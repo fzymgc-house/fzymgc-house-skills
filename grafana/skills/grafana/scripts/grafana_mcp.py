@@ -28,6 +28,7 @@ import sys
 from typing import Any
 
 import httpx
+import yaml
 
 DEFAULT_MCP_URL = "https://mcp.grafana.fzymgc.house/mcp"
 TIMEOUT = 30.0
@@ -170,6 +171,16 @@ class MCPClient:
         self.client.close()
 
 
+def format_output(data: dict[str, Any], fmt: str) -> str:
+    """Format output data according to specified format."""
+    if fmt == "json":
+        return json.dumps(data, separators=(",", ":"))
+    elif fmt == "yaml":
+        return yaml.dump(data, default_flow_style=False, sort_keys=False)
+    else:  # compact - will be enhanced per-tool later
+        return yaml.dump(data, default_flow_style=False, sort_keys=False)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Grafana MCP Gateway - invoke Grafana tools without MCP context overhead",
@@ -192,6 +203,12 @@ def main():
         help="Describe a specific tool's schema and parameters",
     )
     parser.add_argument(
+        "--format",
+        choices=["json", "yaml", "compact"],
+        default="yaml",
+        help="Output format: json (compact), yaml (default), compact (minimal)",
+    )
+    parser.add_argument(
         "tool",
         nargs="?",
         help="Tool name to call",
@@ -210,13 +227,13 @@ def main():
         # Handle --list-tools
         if args.list_tools:
             result = client.list_tools()
-            print(json.dumps(result, indent=2))
+            print(format_output(result, args.format))
             sys.exit(0 if result["success"] else 1)
 
         # Handle --describe
         if args.describe:
             result = client.describe_tool(args.describe)
-            print(json.dumps(result, indent=2))
+            print(format_output(result, args.format))
             sys.exit(0 if result["success"] else 1)
 
         # Handle tool call
@@ -225,11 +242,11 @@ def main():
                 arguments = json.loads(args.arguments)
             except json.JSONDecodeError as e:
                 result = {"success": False, "error": f"Invalid JSON arguments: {e}"}
-                print(json.dumps(result, indent=2))
+                print(format_output(result, args.format))
                 sys.exit(1)
 
             result = client.call_tool(args.tool, arguments)
-            print(json.dumps(result, indent=2))
+            print(format_output(result, args.format))
             sys.exit(0 if result["success"] else 1)
 
         # No action specified

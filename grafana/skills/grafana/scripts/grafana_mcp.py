@@ -324,6 +324,175 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
     return 0
 
 
+def workflow_investigate_metrics(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+    """Check metric health for a job/service.
+
+    Args:
+        params: {"job": "...", "metric": "up", "timeRange": "1h"}
+                job is optional - if omitted, queries metric without label filter
+    """
+    job = params.get("job", "")
+    metric = params.get("metric", "up")
+    time_range = params.get("timeRange", "1h")
+
+    # Find Prometheus datasource
+    ds_result = client.call_tool("list_datasources", {"type": "prometheus"})
+    if not ds_result.get("success"):
+        print(f"Error finding Prometheus datasource: {ds_result.get('error')}", file=sys.stderr)
+        return 1
+
+    prom_uid = None
+    content = ds_result.get("result", {}).get("content", [])
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            try:
+                datasources = json.loads(item["text"])
+                if datasources:
+                    prom_uid = datasources[0].get("uid")
+                    break
+            except (json.JSONDecodeError, TypeError, IndexError):
+                pass
+
+    if not prom_uid:
+        print("Error: No Prometheus datasource found", file=sys.stderr)
+        return 1
+
+    # Build query
+    if job:
+        expr = f'{metric}{{job="{job}"}}'
+    else:
+        expr = metric
+
+    # Query current value
+    query_result = client.call_tool("query_prometheus", {
+        "datasourceUid": prom_uid,
+        "expr": expr,
+        "startTime": f"now-{time_range}",
+        "queryType": "instant",
+    })
+
+    value = None
+    if query_result.get("success"):
+        content = query_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    result = json.loads(item["text"])
+                    if result and "value" in result:
+                        value = result["value"]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    output = {
+        "datasource": prom_uid,
+        "query": expr,
+        "timeRange": f"now-{time_range}",
+        "result": value if value else "no data",
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
+def workflow_quick_status(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+    """Overview of system health."""
+    output = {"incidents": {"active": 0}, "alerts": {"firing": []}}
+
+    # Get active incidents
+    inc_result = client.call_tool("list_incidents", {"status": "active", "limit": 10})
+    if inc_result.get("success"):
+        content = inc_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    incidents = json.loads(item["text"])
+                    if isinstance(incidents, list):
+                        output["incidents"]["active"] = len(incidents)
+                        output["incidents"]["items"] = [
+                            {"title": i.get("title"), "severity": i.get("severity")}
+                            for i in incidents[:5]
+                        ]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    # Get firing alerts
+    alert_result = client.call_tool("list_alert_rules", {"limit": 50})
+    if alert_result.get("success"):
+        content = alert_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    alerts = json.loads(item["text"])
+                    if isinstance(alerts, list):
+                        firing = [a for a in alerts if a.get("state") == "firing"]
+                        output["alerts"]["firing"] = [
+                            f"{a.get('title')} ({a.get('labels', {}).get('severity', 'unknown')})"
+                            for a in firing[:10]
+                        ]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    print(format_output(output, fmt))
+    return 0
+
+
+def workflow_find_dashboard(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+    """Search and summarize a dashboard."""
+    query = params.get("query", "")
+    if not query:
+        print("Error: 'query' parameter is required", file=sys.stderr)
+        return 1
+
+    # Search dashboards
+    search_result = client.call_tool("search_dashboards", {"query": query})
+    if not search_result.get("success"):
+        print(f"Error searching dashboards: {search_result.get('error')}", file=sys.stderr)
+        return 1
+
+    dashboards = []
+    content = search_result.get("result", {}).get("content", [])
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            try:
+                dashboards = json.loads(item["text"])
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    if not dashboards:
+        print(format_output({"found": 0, "message": "No dashboards found"}, fmt))
+        return 0
+
+    # Get summary of top match
+    top = dashboards[0]
+    summary_result = client.call_tool("get_dashboard_summary", {"uid": top.get("uid")})
+
+    summary = {}
+    if summary_result.get("success"):
+        content = summary_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    summary = json.loads(item["text"])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    output = {
+        "found": len(dashboards),
+        "top_match": {
+            "uid": top.get("uid"),
+            "title": top.get("title"),
+            "folder": top.get("folderTitle", "General"),
+            "panels": summary.get("panelCount", 0),
+            "types": summary.get("panelTypes", []),
+            "variables": summary.get("variables", []),
+            "url": top.get("url", ""),
+        }
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def main():
     # Backward compatibility: convert old style to new style
     if len(sys.argv) > 1:
@@ -435,9 +604,29 @@ def main():
                 sys.exit(1)
             sys.exit(workflow_investigate_logs(client, params, args.format))
 
-        elif args.command in ["investigate-metrics", "quick-status", "find-dashboard"]:
-            print(f"Error: Workflow '{args.command}' not yet implemented", file=sys.stderr)
-            sys.exit(1)
+        elif args.command == "investigate-metrics":
+            try:
+                params = json.loads(args.params)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_investigate_metrics(client, params, args.format))
+
+        elif args.command == "quick-status":
+            try:
+                params = json.loads(args.params)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_quick_status(client, params, args.format))
+
+        elif args.command == "find-dashboard":
+            try:
+                params = json.loads(args.params)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_find_dashboard(client, params, args.format))
 
         else:
             parser.print_help()

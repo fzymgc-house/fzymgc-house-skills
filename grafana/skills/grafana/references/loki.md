@@ -86,3 +86,36 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 1. `list_loki_label_names` to see labels
 2. `list_loki_label_values` for each interesting label
 3. Build selector from discovered labels
+
+## Tool Reference
+
+### query_loki_logs
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | From list_datasources |
+| logql | ✅ | string | LogQL query |
+| limit | | int | Max lines (default 10, max 100) |
+| direction | | string | "backward" (default) or "forward" |
+| startRfc3339 | | string | Start time |
+| endRfc3339 | | string | End time |
+
+### query_loki_stats
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| logql | ✅ | string | Label selector only (no filters) |
+| startRfc3339 | | string | Default: 1 hour ago |
+| endRfc3339 | | string | Default: now |
+
+### list_loki_label_names
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| startRfc3339 | | string | |
+| endRfc3339 | | string | |
+
+### list_loki_label_values
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| labelName | ✅ | string | e.g., "app", "env" |

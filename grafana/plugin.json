@@ -1,5 +1,5 @@
 {
   "name": "grafana",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Grafana operations for the fzymgc-house cluster via on-demand MCP invocation"
 }

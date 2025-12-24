@@ -165,6 +165,7 @@ Embed tool schemas in reference files to eliminate `--describe` calls.
 2. **Script: Compound workflows** - 4 workflow commands
 3. **Docs: Schema tables** - Embed in reference files
 4. **Docs: SKILL.md update** - New examples and workflow documentation
+5. **Version bump** - Update `marketplace.json` and `plugin.json` to 0.2.0
 
 ## Estimated Scope
 

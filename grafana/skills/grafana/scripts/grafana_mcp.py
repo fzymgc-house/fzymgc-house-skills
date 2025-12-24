@@ -235,6 +235,93 @@ def format_output(data: Any, fmt: str) -> str:
         return yaml.dump(data, default_flow_style=False, sort_keys=False)
 
 
+def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+    """Find errors in logs for a service."""
+    app = params.get("app", "")
+    time_range = params.get("timeRange", "1h")
+    pattern = params.get("pattern", "error")
+
+    if not app:
+        print("Error: 'app' parameter is required", file=sys.stderr)
+        return 1
+
+    # Step 1: Find Loki datasource
+    ds_result = client.call_tool("list_datasources", {"type": "loki"})
+    if not ds_result.get("success"):
+        print(f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr)
+        return 1
+
+    loki_uid = None
+    content = ds_result.get("result", {}).get("content", [])
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            try:
+                datasources = json.loads(item["text"])
+                if datasources:
+                    loki_uid = datasources[0].get("uid")
+                    break
+            except (json.JSONDecodeError, TypeError, IndexError):
+                pass
+
+    if not loki_uid:
+        print("Error: No Loki datasource found", file=sys.stderr)
+        return 1
+
+    logql = f'{{app="{app}"}}'
+
+    # Step 2: Query stats
+    stats_result = client.call_tool("query_loki_stats", {
+        "datasourceUid": loki_uid,
+        "logql": logql,
+    })
+
+    stats = {"streams": 0, "entries": 0, "bytes": 0}
+    if stats_result.get("success"):
+        content = stats_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    stats = json.loads(item["text"])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    # Step 3: Query logs with error pattern
+    error_logql = f'{{app="{app}"}} |= "{pattern}"'
+    logs_result = client.call_tool("query_loki_logs", {
+        "datasourceUid": loki_uid,
+        "logql": error_logql,
+        "limit": 20,
+    })
+
+    errors = []
+    if logs_result.get("success"):
+        content = logs_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    log_entries = json.loads(item["text"])
+                    if isinstance(log_entries, list):
+                        errors = [f"{e.get('timestamp', '')} {e.get('line', '')[:100]}"
+                                  for e in log_entries[:5]]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    # Build output
+    output = {
+        "datasource": loki_uid,
+        "timeRange": f"now-{time_range} to now",
+        "query": error_logql,
+        "stats": stats,
+        "errors": {
+            "count": len(errors),
+            "sample": errors,
+        }
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def main():
     # Backward compatibility: convert old style to new style
     if len(sys.argv) > 1:
@@ -338,7 +425,15 @@ def main():
                 print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
                 sys.exit(1)
 
-        elif args.command in ["investigate-logs", "investigate-metrics", "quick-status", "find-dashboard"]:
+        elif args.command == "investigate-logs":
+            try:
+                params = json.loads(args.params)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_investigate_logs(client, params, args.format))
+
+        elif args.command in ["investigate-metrics", "quick-status", "find-dashboard"]:
             print(f"Error: Workflow '{args.command}' not yet implemented", file=sys.stderr)
             sys.exit(1)
 

@@ -182,31 +182,47 @@ BRIEF_FILTERS: dict[str, list[str]] = {
 }
 
 
-def apply_brief_filter(data: dict[str, Any], tool_name: str) -> dict[str, Any]:
-    """Apply brief filter to reduce output fields."""
+def apply_brief_filter(data: Any, tool_name: str) -> Any:
+    """Apply brief filter to reduce output fields (expects unwrapped data)."""
     if tool_name not in BRIEF_FILTERS:
         return data
 
     fields = BRIEF_FILTERS[tool_name]
+
+    # Handle list of objects
+    if isinstance(data, list):
+        return [{k: v for k, v in obj.items() if k in fields} for obj in data if isinstance(obj, dict)]
+
+    # Handle dict with "items" key
+    if isinstance(data, dict) and "items" in data:
+        filtered_items = [{k: v for k, v in obj.items() if k in fields} for obj in data["items"] if isinstance(obj, dict)]
+        return {**data, "items": filtered_items}
+
+    return data
+
+
+def unwrap_result(data: dict[str, Any]) -> Any:
+    """Unwrap MCP result structure to return just the data."""
+    if not data.get("success"):
+        return data  # Keep error structure
+
     result = data.get("result", {})
 
-    # Handle MCP content wrapper
+    # Handle MCP content wrapper: {"content": [{"type": "text", "text": "..."}]}
     if "content" in result and isinstance(result["content"], list):
+        texts = []
         for item in result["content"]:
             if item.get("type") == "text" and "text" in item:
                 try:
-                    parsed = json.loads(item["text"])
-                    if isinstance(parsed, list):
-                        filtered = [{k: v for k, v in obj.items() if k in fields} for obj in parsed]
-                        item["text"] = json.dumps(filtered)
-                    elif isinstance(parsed, dict) and "items" in parsed:
-                        filtered = [{k: v for k, v in obj.items() if k in fields} for obj in parsed["items"]]
-                        parsed["items"] = filtered
-                        item["text"] = json.dumps(parsed)
-                except (json.JSONDecodeError, TypeError):
-                    pass
+                    texts.append(json.loads(item["text"]))
+                except json.JSONDecodeError:
+                    texts.append(item["text"])
 
-    return data
+        if len(texts) == 1:
+            return texts[0]
+        return texts
+
+    return result
 
 
 def format_output(data: dict[str, Any], fmt: str) -> str:
@@ -270,29 +286,41 @@ def main():
         # Handle --list-tools
         if args.list_tools:
             result = client.list_tools()
-            print(format_output(result, args.format))
-            sys.exit(0 if result["success"] else 1)
+            if result.get("success"):
+                print(format_output(result["tools"], args.format))
+                sys.exit(0)
+            else:
+                print(f"Error: {result.get('error')}", file=sys.stderr)
+                sys.exit(1)
 
         # Handle --describe
         if args.describe:
             result = client.describe_tool(args.describe)
-            print(format_output(result, args.format))
-            sys.exit(0 if result["success"] else 1)
+            if result.get("success"):
+                print(format_output(result["tool"], args.format))
+                sys.exit(0)
+            else:
+                print(f"Error: {result.get('error')}", file=sys.stderr)
+                sys.exit(1)
 
         # Handle tool call
         if args.tool:
             try:
                 arguments = json.loads(args.arguments)
             except json.JSONDecodeError as e:
-                result = {"success": False, "error": f"Invalid JSON arguments: {e}"}
-                print(format_output(result, args.format))
+                print(f"Error: Invalid JSON arguments: {e}", file=sys.stderr)
                 sys.exit(1)
 
             result = client.call_tool(args.tool, arguments)
-            if args.brief:
-                result = apply_brief_filter(result, args.tool)
-            print(format_output(result, args.format))
-            sys.exit(0 if result["success"] else 1)
+            if result.get("success"):
+                output = unwrap_result(result)
+                if args.brief:
+                    output = apply_brief_filter(output, args.tool)
+                print(format_output(output, args.format))
+                sys.exit(0)
+            else:
+                print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
 
         # No action specified
         parser.print_help()

@@ -73,3 +73,39 @@ Optional: `start_rfc_3339`, `end_rfc_3339`, `max_node_depth`
 1. Use `memory:inuse_objects:count:space:bytes` profile
 2. Look for unexpected allocations
 3. Check heap growth patterns
+
+## Tool Reference
+
+### list_pyroscope_profile_types
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| data_source_uid | ✅ | string | Pyroscope datasource UID |
+| start_rfc_3339 | | string | Default: 1 hour ago |
+| end_rfc_3339 | | string | Default: now |
+
+### list_pyroscope_label_names
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| data_source_uid | ✅ | string | |
+| matchers | | string | e.g., {service_name="api"} |
+| start_rfc_3339 | | string | |
+| end_rfc_3339 | | string | |
+
+### list_pyroscope_label_values
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| data_source_uid | ✅ | string | |
+| name | ✅ | string | Label name |
+| matchers | | string | Label matchers |
+| start_rfc_3339 | | string | |
+| end_rfc_3339 | | string | |
+
+### fetch_pyroscope_profile
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| data_source_uid | ✅ | string | |
+| profile_type | ✅ | string | From list_pyroscope_profile_types |
+| matchers | | string | e.g., {service_name="api"} |
+| start_rfc_3339 | | string | Default: 1 hour ago |
+| end_rfc_3339 | | string | Default: now |
+| max_node_depth | | int | Default: 100, -1 for unlimited |

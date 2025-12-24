@@ -79,3 +79,30 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py create_folder '{"tit
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py generate_deeplink '{"resourceType":"dashboard","dashboardUid":"...","timeRange":{"from":"now-1h","to":"now"}}'
 ```
 Resource types: `dashboard`, `panel`, `explore`
+
+## Tool Reference
+
+### search_dashboards
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| query | | string | Search term |
+
+### get_dashboard_summary
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| uid | ✅ | string | Dashboard UID |
+
+### get_dashboard_property
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| uid | ✅ | string | Dashboard UID |
+| jsonPath | ✅ | string | e.g., "$.panels[*].title" |
+
+### update_dashboard
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| uid | | string | For patching existing |
+| dashboard | | object | For creating new |
+| operations | | array | Patch operations |
+| message | | string | Commit message |
+| folderUid | | string | Target folder |

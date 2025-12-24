@@ -75,3 +75,30 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_contact_points 
 2. Create reduce expression (refId: "B")
 3. Create threshold condition (refId: "C")
 4. Set condition: "C"
+
+## Tool Reference
+
+### list_alert_rules
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| limit | | int | Default 100 |
+| page | | int | Pagination |
+| label_selectors | | array | Filter by labels |
+
+### get_alert_rule_by_uid
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| uid | ✅ | string | Alert rule UID |
+
+### create_alert_rule
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| title | ✅ | string | Rule name |
+| ruleGroup | ✅ | string | Group name |
+| folderUID | ✅ | string | Folder UID |
+| condition | ✅ | string | Query ref (e.g., "B") |
+| data | ✅ | array | Query configs |
+| noDataState | ✅ | string | NoData, Alerting, OK |
+| execErrState | ✅ | string | NoData, Alerting, OK |
+| for | ✅ | string | Duration (e.g., "5m") |
+| orgID | ✅ | int | Organization ID |

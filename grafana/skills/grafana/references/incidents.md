@@ -86,3 +86,36 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_assertions '{"en
 1. `list_incidents` with status "active" - Check open incidents
 2. `list_alert_rules` filtered by firing state
 3. Review Sift investigations if any
+
+## Tool Reference
+
+### list_incidents
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| status | | string | "active" or "resolved" |
+| limit | | int | Max results |
+| drill | | bool | Include drill incidents |
+
+### create_incident
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| title | ✅ | string | Incident title |
+| severity | ✅ | string | critical, major, minor |
+| roomPrefix | ✅ | string | e.g., "inc" |
+| status | | string | Default: active |
+| isDrill | | bool | Drill incident |
+| labels | | array | Labels |
+
+### find_error_pattern_logs
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| name | ✅ | string | Investigation name |
+| labels | ✅ | object | e.g., {"service":"api"} |
+| start | | datetime | ISO 8601 |
+| end | | datetime | ISO 8601 |
+
+### find_slow_requests
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| name | ✅ | string | Investigation name |
+| labels | ✅ | object | e.g., {"service":"api"} |

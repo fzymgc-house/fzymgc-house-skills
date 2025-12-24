@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["httpx"]
+# dependencies = ["httpx", "pyyaml"]
 # ///
 """
 Grafana MCP Gateway Script

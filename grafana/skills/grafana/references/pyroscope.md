@@ -9,7 +9,7 @@
 
 ### List available profile types
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_pyroscope_profile_types '{"data_source_uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_pyroscope_profile_types '{"data_source_uid":"..."}'
 ```
 
 **Profile type format:** `<name>:<sample_type>:<sample_unit>:<period_type>:<period_unit>`
@@ -25,26 +25,26 @@ Not all profile types are available for every service.
 
 ### List label names
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_pyroscope_label_names '{"data_source_uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_pyroscope_label_names '{"data_source_uid":"..."}'
 ```
 
 With matchers:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_pyroscope_label_names '{"data_source_uid":"...","matchers":"{service_name=\"api\"}"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_pyroscope_label_names '{"data_source_uid":"...","matchers":"{service_name=\"api\"}"}'
 ```
 
 Labels with double underscores (e.g., `__name__`) are internal.
 
 ### List label values
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_pyroscope_label_values '{"data_source_uid":"...","name":"service_name"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_pyroscope_label_values '{"data_source_uid":"...","name":"service_name"}'
 ```
 
 ## Fetching Profiles
 
 ### Fetch profile
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py fetch_pyroscope_profile '{"data_source_uid":"...","profile_type":"process_cpu:cpu:nanoseconds:cpu:nanoseconds","matchers":"{service_name=\"api\"}"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py fetch_pyroscope_profile '{"data_source_uid":"...","profile_type":"process_cpu:cpu:nanoseconds:cpu:nanoseconds","matchers":"{service_name=\"api\"}"}'
 ```
 
 Optional: `start_rfc_3339`, `end_rfc_3339`, `max_node_depth`

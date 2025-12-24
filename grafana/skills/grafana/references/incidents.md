@@ -9,26 +9,26 @@
 
 ### List incidents
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_incidents '{"status":"active","limit":10}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_incidents '{"status":"active","limit":10}'
 ```
 
 ### Get incident details
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_incident '{"id":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_incident '{"id":"..."}'
 ```
 
 **Returns:** Title, status, severity, labels, timestamps, metadata
 
 ### Create incident (use sparingly - notifies people)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py create_incident '{"title":"Database connection failures","severity":"critical","roomPrefix":"inc","status":"active"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py create_incident '{"title":"Database connection failures","severity":"critical","roomPrefix":"inc","status":"active"}'
 ```
 
 Optional fields: `isDrill`, `labels`, `attachUrl`, `attachCaption`
 
 ### Add activity to incident
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py add_activity_to_incident '{"incidentId":"...","body":"Identified root cause: connection pool exhaustion. Link: https://..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py add_activity_to_incident '{"incidentId":"...","body":"Identified root cause: connection pool exhaustion. Link: https://..."}'
 ```
 
 URLs in body are automatically attached as context.
@@ -39,29 +39,29 @@ Sift is AI-powered investigation that analyzes logs, traces, and metrics.
 
 ### List investigations
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_sift_investigations '{"limit":10}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_sift_investigations '{"limit":10}'
 ```
 
 ### Get investigation
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_sift_investigation '{"id":"uuid-string"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_sift_investigation '{"id":"uuid-string"}'
 ```
 
 ### Get specific analysis
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_sift_analysis '{"investigationId":"uuid","analysisId":"uuid"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_sift_analysis '{"investigationId":"uuid","analysisId":"uuid"}'
 ```
 
 ### Find error patterns in logs
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py find_error_pattern_logs '{"name":"API errors investigation","labels":{"service":"api","namespace":"prod"}}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_error_pattern_logs '{"name":"API errors investigation","labels":{"service":"api","namespace":"prod"}}'
 ```
 
 Compares error patterns to last day's average. Returns patterns found.
 
 ### Find slow requests
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py find_slow_requests '{"name":"Slow API requests","labels":{"service":"api"}}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_slow_requests '{"name":"Slow API requests","labels":{"service":"api"}}'
 ```
 
 Searches Tempo datasources for slow traces.
@@ -70,7 +70,7 @@ Searches Tempo datasources for slow traces.
 
 ### Get assertion summary
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_assertions '{"entityType":"Service","entityName":"api","env":"prod","namespace":"default","startTime":"2024-01-01T00:00:00Z","endTime":"2024-01-01T01:00:00Z"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_assertions '{"entityType":"Service","entityName":"api","env":"prod","namespace":"default","startTime":"2024-01-01T00:00:00Z","endTime":"2024-01-01T01:00:00Z"}'
 ```
 
 ## Common Patterns

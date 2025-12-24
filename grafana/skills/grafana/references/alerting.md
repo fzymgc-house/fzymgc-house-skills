@@ -9,19 +9,19 @@
 
 ### List alert rules
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_alert_rules '{"limit":100}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_rules '{"limit":100}'
 ```
 
 With label filter:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_alert_rules '{"label_selectors":[{"filters":[{"name":"severity","type":"=","value":"critical"}]}]}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_rules '{"label_selectors":[{"filters":[{"name":"severity","type":"=","value":"critical"}]}]}'
 ```
 
 **Returns:** UID, title, state, labels
 
 ### Get rule details
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_alert_rule_by_uid '{"uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_alert_rule_by_uid '{"uid":"..."}'
 ```
 
 **Returns:** Full config including condition, queries, thresholds, annotations
@@ -37,19 +37,19 @@ Use `--describe create_alert_rule` to see full schema. Key parameters:
 
 ### Update alert rule
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py update_alert_rule '{"uid":"...","title":"...","ruleGroup":"...",...}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py update_alert_rule '{"uid":"...","title":"...","ruleGroup":"...",...}'
 ```
 
 ### Delete alert rule
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py delete_alert_rule '{"uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py delete_alert_rule '{"uid":"..."}'
 ```
 
 ## Contact Points
 
 ### List contact points
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_contact_points '{"limit":100}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_contact_points '{"limit":100}'
 ```
 
 **Returns:** UID, name, type (email, slack, pagerduty, etc.)

@@ -10,26 +10,26 @@
 
 ### Find dashboards
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
 ```
 Returns list with title, UID, folder, tags, URL.
 
 ### Find folders
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py search_folders '{"query":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_folders '{"query":"..."}'
 ```
 
 ## Reading Dashboards
 
 ### Get summary (preferred for overview)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
 ```
 Returns: title, panel count, types, variables, metadata. Use this first to understand structure.
 
 ### Get specific properties (context-efficient)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_property '{"uid":"...","jsonPath":"$.panels[*].title"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_property '{"uid":"...","jsonPath":"$.panels[*].title"}'
 ```
 Common paths:
 - `$.title` - Dashboard title
@@ -41,25 +41,25 @@ Common paths:
 
 ### Get panel queries
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_panel_queries '{"uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_panel_queries '{"uid":"..."}'
 ```
 Returns array of {title, query, datasource}. Use to understand what data the dashboard visualizes.
 
 ### Get full dashboard (use sparingly - large output)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_by_uid '{"uid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_by_uid '{"uid":"..."}'
 ```
 
 ## Modifying Dashboards
 
 ### Create new dashboard
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py update_dashboard '{"dashboard":{...},"folderUid":"...","message":"commit message"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py update_dashboard '{"dashboard":{...},"folderUid":"...","message":"commit message"}'
 ```
 
 ### Patch existing dashboard (preferred - context efficient)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py update_dashboard '{"uid":"...","operations":[{"op":"replace","path":"$.title","value":"New Title"}],"message":"commit message"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py update_dashboard '{"uid":"...","operations":[{"op":"replace","path":"$.title","value":"New Title"}],"message":"commit message"}'
 ```
 
 ### Common patch operations
@@ -71,11 +71,11 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py update_dashboard '{"uid":"...","ope
 
 ### Create folder
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py create_folder '{"title":"...","uid":"...","parentUid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py create_folder '{"title":"...","uid":"...","parentUid":"..."}'
 ```
 
 ### Navigate deeplinks
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py generate_deeplink '{"resourceType":"dashboard","dashboardUid":"...","timeRange":{"from":"now-1h","to":"now"}}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py generate_deeplink '{"resourceType":"dashboard","dashboardUid":"...","timeRange":{"from":"now-1h","to":"now"}}'
 ```
 Resource types: `dashboard`, `panel`, `explore`

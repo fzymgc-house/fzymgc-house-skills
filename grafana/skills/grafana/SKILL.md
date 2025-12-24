@@ -13,17 +13,17 @@ description: |
 
 ## Gateway Script
 
-All operations use the gateway script at `${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py`.
+All operations use the gateway script at `${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py`.
 
 ### Commands
 
 ```bash
 # Discovery
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py --list-tools
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py --describe <tool_name>
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --list-tools
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --describe <tool_name>
 
 # Tool invocation
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py <tool_name> '<json_arguments>'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py <tool_name> '<json_arguments>'
 ```
 
 ### Output Format
@@ -50,24 +50,24 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py <tool_name> '<json_arguments>'
 
 1. **Find relevant datasources**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_datasources '{"type":"loki"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_datasources '{"type":"loki"}'
    ```
 
 2. **Check log patterns** (Loki)
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"...\"}"}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"...\"} |= \"error\"","limit":20}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"...\"}"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"...\"} |= \"error\"","limit":20}'
    ```
 
 3. **Check metrics** (Prometheus)
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":"...","expr":"rate(errors[5m])","startTime":"now-1h","queryType":"range","stepSeconds":60}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":"...","expr":"rate(errors[5m])","startTime":"now-1h","queryType":"range","stepSeconds":60}'
    ```
 
 4. **Use Sift for AI analysis**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py find_error_pattern_logs '{"name":"Investigation","labels":{"service":"..."}}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py find_slow_requests '{"name":"Latency check","labels":{"service":"..."}}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_error_pattern_logs '{"name":"Investigation","labels":{"service":"..."}}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_slow_requests '{"name":"Latency check","labels":{"service":"..."}}'
    ```
 
 For detailed query syntax: [loki.md](references/loki.md), [prometheus.md](references/prometheus.md)
@@ -76,42 +76,42 @@ For detailed query syntax: [loki.md](references/loki.md), [prometheus.md](refere
 
 1. **List datasources**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_datasources '{}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_datasources '{}'
    ```
 
 2. **Discover labels/metrics**
    ```bash
    # Prometheus
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"..."}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_metric_names '{"datasourceUid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_metric_names '{"datasourceUid":"..."}'
 
    # Loki
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_loki_label_names '{"datasourceUid":"..."}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_loki_label_values '{"datasourceUid":"...","labelName":"app"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_names '{"datasourceUid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_values '{"datasourceUid":"...","labelName":"app"}'
    ```
 
 3. **Find existing dashboards**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
    ```
 
 ### Manage Dashboards
 
 1. **Find dashboard**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
    ```
 
 2. **Understand structure**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_dashboard_panel_queries '{"uid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_panel_queries '{"uid":"..."}'
    ```
 
 3. **Modify with patches**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py update_dashboard '{"uid":"...","operations":[...],"message":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py update_dashboard '{"uid":"...","operations":[...],"message":"..."}'
    ```
 
 For full operations: [dashboards.md](references/dashboards.md)
@@ -120,8 +120,8 @@ For full operations: [dashboards.md](references/dashboards.md)
 
 1. **Review existing rules**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_alert_rules '{"limit":20}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_contact_points '{}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_rules '{"limit":20}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_contact_points '{}'
    ```
 
 2. **Create new rule** - use `--describe create_alert_rule` to see required parameters
@@ -132,17 +132,17 @@ For alert configuration: [alerting.md](references/alerting.md)
 
 1. **Check active incidents**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_incidents '{"status":"active"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_incidents '{"status":"active"}'
    ```
 
 2. **Create incident** (notifies people - confirm first)
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py create_incident '{"title":"...","severity":"...","roomPrefix":"inc"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py create_incident '{"title":"...","severity":"...","roomPrefix":"inc"}'
    ```
 
 3. **Add investigation notes**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py add_activity_to_incident '{"incidentId":"...","body":"Findings..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py add_activity_to_incident '{"incidentId":"...","body":"Findings..."}'
    ```
 
 For incident management: [incidents.md](references/incidents.md)
@@ -151,13 +151,13 @@ For incident management: [incidents.md](references/incidents.md)
 
 1. **Find who's on-call**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_schedules '{}'
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_current_oncall_users '{"scheduleId":"..."}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_schedules '{}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_current_oncall_users '{"scheduleId":"..."}'
    ```
 
 2. **Review alert groups**
    ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_alert_groups '{"state":"new"}'
+   ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_groups '{"state":"new"}'
    ```
 
 For on-call operations: [oncall.md](references/oncall.md)
@@ -168,10 +168,10 @@ When unsure about tool parameters:
 
 ```bash
 # List all available tools
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py --list-tools
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --list-tools
 
 # Get tool schema and description
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py --describe <tool_name>
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --describe <tool_name>
 ```
 
 ## Domain References

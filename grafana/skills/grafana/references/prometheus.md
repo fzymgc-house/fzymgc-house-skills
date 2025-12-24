@@ -9,7 +9,7 @@
 
 ### Execute PromQL
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":"...","expr":"up{job=\"prometheus\"}","startTime":"now-1h","queryType":"range","stepSeconds":60}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":"...","expr":"up{job=\"prometheus\"}","startTime":"now-1h","queryType":"range","stepSeconds":60}'
 ```
 
 **Time formats:**
@@ -25,12 +25,12 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":
 
 ### List metric names
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_metric_names '{"datasourceUid":"...","regex":".*error.*","limit":100}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_metric_names '{"datasourceUid":"...","regex":".*error.*","limit":100}'
 ```
 
 ### Get metric metadata
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_metric_metadata '{"datasourceUid":"...","metric":"http_requests_total"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_metric_metadata '{"datasourceUid":"...","metric":"http_requests_total"}'
 ```
 Returns: metric type, help text, unit.
 
@@ -38,17 +38,17 @@ Returns: metric type, help text, unit.
 
 ### List label names
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"..."}'
 ```
 
 ### Get label values
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_label_values '{"datasourceUid":"...","labelName":"job"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_label_values '{"datasourceUid":"...","labelName":"job"}'
 ```
 
 ### With label matchers
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"...","matches":[{"filters":[{"name":"job","type":"=","value":"api"}]}]}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"...","matches":[{"filters":[{"name":"job","type":"=","value":"api"}]}]}'
 ```
 Matcher types: `=`, `!=`, `=~` (regex), `!~` (neg regex)
 

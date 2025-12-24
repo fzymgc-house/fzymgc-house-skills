@@ -10,19 +10,19 @@
 
 ### List schedules
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_schedules '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_schedules '{}'
 ```
 
 With team filter:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_schedules '{"teamId":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_schedules '{"teamId":"..."}'
 ```
 
 **Returns:** ID, name, team ID, timezone, shift IDs
 
 ### Get current on-call users
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_current_oncall_users '{"scheduleId":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_current_oncall_users '{"scheduleId":"..."}'
 ```
 
 **Returns:** Schedule info + list of users currently on-call
@@ -31,34 +31,34 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_current_oncall_users '{"schedul
 
 ### List OnCall users
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_users '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_users '{}'
 ```
 
 Filter by username:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_users '{"username":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_users '{"username":"..."}'
 ```
 
 ### List OnCall teams
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_oncall_teams '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_teams '{}'
 ```
 
 ### List Grafana teams (different from OnCall teams)
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_teams '{"query":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_teams '{"query":"..."}'
 ```
 
 ### List org users
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_users_by_org '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_users_by_org '{}'
 ```
 
 ## Alert Groups
 
 ### List alert groups
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_alert_groups '{"state":"new"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_groups '{"state":"new"}'
 ```
 
 Filter options:
@@ -70,14 +70,14 @@ Filter options:
 
 ### Get alert group details
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_alert_group '{"alertGroupId":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_alert_group '{"alertGroupId":"..."}'
 ```
 
 ## Shifts
 
 ### Get shift details
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py get_oncall_shift '{"shiftId":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_oncall_shift '{"shiftId":"..."}'
 ```
 
 **Returns:** Time period, assigned users, schedule info

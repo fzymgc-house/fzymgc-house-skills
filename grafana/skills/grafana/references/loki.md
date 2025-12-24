@@ -10,7 +10,7 @@
 
 ### Query logs
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"nginx\"} |= \"error\"","limit":20,"direction":"backward"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"nginx\"} |= \"error\"","limit":20,"direction":"backward"}'
 ```
 
 **Returns:** Array of {timestamp, labels, line/value}
@@ -23,7 +23,7 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"
 
 ### Check stream size before querying
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"nginx\"}"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"nginx\"}"}'
 ```
 
 **Returns:** {streams, chunks, entries, bytes}
@@ -34,12 +34,12 @@ Use this first to understand data volume before running expensive queries.
 
 ### List label names
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_loki_label_names '{"datasourceUid":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_names '{"datasourceUid":"..."}'
 ```
 
 ### List label values
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/grafana_mcp.py list_loki_label_values '{"datasourceUid":"...","labelName":"app"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_values '{"datasourceUid":"...","labelName":"app"}'
 ```
 
 ## LogQL Patterns

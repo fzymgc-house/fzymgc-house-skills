@@ -63,3 +63,38 @@ Matcher types: `=`, `!=`, `=~` (regex), `!~` (neg regex)
 1. Check if metric exists: `list_prometheus_metric_names`
 2. Check label values: `list_prometheus_label_values`
 3. Try broader time range or remove filters
+
+## Tool Reference
+
+### query_prometheus
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | From list_datasources |
+| expr | ✅ | string | PromQL expression |
+| startTime | ✅ | string | RFC3339 or relative (now-1h) |
+| queryType | ✅ | string | "instant" or "range" |
+| endTime | | string | Required for range queries |
+| stepSeconds | | int | Required for range queries |
+
+### list_prometheus_metric_names
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| regex | | string | Filter pattern |
+| limit | | int | Max results (default 100) |
+| page | | int | Pagination |
+
+### list_prometheus_label_names
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| matches | | array | Label matchers |
+| startRfc3339 | | string | Time range start |
+| endRfc3339 | | string | Time range end |
+
+### list_prometheus_label_values
+| Param | Required | Type | Notes |
+|-------|----------|------|-------|
+| datasourceUid | ✅ | string | |
+| labelName | ✅ | string | Label to get values for |
+| matches | | array | Label matchers |

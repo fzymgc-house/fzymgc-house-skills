@@ -19,18 +19,26 @@ All operations use the gateway script at `${CLAUDE_PLUGIN_ROOT}/skills/grafana/s
 
 ```bash
 # Discovery
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --list-tools
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --describe <tool_name>
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list-tools
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py describe <tool_name>
 
 # Tool invocation
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py <tool_name> '<json_arguments>'
+
+# Compound workflows (recommended for common tasks)
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"app":"...","timeRange":"1h"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"...","metric":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"..."}'
 ```
 
-### Output Format
+### Output Options
 
-```json
-{"success": true, "result": {...}}
-{"success": false, "error": "..."}
+```bash
+--format yaml    # YAML output (default)
+--format json    # Compact JSON
+--format compact # Minimal output
+--brief          # Essential fields only
 ```
 
 ## Quick Reference
@@ -43,6 +51,34 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py <tool_name> '<json_a
 | Set up alerting | [Alerting](#set-up-alerting) |
 | Handle incidents | [Incidents](#handle-incidents) |
 | Check on-call | [OnCall](#check-on-call) |
+
+## Compound Workflows
+
+Use these for common multi-step operations (saves tokens vs individual calls):
+
+### investigate-logs
+Find errors in logs for an application:
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"app":"nginx","timeRange":"1h","pattern":"error"}'
+```
+
+### investigate-metrics
+Check metric health:
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"api","metric":"http_requests_total"}'
+```
+
+### quick-status
+System health overview:
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
+```
+
+### find-dashboard
+Search and summarize:
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"api latency"}'
+```
 
 ## Core Workflows
 

@@ -236,55 +236,72 @@ def format_output(data: Any, fmt: str) -> str:
 
 
 def main():
+    # Backward compatibility: convert old style to new style
+    if len(sys.argv) > 1:
+        first_arg = sys.argv[1]
+        if first_arg == "--list-tools":
+            sys.argv = [sys.argv[0], "list-tools"] + sys.argv[2:]
+        elif first_arg == "--describe":
+            sys.argv = [sys.argv[0], "describe"] + sys.argv[2:]
+        elif first_arg.startswith("--"):
+            pass  # Regular flag
+        elif first_arg not in ["tool", "list-tools", "describe", "investigate-logs",
+                                "investigate-metrics", "quick-status", "find-dashboard"]:
+            # Old style: tool_name '{args}' -> tool tool_name '{args}'
+            sys.argv = [sys.argv[0], "tool"] + sys.argv[1:]
+
     parser = argparse.ArgumentParser(
         description="Grafana MCP Gateway - invoke Grafana tools without MCP context overhead",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
     )
     parser.add_argument(
         "--url",
         default=os.environ.get("GRAFANA_MCP_URL", DEFAULT_MCP_URL),
-        help=f"MCP server URL (default: {DEFAULT_MCP_URL}, or GRAFANA_MCP_URL env var)",
-    )
-    parser.add_argument(
-        "--list-tools",
-        action="store_true",
-        help="List all available tools",
-    )
-    parser.add_argument(
-        "--describe",
-        metavar="TOOL",
-        help="Describe a specific tool's schema and parameters",
+        help=f"MCP server URL (default: {DEFAULT_MCP_URL})",
     )
     parser.add_argument(
         "--format",
         choices=["json", "yaml", "compact"],
         default="yaml",
-        help="Output format: json (compact), yaml (default), compact (minimal)",
+        help="Output format (default: yaml)",
     )
     parser.add_argument(
         "--brief",
         action="store_true",
-        help="Return only essential fields (tool-specific filtering)",
+        help="Return only essential fields",
     )
-    parser.add_argument(
-        "tool",
-        nargs="?",
-        help="Tool name to call",
-    )
-    parser.add_argument(
-        "arguments",
-        nargs="?",
-        default="{}",
-        help="JSON arguments for the tool (default: {})",
-    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # Tool operations
+    tool_parser = subparsers.add_parser("tool", help="Call an MCP tool")
+    tool_parser.add_argument("name", help="Tool name")
+    tool_parser.add_argument("arguments", nargs="?", default="{}", help="JSON arguments")
+
+    # List tools
+    subparsers.add_parser("list-tools", help="List available MCP tools")
+
+    # Describe tool
+    describe_parser = subparsers.add_parser("describe", help="Describe a tool's schema")
+    describe_parser.add_argument("name", help="Tool name")
+
+    # Workflows (to be implemented in Task 2.2 and 2.3)
+    investigate_logs = subparsers.add_parser("investigate-logs", help="Find errors in logs")
+    investigate_logs.add_argument("params", nargs="?", default="{}", help='{"app":"...","timeRange":"1h"}')
+
+    investigate_metrics = subparsers.add_parser("investigate-metrics", help="Check metric health")
+    investigate_metrics.add_argument("params", nargs="?", default="{}", help='{"job":"...","metric":"..."}')
+
+    quick_status = subparsers.add_parser("quick-status", help="System health overview")
+    quick_status.add_argument("params", nargs="?", default="{}", help="Optional filters")
+
+    find_dashboard = subparsers.add_parser("find-dashboard", help="Search and summarize dashboard")
+    find_dashboard.add_argument("params", nargs="?", default="{}", help='{"query":"..."}')
 
     args = parser.parse_args()
     client = MCPClient(args.url)
 
     try:
-        # Handle --list-tools
-        if args.list_tools:
+        if args.command == "list-tools":
             result = client.list_tools()
             if result.get("success"):
                 print(format_output(result["tools"], args.format))
@@ -293,9 +310,8 @@ def main():
                 print(f"Error: {result.get('error')}", file=sys.stderr)
                 sys.exit(1)
 
-        # Handle --describe
-        if args.describe:
-            result = client.describe_tool(args.describe)
+        elif args.command == "describe":
+            result = client.describe_tool(args.name)
             if result.get("success"):
                 print(format_output(result["tool"], args.format))
                 sys.exit(0)
@@ -303,28 +319,32 @@ def main():
                 print(f"Error: {result.get('error')}", file=sys.stderr)
                 sys.exit(1)
 
-        # Handle tool call
-        if args.tool:
+        elif args.command == "tool":
             try:
                 arguments = json.loads(args.arguments)
             except json.JSONDecodeError as e:
                 print(f"Error: Invalid JSON arguments: {e}", file=sys.stderr)
                 sys.exit(1)
 
-            result = client.call_tool(args.tool, arguments)
+            result = client.call_tool(args.name, arguments)
+            output = unwrap_result(result)
+            if args.brief:
+                output = apply_brief_filter(output, args.name)
+
             if result.get("success"):
-                output = unwrap_result(result)
-                if args.brief:
-                    output = apply_brief_filter(output, args.tool)
                 print(format_output(output, args.format))
                 sys.exit(0)
             else:
                 print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
                 sys.exit(1)
 
-        # No action specified
-        parser.print_help()
-        sys.exit(1)
+        elif args.command in ["investigate-logs", "investigate-metrics", "quick-status", "find-dashboard"]:
+            print(f"Error: Workflow '{args.command}' not yet implemented", file=sys.stderr)
+            sys.exit(1)
+
+        else:
+            parser.print_help()
+            sys.exit(1)
     finally:
         client.close()
 

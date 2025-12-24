@@ -273,6 +273,7 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
     stats_result = client.call_tool("query_loki_stats", {
         "datasourceUid": loki_uid,
         "logql": logql,
+        "startRfc3339": f"now-{time_range}",
     })
 
     stats = {"streams": 0, "entries": 0, "bytes": 0}
@@ -291,6 +292,7 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
         "datasourceUid": loki_uid,
         "logql": error_logql,
         "limit": 20,
+        "startRfc3339": f"now-{time_range}",
     })
 
     errors = []

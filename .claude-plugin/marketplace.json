@@ -11,7 +11,7 @@
     {
       "name": "grafana",
       "description": "Grafana operations for the fzymgc-house cluster via on-demand MCP invocation",
-      "source": "grafana"
+      "source": "./grafana"
     }
   ]
 }

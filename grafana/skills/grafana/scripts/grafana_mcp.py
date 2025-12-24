@@ -212,7 +212,7 @@ def unwrap_result(data: dict[str, Any]) -> Any:
     if "content" in result and isinstance(result["content"], list):
         texts = []
         for item in result["content"]:
-            if item.get("type") == "text" and "text" in item:
+            if isinstance(item, dict) and item.get("type") == "text" and "text" in item:
                 try:
                     texts.append(json.loads(item["text"]))
                 except json.JSONDecodeError:
@@ -225,7 +225,7 @@ def unwrap_result(data: dict[str, Any]) -> Any:
     return result
 
 
-def format_output(data: dict[str, Any], fmt: str) -> str:
+def format_output(data: Any, fmt: str) -> str:
     """Format output data according to specified format."""
     if fmt == "json":
         return json.dumps(data, separators=(",", ":"))

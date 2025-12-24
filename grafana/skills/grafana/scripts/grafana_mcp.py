@@ -171,6 +171,44 @@ class MCPClient:
         self.client.close()
 
 
+# Field filters for --brief mode (tool_name -> list of fields to keep)
+BRIEF_FILTERS: dict[str, list[str]] = {
+    "list_datasources": ["uid", "name", "type"],
+    "search_dashboards": ["uid", "title", "folderTitle", "tags"],
+    "list_alert_rules": ["uid", "title", "state", "labels"],
+    "list_incidents": ["id", "title", "status", "severity"],
+    "list_oncall_schedules": ["id", "name", "teamId"],
+    "list_contact_points": ["uid", "name", "type"],
+}
+
+
+def apply_brief_filter(data: dict[str, Any], tool_name: str) -> dict[str, Any]:
+    """Apply brief filter to reduce output fields."""
+    if tool_name not in BRIEF_FILTERS:
+        return data
+
+    fields = BRIEF_FILTERS[tool_name]
+    result = data.get("result", {})
+
+    # Handle MCP content wrapper
+    if "content" in result and isinstance(result["content"], list):
+        for item in result["content"]:
+            if item.get("type") == "text" and "text" in item:
+                try:
+                    parsed = json.loads(item["text"])
+                    if isinstance(parsed, list):
+                        filtered = [{k: v for k, v in obj.items() if k in fields} for obj in parsed]
+                        item["text"] = json.dumps(filtered)
+                    elif isinstance(parsed, dict) and "items" in parsed:
+                        filtered = [{k: v for k, v in obj.items() if k in fields} for obj in parsed["items"]]
+                        parsed["items"] = filtered
+                        item["text"] = json.dumps(parsed)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    return data
+
+
 def format_output(data: dict[str, Any], fmt: str) -> str:
     """Format output data according to specified format."""
     if fmt == "json":
@@ -207,6 +245,11 @@ def main():
         choices=["json", "yaml", "compact"],
         default="yaml",
         help="Output format: json (compact), yaml (default), compact (minimal)",
+    )
+    parser.add_argument(
+        "--brief",
+        action="store_true",
+        help="Return only essential fields (tool-specific filtering)",
     )
     parser.add_argument(
         "tool",
@@ -246,6 +289,8 @@ def main():
                 sys.exit(1)
 
             result = client.call_tool(args.tool, arguments)
+            if args.brief:
+                result = apply_brief_filter(result, args.tool)
             print(format_output(result, args.format))
             sys.exit(0 if result["success"] else 1)
 

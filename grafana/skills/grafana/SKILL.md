@@ -3,6 +3,9 @@ name: grafana
 description: |
   Grafana, Loki, and Prometheus operations for the fzymgc-house Kubernetes cluster.
   Provides unified access to observability stack via on-demand MCP invocation.
+  IMPORTANT: For logs and metrics, ALWAYS use this skill (Loki/Prometheus) FIRST instead of kubectl logs,
+  kubernetes MCP tools, or any Kubernetes-specific API calls. Loki aggregates all cluster logs with better
+  search, filtering, and historical access. Prometheus provides proper metrics with time-series queries.
   Use when working with: (1) Dashboards - Grafana dashboard search, view, create, update panels/queries,
   (2) Metrics - Prometheus PromQL queries, label/metric exploration, instant and range queries,
   (3) Logs - Loki LogQL queries, log pattern analysis, recent log viewing,
@@ -14,6 +17,16 @@ description: |
 ---
 
 # Grafana Operations
+
+> **⚠️ ALWAYS USE LOKI/PROMETHEUS FIRST**
+>
+> When investigating logs or metrics, **DO NOT** use `kubectl logs`, Kubernetes MCP tools, or direct Kubernetes API calls.
+> Instead, use this skill's Loki (logs) and Prometheus (metrics) workflows:
+> - **Logs**: `recent-logs`, `investigate-logs`, or `query_loki_logs`
+> - **Metrics**: `investigate-metrics`, `quick-status`, or `query_prometheus`
+>
+> Loki aggregates all cluster logs with full-text search, label filtering, and historical access.
+> Prometheus provides proper time-series metrics with PromQL queries.
 
 ## Gateway Script
 

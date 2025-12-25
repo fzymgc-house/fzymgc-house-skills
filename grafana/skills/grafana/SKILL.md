@@ -30,6 +30,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"...","metric":"..."}'
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"..."}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"app":"...","labels":{...}}'
 ```
 
 ### Output Options
@@ -78,6 +79,25 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
 Search and summarize:
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"api latency"}'
+```
+
+### recent-logs
+View recent logs (cluster-wide or filtered by labels):
+```bash
+# Last 5 minutes of all cluster logs
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{}'
+
+# Last 10 minutes for a specific app (by app.kubernetes.io/name)
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":10,"app":"nginx"}'
+
+# Filter by namespace
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"namespace":"monitoring"}'
+
+# Arbitrary label filters
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"labels":{"pod":"nginx-abc123"}}'
+
+# Combine filters with line pattern matching
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"app":"api","filter":"error","limit":100}'
 ```
 
 ## Core Workflows

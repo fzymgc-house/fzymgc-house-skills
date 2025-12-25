@@ -493,6 +493,117 @@ def workflow_find_dashboard(client: MCPClient, params: dict[str, Any], fmt: str)
     return 0
 
 
+def workflow_recent_logs(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+    """View recent logs for the cluster or filtered by labels.
+
+    Args:
+        params: {"minutes": 5, "app": "...", "namespace": "...", "labels": {...}, "limit": 50, "filter": "..."}
+                minutes - time range (default: 5)
+                app - shorthand for app.kubernetes.io/name label
+                namespace - shorthand for namespace label
+                labels - arbitrary label filters {"key": "value", ...}
+                limit - max log entries (default: 50)
+                filter - optional log line filter pattern
+    """
+    from datetime import datetime, timezone, timedelta
+
+    minutes = params.get("minutes", 5)
+    app = params.get("app", "")
+    namespace = params.get("namespace", "")
+    labels = params.get("labels", {})
+    limit = params.get("limit", 50)
+    line_filter = params.get("filter", "")
+
+    # Calculate RFC3339 timestamps
+    now = datetime.now(timezone.utc)
+    start_time = now - timedelta(minutes=minutes)
+    start_rfc3339 = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_rfc3339 = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Find Loki datasource
+    ds_result = client.call_tool("list_datasources", {"type": "loki"})
+    if not ds_result.get("success"):
+        print(f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr)
+        return 1
+
+    loki_uid = None
+    content = ds_result.get("result", {}).get("content", [])
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            try:
+                datasources = json.loads(item["text"])
+                if datasources:
+                    loki_uid = datasources[0].get("uid")
+                    break
+            except (json.JSONDecodeError, TypeError, IndexError):
+                pass
+
+    if not loki_uid:
+        print("Error: No Loki datasource found", file=sys.stderr)
+        return 1
+
+    # Build query with label selectors
+    # app.kubernetes.io/name becomes app_kubernetes_io_name in Loki labels
+    selectors = []
+    if app:
+        selectors.append(f'app_kubernetes_io_name="{app}"')
+    if namespace:
+        selectors.append(f'namespace="{namespace}"')
+    # Add arbitrary label filters
+    for key, value in labels.items():
+        selectors.append(f'{key}="{value}"')
+
+    if selectors:
+        logql = "{" + ", ".join(selectors) + "}"
+    else:
+        # Cluster-wide: match any namespace
+        logql = '{namespace=~".+"}'
+
+    # Add line filter if specified
+    if line_filter:
+        logql = f'{logql} |= "{line_filter}"'
+
+    # Query logs with proper RFC3339 timestamps
+    logs_result = client.call_tool("query_loki_logs", {
+        "datasourceUid": loki_uid,
+        "logql": logql,
+        "limit": limit,
+        "startRfc3339": start_rfc3339,
+        "endRfc3339": end_rfc3339,
+        "direction": "backward",
+    })
+
+    logs = []
+    if logs_result.get("success"):
+        content = logs_result.get("result", {}).get("content", [])
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                try:
+                    log_entries = json.loads(item["text"])
+                    if isinstance(log_entries, list):
+                        logs = [
+                            {
+                                "time": e.get("timestamp", ""),
+                                "labels": e.get("labels", {}),
+                                "line": e.get("line", ""),
+                            }
+                            for e in log_entries
+                        ]
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    output = {
+        "datasource": loki_uid,
+        "query": logql,
+        "timeRange": f"last {minutes} minutes",
+        "count": len(logs),
+        "logs": logs,
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def main():
     # Backward compatibility: convert old style to new style
     if len(sys.argv) > 1:
@@ -504,7 +615,8 @@ def main():
         elif first_arg.startswith("--"):
             pass  # Regular flag
         elif first_arg not in ["tool", "list-tools", "describe", "investigate-logs",
-                                "investigate-metrics", "quick-status", "find-dashboard"]:
+                                "investigate-metrics", "quick-status", "find-dashboard",
+                                "recent-logs"]:
             # Old style: tool_name '{args}' -> tool tool_name '{args}'
             sys.argv = [sys.argv[0], "tool"] + sys.argv[1:]
 
@@ -554,6 +666,9 @@ def main():
 
     find_dashboard = subparsers.add_parser("find-dashboard", help="Search and summarize dashboard")
     find_dashboard.add_argument("params", nargs="?", default="{}", help='{"query":"..."}')
+
+    recent_logs = subparsers.add_parser("recent-logs", help="View recent logs for cluster or by labels")
+    recent_logs.add_argument("params", nargs="?", default="{}", help='{"minutes":5,"app":"...","namespace":"...","labels":{...},"filter":"...","limit":50}')
 
     args = parser.parse_args()
     client = MCPClient(args.url)
@@ -627,6 +742,14 @@ def main():
                 print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
                 sys.exit(1)
             sys.exit(workflow_find_dashboard(client, params, args.format))
+
+        elif args.command == "recent-logs":
+            try:
+                params = json.loads(args.params)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_recent_logs(client, params, args.format))
 
         else:
             parser.print_help()

@@ -620,55 +620,68 @@ def main():
             # Old style: tool_name '{args}' -> tool tool_name '{args}'
             sys.argv = [sys.argv[0], "tool"] + sys.argv[1:]
 
+    # Common options shared by all subcommands (allows --format anywhere)
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument(
+        "--format",
+        choices=["json", "yaml", "compact"],
+        default="yaml",
+        help="Output format (default: yaml)",
+    )
+    common_parser.add_argument(
+        "--brief",
+        action="store_true",
+        help="Return only essential fields",
+    )
+
     parser = argparse.ArgumentParser(
         description="Grafana MCP Gateway - invoke Grafana tools without MCP context overhead",
+        parents=[common_parser],
     )
     parser.add_argument(
         "--url",
         default=os.environ.get("GRAFANA_MCP_URL", DEFAULT_MCP_URL),
         help=f"MCP server URL (default: {DEFAULT_MCP_URL})",
     )
-    parser.add_argument(
-        "--format",
-        choices=["json", "yaml", "compact"],
-        default="yaml",
-        help="Output format (default: yaml)",
-    )
-    parser.add_argument(
-        "--brief",
-        action="store_true",
-        help="Return only essential fields",
-    )
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Tool operations
-    tool_parser = subparsers.add_parser("tool", help="Call an MCP tool")
+    tool_parser = subparsers.add_parser("tool", help="Call an MCP tool", parents=[common_parser])
     tool_parser.add_argument("name", help="Tool name")
     tool_parser.add_argument("arguments", nargs="?", default="{}", help="JSON arguments")
 
     # List tools
-    subparsers.add_parser("list-tools", help="List available MCP tools")
+    subparsers.add_parser("list-tools", help="List available MCP tools", parents=[common_parser])
 
     # Describe tool
-    describe_parser = subparsers.add_parser("describe", help="Describe a tool's schema")
+    describe_parser = subparsers.add_parser("describe", help="Describe a tool's schema", parents=[common_parser])
     describe_parser.add_argument("name", help="Tool name")
 
-    # Workflows (to be implemented in Task 2.2 and 2.3)
-    investigate_logs = subparsers.add_parser("investigate-logs", help="Find errors in logs")
-    investigate_logs.add_argument("params", nargs="?", default="{}", help='{"app":"...","timeRange":"1h"}')
+    # Workflows
+    investigate_logs = subparsers.add_parser("investigate-logs", help="Find errors in Loki logs", parents=[common_parser])
+    investigate_logs.add_argument("--app", help="Application name (app.kubernetes.io/name)")
+    investigate_logs.add_argument("--namespace", help="Kubernetes namespace")
+    investigate_logs.add_argument("--time-range", default="1h", help="Time range (e.g., 1h, 30m, 2d)")
+    investigate_logs.add_argument("--pattern", help="Error pattern to search for")
 
-    investigate_metrics = subparsers.add_parser("investigate-metrics", help="Check metric health")
-    investigate_metrics.add_argument("params", nargs="?", default="{}", help='{"job":"...","metric":"..."}')
+    investigate_metrics = subparsers.add_parser("investigate-metrics", help="Check Prometheus metric health", parents=[common_parser])
+    investigate_metrics.add_argument("--job", help="Prometheus job name")
+    investigate_metrics.add_argument("--metric", help="Metric name to investigate")
+    investigate_metrics.add_argument("--time-range", default="1h", help="Time range (e.g., 1h, 30m)")
 
-    quick_status = subparsers.add_parser("quick-status", help="System health overview")
-    quick_status.add_argument("params", nargs="?", default="{}", help="Optional filters")
+    quick_status = subparsers.add_parser("quick-status", help="System health overview from Prometheus/Loki", parents=[common_parser])
 
-    find_dashboard = subparsers.add_parser("find-dashboard", help="Search and summarize dashboard")
-    find_dashboard.add_argument("params", nargs="?", default="{}", help='{"query":"..."}')
+    find_dashboard = subparsers.add_parser("find-dashboard", help="Search Grafana dashboards", parents=[common_parser])
+    find_dashboard.add_argument("query", help="Dashboard search query")
 
-    recent_logs = subparsers.add_parser("recent-logs", help="View recent logs for cluster or by labels")
-    recent_logs.add_argument("params", nargs="?", default="{}", help='{"minutes":5,"app":"...","namespace":"...","labels":{...},"filter":"...","limit":50}')
+    recent_logs = subparsers.add_parser("recent-logs", help="View recent Loki logs", parents=[common_parser])
+    recent_logs.add_argument("--minutes", type=int, default=5, help="Time range in minutes (default: 5)")
+    recent_logs.add_argument("--app", help="Filter by app.kubernetes.io/name label")
+    recent_logs.add_argument("--namespace", help="Filter by namespace")
+    recent_logs.add_argument("--label", action="append", metavar="KEY=VALUE", help="Additional label filter (repeatable)")
+    recent_logs.add_argument("--filter", dest="line_filter", help="Log line pattern to match")
+    recent_logs.add_argument("--limit", type=int, default=50, help="Max log entries (default: 50)")
 
     args = parser.parse_args()
     client = MCPClient(args.url)
@@ -712,43 +725,48 @@ def main():
                 sys.exit(1)
 
         elif args.command == "investigate-logs":
-            try:
-                params = json.loads(args.params)
-            except json.JSONDecodeError as e:
-                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
-                sys.exit(1)
+            params = {
+                "app": args.app or "",
+                "namespace": args.namespace or "",
+                "timeRange": args.time_range,
+                "pattern": args.pattern or "",
+            }
             sys.exit(workflow_investigate_logs(client, params, args.format))
 
         elif args.command == "investigate-metrics":
-            try:
-                params = json.loads(args.params)
-            except json.JSONDecodeError as e:
-                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
-                sys.exit(1)
+            params = {
+                "job": args.job or "",
+                "metric": args.metric or "",
+                "timeRange": args.time_range,
+            }
             sys.exit(workflow_investigate_metrics(client, params, args.format))
 
         elif args.command == "quick-status":
-            try:
-                params = json.loads(args.params)
-            except json.JSONDecodeError as e:
-                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
-                sys.exit(1)
-            sys.exit(workflow_quick_status(client, params, args.format))
+            sys.exit(workflow_quick_status(client, {}, args.format))
 
         elif args.command == "find-dashboard":
-            try:
-                params = json.loads(args.params)
-            except json.JSONDecodeError as e:
-                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
-                sys.exit(1)
+            params = {"query": args.query}
             sys.exit(workflow_find_dashboard(client, params, args.format))
 
         elif args.command == "recent-logs":
-            try:
-                params = json.loads(args.params)
-            except json.JSONDecodeError as e:
-                print(f"Error: Invalid JSON params: {e}", file=sys.stderr)
-                sys.exit(1)
+            # Parse --label KEY=VALUE arguments into dict
+            labels = {}
+            if args.label:
+                for lbl in args.label:
+                    if "=" in lbl:
+                        key, value = lbl.split("=", 1)
+                        labels[key] = value
+                    else:
+                        print(f"Error: Invalid label format '{lbl}', expected KEY=VALUE", file=sys.stderr)
+                        sys.exit(1)
+            params = {
+                "minutes": args.minutes,
+                "app": args.app or "",
+                "namespace": args.namespace or "",
+                "labels": labels,
+                "filter": args.line_filter or "",
+                "limit": args.limit,
+            }
             sys.exit(workflow_recent_logs(client, params, args.format))
 
         else:

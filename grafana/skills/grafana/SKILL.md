@@ -1,11 +1,15 @@
 ---
 name: grafana
 description: |
-  Grafana operations for the fzymgc-house cluster via on-demand MCP invocation.
-  Use when working with: (1) Dashboards - search, view, create, update panels and queries,
-  (2) Metrics - query Prometheus, explore labels and metrics, (3) Logs - query Loki, analyze patterns,
-  (4) Alerting - manage alert rules and contact points, (5) Incidents - create, update, investigate with Sift,
-  (6) OnCall - schedules, shifts, who's on-call, (7) Profiling - Pyroscope CPU/memory profiles.
+  Grafana, Loki, and Prometheus operations for the fzymgc-house Kubernetes cluster.
+  Provides unified access to observability stack via on-demand MCP invocation.
+  Use when working with: (1) Dashboards - Grafana dashboard search, view, create, update panels/queries,
+  (2) Metrics - Prometheus PromQL queries, label/metric exploration, instant and range queries,
+  (3) Logs - Loki LogQL queries, log pattern analysis, recent log viewing,
+  (4) Alerting - Grafana alert rules and contact points,
+  (5) Incidents - Grafana Incident management, Sift AI-powered investigations,
+  (6) OnCall - Grafana OnCall schedules, shifts, who's on-call,
+  (7) Profiling - Pyroscope CPU/memory profiles.
   Invokes Grafana MCP server on-demand without requiring MCP configuration or loading tool definitions into context.
 ---
 
@@ -22,15 +26,15 @@ All operations use the gateway script at `${CLAUDE_PLUGIN_ROOT}/skills/grafana/s
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list-tools
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py describe <tool_name>
 
-# Tool invocation
+# Tool invocation (raw MCP tools use JSON)
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py <tool_name> '<json_arguments>'
 
-# Compound workflows (recommended for common tasks)
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"app":"...","timeRange":"1h"}'
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"...","metric":"..."}'
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"..."}'
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"app":"...","labels":{...}}'
+# Compound workflows (recommended - use CLI flags)
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs --app nginx --time-range 1h
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics --job api --metric http_requests_total
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard "api latency"
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minutes 5 --app nginx
 ```
 
 ### Output Options
@@ -55,50 +59,56 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minut
 
 ## Compound Workflows
 
-Use these for common multi-step operations (saves tokens vs individual calls):
+**PREFER these over raw MCP tools** - they handle datasource discovery, time formatting, and multi-step operations automatically. Only use raw tools (e.g., `query_loki_logs`, `query_prometheus`) when workflows don't meet your specific needs:
 
 ### investigate-logs
-Find errors in logs for an application:
+Find errors in Loki logs for an application:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"app":"nginx","timeRange":"1h","pattern":"error"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs --app nginx --time-range 1h --pattern error
 ```
+
+Options: `--app`, `--namespace`, `--time-range` (default: 1h), `--pattern`
 
 ### investigate-metrics
-Check metric health:
+Check Prometheus metric health:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"api","metric":"http_requests_total"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics --job api --metric http_requests_total
 ```
 
+Options: `--job`, `--metric`, `--time-range` (default: 1h)
+
 ### quick-status
-System health overview:
+System health overview from Prometheus/Loki:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status
 ```
 
 ### find-dashboard
-Search and summarize:
+Search Grafana dashboards:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"api latency"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard "api latency"
 ```
 
 ### recent-logs
-View recent logs (cluster-wide or filtered by labels):
+View recent Loki logs (cluster-wide or filtered):
 ```bash
 # Last 5 minutes of all cluster logs
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs
 
 # Last 10 minutes for a specific app (by app.kubernetes.io/name)
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":10,"app":"nginx"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minutes 10 --app nginx
 
 # Filter by namespace
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"namespace":"monitoring"}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minutes 5 --namespace monitoring
 
-# Arbitrary label filters
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"labels":{"pod":"nginx-abc123"}}'
+# Arbitrary label filters (repeatable)
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minutes 5 --label pod=nginx-abc123
 
 # Combine filters with line pattern matching
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs '{"minutes":5,"app":"api","filter":"error","limit":100}'
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minutes 5 --app api --filter error --limit 100
 ```
+
+Options: `--minutes` (default: 5), `--app`, `--namespace`, `--label KEY=VALUE` (repeatable), `--filter`, `--limit` (default: 50)
 
 ## Core Workflows
 
@@ -224,10 +234,10 @@ When unsure about tool parameters:
 
 ```bash
 # List all available tools
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --list-tools
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list-tools
 
 # Get tool schema and description
-${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py --describe <tool_name>
+${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py describe <tool_name>
 ```
 
 ## Domain References
@@ -244,7 +254,8 @@ Load these as needed for detailed operations:
 
 ## Best Practices
 
-- **Use `--describe`** before calling unfamiliar tools to see required parameters
+- **Prefer workflows over raw tools**: Use `recent-logs` instead of manual `query_loki_logs`, `investigate-logs` instead of hand-crafting Loki queries, etc. Workflows handle datasource discovery, time formatting, and label normalization automatically
+- **Use `describe`** before calling unfamiliar raw tools to see required parameters
 - **Query stats before logs**: Use `query_loki_stats` to check volume before `query_loki_logs`
 - **Use dashboard summary**: Prefer `get_dashboard_summary` over full `get_dashboard_by_uid`
 - **Patch don't replace**: Use `update_dashboard` with `operations` for targeted changes

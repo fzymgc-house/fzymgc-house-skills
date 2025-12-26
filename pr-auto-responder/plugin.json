@@ -1,0 +1,5 @@
+{
+  "name": "pr-auto-responder",
+  "version": "0.1.0",
+  "description": "Automated PR review comment processing and response generation"
+}

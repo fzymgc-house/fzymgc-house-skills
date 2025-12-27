@@ -59,23 +59,23 @@ Action Items Summary:
 - Suggestions: Z items
 
 Blocking Issues:
-1. [Author] File:Line - <excerpt of comment>
+1. [Author] File:Line - <full comment text>
 2. ...
 
 Important Issues:
-1. [Author] File:Line - <excerpt of comment>
+1. [Author] File:Line - <full comment text>
 2. ...
 
 Suggestions:
-1. [Author] - <excerpt of comment>
+1. [Author] - <full comment text>
 2. ...
 ```
 
-For each item, include:
+For each item, you MUST include:
 
 - Author name
 - File path and line number (if inline comment)
-- Brief excerpt or full comment text
+- **Complete, untruncated comment text** (NOT excerpts or summaries)
 - Link to comment
 
 ### 4. Confirm Scope with User
@@ -142,7 +142,9 @@ git push origin HEAD
 
 You MUST use conventional commit format. You SHOULD reference the reviewer and comment when relevant.
 
-After committing, you MUST acknowledge the comment/review with a thumbs-up reaction:
+#### Mandatory Comment Acknowledgment
+
+After EVERY commit that addresses a comment or review, you MUST acknowledge it with a thumbs-up reaction. This is NON-NEGOTIABLE.
 
 ```bash
 # For review comments (get comment ID from action items JSON)
@@ -154,7 +156,7 @@ gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews/{review_id}/reactions \
   -X POST -f content='+1'
 ```
 
-This signals to the reviewer that their feedback has been processed.
+**CRITICAL**: You MUST acknowledge EVERY processed comment/review. Skipping acknowledgment is a workflow violation.
 
 ### 8. Track Progress
 
@@ -219,6 +221,18 @@ Would you like me to:
 ```
 
 ## Key Patterns
+
+### Complete Comment Processing
+
+You MUST process the ENTIRE content of each comment without truncation, summarization, or excerpting:
+
+- When presenting comments to the user, show the **full, complete text**
+- Do NOT use "..." or ellipsis to shorten comments
+- Do NOT summarize or paraphrase comment content
+- Do NOT extract only "key points" - show everything
+- The user needs to see exactly what the reviewer wrote
+
+This ensures nothing is missed and the full context is preserved for addressing feedback.
 
 ### Severity Classification
 

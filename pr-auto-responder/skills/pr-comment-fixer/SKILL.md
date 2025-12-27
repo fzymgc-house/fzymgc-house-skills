@@ -9,13 +9,23 @@ Process GitHub pull request review comments, extract actionable items, prioritiz
 
 ## Workflow
 
+**CRITICAL REQUIREMENT**: You MUST use the provided scripts (`scripts/fetch_pr_comments.py` and `scripts/parse_action_items.py`) for ALL comment fetching and parsing. These scripts are NON-NEGOTIABLE and ensure complete comment text is captured without truncation. Do NOT use `gh` CLI commands directly or implement your own parsing logic.
+
 ### 1. Fetch PR Comments
 
 You MUST get the PR number from the user (or infer from current context if on a PR branch).
 
+**MANDATORY**: You MUST use the provided script to fetch PR comments. Do NOT use `gh pr view` directly or any other method.
+
 ```bash
 scripts/fetch_pr_comments.py <pr-number> [repo]
 ```
+
+The script fetches the COMPLETE, UNTRUNCATED text of all comments including:
+
+- Review comments (inline code comments) with full `body` field
+- Reviews (approve/request changes/comment) with full `body` field
+- All metadata (author, URL, line numbers, IDs for reactions)
 
 If no repo specified, uses current directory's repo. Save output to a file for processing:
 
@@ -23,9 +33,11 @@ If no repo specified, uses current directory's repo. Save output to a file for p
 scripts/fetch_pr_comments.py 123 > pr_data.json
 ```
 
+**Why this script is mandatory**: The `gh` CLI can truncate long output. This script ensures complete comment text is captured and properly structured for parsing.
+
 ### 2. Parse and Prioritize Action Items
 
-Process the fetched comments to extract action items with severity classification:
+**MANDATORY**: You MUST use the provided parsing script. Do NOT manually parse or filter the JSON output.
 
 ```bash
 scripts/parse_action_items.py pr_data.json > action_items.json
@@ -37,7 +49,7 @@ Or pipe directly:
 scripts/fetch_pr_comments.py 123 | scripts/parse_action_items.py > action_items.json
 ```
 
-The parser classifies items into severity levels:
+The parser preserves COMPLETE comment text while classifying items into severity levels:
 
 - **blocking**: Critical issues, security vulnerabilities, must-fix items
 - **important**: Bugs, problems, required changes (includes CHANGES_REQUESTED reviews)

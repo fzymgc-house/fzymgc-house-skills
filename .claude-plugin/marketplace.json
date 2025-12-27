@@ -9,14 +9,9 @@
   },
   "plugins": [
     {
-      "name": "grafana",
-      "description": "Grafana operations for the fzymgc-house cluster via on-demand MCP invocation",
-      "source": "./grafana"
-    },
-    {
-      "name": "pr-auto-responder",
-      "description": "Automated PR review comment processing and response generation",
-      "source": "./pr-auto-responder"
+      "name": "fzymgc-house",
+      "description": "Skills for fzymgc-house infrastructure including Grafana operations and PR workflow automation",
+      "source": "./fzymgc-house"
     }
   ]
 }

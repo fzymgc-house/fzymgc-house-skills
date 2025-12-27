@@ -1,5 +1,5 @@
 ---
-name: pr-comment-fixer
+name: respond-to-pr-comments
 description: Process GitHub PR review comments, extract and prioritize action items by severity (blocking/important/suggestion), summarize feedback, and delegate fixes to coding agents. Use when the user asks to process PR comments, address PR feedback, fix review issues, or respond to pull request reviews. Handles inline code comments, general review feedback, and review decisions.
 ---
 

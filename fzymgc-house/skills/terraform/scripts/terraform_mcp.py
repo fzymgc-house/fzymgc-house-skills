@@ -518,6 +518,12 @@ def workflow_watch_run(
     workspace = getattr(args, "workspace", None)
     show_logs = getattr(args, "logs", False)
     poll_interval = getattr(args, "interval", POLL_INTERVAL)
+    max_wait = getattr(args, "timeout", 3600)
+    start_time = time.time()
+
+    # Validate poll_interval
+    if poll_interval <= 0:
+        poll_interval = POLL_INTERVAL
 
     # If workspace provided, get latest run
     if not run_id and workspace:
@@ -559,6 +565,11 @@ def workflow_watch_run(
     last_status = None
 
     while True:
+        # Check for timeout
+        if time.time() - start_time > max_wait:
+            print(f"Timeout: Run did not complete within {max_wait}s", file=sys.stderr)
+            return 1
+
         result = client.call_tool("get_run_details", {"run_id": run_id})
 
         if not result.get("success"):
@@ -595,24 +606,27 @@ def workflow_watch_run(
             # Get and display logs if requested
             if show_logs:
                 relationships = data.get("relationships", {})
-                plan_rel = relationships.get("plan", {}).get("data", {})
-                apply_rel = relationships.get("apply", {}).get("data", {})
+                if not relationships:
+                    print("[No relationships data - logs unavailable]", file=sys.stderr)
+                else:
+                    plan_rel = relationships.get("plan", {}).get("data", {})
+                    apply_rel = relationships.get("apply", {}).get("data", {})
 
-                if plan_rel.get("id"):
-                    print("\n=== Plan Output ===", file=sys.stderr)
-                    log_result = hcp_client.get_plan_logs(plan_rel["id"])
-                    if log_result.get("success"):
-                        print(log_result.get("logs", ""))
-                    else:
-                        print(f"[Could not fetch plan logs: {log_result.get('error')}]")
+                    if plan_rel.get("id"):
+                        print("\n=== Plan Output ===")
+                        log_result = hcp_client.get_plan_logs(plan_rel["id"])
+                        if log_result.get("success"):
+                            print(log_result.get("logs", ""))
+                        else:
+                            print(f"[Could not fetch plan logs: {log_result.get('error')}]")
 
-                if apply_rel.get("id") and status == "applied":
-                    print("\n=== Apply Output ===", file=sys.stderr)
-                    log_result = hcp_client.get_apply_logs(apply_rel["id"])
-                    if log_result.get("success"):
-                        print(log_result.get("logs", ""))
-                    else:
-                        print(f"[Could not fetch apply logs: {log_result.get('error')}]")
+                    if apply_rel.get("id") and status == "applied":
+                        print("\n=== Apply Output ===")
+                        log_result = hcp_client.get_apply_logs(apply_rel["id"])
+                        if log_result.get("success"):
+                            print(log_result.get("logs", ""))
+                        else:
+                            print(f"[Could not fetch apply logs: {log_result.get('error')}]")
 
             # Final output
             output = {
@@ -672,6 +686,7 @@ def main():
     watch_parser.add_argument("--workspace", "-w", help="Watch latest run for workspace")
     watch_parser.add_argument("--logs", "-l", action="store_true", help="Show plan/apply logs when complete")
     watch_parser.add_argument("--interval", "-i", type=int, default=5, help="Poll interval in seconds (default: 5)")
+    watch_parser.add_argument("--timeout", "-t", type=int, default=3600, help="Maximum wait time in seconds (default: 3600)")
 
     args = parser.parse_args()
 

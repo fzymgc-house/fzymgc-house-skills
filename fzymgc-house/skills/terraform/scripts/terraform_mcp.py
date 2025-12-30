@@ -197,11 +197,12 @@ class SessionManager:
 
         # Write env vars to temp file to avoid exposing token in process list
         env_file = tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False)
+        # Assign path immediately so cleanup can find it if write/close fails
+        self._env_file_path = env_file.name
         try:
             env_file.write(f"TFE_TOKEN={env['TFE_TOKEN']}\n")
             env_file.write(f"TFE_ADDRESS={env['TFE_ADDRESS']}\n")
             env_file.close()
-            self._env_file_path = env_file.name
 
             cmd = [
                 "docker", "run", "-i", "--rm",
@@ -342,6 +343,7 @@ def unwrap_result(data: dict[str, Any]) -> Any:
                 try:
                     texts.append(json.loads(item["text"]))
                 except json.JSONDecodeError:
+                    warnings.warn(f"MCP response text is not valid JSON, using raw text")
                     texts.append(item["text"])
 
         if len(texts) == 1:

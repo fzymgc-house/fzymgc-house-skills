@@ -64,7 +64,7 @@ The command MUST:
 - Poll status at regular intervals
 - Display status changes with timestamps
 - Show plan summary (resource additions/changes/destructions)
-- Exit with code 0 for applied, 1 for failure states
+- Exit with code 0 for success states (applied, planned_and_finished), 1 for failure states
 
 ### workspace-status
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["httpx", "pyyaml"]
+# dependencies = ["pyyaml"]
 # ///
 """
 Terraform MCP Gateway Script
@@ -27,6 +27,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,6 @@ DEFAULT_TFE_ADDRESS = "https://app.terraform.io"
 DOCKER_IMAGE = "hashicorp/terraform-mcp-server:0.3.3"
 SESSION_DIR = Path.home() / ".cache" / "terraform-mcp"
 SESSION_TIMEOUT = 300  # 5 minutes
-POLL_INTERVAL = 5  # seconds
 
 
 class MCPStdioClient:
@@ -161,8 +161,9 @@ class SessionManager:
     def __init__(self):
         self.session_dir = SESSION_DIR
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.pid_file = self.session_dir / "server.pid"
         self.proc: subprocess.Popen | None = None
+        self._client: MCPStdioClient | None = None
+        self._env_file_path: str | None = None
 
     def _get_env(self) -> dict[str, str]:
         """Get environment variables for Docker container."""
@@ -181,10 +182,16 @@ class SessionManager:
         """Spawn a new Docker container."""
         env = self._get_env()
 
+        # Write env vars to temp file to avoid exposing token in process list
+        env_file = tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False)
+        env_file.write(f"TFE_TOKEN={env['TFE_TOKEN']}\n")
+        env_file.write(f"TFE_ADDRESS={env['TFE_ADDRESS']}\n")
+        env_file.close()
+        self._env_file_path = env_file.name
+
         cmd = [
             "docker", "run", "-i", "--rm",
-            "-e", f"TFE_TOKEN={env['TFE_TOKEN']}",
-            "-e", f"TFE_ADDRESS={env['TFE_ADDRESS']}",
+            "--env-file", self._env_file_path,
             DOCKER_IMAGE,
         ]
 
@@ -195,29 +202,36 @@ class SessionManager:
             stderr=subprocess.PIPE,
         )
 
-        # Save PID for session reuse (future enhancement)
-        self.pid_file.write_text(str(proc.pid))
-
         return proc
 
     def get_client(self) -> MCPStdioClient:
         """Get or create MCP client."""
         # For now, always spawn fresh container
-        # Session reuse can be added later
+        # TODO: Session reuse can be added later
         self.proc = self._spawn_container()
-        return MCPStdioClient(self.proc)
+        self._client = MCPStdioClient(self.proc)
+        return self._client
 
     def cleanup(self):
         """Clean up resources."""
+        # Close MCP client first
+        if self._client:
+            self._client.close()
+            self._client = None
+
+        # Terminate container process (redundant but safe)
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
             try:
                 self.proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.proc.kill()
+        self.proc = None
 
-        if self.pid_file.exists():
-            self.pid_file.unlink()
+        # Remove temp env file
+        if self._env_file_path and os.path.exists(self._env_file_path):
+            os.unlink(self._env_file_path)
+            self._env_file_path = None
 
 
 def unwrap_result(data: dict[str, Any]) -> Any:

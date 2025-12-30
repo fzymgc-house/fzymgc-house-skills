@@ -251,7 +251,7 @@ def format_output(data: Any, fmt: str) -> str:
     elif fmt == "yaml":
         return yaml.dump(data, default_flow_style=False, sort_keys=False)
     else:  # compact
-        return yaml.dump(data, default_flow_style=False, sort_keys=False)
+        return yaml.dump(data, default_flow_style=True, sort_keys=False)
 
 
 def main():
@@ -264,12 +264,6 @@ def main():
         default="yaml",
         help="Output format (default: yaml)",
     )
-    parser.add_argument(
-        "--brief",
-        action="store_true",
-        help="Return only essential fields",
-    )
-
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # list-tools

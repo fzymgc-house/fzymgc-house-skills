@@ -725,14 +725,37 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
             "is_destroy": attrs.get("is-destroy", False),
         })
 
-    output = {
-        "workspace": workspace,
-        "organization": org,
-        "count": len(runs),
-        "runs": runs,
-    }
+    # Use compact table format by default, YAML/JSON for explicit format requests
+    if fmt == "compact" or fmt == "yaml":
+        # Compact table output
+        print(f"Workspace: {workspace} ({org})")
+        print(f"Runs: {len(runs)}")
+        print()
+        # Header
+        print(f"{'ID':<24} {'STATUS':<12} {'CREATED':<17} MESSAGE")
+        print("-" * 80)
+        for run in runs:
+            # Parse and format created_at
+            created = run["created_at"][:16].replace("T", " ") if run["created_at"] else ""
+            # First line of message only
+            msg = run["message"].split("\n")[0][:40]
+            status = run["status"]
+            # Add markers for special runs
+            if run["is_destroy"]:
+                status += " 🗑"
+            elif run["plan_only"]:
+                status += " 📋"
+            print(f"{run['id']:<24} {status:<12} {created:<17} {msg}")
+    else:
+        # JSON format - structured output
+        output = {
+            "workspace": workspace,
+            "organization": org,
+            "count": len(runs),
+            "runs": runs,
+        }
+        print(format_output(output, fmt))
 
-    print(format_output(output, fmt))
     return 0
 
 
@@ -1244,7 +1267,8 @@ def workflow_watch_run(
                         print("\n=== Plan Output ===")
                         log_result = hcp_client.get_plan_logs(plan_rel["id"])
                         if log_result.get("success"):
-                            print(log_result.get("logs", ""))
+                            formatted = format_terraform_logs(log_result.get("logs", ""))
+                            print(formatted)
                         else:
                             print(f"[Could not fetch plan logs: {log_result.get('error')}]")
 
@@ -1252,7 +1276,8 @@ def workflow_watch_run(
                         print("\n=== Apply Output ===")
                         log_result = hcp_client.get_apply_logs(apply_rel["id"])
                         if log_result.get("success"):
-                            print(log_result.get("logs", ""))
+                            formatted = format_terraform_logs(log_result.get("logs", ""))
+                            print(formatted)
                         else:
                             print(f"[Could not fetch apply logs: {log_result.get('error')}]")
 

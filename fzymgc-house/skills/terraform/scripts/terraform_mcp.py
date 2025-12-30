@@ -506,6 +506,135 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     return 0
 
 
+def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+    """Look up provider documentation."""
+    provider = args.provider
+    resource = getattr(args, "resource", None)
+    data_source = getattr(args, "data_source", None)
+    list_resources = getattr(args, "list_resources", False)
+
+    # Determine namespace (default to hashicorp for common providers)
+    namespace = getattr(args, "namespace", None)
+
+    # Common provider namespaces
+    provider_namespaces = {
+        "aws": "hashicorp",
+        "azurerm": "hashicorp",
+        "google": "hashicorp",
+        "kubernetes": "hashicorp",
+        "helm": "hashicorp",
+        "vault": "hashicorp",
+        "cloudflare": "cloudflare",
+        "datadog": "DataDog",
+        "github": "integrations",
+    }
+
+    if not namespace and provider in provider_namespaces:
+        namespace = provider_namespaces[provider]
+    elif not namespace:
+        namespace = "hashicorp"  # Default fallback
+
+    # Determine document type
+    if list_resources:
+        doc_type = "resources"
+        service_slug = provider
+    elif resource:
+        doc_type = "resources"
+        service_slug = resource
+    elif data_source:
+        doc_type = "data-sources"
+        service_slug = data_source
+    else:
+        doc_type = "overview"
+        service_slug = provider
+
+    # Search for provider docs
+    result = client.call_tool("search_providers", {
+        "provider_name": provider,
+        "provider_namespace": namespace,
+        "service_slug": service_slug,
+        "provider_document_type": doc_type,
+    })
+
+    if not result.get("success"):
+        print(f"Error: {result.get('error')}", file=sys.stderr)
+        return 1
+
+    data = unwrap_result(result)
+
+    # Validate data type
+    if not isinstance(data, (dict, list)):
+        print("Error: Unexpected response format", file=sys.stderr)
+        return 1
+
+    # If listing resources, just show the search results
+    if list_resources:
+        items = data if isinstance(data, list) else [data]
+        resources = [
+            {"title": item.get("title", ""), "id": item.get("id", "")}
+            for item in items
+            if isinstance(item, dict)
+        ]
+        output = {
+            "provider": provider,
+            "namespace": namespace,
+            "resources": resources,
+        }
+        print(format_output(output, fmt))
+        return 0
+
+    # Get the doc ID from search results
+    doc_id = None
+    if isinstance(data, list) and data:
+        doc_id = data[0].get("id")
+    elif isinstance(data, dict):
+        doc_id = data.get("id")
+
+    if not doc_id:
+        print(f"No documentation found for {provider}/{service_slug}", file=sys.stderr)
+        return 1
+
+    # Fetch full documentation
+    detail_result = client.call_tool("get_provider_details", {
+        "provider_doc_id": str(doc_id),
+    })
+
+    if not detail_result.get("success"):
+        print(f"Error: {detail_result.get('error')}", file=sys.stderr)
+        return 1
+
+    doc_data = unwrap_result(detail_result)
+
+    # Output the documentation
+    if fmt == "yaml":
+        # For YAML, structure the output
+        if isinstance(doc_data, str):
+            content = doc_data
+        elif isinstance(doc_data, dict):
+            content = doc_data.get("content", doc_data)
+        else:
+            content = str(doc_data)
+
+        output = {
+            "provider": provider,
+            "namespace": namespace,
+            "type": doc_type,
+            "content": content,
+        }
+        print(format_output(output, fmt))
+    else:
+        # For other formats, just print the content
+        if isinstance(doc_data, str):
+            content = doc_data
+        elif isinstance(doc_data, dict):
+            content = doc_data.get("content", str(doc_data))
+        else:
+            content = str(doc_data)
+        print(content)
+
+    return 0
+
+
 def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """View terraform outputs from a run."""
     org = get_default_org()
@@ -773,6 +902,14 @@ def main():
     outputs_parser.add_argument("run_id", nargs="?", help="Run ID")
     outputs_parser.add_argument("--workspace", "-w", help="Get outputs from latest successful run")
 
+    # provider-docs
+    provider_parser = subparsers.add_parser("provider-docs", help="Look up provider documentation")
+    provider_parser.add_argument("provider", help="Provider name (e.g., aws, azurerm, google)")
+    provider_parser.add_argument("--namespace", help="Provider namespace (default: auto-detected)")
+    provider_parser.add_argument("--resource", "-r", help="Resource name (e.g., lambda_function)")
+    provider_parser.add_argument("--data-source", "-d", help="Data source name")
+    provider_parser.add_argument("--list-resources", "-l", action="store_true", help="List available resources")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -840,6 +977,9 @@ def main():
 
         elif args.command == "run-outputs":
             sys.exit(workflow_run_outputs(client, args, args.format))
+
+        elif args.command == "provider-docs":
+            sys.exit(workflow_provider_docs(client, args, args.format))
 
     except EnvironmentError as e:
         print(f"Configuration error: {e}", file=sys.stderr)

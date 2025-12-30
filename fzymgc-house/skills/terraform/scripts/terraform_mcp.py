@@ -432,6 +432,68 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
         return 0
 
 
+def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+    """List recent runs for a workspace."""
+    org = get_default_org()
+    workspace = args.workspace
+    limit = getattr(args, "limit", 10)
+    status_filter = getattr(args, "status", None)
+
+    params: dict[str, Any] = {
+        "terraform_org_name": org,
+        "workspace_name": workspace,
+        "pageSize": limit,
+    }
+
+    if status_filter:
+        params["status"] = [status_filter]
+
+    result = client.call_tool("list_runs", params)
+
+    if not result.get("success"):
+        print(f"Error: {result.get('error')}", file=sys.stderr)
+        return 1
+
+    data = unwrap_result(result)
+
+    # Validate data type
+    if not isinstance(data, (dict, list)):
+        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        return 1
+
+    # Handle various response structures
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict) and "data" in data:
+        items = data["data"] if isinstance(data["data"], list) else []
+    elif isinstance(data, dict) and "items" in data:
+        items = data["items"] if isinstance(data["items"], list) else []
+    else:
+        items = [data] if data else []
+
+    runs = []
+    for run in items:
+        attrs = run.get("attributes", {}) if isinstance(run, dict) else {}
+        runs.append({
+            "id": run.get("id", ""),
+            "status": attrs.get("status", ""),
+            "message": (attrs.get("message", "") or "")[:80],
+            "created_at": attrs.get("created-at", ""),
+            "plan_only": attrs.get("plan-only", False),
+            "is_destroy": attrs.get("is-destroy", False),
+        })
+
+    output = {
+        "workspace": workspace,
+        "organization": org,
+        "count": len(runs),
+        "runs": runs,
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Terraform MCP Gateway - invoke Terraform tools without MCP context overhead",
@@ -459,6 +521,12 @@ def main():
     # workspace-status
     ws_parser = subparsers.add_parser("workspace-status", help="Show workspace status")
     ws_parser.add_argument("workspace", nargs="?", help="Workspace name (optional, lists all if omitted)")
+
+    # list-runs
+    runs_parser = subparsers.add_parser("list-runs", help="List recent runs for a workspace")
+    runs_parser.add_argument("workspace", help="Workspace name")
+    runs_parser.add_argument("--limit", type=int, default=10, help="Number of runs (default: 10)")
+    runs_parser.add_argument("--status", help="Filter by status (e.g., applied, errored, planning)")
 
     args = parser.parse_args()
 
@@ -508,6 +576,9 @@ def main():
 
         elif args.command == "workspace-status":
             sys.exit(workflow_workspace_status(client, args, args.format))
+
+        elif args.command == "list-runs":
+            sys.exit(workflow_list_runs(client, args, args.format))
 
     except EnvironmentError as e:
         print(f"Configuration error: {e}", file=sys.stderr)

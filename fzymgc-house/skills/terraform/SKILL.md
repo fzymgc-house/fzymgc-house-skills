@@ -14,12 +14,16 @@ All operations MUST use the gateway script at `${CLAUDE_PLUGIN_ROOT}/skills/terr
 
 ### Configuration
 
-The following environment variables MUST be set:
-- `TFE_TOKEN` - HCP Terraform API token
-- `TFE_ORG` - Default organization name
+The following environment variable MUST be set:
+- `TFE_TOKEN` - HCP Terraform API token (create at https://app.terraform.io/app/settings/tokens)
+
+The following environment variable is required for workspace/run operations:
+- `TFE_ORG` - Default organization name (required for: workspace-status, list-runs, watch-run, run-outputs)
 
 The following environment variable MAY be set:
 - `TFE_ADDRESS` - TFC/TFE URL (default: https://app.terraform.io)
+
+Note: Provider documentation commands (provider-docs, list-providers) do not require TFE_ORG.
 
 ## Quick Reference
 

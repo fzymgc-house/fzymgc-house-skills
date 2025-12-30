@@ -2,7 +2,7 @@
 
 ## Provider Namespaces
 
-Common provider namespaces:
+Common provider namespaces (this is a subset - many more exist in the registry):
 
 | Provider | Namespace |
 |----------|-----------|
@@ -10,6 +10,9 @@ Common provider namespaces:
 | cloudflare | cloudflare |
 | datadog | DataDog |
 | github | integrations |
+
+For providers not listed here, the script defaults to "hashicorp" namespace. Use
+`--namespace` flag to specify a different namespace if needed.
 
 ## Document Types
 

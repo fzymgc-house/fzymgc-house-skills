@@ -4,20 +4,11 @@
 # dependencies = ["httpx", "pyyaml"]
 # ///
 """
-Terraform MCP Gateway Script
+Terraform MCP Gateway Script.
 
-Invokes Terraform MCP server tools without requiring MCP server configuration.
-Reduces context overhead by not loading all MCP tool definitions.
+Invokes Terraform MCP server on-demand without loading tool definitions into context.
 
-Usage:
-    terraform_mcp.py list-tools                    # List available tools
-    terraform_mcp.py describe <tool>               # Describe a tool's schema
-    terraform_mcp.py tool <name> '<json_args>'     # Call a raw tool
-
-Environment Variables:
-    TFE_TOKEN    - HCP Terraform API token (required)
-    TFE_ORG      - Default organization name (required)
-    TFE_ADDRESS  - TFC/TFE URL (default: https://app.terraform.io)
+Run with --help for usage. Requires TFE_TOKEN environment variable.
 """
 
 from __future__ import annotations
@@ -29,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -38,8 +30,6 @@ import yaml
 # Configuration
 DEFAULT_TFE_ADDRESS = "https://app.terraform.io"
 DOCKER_IMAGE = "hashicorp/terraform-mcp-server:0.3.3"
-SESSION_DIR = Path.home() / ".cache" / "terraform-mcp"
-SESSION_TIMEOUT = 300  # 5 minutes
 POLL_INTERVAL = 5  # seconds
 
 
@@ -47,32 +37,51 @@ class MCPStdioClient:
     """MCP client communicating via stdio with Docker container."""
 
     def __init__(self, proc: subprocess.Popen):
-        self.proc = proc
-        self.request_id = 0
+        self._proc = proc
+        self._request_id = 0
         self._initialized = False
 
     def _send(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Send JSON-RPC request and receive response."""
-        self.request_id += 1
+        # Check if process is still running
+        if self._proc.poll() is not None:
+            stderr_output = ""
+            if self._proc.stderr:
+                stderr_output = self._proc.stderr.read().decode(errors="replace")
+            error_msg = f"MCP server process exited (code {self._proc.returncode})"
+            if stderr_output:
+                error_msg += f": {stderr_output[:500]}"
+            return {"error": {"message": error_msg}}
+
+        self._request_id += 1
         request = {
             "jsonrpc": "2.0",
-            "id": self.request_id,
+            "id": self._request_id,
             "method": method,
             "params": params or {},
         }
 
         try:
             line = json.dumps(request) + "\n"
-            self.proc.stdin.write(line.encode())
-            self.proc.stdin.flush()
+            self._proc.stdin.write(line.encode())
+            self._proc.stdin.flush()
 
-            response_line = self.proc.stdout.readline()
+            response_line = self._proc.stdout.readline()
             if not response_line:
-                return {"error": {"message": "No response from server"}}
+                # Try to get stderr for better error message
+                stderr_output = ""
+                if self._proc.stderr:
+                    stderr_output = self._proc.stderr.read().decode(errors="replace")
+                error_msg = "No response from MCP server"
+                if stderr_output:
+                    error_msg += f": {stderr_output[:500]}"
+                return {"error": {"message": error_msg}}
 
             return json.loads(response_line)
-        except (BrokenPipeError, json.JSONDecodeError) as e:
-            return {"error": {"message": str(e)}}
+        except BrokenPipeError as e:
+            return {"error": {"message": f"Connection to MCP server broken: {e}"}}
+        except json.JSONDecodeError as e:
+            return {"error": {"message": f"Invalid JSON response from MCP server: {e}"}}
 
     def initialize(self) -> dict[str, Any]:
         """Initialize the MCP session."""
@@ -150,21 +159,19 @@ class MCPStdioClient:
 
     def close(self):
         """Terminate the MCP server process."""
-        if self.proc.poll() is None:
-            self.proc.terminate()
+        if self._proc.poll() is None:
+            self._proc.terminate()
             try:
-                self.proc.wait(timeout=5)
+                self._proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                self.proc.kill()
+                self._proc.kill()
 
 
 class SessionManager:
     """Manage Docker container session for MCP server."""
 
     def __init__(self):
-        self.session_dir = SESSION_DIR
-        self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.proc: subprocess.Popen | None = None
+        self._proc: subprocess.Popen | None = None
         self._client: MCPStdioClient | None = None
         self._env_file_path: str | None = None
 
@@ -172,7 +179,10 @@ class SessionManager:
         """Get environment variables for Docker container."""
         token = os.environ.get("TFE_TOKEN")
         if not token:
-            raise EnvironmentError("TFE_TOKEN environment variable is required")
+            raise EnvironmentError(
+                "TFE_TOKEN environment variable is required. "
+                "Create a token at https://app.terraform.io/app/settings/tokens"
+            )
 
         address = os.environ.get("TFE_ADDRESS", DEFAULT_TFE_ADDRESS)
 
@@ -187,32 +197,37 @@ class SessionManager:
 
         # Write env vars to temp file to avoid exposing token in process list
         env_file = tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False)
-        env_file.write(f"TFE_TOKEN={env['TFE_TOKEN']}\n")
-        env_file.write(f"TFE_ADDRESS={env['TFE_ADDRESS']}\n")
-        env_file.close()
-        self._env_file_path = env_file.name
+        try:
+            env_file.write(f"TFE_TOKEN={env['TFE_TOKEN']}\n")
+            env_file.write(f"TFE_ADDRESS={env['TFE_ADDRESS']}\n")
+            env_file.close()
+            self._env_file_path = env_file.name
 
-        cmd = [
-            "docker", "run", "-i", "--rm",
-            "--env-file", self._env_file_path,
-            DOCKER_IMAGE,
-        ]
+            cmd = [
+                "docker", "run", "-i", "--rm",
+                "--env-file", self._env_file_path,
+                DOCKER_IMAGE,
+            ]
 
-        proc = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+            proc = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
 
-        return proc
+            return proc
+        except Exception:
+            # Clean up temp file on any error during spawn
+            if self._env_file_path and os.path.exists(self._env_file_path):
+                os.unlink(self._env_file_path)
+                self._env_file_path = None
+            raise
 
     def get_client(self) -> MCPStdioClient:
         """Get or create MCP client."""
-        # For now, always spawn fresh container
-        # TODO: Session reuse can be added later
-        self.proc = self._spawn_container()
-        self._client = MCPStdioClient(self.proc)
+        self._proc = self._spawn_container()
+        self._client = MCPStdioClient(self._proc)
         return self._client
 
     def cleanup(self):
@@ -223,13 +238,13 @@ class SessionManager:
             self._client = None
 
         # Terminate container process (redundant but safe)
-        if self.proc and self.proc.poll() is None:
-            self.proc.terminate()
+        if self._proc and self._proc.poll() is None:
+            self._proc.terminate()
             try:
-                self.proc.wait(timeout=5)
+                self._proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                self.proc.kill()
-        self.proc = None
+                self._proc.kill()
+        self._proc = None
 
         # Remove temp env file
         if self._env_file_path and os.path.exists(self._env_file_path):
@@ -241,7 +256,9 @@ class HCPTerraformClient:
     """Direct HCP Terraform API client for operations not exposed via MCP."""
 
     def __init__(self, token: str, address: str = DEFAULT_TFE_ADDRESS):
-        self.client = httpx.Client(
+        if not token:
+            raise ValueError("HCP Terraform API token is required")
+        self._client = httpx.Client(
             base_url=address.rstrip("/"),
             headers={
                 "Authorization": f"Bearer {token}",
@@ -253,7 +270,7 @@ class HCPTerraformClient:
     def get_plan_logs(self, plan_id: str) -> dict[str, Any]:
         """Fetch plan logs from HCP Terraform API."""
         try:
-            resp = self.client.get(f"/api/v2/plans/{plan_id}")
+            resp = self._client.get(f"/api/v2/plans/{plan_id}")
             resp.raise_for_status()
             plan_data = resp.json()
 
@@ -266,13 +283,15 @@ class HCPTerraformClient:
             return {"success": True, "logs": log_resp.text}
         except httpx.HTTPStatusError as e:
             return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        except httpx.TimeoutException as e:
+            return {"success": False, "error": f"Request timed out: {e}"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
 
     def get_apply_logs(self, apply_id: str) -> dict[str, Any]:
         """Fetch apply logs from HCP Terraform API."""
         try:
-            resp = self.client.get(f"/api/v2/applies/{apply_id}")
+            resp = self._client.get(f"/api/v2/applies/{apply_id}")
             resp.raise_for_status()
             apply_data = resp.json()
 
@@ -285,23 +304,27 @@ class HCPTerraformClient:
             return {"success": True, "logs": log_resp.text}
         except httpx.HTTPStatusError as e:
             return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        except httpx.TimeoutException as e:
+            return {"success": False, "error": f"Request timed out: {e}"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
 
     def get_run(self, run_id: str) -> dict[str, Any]:
         """Get run details including plan/apply IDs."""
         try:
-            resp = self.client.get(f"/api/v2/runs/{run_id}")
+            resp = self._client.get(f"/api/v2/runs/{run_id}")
             resp.raise_for_status()
             return {"success": True, "data": resp.json()}
         except httpx.HTTPStatusError as e:
             return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        except httpx.TimeoutException as e:
+            return {"success": False, "error": f"Request timed out: {e}"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
 
     def close(self):
         """Close the HTTP client."""
-        self.client.close()
+        self._client.close()
 
 
 def unwrap_result(data: dict[str, Any]) -> Any:
@@ -342,7 +365,10 @@ def get_default_org() -> str:
     """Get default organization from environment."""
     org = os.environ.get("TFE_ORG")
     if not org:
-        raise EnvironmentError("TFE_ORG environment variable is required")
+        raise EnvironmentError(
+            "TFE_ORG environment variable is required for workspace/run operations. "
+            "Set it to your HCP Terraform organization name (e.g., export TFE_ORG=my-org)"
+        )
     return org
 
 
@@ -411,9 +437,23 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
         if isinstance(data, list):
             items = data
         elif isinstance(data, dict) and "data" in data:
-            items = data["data"] if isinstance(data["data"], list) else []
+            if isinstance(data["data"], list):
+                items = data["data"]
+            else:
+                warnings.warn(
+                    f"Expected list in data['data'], got {type(data['data']).__name__}. Using empty list.",
+                    stacklevel=2,
+                )
+                items = []
         elif isinstance(data, dict) and "items" in data:
-            items = data["items"] if isinstance(data["items"], list) else []
+            if isinstance(data["items"], list):
+                items = data["items"]
+            else:
+                warnings.warn(
+                    f"Expected list in data['items'], got {type(data['items']).__name__}. Using empty list.",
+                    stacklevel=2,
+                )
+                items = []
         elif isinstance(data, dict):
             items = [data]  # Single workspace response
         else:
@@ -477,9 +517,23 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     if isinstance(data, list):
         items = data
     elif isinstance(data, dict) and "data" in data:
-        items = data["data"] if isinstance(data["data"], list) else []
+        if isinstance(data["data"], list):
+            items = data["data"]
+        else:
+            warnings.warn(
+                f"Expected list in data['data'], got {type(data['data']).__name__}. Using empty list.",
+                stacklevel=2,
+            )
+            items = []
     elif isinstance(data, dict) and "items" in data:
-        items = data["items"] if isinstance(data["items"], list) else []
+        if isinstance(data["items"], list):
+            items = data["items"]
+        else:
+            warnings.warn(
+                f"Expected list in data['items'], got {type(data['items']).__name__}. Using empty list.",
+                stacklevel=2,
+            )
+            items = []
     else:
         items = [data] if data else []
 
@@ -715,9 +769,23 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
         if isinstance(data, list):
             items = data
         elif isinstance(data, dict) and "data" in data:
-            items = data["data"] if isinstance(data["data"], list) else []
+            if isinstance(data["data"], list):
+                items = data["data"]
+            else:
+                warnings.warn(
+                    f"Expected list in data['data'], got {type(data['data']).__name__}. Using empty list.",
+                    stacklevel=2,
+                )
+                items = []
         elif isinstance(data, dict) and "items" in data:
-            items = data["items"] if isinstance(data["items"], list) else []
+            if isinstance(data["items"], list):
+                items = data["items"]
+            else:
+                warnings.warn(
+                    f"Expected list in data['items'], got {type(data['items']).__name__}. Using empty list.",
+                    stacklevel=2,
+                )
+                items = []
         else:
             items = []
 
@@ -781,9 +849,8 @@ def workflow_watch_run(
     max_wait = getattr(args, "timeout", 3600)
     start_time = time.time()
 
-    # Validate poll_interval
-    if poll_interval <= 0:
-        poll_interval = POLL_INTERVAL
+    # Validate poll_interval (minimum 1 second)
+    poll_interval = max(poll_interval, 1)
 
     # If workspace provided, get latest run
     if not run_id and workspace:
@@ -800,7 +867,26 @@ def workflow_watch_run(
         if isinstance(data, list):
             items = data
         elif isinstance(data, dict):
-            items = data.get("data", data.get("items", []))
+            if "data" in data:
+                if isinstance(data["data"], list):
+                    items = data["data"]
+                else:
+                    warnings.warn(
+                        f"Expected list in data['data'], got {type(data['data']).__name__}. Using empty list.",
+                        stacklevel=2,
+                    )
+                    items = []
+            elif "items" in data:
+                if isinstance(data["items"], list):
+                    items = data["items"]
+                else:
+                    warnings.warn(
+                        f"Expected list in data['items'], got {type(data['items']).__name__}. Using empty list.",
+                        stacklevel=2,
+                    )
+                    items = []
+            else:
+                items = [data] if data else []
         else:
             items = []
 
@@ -901,7 +987,9 @@ def workflow_watch_run(
             if fmt != "compact":
                 print(format_output(output, fmt))
 
-            return 0 if status == "applied" else 1
+            # Success states return 0, failure states return 1
+            success_states = {"applied", "planned_and_finished"}
+            return 0 if status in success_states else 1
 
         time.sleep(poll_interval)
 

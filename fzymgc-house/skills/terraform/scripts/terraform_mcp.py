@@ -393,6 +393,11 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
 
         data = unwrap_result(result)
 
+        # Validate data type before processing
+        if not isinstance(data, (dict, list)):
+            print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+            return 1
+
         # Handle various response structures from MCP
         if isinstance(data, list):
             items = data

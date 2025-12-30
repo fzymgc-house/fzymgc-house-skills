@@ -438,6 +438,83 @@ def format_output(data: Any, fmt: str) -> str:
         return yaml.dump(data, default_flow_style=True, sort_keys=False)
 
 
+def format_terraform_logs(raw_logs: str) -> str:
+    """Format Terraform JSON logs as human-readable markdown.
+
+    Parses JSON diagnostic messages and formats them for reduced token usage.
+    Non-JSON lines are passed through as-is.
+    """
+    lines = []
+    for line in raw_logs.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+
+        # Try to parse as JSON
+        if line.startswith('{'):
+            try:
+                obj = json.loads(line)
+                msg_type = obj.get("type", "")
+                level = obj.get("@level", "info")
+                message = obj.get("@message", "")
+
+                if msg_type == "diagnostic":
+                    # Format error/warning diagnostics
+                    diag = obj.get("diagnostic", {})
+                    severity = diag.get("severity", level).upper()
+                    summary = diag.get("summary", message)
+                    detail = diag.get("detail", "")
+                    range_info = diag.get("range", {})
+
+                    formatted = f"{severity}: {summary}"
+                    if range_info:
+                        filename = range_info.get("filename", "")
+                        start = range_info.get("start", {})
+                        line_num = start.get("line", "")
+                        col = start.get("column", "")
+                        if filename:
+                            formatted += f"\n  File: {filename}:{line_num}:{col}"
+                    if detail:
+                        formatted += f"\n  Detail: {detail}"
+                    lines.append(formatted)
+
+                elif msg_type == "change_summary":
+                    # Format plan/apply summary
+                    changes = obj.get("changes", {})
+                    op = changes.get("operation", "")
+                    add = changes.get("add", 0)
+                    change = changes.get("change", 0)
+                    remove = changes.get("remove", 0)
+                    if op == "plan":
+                        lines.append(f"Plan: {add} to add, {change} to change, {remove} to destroy")
+                    elif op == "apply":
+                        lines.append(f"Apply complete: {add} added, {change} changed, {remove} destroyed")
+                    else:
+                        lines.append(message)
+
+                elif msg_type == "version":
+                    # Terraform version info
+                    tf_version = obj.get("terraform", "")
+                    lines.append(f"Terraform v{tf_version}")
+
+                elif msg_type == "resource_drift" or msg_type == "planned_change":
+                    # Resource changes - just use the message
+                    lines.append(message)
+
+                elif message:
+                    # Other messages - just print the message
+                    lines.append(message)
+
+            except json.JSONDecodeError:
+                # Not valid JSON, include as-is
+                lines.append(line)
+        else:
+            # Non-JSON line, include as-is
+            lines.append(line)
+
+    return '\n'.join(lines)
+
+
 def get_default_org() -> str:
     """Get default organization from environment."""
     org = os.environ.get("TFE_ORG")
@@ -940,6 +1017,73 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
     return 0
 
 
+def workflow_run_details(
+    client: MCPStdioClient,
+    hcp_client: HCPTerraformClient,
+    args: argparse.Namespace,
+    fmt: str,
+) -> int:
+    """View details and logs for a completed run."""
+    run_id = args.run_id
+
+    # Get run details
+    result = client.call_tool("get_run_details", {"run_id": run_id})
+
+    if not result.get("success"):
+        print(f"Error: {result.get('error')}", file=sys.stderr)
+        return 1
+
+    data = unwrap_result(result)
+    if not isinstance(data, dict):
+        print("Error: Unexpected response format", file=sys.stderr)
+        return 1
+
+    # Navigate into the run object (response wraps it in {"data": {...}})
+    run_data = data.get("data", data)
+    if isinstance(run_data, dict) and run_data.get("type") == "runs":
+        data = run_data
+
+    attrs = data.get("attributes", {})
+    status = attrs.get("status", "unknown")
+    message = attrs.get("message", "") or ""
+
+    # Print run summary
+    print(f"Run: {run_id}")
+    print(f"Status: {status}")
+    print(f"Message: {_truncate_message(message, 200)}")
+    print(f"Resources: +{attrs.get('resource-additions', 0)} ~{attrs.get('resource-changes', 0)} -{attrs.get('resource-destructions', 0)}")
+    print("-" * 50)
+
+    # Get and display logs
+    relationships = data.get("relationships", {})
+    if not relationships:
+        print("[No relationships data - logs unavailable]", file=sys.stderr)
+        return 0
+
+    plan_rel = relationships.get("plan", {}).get("data", {})
+    apply_rel = relationships.get("apply", {}).get("data", {})
+
+    if plan_rel.get("id"):
+        print("\n=== Plan Output ===")
+        log_result = hcp_client.get_plan_logs(plan_rel["id"])
+        if log_result.get("success"):
+            formatted = format_terraform_logs(log_result.get("logs", ""))
+            print(formatted)
+        else:
+            print(f"[Could not fetch plan logs: {log_result.get('error')}]")
+
+    if apply_rel.get("id") and status == "applied":
+        print("\n=== Apply Output ===")
+        log_result = hcp_client.get_apply_logs(apply_rel["id"])
+        if log_result.get("success"):
+            formatted = format_terraform_logs(log_result.get("logs", ""))
+            print(formatted)
+        else:
+            print(f"[Could not fetch apply logs: {log_result.get('error')}]")
+
+    return 0
+
+
 def workflow_watch_run(
     client: MCPStdioClient,
     hcp_client: HCPTerraformClient,
@@ -1009,6 +1153,33 @@ def workflow_watch_run(
         "applied", "errored", "discarded", "canceled", "force_canceled",
         "planned_and_finished", "policy_soft_failed",
     }
+
+    # Check if run is already in terminal state
+    result = client.call_tool("get_run_details", {"run_id": run_id})
+    if result.get("success"):
+        data = unwrap_result(result)
+        if isinstance(data, dict):
+            run_data = data.get("data", data)
+            if isinstance(run_data, dict) and run_data.get("type") == "runs":
+                data = run_data
+            attrs = data.get("attributes", {})
+            status = attrs.get("status", "unknown")
+            if status in terminal_states:
+                print(f"Run {run_id} is already complete (status: {status})", file=sys.stderr)
+                print(f"Use 'run-details {run_id}' to view formatted logs", file=sys.stderr)
+                if not show_logs:
+                    # Just show summary and exit
+                    output = {
+                        "run_id": run_id,
+                        "status": status,
+                        "message": _truncate_message(attrs.get("message", "") or "", 200),
+                        "resource_additions": attrs.get("resource-additions", 0),
+                        "resource_changes": attrs.get("resource-changes", 0),
+                        "resource_destructions": attrs.get("resource-destructions", 0),
+                    }
+                    print(format_output(output, fmt))
+                    success_states = {"applied", "planned_and_finished"}
+                    return 0 if status in success_states else 1
 
     print(f"Watching run: {run_id}", file=sys.stderr)
     print(f"Poll interval: {poll_interval}s", file=sys.stderr)
@@ -1152,6 +1323,10 @@ def main():
     outputs_parser.add_argument("run_id", nargs="?", help="Run ID")
     outputs_parser.add_argument("--workspace", "-w", help="Get outputs from latest successful run")
 
+    # run-details
+    details_parser = subparsers.add_parser("run-details", help="View details and formatted logs for a completed run")
+    details_parser.add_argument("run_id", help="Run ID to inspect")
+
     # list-providers
     list_prov_parser = subparsers.add_parser("list-providers", help="List/search providers")
     list_prov_parser.add_argument("--search", "-s", help="Search term")
@@ -1232,6 +1407,12 @@ def main():
 
         elif args.command == "run-outputs":
             sys.exit(workflow_run_outputs(client, args, args.format))
+
+        elif args.command == "run-details":
+            if not hcp_client:
+                print("Error: TFE_TOKEN required for run-details", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_run_details(client, hcp_client, args, args.format))
 
         elif args.command == "list-providers":
             sys.exit(workflow_list_providers(client, args, args.format))

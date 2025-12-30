@@ -29,42 +29,66 @@ Note: Provider documentation commands (provider-docs, list-providers) do not req
 
 | Task | Command |
 |------|---------|
-| Watch a run | `watch-run <run-id>` |
+| View completed run | `run-details <run-id>` |
+| Watch in-progress run | `watch-run <run-id>` |
 | Watch latest run | `watch-run --workspace <name>` |
-| View run outputs | `run-outputs --workspace <name>` |
-| Workspace status | `workspace-status [name]` |
 | List runs | `list-runs <workspace>` |
+| Workspace status | `workspace-status [name]` |
+| View terraform outputs | `run-outputs --workspace <name>` |
 | Provider docs | `provider-docs aws --resource lambda_function` |
 | List providers | `list-providers --search cloud` |
 
 ## TFC Operations
 
-### watch-run
+### run-details
 
-Monitor a run's progress with live status updates.
+View details and formatted logs for a completed run. Parses JSON logs into human-readable format, reducing token usage by ~70%.
 
 ```bash
-# Watch specific run
+# View completed run with formatted logs
+${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py run-details run-abc123
+```
+
+Output includes:
+- Run status and commit message
+- Resource change summary (+add ~change -destroy)
+- Formatted plan output (errors, warnings, change summary)
+- Formatted apply output (for successful runs)
+
+Errors are displayed as:
+```
+ERROR: Reference to undeclared resource
+  File: main.tf:32:20
+  Detail: A managed resource "aws_instance" "web" has not been declared...
+```
+
+### watch-run
+
+Monitor an in-progress run with live status updates. For completed runs, use `run-details` instead.
+
+```bash
+# Watch specific run (will suggest run-details if already complete)
 ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run run-abc123
 
 # Watch latest run for workspace
 ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run --workspace my-workspace
 
-# Include plan/apply logs when complete
+# Include raw logs when complete (prefer run-details for formatted output)
 ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run --workspace my-workspace --logs
 ```
 
 Options:
 - `--workspace`, `-w` - Watch latest run for workspace
-- `--logs`, `-l` - Show plan/apply logs when run completes
+- `--logs`, `-l` - Show raw plan/apply logs when run completes
 - `--interval`, `-i` - Poll interval in seconds (default: 5)
 - `--timeout`, `-t` - Maximum wait time in seconds (default: 3600)
 
-The command MUST:
-- Poll status at regular intervals
-- Display status changes with timestamps
-- Show plan summary (resource additions/changes/destructions)
-- Exit with code 0 for success states (applied, planned_and_finished), 1 for failure states
+Behavior:
+- If run is already complete, suggests using `run-details` instead
+- Polls status at regular intervals for in-progress runs
+- Displays status changes with timestamps
+- Shows plan summary (resource additions/changes/destructions)
+- Exits with code 0 for success states, 1 for failure states
 
 ### workspace-status
 
@@ -159,10 +183,11 @@ ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py describe <tool_n
 
 ## Best Practices
 
-- SHOULD use `watch-run --workspace <name>` rather than manually finding run IDs
+- SHOULD use `run-details <run-id>` for viewing completed runs (formatted output, reduced tokens)
+- SHOULD use `watch-run --workspace <name>` for monitoring in-progress runs
 - SHOULD use `workspace-status` to get an overview before investigating runs
 - MUST NOT use raw MCP tools directly when a workflow exists
-- SHOULD use `--logs` with `watch-run` to see full plan/apply output
+- SHOULD prefer `run-details` over `watch-run --logs` for completed runs
 
 ## Domain References
 

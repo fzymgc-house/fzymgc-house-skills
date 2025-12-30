@@ -336,6 +336,82 @@ def format_output(data: Any, fmt: str) -> str:
         return yaml.dump(data, default_flow_style=True, sort_keys=False)
 
 
+def get_default_org() -> str:
+    """Get default organization from environment."""
+    org = os.environ.get("TFE_ORG")
+    if not org:
+        raise EnvironmentError("TFE_ORG environment variable is required")
+    return org
+
+
+def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+    """Show workspace status overview."""
+    org = get_default_org()
+    workspace_name = args.workspace if hasattr(args, "workspace") and args.workspace else None
+
+    if workspace_name:
+        # Single workspace detail
+        result = client.call_tool("get_workspace_details", {
+            "terraform_org_name": org,
+            "workspace_name": workspace_name,
+        })
+
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}", file=sys.stderr)
+            return 1
+
+        data = unwrap_result(result)
+
+        # Extract key fields
+        output = {
+            "workspace": workspace_name,
+            "organization": org,
+            "id": data.get("id", ""),
+            "terraform_version": data.get("attributes", {}).get("terraform-version", ""),
+            "execution_mode": data.get("attributes", {}).get("execution-mode", ""),
+            "auto_apply": data.get("attributes", {}).get("auto-apply", False),
+            "working_directory": data.get("attributes", {}).get("working-directory", ""),
+            "vcs_repo": data.get("attributes", {}).get("vcs-repo", {}),
+            "updated_at": data.get("attributes", {}).get("updated-at", ""),
+        }
+
+        print(format_output(output, fmt))
+        return 0
+
+    else:
+        # List all workspaces
+        result = client.call_tool("list_workspaces", {
+            "terraform_org_name": org,
+        })
+
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}", file=sys.stderr)
+            return 1
+
+        data = unwrap_result(result)
+
+        # Format as brief list
+        workspaces = []
+        items = data if isinstance(data, list) else data.get("items", [])
+        for ws in items:
+            attrs = ws.get("attributes", {}) if isinstance(ws, dict) else {}
+            workspaces.append({
+                "name": attrs.get("name", ws.get("name", "")),
+                "id": ws.get("id", ""),
+                "terraform_version": attrs.get("terraform-version", ""),
+                "updated_at": attrs.get("updated-at", ""),
+            })
+
+        output = {
+            "organization": org,
+            "count": len(workspaces),
+            "workspaces": workspaces,
+        }
+
+        print(format_output(output, fmt))
+        return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Terraform MCP Gateway - invoke Terraform tools without MCP context overhead",
@@ -359,6 +435,10 @@ def main():
     tool_parser = subparsers.add_parser("tool", help="Call an MCP tool directly")
     tool_parser.add_argument("name", help="Tool name")
     tool_parser.add_argument("arguments", nargs="?", default="{}", help="JSON arguments")
+
+    # workspace-status
+    ws_parser = subparsers.add_parser("workspace-status", help="Show workspace status")
+    ws_parser.add_argument("workspace", nargs="?", help="Workspace name (optional, lists all if omitted)")
 
     args = parser.parse_args()
 
@@ -405,6 +485,9 @@ def main():
             else:
                 print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
                 sys.exit(1)
+
+        elif args.command == "workspace-status":
+            sys.exit(workflow_workspace_status(client, args, args.format))
 
     except EnvironmentError as e:
         print(f"Configuration error: {e}", file=sys.stderr)

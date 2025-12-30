@@ -506,6 +506,52 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     return 0
 
 
+def workflow_list_providers(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+    """List/search available providers."""
+    search = getattr(args, "search", None) or ""
+    namespace = getattr(args, "namespace", None) or "hashicorp"
+
+    # Use search_providers with overview type to list
+    result = client.call_tool("search_providers", {
+        "provider_name": search if search else "aws",  # Default search term
+        "provider_namespace": namespace,
+        "service_slug": search if search else "aws",
+        "provider_document_type": "overview",
+    })
+
+    if not result.get("success"):
+        print(f"Error: {result.get('error')}", file=sys.stderr)
+        return 1
+
+    data = unwrap_result(result)
+
+    # Validate data type
+    if not isinstance(data, (dict, list)):
+        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        return 1
+
+    # Format as list
+    items = data if isinstance(data, list) else [data]
+    providers = []
+    for item in items:
+        if isinstance(item, dict):
+            providers.append({
+                "name": item.get("title", ""),
+                "id": item.get("id", ""),
+                "category": item.get("category", ""),
+            })
+
+    output = {
+        "search": search,
+        "namespace": namespace,
+        "count": len(providers),
+        "providers": providers,
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """Look up provider documentation."""
     provider = args.provider
@@ -907,6 +953,11 @@ def main():
     outputs_parser.add_argument("run_id", nargs="?", help="Run ID")
     outputs_parser.add_argument("--workspace", "-w", help="Get outputs from latest successful run")
 
+    # list-providers
+    list_prov_parser = subparsers.add_parser("list-providers", help="List/search providers")
+    list_prov_parser.add_argument("--search", "-s", help="Search term")
+    list_prov_parser.add_argument("--namespace", "-n", default="hashicorp", help="Provider namespace")
+
     # provider-docs
     provider_parser = subparsers.add_parser("provider-docs", help="Look up provider documentation")
     provider_parser.add_argument("provider", help="Provider name (e.g., aws, azurerm, google)")
@@ -982,6 +1033,9 @@ def main():
 
         elif args.command == "run-outputs":
             sys.exit(workflow_run_outputs(client, args, args.format))
+
+        elif args.command == "list-providers":
+            sys.exit(workflow_list_providers(client, args, args.format))
 
         elif args.command == "provider-docs":
             sys.exit(workflow_provider_docs(client, args, args.format))

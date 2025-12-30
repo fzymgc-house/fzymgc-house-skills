@@ -513,6 +513,11 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
     data_source = getattr(args, "data_source", None)
     list_resources = getattr(args, "list_resources", False)
 
+    # Validate mutually exclusive arguments
+    if sum(bool(x) for x in [resource, data_source, list_resources]) > 1:
+        print("Error: Only one of --resource, --data-source, or --list-resources can be used", file=sys.stderr)
+        return 1
+
     # Determine namespace (default to hashicorp for common providers)
     namespace = getattr(args, "namespace", None)
 
@@ -564,7 +569,7 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
 
     # Validate data type
     if not isinstance(data, (dict, list)):
-        print("Error: Unexpected response format", file=sys.stderr)
+        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
         return 1
 
     # If listing resources, just show the search results

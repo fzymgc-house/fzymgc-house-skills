@@ -347,7 +347,7 @@ def get_default_org() -> str:
 def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """Show workspace status overview."""
     org = get_default_org()
-    workspace_name = args.workspace if hasattr(args, "workspace") and args.workspace else None
+    workspace_name = getattr(args, "workspace", None)
 
     if workspace_name:
         # Single workspace detail
@@ -361,12 +361,15 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
             return 1
 
         data = unwrap_result(result)
+        if not isinstance(data, dict):
+            print("Error: Unexpected response format", file=sys.stderr)
+            return 1
 
         # Extract key fields
         output = {
             "workspace": workspace_name,
             "organization": org,
-            "id": data.get("id", ""),
+            "workspace_id": data.get("id", ""),
             "terraform_version": data.get("attributes", {}).get("terraform-version", ""),
             "execution_mode": data.get("attributes", {}).get("execution-mode", ""),
             "auto_apply": data.get("attributes", {}).get("auto-apply", False),
@@ -390,9 +393,21 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
 
         data = unwrap_result(result)
 
+        # Handle various response structures from MCP
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict) and "data" in data:
+            items = data["data"] if isinstance(data["data"], list) else []
+        elif isinstance(data, dict) and "items" in data:
+            items = data["items"] if isinstance(data["items"], list) else []
+        elif isinstance(data, dict):
+            items = [data]  # Single workspace response
+        else:
+            print("Error: Could not extract workspace list from response", file=sys.stderr)
+            return 1
+
         # Format as brief list
         workspaces = []
-        items = data if isinstance(data, list) else data.get("items", [])
         for ws in items:
             attrs = ws.get("attributes", {}) if isinstance(ws, dict) else {}
             workspaces.append({

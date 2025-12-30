@@ -323,6 +323,37 @@ class HCPTerraformClient:
         except httpx.RequestError as e:
             return {"success": False, "error": f"Network error: {e}"}
 
+    def list_runs(
+        self,
+        organization: str,
+        workspace: str,
+        page_size: int = 10,
+        status_filter: str | None = None,
+    ) -> dict[str, Any]:
+        """List runs for a workspace via direct HCP API.
+
+        This method exists because the MCP server's list_runs tool is broken
+        (returns empty/malformed data for all queries).
+        """
+        try:
+            params: dict[str, Any] = {
+                "filter[organization][name]": organization,
+                "filter[workspace][name]": workspace,
+                "page[size]": page_size,
+            }
+            if status_filter:
+                params["filter[status]"] = status_filter
+
+            resp = self._client.get("/api/v2/runs", params=params)
+            resp.raise_for_status()
+            return {"success": True, "data": resp.json()}
+        except httpx.HTTPStatusError as e:
+            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
+        except httpx.TimeoutException as e:
+            return {"success": False, "error": f"Request timed out: {e}"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
+
     def close(self):
         """Close the HTTP client."""
         self._client.close()
@@ -351,6 +382,50 @@ def unwrap_result(data: dict[str, Any]) -> Any:
         return texts
 
     return result
+
+
+def parse_provider_search_markdown(text: str, target_slug: str | None = None) -> list[dict]:
+    """Parse markdown response from search_providers into structured data.
+
+    The MCP server returns markdown formatted like:
+    - providerDocID: 10931109
+    - Title: lambda_function
+    - Category: resources
+    - Description: Manages an AWS Lambda Function.
+    ---
+
+    Returns list of dicts with id, title, category, description.
+    If target_slug is provided, prioritizes exact title matches.
+    """
+    entries = []
+    current = {}
+
+    for line in text.split('\n'):
+        line = line.strip()
+        if line == '---':
+            if current:
+                entries.append(current)
+                current = {}
+        elif line.startswith('- providerDocID:'):
+            current['id'] = line.split(':', 1)[1].strip()
+        elif line.startswith('- Title:'):
+            current['title'] = line.split(':', 1)[1].strip()
+        elif line.startswith('- Category:'):
+            current['category'] = line.split(':', 1)[1].strip()
+        elif line.startswith('- Description:'):
+            current['description'] = line.split(':', 1)[1].strip()
+
+    # Don't forget the last entry if no trailing ---
+    if current:
+        entries.append(current)
+
+    # If we have a target slug, prioritize exact matches
+    if target_slug and entries:
+        exact_matches = [e for e in entries if e.get('title', '').lower() == target_slug.lower()]
+        if exact_matches:
+            return exact_matches
+
+    return entries
 
 
 def format_output(data: Any, fmt: str) -> str:
@@ -483,6 +558,34 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
         return 0
 
 
+def _is_mcp_list_runs_broken(data: Any) -> bool:
+    """Check if MCP list_runs returned broken/empty data.
+
+    The MCP server has a known bug where it returns {"data":{"type":""}}
+    instead of the actual runs list.
+    """
+    if not isinstance(data, dict):
+        return False
+    if "data" not in data:
+        return False
+    # Broken response: {"data":{"type":""}} instead of {"data":[...]}
+    if isinstance(data["data"], dict) and data["data"].get("type") == "":
+        return True
+    return False
+
+
+def _extract_runs_from_api_response(data: Any) -> list[dict]:
+    """Extract runs list from API response data."""
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        if "data" in data and isinstance(data["data"], list):
+            return data["data"]
+        if "items" in data and isinstance(data["items"], list):
+            return data["items"]
+    return []
+
+
 def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """List recent runs for a workspace."""
     org = get_default_org()
@@ -493,51 +596,45 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     limit = getattr(args, "limit", 10)
     status_filter = getattr(args, "status", None)
 
+    # Try MCP first
     params: dict[str, Any] = {
         "terraform_org_name": org,
         "workspace_name": workspace,
         "pageSize": limit,
     }
-
     if status_filter:
         params["status"] = [status_filter]
 
     result = client.call_tool("list_runs", params)
+    items: list[dict] = []
+    used_fallback = False
 
-    if not result.get("success"):
-        print(f"Error: {result.get('error')}", file=sys.stderr)
-        return 1
+    if result.get("success"):
+        data = unwrap_result(result)
+        if _is_mcp_list_runs_broken(data):
+            # MCP server bug: returns {"data":{"type":""}} - fall back to direct API
+            used_fallback = True
+        elif isinstance(data, (dict, list)):
+            items = _extract_runs_from_api_response(data)
 
-    data = unwrap_result(result)
+    # Fall back to direct HCP API if MCP failed or returned broken data
+    if not items and (not result.get("success") or used_fallback):
+        token = os.environ.get("TFE_TOKEN")
+        address = os.environ.get("TFE_ADDRESS", DEFAULT_TFE_ADDRESS)
+        if not token:
+            print("Error: TFE_TOKEN required for direct API fallback", file=sys.stderr)
+            return 1
 
-    # Validate data type
-    if not isinstance(data, (dict, list)):
-        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
-        return 1
-
-    # Handle various response structures
-    if isinstance(data, list):
-        items = data
-    elif isinstance(data, dict) and "data" in data:
-        if isinstance(data["data"], list):
-            items = data["data"]
-        else:
-            warnings.warn(
-                f"Expected list in data['data'], got {type(data['data']).__name__}. Using empty list.",
-                stacklevel=2,
-            )
-            items = []
-    elif isinstance(data, dict) and "items" in data:
-        if isinstance(data["items"], list):
-            items = data["items"]
-        else:
-            warnings.warn(
-                f"Expected list in data['items'], got {type(data['items']).__name__}. Using empty list.",
-                stacklevel=2,
-            )
-            items = []
-    else:
-        items = [data] if data else []
+        hcp_client = HCPTerraformClient(token, address)
+        try:
+            api_result = hcp_client.list_runs(org, workspace, limit, status_filter)
+            if not api_result.get("success"):
+                print(f"Error: {api_result.get('error')}", file=sys.stderr)
+                return 1
+            api_data = api_result.get("data", {})
+            items = _extract_runs_from_api_response(api_data)
+        finally:
+            hcp_client.close()
 
     runs = []
     for run in items:
@@ -669,8 +766,15 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
 
     data = unwrap_result(result)
 
-    # Validate data type
-    if not isinstance(data, (dict, list)):
+    # Handle markdown response from search_providers
+    # The MCP server returns markdown text, not JSON
+    if isinstance(data, str):
+        parsed_entries = parse_provider_search_markdown(data, service_slug)
+        if not parsed_entries:
+            print(f"No documentation found for {provider}/{service_slug}", file=sys.stderr)
+            return 1
+        data = parsed_entries
+    elif not isinstance(data, (dict, list)):
         print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
         return 1
 
@@ -928,6 +1032,11 @@ def workflow_watch_run(
         if not isinstance(data, dict):
             print("Error: Unexpected response format", file=sys.stderr)
             return 1
+
+        # Navigate into the run object (response wraps it in {"data": {...}})
+        run_data = data.get("data", data)
+        if isinstance(run_data, dict) and run_data.get("type") == "runs":
+            data = run_data
 
         attrs = data.get("attributes", {})
         status = attrs.get("status", "unknown")

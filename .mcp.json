@@ -3,6 +3,20 @@
     "grafana": {
       "type": "http",
       "url": "https://mcp.grafana.fzymgc.house/mcp"
+    },
+    "terraform": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "TFE_TOKEN",
+        "-e", "TFE_ADDRESS=https://app.terraform.io",
+        "hashicorp/terraform-mcp-server:latest"
+      ],
+      "env": {
+        "TFE_TOKEN": "${TFE_TOKEN}"
+      }
     }
   }
 }

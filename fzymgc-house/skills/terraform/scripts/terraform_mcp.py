@@ -506,6 +506,86 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     return 0
 
 
+def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+    """View terraform outputs from a run."""
+    org = get_default_org()
+    run_id = getattr(args, "run_id", None)
+    workspace = getattr(args, "workspace", None)
+
+    # If workspace provided, get latest successful run
+    if not run_id and workspace:
+        result = client.call_tool("list_runs", {
+            "terraform_org_name": org,
+            "workspace_name": workspace,
+            "pageSize": 10,
+            "status": ["applied"],
+        })
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}", file=sys.stderr)
+            return 1
+
+        data = unwrap_result(result)
+
+        # Validate data type
+        if not isinstance(data, (dict, list)):
+            print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+            return 1
+
+        # Handle various response structures
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict) and "data" in data:
+            items = data["data"] if isinstance(data["data"], list) else []
+        elif isinstance(data, dict) and "items" in data:
+            items = data["items"] if isinstance(data["items"], list) else []
+        else:
+            items = []
+
+        if not items:
+            print(f"No successful runs found for workspace '{workspace}'", file=sys.stderr)
+            return 1
+        run_id = items[0].get("id")
+
+    if not run_id:
+        print("Error: Either run_id or --workspace is required", file=sys.stderr)
+        return 1
+
+    # Get run details to find state version
+    result = client.call_tool("get_run_details", {"run_id": run_id})
+
+    if not result.get("success"):
+        print(f"Error: {result.get('error')}", file=sys.stderr)
+        return 1
+
+    data = unwrap_result(result)
+
+    # Validate data type
+    if not isinstance(data, dict):
+        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        return 1
+
+    # Extract outputs from run if available
+    outputs = data.get("outputs", {})
+
+    if not outputs:
+        # Try to get from attributes
+        attrs = data.get("attributes", {})
+        outputs = attrs.get("outputs", {})
+
+    if not outputs:
+        print(f"No outputs found for run {run_id}", file=sys.stderr)
+        print("Note: Outputs may only be available after terraform apply", file=sys.stderr)
+        return 1
+
+    output = {
+        "run_id": run_id,
+        "outputs": outputs,
+    }
+
+    print(format_output(output, fmt))
+    return 0
+
+
 def workflow_watch_run(
     client: MCPStdioClient,
     hcp_client: HCPTerraformClient,
@@ -688,6 +768,11 @@ def main():
     watch_parser.add_argument("--interval", "-i", type=int, default=5, help="Poll interval in seconds (default: 5)")
     watch_parser.add_argument("--timeout", "-t", type=int, default=3600, help="Maximum wait time in seconds (default: 3600)")
 
+    # run-outputs
+    outputs_parser = subparsers.add_parser("run-outputs", help="View terraform outputs from a run")
+    outputs_parser.add_argument("run_id", nargs="?", help="Run ID")
+    outputs_parser.add_argument("--workspace", "-w", help="Get outputs from latest successful run")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -752,6 +837,9 @@ def main():
                 print("Error: TFE_TOKEN required for watch-run", file=sys.stderr)
                 sys.exit(1)
             sys.exit(workflow_watch_run(client, hcp_client, args, args.format))
+
+        elif args.command == "run-outputs":
+            sys.exit(workflow_run_outputs(client, args, args.format))
 
     except EnvironmentError as e:
         print(f"Configuration error: {e}", file=sys.stderr)

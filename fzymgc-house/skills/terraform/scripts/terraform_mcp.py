@@ -28,6 +28,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,7 @@ DEFAULT_TFE_ADDRESS = "https://app.terraform.io"
 DOCKER_IMAGE = "hashicorp/terraform-mcp-server:0.3.3"
 SESSION_DIR = Path.home() / ".cache" / "terraform-mcp"
 SESSION_TIMEOUT = 300  # 5 minutes
+POLL_INTERVAL = 5  # seconds
 
 
 class MCPStdioClient:
@@ -504,6 +506,132 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     return 0
 
 
+def workflow_watch_run(
+    client: MCPStdioClient,
+    hcp_client: HCPTerraformClient,
+    args: argparse.Namespace,
+    fmt: str,
+) -> int:
+    """Watch a run's progress with live updates."""
+    org = get_default_org()
+    run_id = getattr(args, "run_id", None)
+    workspace = getattr(args, "workspace", None)
+    show_logs = getattr(args, "logs", False)
+    poll_interval = getattr(args, "interval", POLL_INTERVAL)
+
+    # If workspace provided, get latest run
+    if not run_id and workspace:
+        result = client.call_tool("list_runs", {
+            "terraform_org_name": org,
+            "workspace_name": workspace,
+            "pageSize": 1,
+        })
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}", file=sys.stderr)
+            return 1
+
+        data = unwrap_result(result)
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict):
+            items = data.get("data", data.get("items", []))
+        else:
+            items = []
+
+        if not items:
+            print(f"No runs found for workspace '{workspace}'", file=sys.stderr)
+            return 1
+        run_id = items[0].get("id")
+
+    if not run_id:
+        print("Error: Either run_id or --workspace is required", file=sys.stderr)
+        return 1
+
+    terminal_states = {
+        "applied", "errored", "discarded", "canceled", "force_canceled",
+        "planned_and_finished", "policy_soft_failed",
+    }
+
+    print(f"Watching run: {run_id}", file=sys.stderr)
+    print(f"Poll interval: {poll_interval}s", file=sys.stderr)
+    print("-" * 50, file=sys.stderr)
+
+    last_status = None
+
+    while True:
+        result = client.call_tool("get_run_details", {"run_id": run_id})
+
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}", file=sys.stderr)
+            return 1
+
+        data = unwrap_result(result)
+        if not isinstance(data, dict):
+            print("Error: Unexpected response format", file=sys.stderr)
+            return 1
+
+        attrs = data.get("attributes", {})
+        status = attrs.get("status", "unknown")
+
+        # Print status update if changed
+        if status != last_status:
+            timestamp = time.strftime("%H:%M:%S")
+            plan_summary = ""
+
+            # Try to get plan/apply counts
+            additions = attrs.get("resource-additions", 0)
+            changes = attrs.get("resource-changes", 0)
+            destructions = attrs.get("resource-destructions", 0)
+            if additions or changes or destructions:
+                plan_summary = f" | Plan: +{additions} ~{changes} -{destructions}"
+
+            print(f"[{timestamp}] Status: {status}{plan_summary}", file=sys.stderr)
+            last_status = status
+
+        # Check for terminal state
+        if status in terminal_states:
+            print("-" * 50, file=sys.stderr)
+
+            # Get and display logs if requested
+            if show_logs:
+                relationships = data.get("relationships", {})
+                plan_rel = relationships.get("plan", {}).get("data", {})
+                apply_rel = relationships.get("apply", {}).get("data", {})
+
+                if plan_rel.get("id"):
+                    print("\n=== Plan Output ===", file=sys.stderr)
+                    log_result = hcp_client.get_plan_logs(plan_rel["id"])
+                    if log_result.get("success"):
+                        print(log_result.get("logs", ""))
+                    else:
+                        print(f"[Could not fetch plan logs: {log_result.get('error')}]")
+
+                if apply_rel.get("id") and status == "applied":
+                    print("\n=== Apply Output ===", file=sys.stderr)
+                    log_result = hcp_client.get_apply_logs(apply_rel["id"])
+                    if log_result.get("success"):
+                        print(log_result.get("logs", ""))
+                    else:
+                        print(f"[Could not fetch apply logs: {log_result.get('error')}]")
+
+            # Final output
+            output = {
+                "run_id": run_id,
+                "status": status,
+                "message": _truncate_message(attrs.get("message", "") or "", 200),
+                "resource_additions": attrs.get("resource-additions", 0),
+                "resource_changes": attrs.get("resource-changes", 0),
+                "resource_destructions": attrs.get("resource-destructions", 0),
+            }
+
+            if fmt != "compact":
+                print(format_output(output, fmt))
+
+            return 0 if status == "applied" else 1
+
+        time.sleep(poll_interval)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Terraform MCP Gateway - invoke Terraform tools without MCP context overhead",
@@ -538,6 +666,13 @@ def main():
     runs_parser.add_argument("--limit", type=int, default=10, help="Number of runs (default: 10)")
     runs_parser.add_argument("--status", help="Filter by status (e.g., applied, errored, planning)")
 
+    # watch-run
+    watch_parser = subparsers.add_parser("watch-run", help="Watch a run's progress")
+    watch_parser.add_argument("run_id", nargs="?", help="Run ID to watch")
+    watch_parser.add_argument("--workspace", "-w", help="Watch latest run for workspace")
+    watch_parser.add_argument("--logs", "-l", action="store_true", help="Show plan/apply logs when complete")
+    watch_parser.add_argument("--interval", "-i", type=int, default=5, help="Poll interval in seconds (default: 5)")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -545,9 +680,16 @@ def main():
         sys.exit(1)
 
     session = SessionManager()
+    hcp_client = None
 
     try:
         client = session.get_client()
+
+        # Create HCP client for direct API calls
+        token = os.environ.get("TFE_TOKEN")
+        address = os.environ.get("TFE_ADDRESS", DEFAULT_TFE_ADDRESS)
+        if token:
+            hcp_client = HCPTerraformClient(token, address)
 
         if args.command == "list-tools":
             result = client.list_tools()
@@ -590,6 +732,12 @@ def main():
         elif args.command == "list-runs":
             sys.exit(workflow_list_runs(client, args, args.format))
 
+        elif args.command == "watch-run":
+            if not hcp_client:
+                print("Error: TFE_TOKEN required for watch-run", file=sys.stderr)
+                sys.exit(1)
+            sys.exit(workflow_watch_run(client, hcp_client, args, args.format))
+
     except EnvironmentError as e:
         print(f"Configuration error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -598,6 +746,8 @@ def main():
         sys.exit(1)
     finally:
         session.cleanup()
+        if hcp_client:
+            hcp_client.close()
 
 
 if __name__ == "__main__":

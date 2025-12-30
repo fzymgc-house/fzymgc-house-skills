@@ -344,6 +344,13 @@ def get_default_org() -> str:
     return org
 
 
+def _truncate_message(msg: str, max_len: int) -> str:
+    """Truncate message with ellipsis if too long."""
+    if len(msg) <= max_len:
+        return msg
+    return msg[:max_len - 3] + "..."
+
+
 def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """Show workspace status overview."""
     org = get_default_org()
@@ -435,7 +442,10 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
 def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
     """List recent runs for a workspace."""
     org = get_default_org()
-    workspace = args.workspace
+    workspace = getattr(args, "workspace", None)
+    if not workspace:
+        print("Error: workspace argument is required", file=sys.stderr)
+        return 1
     limit = getattr(args, "limit", 10)
     status_filter = getattr(args, "status", None)
 
@@ -477,7 +487,7 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
         runs.append({
             "id": run.get("id", ""),
             "status": attrs.get("status", ""),
-            "message": (attrs.get("message", "") or "")[:80],
+            "message": _truncate_message(attrs.get("message", "") or "", 80),
             "created_at": attrs.get("created-at", ""),
             "plan_only": attrs.get("plan-only", False),
             "is_destroy": attrs.get("is-destroy", False),

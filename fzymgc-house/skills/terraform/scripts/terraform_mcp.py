@@ -31,6 +31,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+import httpx
 import yaml
 
 # Configuration
@@ -238,7 +239,6 @@ class HCPTerraformClient:
     """Direct HCP Terraform API client for operations not exposed via MCP."""
 
     def __init__(self, token: str, address: str = DEFAULT_TFE_ADDRESS):
-        import httpx
         self.client = httpx.Client(
             base_url=address.rstrip("/"),
             headers={
@@ -248,27 +248,26 @@ class HCPTerraformClient:
             timeout=30.0,
         )
 
-    def get_plan_logs(self, plan_id: str) -> str:
+    def get_plan_logs(self, plan_id: str) -> dict[str, Any]:
         """Fetch plan logs from HCP Terraform API."""
         try:
-            # First get the plan to find the log URL
             resp = self.client.get(f"/api/v2/plans/{plan_id}")
             resp.raise_for_status()
             plan_data = resp.json()
 
             log_url = plan_data.get("data", {}).get("attributes", {}).get("log-read-url")
             if not log_url:
-                return "[No log URL available]"
+                return {"success": False, "error": "No log URL available"}
 
-            # Fetch the actual logs
-            import httpx
             log_resp = httpx.get(log_url, timeout=30.0)
             log_resp.raise_for_status()
-            return log_resp.text
+            return {"success": True, "logs": log_resp.text}
+        except httpx.HTTPStatusError as e:
+            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
         except Exception as e:
-            return f"[Error fetching plan logs: {e}]"
+            return {"success": False, "error": str(e)}
 
-    def get_apply_logs(self, apply_id: str) -> str:
+    def get_apply_logs(self, apply_id: str) -> dict[str, Any]:
         """Fetch apply logs from HCP Terraform API."""
         try:
             resp = self.client.get(f"/api/v2/applies/{apply_id}")
@@ -277,23 +276,26 @@ class HCPTerraformClient:
 
             log_url = apply_data.get("data", {}).get("attributes", {}).get("log-read-url")
             if not log_url:
-                return "[No log URL available]"
+                return {"success": False, "error": "No log URL available"}
 
-            import httpx
             log_resp = httpx.get(log_url, timeout=30.0)
             log_resp.raise_for_status()
-            return log_resp.text
+            return {"success": True, "logs": log_resp.text}
+        except httpx.HTTPStatusError as e:
+            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
         except Exception as e:
-            return f"[Error fetching apply logs: {e}]"
+            return {"success": False, "error": str(e)}
 
     def get_run(self, run_id: str) -> dict[str, Any]:
         """Get run details including plan/apply IDs."""
         try:
             resp = self.client.get(f"/api/v2/runs/{run_id}")
             resp.raise_for_status()
-            return resp.json()
+            return {"success": True, "data": resp.json()}
+        except httpx.HTTPStatusError as e:
+            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
         except Exception as e:
-            return {"error": str(e)}
+            return {"success": False, "error": str(e)}
 
     def close(self):
         """Close the HTTP client."""

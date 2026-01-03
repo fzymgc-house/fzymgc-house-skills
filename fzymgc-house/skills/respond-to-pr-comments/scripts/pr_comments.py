@@ -18,7 +18,6 @@ Commands:
 import json
 import subprocess
 import sys
-from typing import Optional
 
 
 def run_gh(cmd: list[str]) -> str:
@@ -58,16 +57,15 @@ def check_acked(comment_id: str, comment_type: str, pr: str) -> bool:
             if reaction["content"] == "+1" and reaction["user"]["login"] == username:
                 return True
         return False
-    except:
+    except Exception:
         return False
 
 
 def list_comments(pr: str, unacked_only: bool = False):
     """List all PR comments in markdown format."""
-    data = json.loads(run_gh([
-        "gh", "pr", "view", pr, "--json",
-        "number,title,comments,reviews"
-    ]))
+    data = json.loads(
+        run_gh(["gh", "pr", "view", pr, "--json", "number,title,comments,reviews"])
+    )
 
     print(f"# PR #{data['number']}: {data['title']}\n")
 
@@ -79,14 +77,16 @@ def list_comments(pr: str, unacked_only: bool = False):
             continue
 
         cid = f"RC_{c['id']}"
-        acked = check_acked(c['id'], 'review_comment', pr)
+        acked = check_acked(c["id"], "review_comment", pr)
 
         if unacked_only and acked:
             continue
 
         has_output = True
         ack_mark = "✓" if acked else "○"
-        file_info = f"{c.get('path', 'unknown')}:{c.get('line', '?')}" if c.get('path') else ""
+        file_info = (
+            f"{c.get('path', 'unknown')}:{c.get('line', '?')}" if c.get("path") else ""
+        )
 
         print(f"## [{ack_mark}] {cid} - @{c['author']['login']}")
         if file_info:
@@ -101,14 +101,14 @@ def list_comments(pr: str, unacked_only: bool = False):
             continue
 
         rid = f"R_{r['id']}"
-        acked = check_acked(r['id'], 'review', pr)
+        acked = check_acked(r["id"], "review", pr)
 
         if unacked_only and acked:
             continue
 
         has_output = True
         ack_mark = "✓" if acked else "○"
-        state = r.get('state', 'COMMENTED')
+        state = r.get("state", "COMMENTED")
 
         print(f"## [{ack_mark}] {rid} - @{r['author']['login']} ({state})")
         print(f"\n{r['body']}\n")
@@ -116,15 +116,18 @@ def list_comments(pr: str, unacked_only: bool = False):
             print(f"*Ack:* `pr_comments.py ack {pr} {rid}`\n")
 
     if not has_output:
-        print("*No comments found*" if not unacked_only else "*No unacknowledged comments*")
+        print(
+            "*No comments found*"
+            if not unacked_only
+            else "*No unacknowledged comments*"
+        )
 
 
 def get_comment(pr: str, comment_id: str, save_path: str = None):
     """Get specific comment with acknowledgment status."""
-    data = json.loads(run_gh([
-        "gh", "pr", "view", pr, "--json",
-        "number,title,comments,reviews"
-    ]))
+    data = json.loads(
+        run_gh(["gh", "pr", "view", pr, "--json", "number,title,comments,reviews"])
+    )
 
     # Determine type and extract numeric ID
     is_review = comment_id.startswith("R_")
@@ -132,25 +135,29 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
 
     # Find comment
     comments = data.get("reviews" if is_review else "comments", [])
-    comment = next((c for c in comments if str(c['id']) == numeric_id), None)
+    comment = next((c for c in comments if str(c["id"]) == numeric_id), None)
 
     if not comment:
         print(f"Comment {comment_id} not found", file=sys.stderr)
         sys.exit(1)
 
-    acked = check_acked(numeric_id, 'review' if is_review else 'review_comment', pr)
+    acked = check_acked(numeric_id, "review" if is_review else "review_comment", pr)
     ack_mark = "✓" if acked else "○"
 
     # Build output
     output_lines = []
-    output_lines.append(f"# [{ack_mark}] {comment_id} - @{comment['author']['login']}\n")
+    output_lines.append(
+        f"# [{ack_mark}] {comment_id} - @{comment['author']['login']}\n"
+    )
     output_lines.append(f"**PR:** #{data['number']} - {data['title']}")
 
     if is_review:
         output_lines.append(f"**State:** {comment.get('state', 'COMMENTED')}")
     else:
-        if comment.get('path'):
-            output_lines.append(f"**File:** {comment['path']}:{comment.get('line', '?')}")
+        if comment.get("path"):
+            output_lines.append(
+                f"**File:** {comment['path']}:{comment.get('line', '?')}"
+            )
 
     output_lines.append(f"**URL:** {comment.get('url', 'N/A')}")
     output_lines.append(f"\n## Comment\n\n{comment['body']}\n")
@@ -162,7 +169,7 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
 
     # Save to file if requested
     if save_path:
-        with open(save_path, 'w') as f:
+        with open(save_path, "w") as f:
             f.write(output)
         print(f"✓ Comment saved to {save_path}")
     else:
@@ -171,31 +178,32 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
 
 def get_latest(pr: str):
     """Get most recent comment."""
-    data = json.loads(run_gh([
-        "gh", "pr", "view", pr, "--json",
-        "comments,reviews"
-    ]))
+    data = json.loads(run_gh(["gh", "pr", "view", pr, "--json", "comments,reviews"]))
 
     # Collect all comments with timestamps
     all_comments = []
 
     for c in data.get("comments", []):
         if c.get("body"):
-            all_comments.append({
-                "id": f"RC_{c['id']}",
-                "created": c.get("createdAt", ""),
-                "data": c,
-                "type": "review_comment"
-            })
+            all_comments.append(
+                {
+                    "id": f"RC_{c['id']}",
+                    "created": c.get("createdAt", ""),
+                    "data": c,
+                    "type": "review_comment",
+                }
+            )
 
     for r in data.get("reviews", []):
         if r.get("body"):
-            all_comments.append({
-                "id": f"R_{r['id']}",
-                "created": r.get("submittedAt", ""),
-                "data": r,
-                "type": "review"
-            })
+            all_comments.append(
+                {
+                    "id": f"R_{r['id']}",
+                    "created": r.get("submittedAt", ""),
+                    "data": r,
+                    "type": "review",
+                }
+            )
 
     if not all_comments:
         print("No comments found")
@@ -219,11 +227,7 @@ def ack_comment(pr: str, comment_id: str):
     else:
         endpoint = f"repos/{repo}/pulls/comments/{numeric_id}/reactions"
 
-    run_gh([
-        "gh", "api", endpoint,
-        "-X", "POST",
-        "-f", "content=+1"
-    ])
+    run_gh(["gh", "api", endpoint, "-X", "POST", "-f", "content=+1"])
 
     print(f"✓ Acknowledged {comment_id}")
 
@@ -231,16 +235,13 @@ def ack_comment(pr: str, comment_id: str):
 def add_comment(pr: str, text: str = None, file_path: str = None):
     """Add comment to PR from text or file."""
     if file_path:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             text = f.read()
 
     if not text:
         raise ValueError("No comment text provided")
 
-    run_gh([
-        "gh", "pr", "comment", pr,
-        "--body", text
-    ])
+    run_gh(["gh", "pr", "comment", pr, "--body", text])
 
     print(f"✓ Comment added to PR #{pr}")
 
@@ -263,7 +264,10 @@ def main():
 
         elif cmd == "get":
             if len(sys.argv) < 4:
-                print("Usage: pr_comments.py get <pr> <comment_id> [--save <path>]", file=sys.stderr)
+                print(
+                    "Usage: pr_comments.py get <pr> <comment_id> [--save <path>]",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             pr = sys.argv[2]
@@ -293,7 +297,10 @@ def main():
 
         elif cmd == "comment":
             if len(sys.argv) < 4:
-                print("Usage: pr_comments.py comment <pr> <text> | comment <pr> --file <path>", file=sys.stderr)
+                print(
+                    "Usage: pr_comments.py comment <pr> <text> | comment <pr> --file <path>",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             pr = sys.argv[2]

@@ -1,0 +1,323 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+Minimal PR comment operations with markdown output.
+
+Commands:
+  list <pr> [--unacked]              List all comments (filter unacknowledged)
+  get <pr> <comment_id> [--save <path>]  Get specific comment, optionally save to file
+  latest <pr>                        Get most recent comment
+  ack <pr> <comment_id>              Acknowledge comment with +1
+  comment <pr> <text>                Add comment to PR (inline text)
+  comment <pr> --file <path>         Add comment from file (preferred)
+"""
+
+import json
+import subprocess
+import sys
+from typing import Optional
+
+
+def run_gh(cmd: list[str]) -> str:
+    """Run gh CLI command and return output."""
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
+def get_repo_from_git() -> str:
+    """Get current repo in owner/name format."""
+    remote = run_gh(["git", "remote", "get-url", "origin"])
+    # Parse owner/repo from git@github.com:owner/repo.git or https://github.com/owner/repo
+    if "github.com" in remote:
+        parts = remote.split("github.com")[-1].strip(":/").replace(".git", "")
+        return parts
+    raise ValueError("Not a GitHub repository")
+
+
+def check_acked(comment_id: str, comment_type: str, pr: str) -> bool:
+    """Check if comment has +1 reaction from authenticated user."""
+    try:
+        repo = get_repo_from_git()
+
+        if comment_type == "review_comment":
+            endpoint = f"repos/{repo}/pulls/comments/{comment_id}/reactions"
+        else:  # review
+            endpoint = f"repos/{repo}/pulls/{pr}/reviews/{comment_id}/reactions"
+
+        reactions = json.loads(run_gh(["gh", "api", endpoint]))
+
+        # Get current user
+        user = json.loads(run_gh(["gh", "api", "user"]))
+        username = user["login"]
+
+        # Check for +1 from current user
+        for reaction in reactions:
+            if reaction["content"] == "+1" and reaction["user"]["login"] == username:
+                return True
+        return False
+    except:
+        return False
+
+
+def list_comments(pr: str, unacked_only: bool = False):
+    """List all PR comments in markdown format."""
+    data = json.loads(run_gh([
+        "gh", "pr", "view", pr, "--json",
+        "number,title,comments,reviews"
+    ]))
+
+    print(f"# PR #{data['number']}: {data['title']}\n")
+
+    has_output = False
+
+    # Review comments (inline code comments)
+    for c in data.get("comments", []):
+        if not c.get("body"):
+            continue
+
+        cid = f"RC_{c['id']}"
+        acked = check_acked(c['id'], 'review_comment', pr)
+
+        if unacked_only and acked:
+            continue
+
+        has_output = True
+        ack_mark = "✓" if acked else "○"
+        file_info = f"{c.get('path', 'unknown')}:{c.get('line', '?')}" if c.get('path') else ""
+
+        print(f"## [{ack_mark}] {cid} - @{c['author']['login']}")
+        if file_info:
+            print(f"**File:** {file_info}")
+        print(f"\n{c['body']}\n")
+        if not acked:
+            print(f"*Ack:* `pr_comments.py ack {pr} {cid}`\n")
+
+    # Reviews (approve/request changes/comment)
+    for r in data.get("reviews", []):
+        if not r.get("body"):
+            continue
+
+        rid = f"R_{r['id']}"
+        acked = check_acked(r['id'], 'review', pr)
+
+        if unacked_only and acked:
+            continue
+
+        has_output = True
+        ack_mark = "✓" if acked else "○"
+        state = r.get('state', 'COMMENTED')
+
+        print(f"## [{ack_mark}] {rid} - @{r['author']['login']} ({state})")
+        print(f"\n{r['body']}\n")
+        if not acked:
+            print(f"*Ack:* `pr_comments.py ack {pr} {rid}`\n")
+
+    if not has_output:
+        print("*No comments found*" if not unacked_only else "*No unacknowledged comments*")
+
+
+def get_comment(pr: str, comment_id: str, save_path: str = None):
+    """Get specific comment with acknowledgment status."""
+    data = json.loads(run_gh([
+        "gh", "pr", "view", pr, "--json",
+        "number,title,comments,reviews"
+    ]))
+
+    # Determine type and extract numeric ID
+    is_review = comment_id.startswith("R_")
+    numeric_id = comment_id.split("_")[1]
+
+    # Find comment
+    comments = data.get("reviews" if is_review else "comments", [])
+    comment = next((c for c in comments if str(c['id']) == numeric_id), None)
+
+    if not comment:
+        print(f"Comment {comment_id} not found", file=sys.stderr)
+        sys.exit(1)
+
+    acked = check_acked(numeric_id, 'review' if is_review else 'review_comment', pr)
+    ack_mark = "✓" if acked else "○"
+
+    # Build output
+    output_lines = []
+    output_lines.append(f"# [{ack_mark}] {comment_id} - @{comment['author']['login']}\n")
+    output_lines.append(f"**PR:** #{data['number']} - {data['title']}")
+
+    if is_review:
+        output_lines.append(f"**State:** {comment.get('state', 'COMMENTED')}")
+    else:
+        if comment.get('path'):
+            output_lines.append(f"**File:** {comment['path']}:{comment.get('line', '?')}")
+
+    output_lines.append(f"**URL:** {comment.get('url', 'N/A')}")
+    output_lines.append(f"\n## Comment\n\n{comment['body']}\n")
+
+    if not acked:
+        output_lines.append(f"**Acknowledge:** `pr_comments.py ack {pr} {comment_id}`")
+
+    output = "\n".join(output_lines)
+
+    # Save to file if requested
+    if save_path:
+        with open(save_path, 'w') as f:
+            f.write(output)
+        print(f"✓ Comment saved to {save_path}")
+    else:
+        print(output)
+
+
+def get_latest(pr: str):
+    """Get most recent comment."""
+    data = json.loads(run_gh([
+        "gh", "pr", "view", pr, "--json",
+        "comments,reviews"
+    ]))
+
+    # Collect all comments with timestamps
+    all_comments = []
+
+    for c in data.get("comments", []):
+        if c.get("body"):
+            all_comments.append({
+                "id": f"RC_{c['id']}",
+                "created": c.get("createdAt", ""),
+                "data": c,
+                "type": "review_comment"
+            })
+
+    for r in data.get("reviews", []):
+        if r.get("body"):
+            all_comments.append({
+                "id": f"R_{r['id']}",
+                "created": r.get("submittedAt", ""),
+                "data": r,
+                "type": "review"
+            })
+
+    if not all_comments:
+        print("No comments found")
+        return
+
+    # Sort by timestamp, get latest
+    latest = max(all_comments, key=lambda x: x["created"])
+
+    # Use get_comment to display
+    get_comment(pr, latest["id"])
+
+
+def ack_comment(pr: str, comment_id: str):
+    """Acknowledge comment with +1 reaction."""
+    repo = get_repo_from_git()
+    is_review = comment_id.startswith("R_")
+    numeric_id = comment_id.split("_")[1]
+
+    if is_review:
+        endpoint = f"repos/{repo}/pulls/{pr}/reviews/{numeric_id}/reactions"
+    else:
+        endpoint = f"repos/{repo}/pulls/comments/{numeric_id}/reactions"
+
+    run_gh([
+        "gh", "api", endpoint,
+        "-X", "POST",
+        "-f", "content=+1"
+    ])
+
+    print(f"✓ Acknowledged {comment_id}")
+
+
+def add_comment(pr: str, text: str = None, file_path: str = None):
+    """Add comment to PR from text or file."""
+    if file_path:
+        with open(file_path, 'r') as f:
+            text = f.read()
+
+    if not text:
+        raise ValueError("No comment text provided")
+
+    run_gh([
+        "gh", "pr", "comment", pr,
+        "--body", text
+    ])
+
+    print(f"✓ Comment added to PR #{pr}")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__, file=sys.stderr)
+        sys.exit(1)
+
+    cmd = sys.argv[1]
+
+    try:
+        if cmd == "list":
+            if len(sys.argv) < 3:
+                print("Usage: pr_comments.py list <pr> [--unacked]", file=sys.stderr)
+                sys.exit(1)
+            pr = sys.argv[2]
+            unacked_only = "--unacked" in sys.argv
+            list_comments(pr, unacked_only)
+
+        elif cmd == "get":
+            if len(sys.argv) < 4:
+                print("Usage: pr_comments.py get <pr> <comment_id> [--save <path>]", file=sys.stderr)
+                sys.exit(1)
+
+            pr = sys.argv[2]
+            comment_id = sys.argv[3]
+            save_path = None
+
+            if "--save" in sys.argv:
+                save_idx = sys.argv.index("--save") + 1
+                if save_idx >= len(sys.argv):
+                    print("Error: --save requires a path argument", file=sys.stderr)
+                    sys.exit(1)
+                save_path = sys.argv[save_idx]
+
+            get_comment(pr, comment_id, save_path)
+
+        elif cmd == "latest":
+            if len(sys.argv) < 3:
+                print("Usage: pr_comments.py latest <pr>", file=sys.stderr)
+                sys.exit(1)
+            get_latest(sys.argv[2])
+
+        elif cmd == "ack":
+            if len(sys.argv) < 4:
+                print("Usage: pr_comments.py ack <pr> <comment_id>", file=sys.stderr)
+                sys.exit(1)
+            ack_comment(sys.argv[2], sys.argv[3])
+
+        elif cmd == "comment":
+            if len(sys.argv) < 4:
+                print("Usage: pr_comments.py comment <pr> <text> | comment <pr> --file <path>", file=sys.stderr)
+                sys.exit(1)
+
+            pr = sys.argv[2]
+            if "--file" in sys.argv:
+                file_idx = sys.argv.index("--file") + 1
+                if file_idx >= len(sys.argv):
+                    print("Error: --file requires a path argument", file=sys.stderr)
+                    sys.exit(1)
+                add_comment(pr, file_path=sys.argv[file_idx])
+            else:
+                add_comment(pr, text=" ".join(sys.argv[3:]))
+
+        else:
+            print(f"Unknown command: {cmd}", file=sys.stderr)
+            print(__doc__, file=sys.stderr)
+            sys.exit(1)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e.stderr if e.stderr else str(e)}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

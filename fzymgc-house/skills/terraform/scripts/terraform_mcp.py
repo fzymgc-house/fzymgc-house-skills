@@ -1095,7 +1095,9 @@ def workflow_run_details(
         else:
             print(f"[Could not fetch plan logs: {log_result.get('error')}]")
 
-    if apply_rel.get("id") and status == "applied":
+    # Show apply logs for both successful and errored runs
+    # (errors during apply have status "errored" not "applied")
+    if apply_rel.get("id") and status in ("applied", "errored"):
         print("\n=== Apply Output ===")
         log_result = hcp_client.get_apply_logs(apply_rel["id"])
         if log_result.get("success"):
@@ -1272,7 +1274,8 @@ def workflow_watch_run(
                         else:
                             print(f"[Could not fetch plan logs: {log_result.get('error')}]")
 
-                    if apply_rel.get("id") and status == "applied":
+                    # Show apply logs for both successful and errored runs
+                    if apply_rel.get("id") and status in ("applied", "errored"):
                         print("\n=== Apply Output ===")
                         log_result = hcp_client.get_apply_logs(apply_rel["id"])
                         if log_result.get("success"):

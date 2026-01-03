@@ -76,8 +76,10 @@ def list_comments(pr: str, unacked_only: bool = False):
         if not c.get("body"):
             continue
 
+        # Use databaseId for API calls, id for display
+        db_id = c.get("databaseId", c["id"])
         cid = f"RC_{c['id']}"
-        acked = check_acked(c["id"], "review_comment", pr)
+        acked = check_acked(db_id, "review_comment", pr)
 
         if unacked_only and acked:
             continue
@@ -100,8 +102,10 @@ def list_comments(pr: str, unacked_only: bool = False):
         if not r.get("body"):
             continue
 
+        # Use databaseId for API calls, id for display
+        db_id = r.get("databaseId", r["id"])
         rid = f"R_{r['id']}"
-        acked = check_acked(r["id"], "review", pr)
+        acked = check_acked(db_id, "review", pr)
 
         if unacked_only and acked:
             continue
@@ -129,19 +133,21 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
         run_gh(["gh", "pr", "view", pr, "--json", "number,title,comments,reviews"])
     )
 
-    # Determine type and extract numeric ID
+    # Determine type and extract GraphQL ID (after RC_ or R_ prefix)
     is_review = comment_id.startswith("R_")
-    numeric_id = comment_id.split("_")[1]
+    graphql_id = comment_id.split("_", 1)[1]
 
-    # Find comment
+    # Find comment by matching the GraphQL ID
     comments = data.get("reviews" if is_review else "comments", [])
-    comment = next((c for c in comments if str(c["id"]) == numeric_id), None)
+    comment = next((c for c in comments if c["id"] == graphql_id), None)
 
     if not comment:
         print(f"Comment {comment_id} not found", file=sys.stderr)
         sys.exit(1)
 
-    acked = check_acked(numeric_id, "review" if is_review else "review_comment", pr)
+    # Use databaseId for API calls
+    db_id = comment.get("databaseId", comment["id"])
+    acked = check_acked(db_id, "review" if is_review else "review_comment", pr)
     ack_mark = "✓" if acked else "○"
 
     # Build output
@@ -218,14 +224,29 @@ def get_latest(pr: str):
 
 def ack_comment(pr: str, comment_id: str):
     """Acknowledge comment with +1 reaction."""
-    repo = get_repo_from_git()
+    # Fetch PR data to get databaseId
+    data = json.loads(run_gh(["gh", "pr", "view", pr, "--json", "comments,reviews"]))
+
+    # Determine type and extract GraphQL ID
     is_review = comment_id.startswith("R_")
-    numeric_id = comment_id.split("_")[1]
+    graphql_id = comment_id.split("_", 1)[1]
+
+    # Find comment to get databaseId
+    comments = data.get("reviews" if is_review else "comments", [])
+    comment = next((c for c in comments if c["id"] == graphql_id), None)
+
+    if not comment:
+        print(f"Comment {comment_id} not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Use databaseId for API call
+    repo = get_repo_from_git()
+    db_id = comment.get("databaseId", comment["id"])
 
     if is_review:
-        endpoint = f"repos/{repo}/pulls/{pr}/reviews/{numeric_id}/reactions"
+        endpoint = f"repos/{repo}/pulls/{pr}/reviews/{db_id}/reactions"
     else:
-        endpoint = f"repos/{repo}/pulls/comments/{numeric_id}/reactions"
+        endpoint = f"repos/{repo}/pulls/comments/{db_id}/reactions"
 
     run_gh(["gh", "api", endpoint, "-X", "POST", "-f", "content=+1"])
 

@@ -36,13 +36,62 @@ def get_repo_from_git() -> str:
     raise ValueError("Not a GitHub repository")
 
 
+def get_database_id(node_id: str, node_type: str, pr: str) -> int:
+    """Convert GraphQL node ID to numeric database ID."""
+    repo = get_repo_from_git()
+    owner, name = repo.split("/")
+
+    if node_type == "review":
+        query = f'''
+        {{
+          repository(owner: "{owner}", name: "{name}") {{
+            pullRequest(number: {pr}) {{
+              reviews(first: 100) {{
+                nodes {{
+                  id
+                  databaseId
+                }}
+              }}
+            }}
+          }}
+        }}
+        '''
+        result = json.loads(run_gh(["gh", "api", "graphql", "-f", f"query={query}"]))
+        nodes = result["data"]["repository"]["pullRequest"]["reviews"]["nodes"]
+    else:  # review_comment
+        query = f'''
+        {{
+          repository(owner: "{owner}", name: "{name}") {{
+            pullRequest(number: {pr}) {{
+              comments(first: 100) {{
+                nodes {{
+                  id
+                  databaseId
+                }}
+              }}
+            }}
+          }}
+        }}
+        '''
+        result = json.loads(run_gh(["gh", "api", "graphql", "-f", f"query={query}"]))
+        nodes = result["data"]["repository"]["pullRequest"]["comments"]["nodes"]
+
+    # Find matching node and return databaseId
+    for node in nodes:
+        if node["id"] == node_id:
+            return node["databaseId"]
+
+    raise ValueError(f"Node ID {node_id} not found")
+
+
 def check_acked(comment_id: str, comment_type: str, pr: str) -> bool:
     """Check if comment has +1 reaction from authenticated user."""
     try:
         repo = get_repo_from_git()
 
         if comment_type == "review_comment":
-            endpoint = f"repos/{repo}/pulls/comments/{comment_id}/reactions"
+            # PR comments are actually issue comments
+            endpoint = f"repos/{repo}/issues/comments/{comment_id}/reactions"
         else:  # review
             endpoint = f"repos/{repo}/pulls/{pr}/reviews/{comment_id}/reactions"
 
@@ -76,9 +125,9 @@ def list_comments(pr: str, unacked_only: bool = False):
         if not c.get("body"):
             continue
 
-        # Use databaseId for API calls, id for display
-        db_id = c.get("databaseId", c["id"])
         cid = f"RC_{c['id']}"
+        # Convert node ID to database ID for API calls
+        db_id = get_database_id(c["id"], "review_comment", pr)
         acked = check_acked(db_id, "review_comment", pr)
 
         if unacked_only and acked:
@@ -102,9 +151,9 @@ def list_comments(pr: str, unacked_only: bool = False):
         if not r.get("body"):
             continue
 
-        # Use databaseId for API calls, id for display
-        db_id = r.get("databaseId", r["id"])
         rid = f"R_{r['id']}"
+        # Convert node ID to database ID for API calls
+        db_id = get_database_id(r["id"], "review", pr)
         acked = check_acked(db_id, "review", pr)
 
         if unacked_only and acked:
@@ -145,9 +194,10 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
         print(f"Comment {comment_id} not found", file=sys.stderr)
         sys.exit(1)
 
-    # Use databaseId for API calls
-    db_id = comment.get("databaseId", comment["id"])
-    acked = check_acked(db_id, "review" if is_review else "review_comment", pr)
+    # Convert node ID to database ID for API calls
+    node_type = "review" if is_review else "review_comment"
+    db_id = get_database_id(comment["id"], node_type, pr)
+    acked = check_acked(db_id, node_type, pr)
     ack_mark = "✓" if acked else "○"
 
     # Build output
@@ -239,14 +289,16 @@ def ack_comment(pr: str, comment_id: str):
         print(f"Comment {comment_id} not found", file=sys.stderr)
         sys.exit(1)
 
-    # Use databaseId for API call
+    # Convert node ID to database ID for API call
     repo = get_repo_from_git()
-    db_id = comment.get("databaseId", comment["id"])
+    node_type = "review" if is_review else "review_comment"
+    db_id = get_database_id(graphql_id, node_type, pr)
 
     if is_review:
         endpoint = f"repos/{repo}/pulls/{pr}/reviews/{db_id}/reactions"
     else:
-        endpoint = f"repos/{repo}/pulls/comments/{db_id}/reactions"
+        # PR comments are actually issue comments
+        endpoint = f"repos/{repo}/issues/comments/{db_id}/reactions"
 
     run_gh(["gh", "api", endpoint, "-X", "POST", "-f", "content=+1"])
 

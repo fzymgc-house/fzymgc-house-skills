@@ -1,7 +1,10 @@
 #!/usr/bin/env -S uv run
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["httpx", "pyyaml"]
+# dependencies = [
+#   "httpx[socks]",  # [socks] extra needed for SOCKS proxy support (httpx auto-detects proxies from env)
+#   "pyyaml"
+# ]
 # ///
 """
 Terraform MCP Gateway Script.
@@ -9,6 +12,11 @@ Terraform MCP Gateway Script.
 Invokes Terraform MCP server on-demand without loading tool definitions into context.
 
 Run with --help for usage. Requires TFE_TOKEN environment variable.
+
+NOTE: httpx automatically detects proxy configuration from environment variables
+(HTTP_PROXY, HTTPS_PROXY, ALL_PROXY) and system settings. The httpx[socks] extra
+is required when a SOCKS proxy is detected. If you don't need proxy support,
+set NO_PROXY=* in your environment.
 """
 
 from __future__ import annotations
@@ -21,7 +29,6 @@ import sys
 import tempfile
 import time
 import warnings
-from pathlib import Path
 from typing import Any
 
 import httpx
@@ -41,7 +48,9 @@ class MCPStdioClient:
         self._request_id = 0
         self._initialized = False
 
-    def _send(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _send(
+        self, method: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Send JSON-RPC request and receive response."""
         # Check if process is still running
         if self._proc.poll() is not None:
@@ -88,11 +97,14 @@ class MCPStdioClient:
         if self._initialized:
             return {"success": True}
 
-        result = self._send("initialize", {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {"name": "terraform-mcp-gateway", "version": "1.0.0"},
-        })
+        result = self._send(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "terraform-mcp-gateway", "version": "1.0.0"},
+            },
+        )
 
         if "error" not in result:
             self._initialized = True
@@ -107,7 +119,10 @@ class MCPStdioClient:
         result = self._send("tools/list")
 
         if "error" in result:
-            return {"success": False, "error": result["error"].get("message", str(result["error"]))}
+            return {
+                "success": False,
+                "error": result["error"].get("message", str(result["error"])),
+            }
 
         if "result" in result and "tools" in result["result"]:
             tool_names = [t["name"] for t in result["result"]["tools"]]
@@ -121,7 +136,10 @@ class MCPStdioClient:
         result = self._send("tools/list")
 
         if "error" in result:
-            return {"success": False, "error": result["error"].get("message", str(result["error"]))}
+            return {
+                "success": False,
+                "error": result["error"].get("message", str(result["error"])),
+            }
 
         if "result" in result and "tools" in result["result"]:
             for tool in result["result"]["tools"]:
@@ -150,7 +168,10 @@ class MCPStdioClient:
         result = self._send("tools/call", {"name": tool_name, "arguments": arguments})
 
         if "error" in result:
-            return {"success": False, "error": result["error"].get("message", str(result["error"]))}
+            return {
+                "success": False,
+                "error": result["error"].get("message", str(result["error"])),
+            }
 
         if "result" in result:
             return {"success": True, "result": result["result"]}
@@ -196,7 +217,7 @@ class SessionManager:
         env = self._get_env()
 
         # Write env vars to temp file to avoid exposing token in process list
-        env_file = tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False)
+        env_file = tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False)
         # Assign path immediately so cleanup can find it if write/close fails
         self._env_file_path = env_file.name
         try:
@@ -205,8 +226,12 @@ class SessionManager:
             env_file.close()
 
             cmd = [
-                "docker", "run", "-i", "--rm",
-                "--env-file", self._env_file_path,
+                "docker",
+                "run",
+                "-i",
+                "--rm",
+                "--env-file",
+                self._env_file_path,
                 DOCKER_IMAGE,
             ]
 
@@ -275,7 +300,9 @@ class HCPTerraformClient:
             resp.raise_for_status()
             plan_data = resp.json()
 
-            log_url = plan_data.get("data", {}).get("attributes", {}).get("log-read-url")
+            log_url = (
+                plan_data.get("data", {}).get("attributes", {}).get("log-read-url")
+            )
             if not log_url:
                 return {"success": False, "error": "No log URL available"}
 
@@ -283,7 +310,10 @@ class HCPTerraformClient:
             log_resp.raise_for_status()
             return {"success": True, "logs": log_resp.text}
         except httpx.HTTPStatusError as e:
-            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
+            return {
+                "success": False,
+                "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}",
+            }
         except httpx.TimeoutException as e:
             return {"success": False, "error": f"Request timed out: {e}"}
         except httpx.RequestError as e:
@@ -296,7 +326,9 @@ class HCPTerraformClient:
             resp.raise_for_status()
             apply_data = resp.json()
 
-            log_url = apply_data.get("data", {}).get("attributes", {}).get("log-read-url")
+            log_url = (
+                apply_data.get("data", {}).get("attributes", {}).get("log-read-url")
+            )
             if not log_url:
                 return {"success": False, "error": "No log URL available"}
 
@@ -304,7 +336,10 @@ class HCPTerraformClient:
             log_resp.raise_for_status()
             return {"success": True, "logs": log_resp.text}
         except httpx.HTTPStatusError as e:
-            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
+            return {
+                "success": False,
+                "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}",
+            }
         except httpx.TimeoutException as e:
             return {"success": False, "error": f"Request timed out: {e}"}
         except httpx.RequestError as e:
@@ -317,7 +352,10 @@ class HCPTerraformClient:
             resp.raise_for_status()
             return {"success": True, "data": resp.json()}
         except httpx.HTTPStatusError as e:
-            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
+            return {
+                "success": False,
+                "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}",
+            }
         except httpx.TimeoutException as e:
             return {"success": False, "error": f"Request timed out: {e}"}
         except httpx.RequestError as e:
@@ -348,7 +386,10 @@ class HCPTerraformClient:
             resp.raise_for_status()
             return {"success": True, "data": resp.json()}
         except httpx.HTTPStatusError as e:
-            return {"success": False, "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}"}
+            return {
+                "success": False,
+                "error": f"HTTP {e.response.status_code}: {e.response.text[:200]}",
+            }
         except httpx.TimeoutException as e:
             return {"success": False, "error": f"Request timed out: {e}"}
         except httpx.RequestError as e:
@@ -374,7 +415,7 @@ def unwrap_result(data: dict[str, Any]) -> Any:
                 try:
                     texts.append(json.loads(item["text"]))
                 except json.JSONDecodeError:
-                    warnings.warn(f"MCP response text is not valid JSON, using raw text")
+                    warnings.warn("MCP response text is not valid JSON, using raw text")
                     texts.append(item["text"])
 
         if len(texts) == 1:
@@ -384,7 +425,9 @@ def unwrap_result(data: dict[str, Any]) -> Any:
     return result
 
 
-def parse_provider_search_markdown(text: str, target_slug: str | None = None) -> list[dict]:
+def parse_provider_search_markdown(
+    text: str, target_slug: str | None = None
+) -> list[dict]:
     """Parse markdown response from search_providers into structured data.
 
     The MCP server returns markdown formatted like:
@@ -400,20 +443,20 @@ def parse_provider_search_markdown(text: str, target_slug: str | None = None) ->
     entries = []
     current = {}
 
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         line = line.strip()
-        if line == '---':
+        if line == "---":
             if current:
                 entries.append(current)
                 current = {}
-        elif line.startswith('- providerDocID:'):
-            current['id'] = line.split(':', 1)[1].strip()
-        elif line.startswith('- Title:'):
-            current['title'] = line.split(':', 1)[1].strip()
-        elif line.startswith('- Category:'):
-            current['category'] = line.split(':', 1)[1].strip()
-        elif line.startswith('- Description:'):
-            current['description'] = line.split(':', 1)[1].strip()
+        elif line.startswith("- providerDocID:"):
+            current["id"] = line.split(":", 1)[1].strip()
+        elif line.startswith("- Title:"):
+            current["title"] = line.split(":", 1)[1].strip()
+        elif line.startswith("- Category:"):
+            current["category"] = line.split(":", 1)[1].strip()
+        elif line.startswith("- Description:"):
+            current["description"] = line.split(":", 1)[1].strip()
 
     # Don't forget the last entry if no trailing ---
     if current:
@@ -421,7 +464,9 @@ def parse_provider_search_markdown(text: str, target_slug: str | None = None) ->
 
     # If we have a target slug, prioritize exact matches
     if target_slug and entries:
-        exact_matches = [e for e in entries if e.get('title', '').lower() == target_slug.lower()]
+        exact_matches = [
+            e for e in entries if e.get("title", "").lower() == target_slug.lower()
+        ]
         if exact_matches:
             return exact_matches
 
@@ -445,13 +490,13 @@ def format_terraform_logs(raw_logs: str) -> str:
     Non-JSON lines are passed through as-is.
     """
     lines = []
-    for line in raw_logs.split('\n'):
+    for line in raw_logs.split("\n"):
         line = line.strip()
         if not line:
             continue
 
         # Try to parse as JSON
-        if line.startswith('{'):
+        if line.startswith("{"):
             try:
                 obj = json.loads(line)
                 msg_type = obj.get("type", "")
@@ -486,9 +531,13 @@ def format_terraform_logs(raw_logs: str) -> str:
                     change = changes.get("change", 0)
                     remove = changes.get("remove", 0)
                     if op == "plan":
-                        lines.append(f"Plan: {add} to add, {change} to change, {remove} to destroy")
+                        lines.append(
+                            f"Plan: {add} to add, {change} to change, {remove} to destroy"
+                        )
                     elif op == "apply":
-                        lines.append(f"Apply complete: {add} added, {change} changed, {remove} destroyed")
+                        lines.append(
+                            f"Apply complete: {add} added, {change} changed, {remove} destroyed"
+                        )
                     else:
                         lines.append(message)
 
@@ -512,7 +561,7 @@ def format_terraform_logs(raw_logs: str) -> str:
             # Non-JSON line, include as-is
             lines.append(line)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def get_default_org() -> str:
@@ -530,20 +579,25 @@ def _truncate_message(msg: str, max_len: int) -> str:
     """Truncate message with ellipsis if too long."""
     if len(msg) <= max_len:
         return msg
-    return msg[:max_len - 3] + "..."
+    return msg[: max_len - 3] + "..."
 
 
-def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+def workflow_workspace_status(
+    client: MCPStdioClient, args: argparse.Namespace, fmt: str
+) -> int:
     """Show workspace status overview."""
     org = get_default_org()
     workspace_name = getattr(args, "workspace", None)
 
     if workspace_name:
         # Single workspace detail
-        result = client.call_tool("get_workspace_details", {
-            "terraform_org_name": org,
-            "workspace_name": workspace_name,
-        })
+        result = client.call_tool(
+            "get_workspace_details",
+            {
+                "terraform_org_name": org,
+                "workspace_name": workspace_name,
+            },
+        )
 
         if not result.get("success"):
             print(f"Error: {result.get('error')}", file=sys.stderr)
@@ -559,10 +613,14 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
             "workspace": workspace_name,
             "organization": org,
             "workspace_id": data.get("id", ""),
-            "terraform_version": data.get("attributes", {}).get("terraform-version", ""),
+            "terraform_version": data.get("attributes", {}).get(
+                "terraform-version", ""
+            ),
             "execution_mode": data.get("attributes", {}).get("execution-mode", ""),
             "auto_apply": data.get("attributes", {}).get("auto-apply", False),
-            "working_directory": data.get("attributes", {}).get("working-directory", ""),
+            "working_directory": data.get("attributes", {}).get(
+                "working-directory", ""
+            ),
             "vcs_repo": data.get("attributes", {}).get("vcs-repo", {}),
             "updated_at": data.get("attributes", {}).get("updated-at", ""),
         }
@@ -572,9 +630,12 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
 
     else:
         # List all workspaces
-        result = client.call_tool("list_workspaces", {
-            "terraform_org_name": org,
-        })
+        result = client.call_tool(
+            "list_workspaces",
+            {
+                "terraform_org_name": org,
+            },
+        )
 
         if not result.get("success"):
             print(f"Error: {result.get('error')}", file=sys.stderr)
@@ -584,7 +645,10 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
 
         # Validate data type before processing
         if not isinstance(data, (dict, list)):
-            print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+            print(
+                f"Error: Unexpected response format: {type(data).__name__}",
+                file=sys.stderr,
+            )
             return 1
 
         # Handle various response structures from MCP
@@ -611,19 +675,23 @@ def workflow_workspace_status(client: MCPStdioClient, args: argparse.Namespace, 
         elif isinstance(data, dict):
             items = [data]  # Single workspace response
         else:
-            print("Error: Could not extract workspace list from response", file=sys.stderr)
+            print(
+                "Error: Could not extract workspace list from response", file=sys.stderr
+            )
             return 1
 
         # Format as brief list
         workspaces = []
         for ws in items:
             attrs = ws.get("attributes", {}) if isinstance(ws, dict) else {}
-            workspaces.append({
-                "name": attrs.get("name", ws.get("name", "")),
-                "id": ws.get("id", ""),
-                "terraform_version": attrs.get("terraform-version", ""),
-                "updated_at": attrs.get("updated-at", ""),
-            })
+            workspaces.append(
+                {
+                    "name": attrs.get("name", ws.get("name", "")),
+                    "id": ws.get("id", ""),
+                    "terraform_version": attrs.get("terraform-version", ""),
+                    "updated_at": attrs.get("updated-at", ""),
+                }
+            )
 
         output = {
             "organization": org,
@@ -663,7 +731,9 @@ def _extract_runs_from_api_response(data: Any) -> list[dict]:
     return []
 
 
-def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+def workflow_list_runs(
+    client: MCPStdioClient, args: argparse.Namespace, fmt: str
+) -> int:
     """List recent runs for a workspace."""
     org = get_default_org()
     workspace = getattr(args, "workspace", None)
@@ -716,14 +786,16 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     runs = []
     for run in items:
         attrs = run.get("attributes", {}) if isinstance(run, dict) else {}
-        runs.append({
-            "id": run.get("id", ""),
-            "status": attrs.get("status", ""),
-            "message": _truncate_message(attrs.get("message", "") or "", 80),
-            "created_at": attrs.get("created-at", ""),
-            "plan_only": attrs.get("plan-only", False),
-            "is_destroy": attrs.get("is-destroy", False),
-        })
+        runs.append(
+            {
+                "id": run.get("id", ""),
+                "status": attrs.get("status", ""),
+                "message": _truncate_message(attrs.get("message", "") or "", 80),
+                "created_at": attrs.get("created-at", ""),
+                "plan_only": attrs.get("plan-only", False),
+                "is_destroy": attrs.get("is-destroy", False),
+            }
+        )
 
     # Use compact table format by default, YAML/JSON for explicit format requests
     if fmt == "compact" or fmt == "yaml":
@@ -736,7 +808,9 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
         print("-" * 80)
         for run in runs:
             # Parse and format created_at
-            created = run["created_at"][:16].replace("T", " ") if run["created_at"] else ""
+            created = (
+                run["created_at"][:16].replace("T", " ") if run["created_at"] else ""
+            )
             # First line of message only
             msg = run["message"].split("\n")[0][:40]
             status = run["status"]
@@ -759,18 +833,23 @@ def workflow_list_runs(client: MCPStdioClient, args: argparse.Namespace, fmt: st
     return 0
 
 
-def workflow_list_providers(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+def workflow_list_providers(
+    client: MCPStdioClient, args: argparse.Namespace, fmt: str
+) -> int:
     """List/search available providers."""
     search = getattr(args, "search", None) or ""
     namespace = getattr(args, "namespace", None) or "hashicorp"
 
     # Use search_providers with overview type to list
-    result = client.call_tool("search_providers", {
-        "provider_name": search if search else "aws",  # Default search term
-        "provider_namespace": namespace,
-        "service_slug": search if search else "aws",
-        "provider_document_type": "overview",
-    })
+    result = client.call_tool(
+        "search_providers",
+        {
+            "provider_name": search if search else "aws",  # Default search term
+            "provider_namespace": namespace,
+            "service_slug": search if search else "aws",
+            "provider_document_type": "overview",
+        },
+    )
 
     if not result.get("success"):
         print(f"Error: {result.get('error')}", file=sys.stderr)
@@ -780,7 +859,9 @@ def workflow_list_providers(client: MCPStdioClient, args: argparse.Namespace, fm
 
     # Validate data type
     if not isinstance(data, (dict, list)):
-        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        print(
+            f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr
+        )
         return 1
 
     # Format as list
@@ -788,11 +869,13 @@ def workflow_list_providers(client: MCPStdioClient, args: argparse.Namespace, fm
     providers = []
     for item in items:
         if isinstance(item, dict):
-            providers.append({
-                "name": item.get("title", ""),
-                "id": item.get("id", ""),
-                "category": item.get("category", ""),
-            })
+            providers.append(
+                {
+                    "name": item.get("title", ""),
+                    "id": item.get("id", ""),
+                    "category": item.get("category", ""),
+                }
+            )
 
     output = {
         "search": search,
@@ -805,7 +888,9 @@ def workflow_list_providers(client: MCPStdioClient, args: argparse.Namespace, fm
     return 0
 
 
-def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+def workflow_provider_docs(
+    client: MCPStdioClient, args: argparse.Namespace, fmt: str
+) -> int:
     """Look up provider documentation."""
     provider = args.provider
     resource = getattr(args, "resource", None)
@@ -814,7 +899,10 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
 
     # Validate mutually exclusive arguments
     if sum(bool(x) for x in [resource, data_source, list_resources]) > 1:
-        print("Error: Only one of --resource, --data-source, or --list-resources can be used", file=sys.stderr)
+        print(
+            "Error: Only one of --resource, --data-source, or --list-resources can be used",
+            file=sys.stderr,
+        )
         return 1
 
     # Determine namespace (default to hashicorp for common providers)
@@ -853,12 +941,15 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
         service_slug = provider
 
     # Search for provider docs
-    result = client.call_tool("search_providers", {
-        "provider_name": provider,
-        "provider_namespace": namespace,
-        "service_slug": service_slug,
-        "provider_document_type": doc_type,
-    })
+    result = client.call_tool(
+        "search_providers",
+        {
+            "provider_name": provider,
+            "provider_namespace": namespace,
+            "service_slug": service_slug,
+            "provider_document_type": doc_type,
+        },
+    )
 
     if not result.get("success"):
         print(f"Error: {result.get('error')}", file=sys.stderr)
@@ -871,11 +962,15 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
     if isinstance(data, str):
         parsed_entries = parse_provider_search_markdown(data, service_slug)
         if not parsed_entries:
-            print(f"No documentation found for {provider}/{service_slug}", file=sys.stderr)
+            print(
+                f"No documentation found for {provider}/{service_slug}", file=sys.stderr
+            )
             return 1
         data = parsed_entries
     elif not isinstance(data, (dict, list)):
-        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        print(
+            f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr
+        )
         return 1
 
     # If listing resources, just show the search results
@@ -906,9 +1001,12 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
         return 1
 
     # Fetch full documentation
-    detail_result = client.call_tool("get_provider_details", {
-        "provider_doc_id": str(doc_id),
-    })
+    detail_result = client.call_tool(
+        "get_provider_details",
+        {
+            "provider_doc_id": str(doc_id),
+        },
+    )
 
     if not detail_result.get("success"):
         print(f"Error: {detail_result.get('error')}", file=sys.stderr)
@@ -946,7 +1044,9 @@ def workflow_provider_docs(client: MCPStdioClient, args: argparse.Namespace, fmt
     return 0
 
 
-def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: str) -> int:
+def workflow_run_outputs(
+    client: MCPStdioClient, args: argparse.Namespace, fmt: str
+) -> int:
     """View terraform outputs from a run."""
     org = get_default_org()
     run_id = getattr(args, "run_id", None)
@@ -954,12 +1054,15 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
 
     # If workspace provided, get latest successful run
     if not run_id and workspace:
-        result = client.call_tool("list_runs", {
-            "terraform_org_name": org,
-            "workspace_name": workspace,
-            "pageSize": 10,
-            "status": ["applied"],
-        })
+        result = client.call_tool(
+            "list_runs",
+            {
+                "terraform_org_name": org,
+                "workspace_name": workspace,
+                "pageSize": 10,
+                "status": ["applied"],
+            },
+        )
         if not result.get("success"):
             print(f"Error: {result.get('error')}", file=sys.stderr)
             return 1
@@ -968,7 +1071,10 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
 
         # Validate data type
         if not isinstance(data, (dict, list)):
-            print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+            print(
+                f"Error: Unexpected response format: {type(data).__name__}",
+                file=sys.stderr,
+            )
             return 1
 
         # Handle various response structures
@@ -996,7 +1102,9 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
             items = []
 
         if not items:
-            print(f"No successful runs found for workspace '{workspace}'", file=sys.stderr)
+            print(
+                f"No successful runs found for workspace '{workspace}'", file=sys.stderr
+            )
             return 1
         run_id = items[0].get("id")
 
@@ -1015,7 +1123,9 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
 
     # Validate data type
     if not isinstance(data, dict):
-        print(f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr)
+        print(
+            f"Error: Unexpected response format: {type(data).__name__}", file=sys.stderr
+        )
         return 1
 
     # Extract outputs from run if available
@@ -1028,7 +1138,9 @@ def workflow_run_outputs(client: MCPStdioClient, args: argparse.Namespace, fmt: 
 
     if not outputs:
         print(f"No outputs found for run {run_id}", file=sys.stderr)
-        print("Note: Outputs may only be available after terraform apply", file=sys.stderr)
+        print(
+            "Note: Outputs may only be available after terraform apply", file=sys.stderr
+        )
         return 1
 
     output = {
@@ -1074,7 +1186,9 @@ def workflow_run_details(
     print(f"Run: {run_id}")
     print(f"Status: {status}")
     print(f"Message: {_truncate_message(message, 200)}")
-    print(f"Resources: +{attrs.get('resource-additions', 0)} ~{attrs.get('resource-changes', 0)} -{attrs.get('resource-destructions', 0)}")
+    print(
+        f"Resources: +{attrs.get('resource-additions', 0)} ~{attrs.get('resource-changes', 0)} -{attrs.get('resource-destructions', 0)}"
+    )
     print("-" * 50)
 
     # Get and display logs
@@ -1129,11 +1243,14 @@ def workflow_watch_run(
 
     # If workspace provided, get latest run
     if not run_id and workspace:
-        result = client.call_tool("list_runs", {
-            "terraform_org_name": org,
-            "workspace_name": workspace,
-            "pageSize": 1,
-        })
+        result = client.call_tool(
+            "list_runs",
+            {
+                "terraform_org_name": org,
+                "workspace_name": workspace,
+                "pageSize": 1,
+            },
+        )
         if not result.get("success"):
             print(f"Error: {result.get('error')}", file=sys.stderr)
             return 1
@@ -1175,8 +1292,13 @@ def workflow_watch_run(
         return 1
 
     terminal_states = {
-        "applied", "errored", "discarded", "canceled", "force_canceled",
-        "planned_and_finished", "policy_soft_failed",
+        "applied",
+        "errored",
+        "discarded",
+        "canceled",
+        "force_canceled",
+        "planned_and_finished",
+        "policy_soft_failed",
     }
 
     # Check if run is already in terminal state
@@ -1190,14 +1312,22 @@ def workflow_watch_run(
             attrs = data.get("attributes", {})
             status = attrs.get("status", "unknown")
             if status in terminal_states:
-                print(f"Run {run_id} is already complete (status: {status})", file=sys.stderr)
-                print(f"Use 'run-details {run_id}' to view formatted logs", file=sys.stderr)
+                print(
+                    f"Run {run_id} is already complete (status: {status})",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Use 'run-details {run_id}' to view formatted logs",
+                    file=sys.stderr,
+                )
                 if not show_logs:
                     # Just show summary and exit
                     output = {
                         "run_id": run_id,
                         "status": status,
-                        "message": _truncate_message(attrs.get("message", "") or "", 200),
+                        "message": _truncate_message(
+                            attrs.get("message", "") or "", 200
+                        ),
                         "resource_additions": attrs.get("resource-additions", 0),
                         "resource_changes": attrs.get("resource-changes", 0),
                         "resource_destructions": attrs.get("resource-destructions", 0),
@@ -1269,20 +1399,28 @@ def workflow_watch_run(
                         print("\n=== Plan Output ===")
                         log_result = hcp_client.get_plan_logs(plan_rel["id"])
                         if log_result.get("success"):
-                            formatted = format_terraform_logs(log_result.get("logs", ""))
+                            formatted = format_terraform_logs(
+                                log_result.get("logs", "")
+                            )
                             print(formatted)
                         else:
-                            print(f"[Could not fetch plan logs: {log_result.get('error')}]")
+                            print(
+                                f"[Could not fetch plan logs: {log_result.get('error')}]"
+                            )
 
                     # Show apply logs for both successful and errored runs
                     if apply_rel.get("id") and status in ("applied", "errored"):
                         print("\n=== Apply Output ===")
                         log_result = hcp_client.get_apply_logs(apply_rel["id"])
                         if log_result.get("success"):
-                            formatted = format_terraform_logs(log_result.get("logs", ""))
+                            formatted = format_terraform_logs(
+                                log_result.get("logs", "")
+                            )
                             print(formatted)
                         else:
-                            print(f"[Could not fetch apply logs: {log_result.get('error')}]")
+                            print(
+                                f"[Could not fetch apply logs: {log_result.get('error')}]"
+                            )
 
             # Final output
             output = {
@@ -1326,47 +1464,93 @@ def main():
     # tool (raw tool call)
     tool_parser = subparsers.add_parser("tool", help="Call an MCP tool directly")
     tool_parser.add_argument("name", help="Tool name")
-    tool_parser.add_argument("arguments", nargs="?", default="{}", help="JSON arguments")
+    tool_parser.add_argument(
+        "arguments", nargs="?", default="{}", help="JSON arguments"
+    )
 
     # workspace-status
     ws_parser = subparsers.add_parser("workspace-status", help="Show workspace status")
-    ws_parser.add_argument("workspace", nargs="?", help="Workspace name (optional, lists all if omitted)")
+    ws_parser.add_argument(
+        "workspace", nargs="?", help="Workspace name (optional, lists all if omitted)"
+    )
 
     # list-runs
-    runs_parser = subparsers.add_parser("list-runs", help="List recent runs for a workspace")
+    runs_parser = subparsers.add_parser(
+        "list-runs", help="List recent runs for a workspace"
+    )
     runs_parser.add_argument("workspace", help="Workspace name")
-    runs_parser.add_argument("--limit", type=int, default=10, help="Number of runs (default: 10)")
-    runs_parser.add_argument("--status", help="Filter by status (e.g., applied, errored, planning)")
+    runs_parser.add_argument(
+        "--limit", type=int, default=10, help="Number of runs (default: 10)"
+    )
+    runs_parser.add_argument(
+        "--status", help="Filter by status (e.g., applied, errored, planning)"
+    )
 
     # watch-run
     watch_parser = subparsers.add_parser("watch-run", help="Watch a run's progress")
     watch_parser.add_argument("run_id", nargs="?", help="Run ID to watch")
-    watch_parser.add_argument("--workspace", "-w", help="Watch latest run for workspace")
-    watch_parser.add_argument("--logs", "-l", action="store_true", help="Show plan/apply logs when complete")
-    watch_parser.add_argument("--interval", "-i", type=int, default=5, help="Poll interval in seconds (default: 5)")
-    watch_parser.add_argument("--timeout", "-t", type=int, default=3600, help="Maximum wait time in seconds (default: 3600)")
+    watch_parser.add_argument(
+        "--workspace", "-w", help="Watch latest run for workspace"
+    )
+    watch_parser.add_argument(
+        "--logs", "-l", action="store_true", help="Show plan/apply logs when complete"
+    )
+    watch_parser.add_argument(
+        "--interval",
+        "-i",
+        type=int,
+        default=5,
+        help="Poll interval in seconds (default: 5)",
+    )
+    watch_parser.add_argument(
+        "--timeout",
+        "-t",
+        type=int,
+        default=3600,
+        help="Maximum wait time in seconds (default: 3600)",
+    )
 
     # run-outputs
-    outputs_parser = subparsers.add_parser("run-outputs", help="View terraform outputs from a run")
+    outputs_parser = subparsers.add_parser(
+        "run-outputs", help="View terraform outputs from a run"
+    )
     outputs_parser.add_argument("run_id", nargs="?", help="Run ID")
-    outputs_parser.add_argument("--workspace", "-w", help="Get outputs from latest successful run")
+    outputs_parser.add_argument(
+        "--workspace", "-w", help="Get outputs from latest successful run"
+    )
 
     # run-details
-    details_parser = subparsers.add_parser("run-details", help="View details and formatted logs for a completed run")
+    details_parser = subparsers.add_parser(
+        "run-details", help="View details and formatted logs for a completed run"
+    )
     details_parser.add_argument("run_id", help="Run ID to inspect")
 
     # list-providers
-    list_prov_parser = subparsers.add_parser("list-providers", help="List/search providers")
+    list_prov_parser = subparsers.add_parser(
+        "list-providers", help="List/search providers"
+    )
     list_prov_parser.add_argument("--search", "-s", help="Search term")
-    list_prov_parser.add_argument("--namespace", "-n", default="hashicorp", help="Provider namespace")
+    list_prov_parser.add_argument(
+        "--namespace", "-n", default="hashicorp", help="Provider namespace"
+    )
 
     # provider-docs
-    provider_parser = subparsers.add_parser("provider-docs", help="Look up provider documentation")
-    provider_parser.add_argument("provider", help="Provider name (e.g., aws, azurerm, google)")
-    provider_parser.add_argument("--namespace", help="Provider namespace (default: auto-detected)")
-    provider_parser.add_argument("--resource", "-r", help="Resource name (e.g., lambda_function)")
+    provider_parser = subparsers.add_parser(
+        "provider-docs", help="Look up provider documentation"
+    )
+    provider_parser.add_argument(
+        "provider", help="Provider name (e.g., aws, azurerm, google)"
+    )
+    provider_parser.add_argument(
+        "--namespace", help="Provider namespace (default: auto-detected)"
+    )
+    provider_parser.add_argument(
+        "--resource", "-r", help="Resource name (e.g., lambda_function)"
+    )
     provider_parser.add_argument("--data-source", "-d", help="Data source name")
-    provider_parser.add_argument("--list-resources", "-l", action="store_true", help="List available resources")
+    provider_parser.add_argument(
+        "--list-resources", "-l", action="store_true", help="List available resources"
+    )
 
     args = parser.parse_args()
 

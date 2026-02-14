@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = []
@@ -106,7 +106,8 @@ def check_acked(comment_id: str, comment_type: str, pr: str) -> bool:
             if reaction["content"] == "+1" and reaction["user"]["login"] == username:
                 return True
         return False
-    except Exception:
+    except Exception as e:
+        print(f"⚠ Could not check ack status for {comment_id}: {e}", file=sys.stderr)
         return False
 
 
@@ -144,7 +145,7 @@ def list_comments(pr: str, unacked_only: bool = False):
             print(f"**File:** {file_info}")
         print(f"\n{c['body']}\n")
         if not acked:
-            print(f"*Ack:* `pr_comments.py ack {pr} {cid}`\n")
+            print(f"*Ack:* `{SELF} ack {pr} {cid}`\n")
 
     # Reviews (approve/request changes/comment)
     for r in data.get("reviews", []):
@@ -166,7 +167,7 @@ def list_comments(pr: str, unacked_only: bool = False):
         print(f"## [{ack_mark}] {rid} - @{r['author']['login']} ({state})")
         print(f"\n{r['body']}\n")
         if not acked:
-            print(f"*Ack:* `pr_comments.py ack {pr} {rid}`\n")
+            print(f"*Ack:* `{SELF} ack {pr} {rid}`\n")
 
     if not has_output:
         print(
@@ -219,7 +220,7 @@ def get_comment(pr: str, comment_id: str, save_path: str = None):
     output_lines.append(f"\n## Comment\n\n{comment['body']}\n")
 
     if not acked:
-        output_lines.append(f"**Acknowledge:** `pr_comments.py ack {pr} {comment_id}`")
+        output_lines.append(f"**Acknowledge:** `{SELF} ack {pr} {comment_id}`")
 
     output = "\n".join(output_lines)
 
@@ -319,6 +320,10 @@ def add_comment(pr: str, text: str = None, file_path: str = None):
     print(f"✓ Comment added to PR #{pr}")
 
 
+SELF = sys.argv[0]
+"""Absolute path to this script, used in output so agents can copy-paste commands."""
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__, file=sys.stderr)
@@ -329,7 +334,7 @@ def main():
     try:
         if cmd == "list":
             if len(sys.argv) < 3:
-                print("Usage: pr_comments.py list <pr> [--unacked]", file=sys.stderr)
+                print(f"Usage: {SELF} list <pr> [--unacked]", file=sys.stderr)
                 sys.exit(1)
             pr = sys.argv[2]
             unacked_only = "--unacked" in sys.argv
@@ -338,7 +343,7 @@ def main():
         elif cmd == "get":
             if len(sys.argv) < 4:
                 print(
-                    "Usage: pr_comments.py get <pr> <comment_id> [--save <path>]",
+                    f"Usage: {SELF} get <pr> <comment_id> [--save <path>]",
                     file=sys.stderr,
                 )
                 sys.exit(1)
@@ -358,20 +363,20 @@ def main():
 
         elif cmd == "latest":
             if len(sys.argv) < 3:
-                print("Usage: pr_comments.py latest <pr>", file=sys.stderr)
+                print(f"Usage: {SELF} latest <pr>", file=sys.stderr)
                 sys.exit(1)
             get_latest(sys.argv[2])
 
         elif cmd == "ack":
             if len(sys.argv) < 4:
-                print("Usage: pr_comments.py ack <pr> <comment_id>", file=sys.stderr)
+                print(f"Usage: {SELF} ack <pr> <comment_id>", file=sys.stderr)
                 sys.exit(1)
             ack_comment(sys.argv[2], sys.argv[3])
 
         elif cmd == "comment":
             if len(sys.argv) < 4:
                 print(
-                    "Usage: pr_comments.py comment <pr> <text> | comment <pr> --file <path>",
+                    f"Usage: {SELF} comment <pr> <text> | comment <pr> --file <path>",
                     file=sys.stderr,
                 )
                 sys.exit(1)

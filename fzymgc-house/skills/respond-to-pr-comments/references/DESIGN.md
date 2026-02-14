@@ -25,7 +25,7 @@ comments and feedback.
 
 ### Single Script
 
-`scripts/pr_comments.py` - All operations in one executable
+`scripts/pr_comments` - All operations in one executable
 
 **Commands:**
 
@@ -41,11 +41,12 @@ Markdown structure:
 
 ```markdown
 ## [✓] RC_123456 - @username
+
 **File:** path/to/file.ts:42
 
 Comment body text here...
 
-*Ack:* `pr_comments.py ack 123 RC_123456`
+*Ack:* `pr_comments ack 123 RC_123456`
 ```
 
 Minimal, scannable, pipeable to grep/awk/sed.
@@ -81,28 +82,28 @@ Uses GitHub reactions API:
 ### View unacknowledged feedback
 
 ```bash
-pr_comments.py list 123 --unacked | less
+pr_comments list 123 --unacked | less
 ```
 
 ### Get specific comment for editing
 
 ```bash
-pr_comments.py get 123 RC_456 --save /tmp/comment.md
+pr_comments get 123 RC_456 --save /tmp/comment.md
 # Edit file, then reply
-pr_comments.py comment 123 --file /tmp/reply.md
-pr_comments.py ack 123 RC_456
+pr_comments comment 123 --file /tmp/reply.md
+pr_comments ack 123 RC_456
 ```
 
 ### Check latest activity
 
 ```bash
-pr_comments.py latest 123
+pr_comments latest 123
 ```
 
 ### Search for specific topic
 
 ```bash
-pr_comments.py list 123 | grep -i "authentication"
+pr_comments list 123 | grep -i "authentication"
 ```
 
 ## Future Considerations
@@ -125,13 +126,13 @@ pr_comments.py list 123 | grep -i "authentication"
 
 Old design required:
 
-1. `fetch_pr_comments.py` - Fetch all comment data to JSON
+1. `fetch_pr_comments` - Fetch all comment data to JSON
 2. `parse_action_items.py` - Parse and classify into severity levels
 3. Follow 10-step workflow with mandatory TodoWrite tracking
 
 New design:
 
-1. Single `pr_comments.py` with 5 commands
+1. Single `pr_comments` with 5 commands
 2. Markdown output, optional file I/O
 3. No mandatory patterns
 

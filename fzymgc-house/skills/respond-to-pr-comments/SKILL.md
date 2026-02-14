@@ -1,130 +1,100 @@
 ---
 name: respond-to-pr-comments
-description: Use when user asks to list PR comments, check PR feedback, get PR reviews, acknowledge comments, or respond to PR comments. Provides minimal-token operations for viewing and managing GitHub PR review comments and feedback.
+description: >-
+  This skill should be used when the user asks to "list PR comments",
+  "check PR feedback", "get PR reviews", "acknowledge comments",
+  "respond to PR comments", or "check what reviewers said".
+  Provides minimal-token operations for viewing and managing GitHub PR
+  review comments and feedback.
+argument-hint: "[pr-number]"
+allowed-tools:
+  - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-pr-comments/scripts/pr_comments.py *)"
+  - Read
+  - Write
+metadata:
+  author: fzymgc-house
+  version: 0.2.0
 ---
 
 # PR Comment Operations
 
 Minimal operations for GitHub PR comment management with markdown output.
 
-## Script Usage
+All PR comment operations MUST use the bundled script:
 
-You MUST use `scripts/pr_comments.py` for all PR comment operations.
-
-### Commands
-
-#### List Comments
-
-```bash
-# List all comments on a PR
-scripts/pr_comments.py list <pr-number>
-
-# List only unacknowledged comments
-scripts/pr_comments.py list <pr-number> --unacked
+```text
+${CLAUDE_PLUGIN_ROOT}/skills/respond-to-pr-comments/scripts/pr_comments.py
 ```
 
-Output includes:
+## Commands
 
-- Comment ID (format: `RC_*` for review comments, `R_*` for reviews)
-- Acknowledgment status (`[✓]` acked, `[○]` unacked)
-- Author, file location (for inline comments), comment body
-- Ready-to-run ack command for unacked comments
-
-#### Get Specific Comment
+### List Comments
 
 ```bash
-# Display comment to stdout
-scripts/pr_comments.py get <pr-number> <comment-id>
-
-# Save comment to file
-scripts/pr_comments.py get <pr-number> <comment-id> --save /path/to/file.md
+pr_comments.py list <pr-number>            # All comments
+pr_comments.py list <pr-number> --unacked  # Only unacknowledged
 ```
 
-Output includes:
+Output includes comment ID (`RC_*` for review comments, `R_*` for reviews),
+acknowledgment status (`[✓]`/`[○]`), author, file location, body, and
+ready-to-run ack commands.
 
-- Full comment details with acknowledgment status
-- File location and line number (for inline comments)
-- Review state (for review comments)
-- Comment URL
-- Ready-to-run ack command if unacked
-
-When `--save` is used, writes output to file and prints confirmation message.
-
-#### Get Latest Comment
+### Get Specific Comment
 
 ```bash
-scripts/pr_comments.py latest <pr-number>
+pr_comments.py get <pr-number> <comment-id>
+pr_comments.py get <pr-number> <comment-id> --save /path/to/file.md
 ```
 
-Returns the most recent comment from any source (review comments or reviews).
+Returns full comment details with acknowledgment status, file location,
+review state, and URL. The `--save` flag writes output to a file.
 
-#### Acknowledge Comment
+### Get Latest Comment
 
 ```bash
-scripts/pr_comments.py ack <pr-number> <comment-id>
+pr_comments.py latest <pr-number>
 ```
 
-Adds a 👍 reaction to the specified comment. You SHOULD acknowledge comments after addressing them.
+Returns the most recent comment from any source.
 
-#### Add Comment
+### Acknowledge Comment
 
 ```bash
-# From file (preferred - avoids heredoc complications)
-scripts/pr_comments.py comment <pr-number> --file /path/to/comment.md
-
-# Inline text (for short comments only)
-scripts/pr_comments.py comment <pr-number> "Your comment text here"
+pr_comments.py ack <pr-number> <comment-id>
 ```
 
-Posts a new comment to the PR conversation. You SHOULD use `--file` for multi-line or formatted comments to avoid shell escaping issues.
+Adds a 👍 reaction to the comment. Acknowledge comments after addressing them.
 
-## Output Format
+### Add Comment
 
-All commands use markdown output to minimize tokens. Output is structured for readability and includes inline ack commands where applicable.
+```bash
+pr_comments.py comment <pr-number> --file /path/to/comment.md  # Preferred
+pr_comments.py comment <pr-number> "Short inline text"
+```
+
+Posts a comment to the PR conversation. Prefer `--file` for multi-line or
+formatted comments to avoid shell escaping issues.
 
 ## Comment IDs
 
-- `RC_*` prefix: Review comment (inline code comment)
-- `R_*` prefix: Review (approve/request changes/comment with body)
+| Prefix | Type                              |
+|--------|-----------------------------------|
+| `RC_*` | Review comment (inline on code)   |
+| `R_*`  | Review (approve/request/comment)  |
 
 ## Acknowledgment Tracking
 
-The script checks GitHub reactions API to determine if the authenticated user has already added a 👍 reaction to a comment. This allows filtering with `--unacked` and shows status in all outputs.
-
-## Workflow Examples
-
-**Review unacknowledged comments:**
-
-```bash
-scripts/pr_comments.py list 123 --unacked
-```
-
-**Get details on specific comment:**
-
-```bash
-scripts/pr_comments.py get 123 RC_456789
-```
-
-**Acknowledge after addressing:**
-
-```bash
-scripts/pr_comments.py ack 123 RC_456789
-```
-
-**Check latest feedback:**
-
-```bash
-scripts/pr_comments.py latest 123
-```
+The script checks the GitHub reactions API to determine if the authenticated
+user has already reacted with 👍. This enables `--unacked` filtering and
+status display in all outputs.
 
 ## Integration Notes
 
-- You MAY use these commands in any order or combination
-- You SHOULD acknowledge comments after addressing feedback
-- You MAY add summary comments to PR after batch fixes
-- You MUST NOT create additional parsing or processing scripts
-- You MUST use the comment ID formats provided in output
+- Commands MAY be used in any order or combination.
+- Acknowledge comments after addressing feedback.
+- Summary comments MAY be posted after batch fixes.
+- MUST NOT create additional parsing or processing scripts.
+- MUST use the comment ID formats provided in output.
 
-## No Mandatory Workflows
-
-This skill provides tools only. You MAY choose how to use them based on user requests. There are NO required delegation patterns, commit structures, or processing steps.
+This skill provides tools only — no mandatory workflows, delegation patterns,
+commit structures, or processing steps are imposed.

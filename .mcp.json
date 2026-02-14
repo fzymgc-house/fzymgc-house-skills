@@ -4,6 +4,10 @@
       "type": "http",
       "url": "https://mcp.grafana.fzymgc.house/mcp"
     },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
     "terraform": {
       "command": "docker",
       "args": [

@@ -1,5 +1,7 @@
-# Claude Code
-.claude/
+# Claude Code - ignore all except shared config
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 
 # Python
 __pycache__/

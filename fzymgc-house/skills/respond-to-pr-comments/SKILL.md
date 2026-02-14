@@ -138,11 +138,61 @@ with the model from Phase 2. Each sub-agent should receive:
 
 Launch a **sonnet sub-agent** to run quality gates and fix any failures:
 
-1. Sub-agent runs all gates: `task test && task build && task lint`
+1. Sub-agent detects project type and runs appropriate quality gates:
+   - **Detect:** Check for `Taskfile.yml`, `build.gradle`, `pyproject.toml`, `Cargo.toml`, `package.json`, etc.
+   - **Run:** Execute project-specific commands for unit tests, integration tests, build, and lint
+   - **Examples:**
+     - Taskfile: `task test && task test:integration && task build && task lint`
+     - Python: `pytest tests/ && pytest tests/integration/ && python -m build && ruff check`
+     - Rust: `cargo test && cargo test --test integration && cargo build && cargo clippy`
+     - Gradle: `./gradlew test integrationTest build check`
+     - Node: `npm test && npm run test:integration && npm run build && npm run lint`
 2. If failures: sub-agent reviews error → fixes → re-runs.
 3. **Max 3 attempts.** If gates still fail after 3 rounds, sub-agent reports
    the remaining failures and stops. Present the failures to the user for guidance.
-4. Do NOT proceed to Phase 5 until all gates pass.
+4. Do NOT proceed to Phase 4.5 until all gates pass (unit tests, integration tests, build, lint).
+
+### Phase 4.5: Independent Review (Conditional)
+
+**Trigger when ANY of these conditions apply:**
+
+- 3+ comments addressed (high change volume)
+- Any comment categorized as "high" complexity
+- Any bug fix (category "bug")
+- User explicitly requests review before shipping
+
+Launch an **opus sub-agent** (independent context) to review. Sub-agent outputs
+ONLY structured results (no explanations) to minimize token use:
+
+**Sub-agent task:**
+
+1. Read Phase 2 categorization (comment IDs, categories, user guidance)
+2. Run `git diff` to see actual changes
+3. For EACH comment ID, output one line:
+
+   ```text
+   <comment-id>: PASS | FAIL: <reason-if-fail>
+   ```
+
+4. After all comments, output decision:
+
+   ```text
+   DECISION: SHIP | BLOCK
+   BLOCK_REASON: <one-line-summary-if-blocked>
+   ```
+
+**Example output:**
+
+```text
+RC_123: PASS
+RC_456: FAIL: Test added but doesn't cover edge case mentioned in comment
+R_789: PASS
+DECISION: BLOCK
+BLOCK_REASON: RC_456 test incomplete
+```
+
+If DECISION is BLOCK, return to Phase 3 to address flagged issues, then re-run Phase 4 gates.
+If DECISION is SHIP, proceed to Phase 5.
 
 ### Phase 5: Ship
 

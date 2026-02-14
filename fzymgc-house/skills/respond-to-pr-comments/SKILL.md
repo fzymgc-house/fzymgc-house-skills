@@ -75,9 +75,13 @@ Copy this checklist and update as you go:
    `git branch --show-current`. If not, ask the user whether to create one.
    **MUST** use an existing worktree if one matches.
 
-### Phase 2: Categorize and assess
+### Phase 2: Categorize, clarify, and confirm
 
-For each comment, assign a **category**, **complexity**, and **model**:
+This phase has three distinct steps. Do NOT combine them.
+
+**Step 2a — Categorize internally.** For each comment, assign a
+**category**, **complexity**, and **model**. Do not present to the
+user yet.
 
 | Category     | Description                        | Action |
 |--------------|------------------------------------|--------|
@@ -93,27 +97,41 @@ For each comment, assign a **category**, **complexity**, and **model**:
 | **medium** | Few files, some judgment, clear approach     | sonnet |
 | **high**   | Cross-cutting, architectural, needs context  | opus   |
 
-Present the categorized list (category + complexity + model) to the user
-for confirmation before proceeding.
+**Step 2b — Gather clarifications.** For every comment categorized as
+feature, design, or question: present it to the user one at a time
+with full context (comment text, file location, surrounding code).
+Ask exactly one question per comment. Wait for the user's response
+before presenting the next. Record each answer.
+
+**Step 2c — Present plan for approval.** Show the full categorized
+list to the user in a single summary:
+
+- Each comment's ID, category, complexity, and recommended model
+- For bug/style: the proposed fix approach
+- For feature/design/question: the user's answer from Step 2b
+  and the planned action
+
+Ask the user to confirm or adjust before proceeding. Do NOT begin
+implementation until the user approves.
 
 ### Phase 3: Implement
 
-Dispatch each fix/response as a **sub-agent** using the Task tool with the
-model recommended in Phase 2. Each sub-agent should receive:
+Dispatch each fix/response as a **sub-agent** using the Task tool
+with the model from Phase 2. Each sub-agent should receive:
 
 - The comment text and file location
 - The category and what to do
 - For bug/style: instructions to use TDD
-- For feature/design/question: the user's guidance (gathered first — see below)
+- For feature/design/question: the user's guidance from Step 2b
 
 1. **Bug and style:** launch sub-agent with recommended model.
-   - Sub-agent writes a failing test (when testable), implements fix, confirms pass.
+   - Sub-agent writes a failing test (when testable), implements
+     fix, confirms pass.
    - Acknowledge after sub-agent completes: `ack <pr> <comment-id>`
    - Independent fixes MAY run as parallel sub-agents.
 
-2. **Feature, design, question:** present each to the user one at a time
-   with full context. Ask exactly one question per comment. Wait for response.
-   Then launch sub-agent with recommended model and the user's guidance.
+2. **Feature, design, question:** launch sub-agent with recommended
+   model and the user's guidance from Step 2b.
    - Acknowledge after sub-agent completes: `ack <pr> <comment-id>`
 
 ### Phase 4: Verify

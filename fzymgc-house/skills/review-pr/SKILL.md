@@ -124,7 +124,7 @@ straightforward reviews.
 | comment-analyzer | sonnet | Rarely needs opus |
 | security-auditor | opus | Always — security requires rigor |
 | api-contract-checker | sonnet | Many public interfaces changed |
-| spec-compliance | sonnet | Complex architectural changes |
+| spec-compliance | sonnet | 2+ design docs found, or architectural changes |
 | code-simplifier | sonnet | Rarely needs opus |
 
 ### 4. Load Agent Prompts

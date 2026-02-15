@@ -193,8 +193,10 @@ Each Task call should:
 4. Instruct the agent to write findings to `$REVIEW_DIR/<aspect>.jsonl`
 5. Instruct the agent to return only a 2-3 line summary (issue counts + critical items)
 
-**Parallel execution** (default for `all`): Launch all agents simultaneously
-using multiple Task tool calls in a single message.
+**Batched parallel execution** (default for `all`): Launch agents in
+batches of **at most 3 concurrent** Task tool calls per message. Wait for
+each batch to complete before launching the next. Order batches by
+priority — run `security` and `code` in the first batch when possible.
 
 **Sequential execution**: When a specific aspect is requested alone, launch
 one agent at a time for interactive review.

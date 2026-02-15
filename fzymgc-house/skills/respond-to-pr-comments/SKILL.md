@@ -55,7 +55,7 @@ Follow the workflow below.
 Copy this checklist and update as you go:
 
 ```text
-- [ ] Phase 1: Read unacked comments, locate worktree
+- [ ] Phase 1: Read unacked comments, gather review history, locate worktree
 - [ ] Phase 2: Categorize comments, confirm with user
 - [ ] Phase 3: Implement fixes (bug/style) and ask about (feature/design/question)
 - [ ] Phase 4: All quality gates pass (test, build, lint)
@@ -70,7 +70,20 @@ Copy this checklist and update as you go:
 2. **Read all unresolved comments:** `list <pr-number> --unacked`.
    If none exist, report and stop.
 
-3. **Locate the worktree.** Run `git worktree list` and check whether one
+3. **Gather review history.** Fetch all prior reviews and comments
+   to understand the full conversation context:
+
+   ```bash
+   gh api repos/{owner}/{repo}/pulls/<number>/reviews
+   gh api repos/{owner}/{repo}/pulls/<number>/comments
+   ```
+
+   Note which review round this is (first review, re-review after
+   fixes, etc.) and whether previously flagged issues were resolved.
+   Pass this context to sub-agents in Phase 3 so they understand
+   what was already attempted.
+
+4. **Locate the worktree.** Run `git worktree list` and check whether one
    exists for the PR's branch. If so, `cd` into it and verify with
    `git branch --show-current`. If not, ask the user whether to create one.
    **MUST** use an existing worktree if one matches.

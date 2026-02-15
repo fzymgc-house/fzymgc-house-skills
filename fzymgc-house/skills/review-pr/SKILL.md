@@ -28,6 +28,7 @@ allowed-tools:
   - "Bash(gh pr diff *)"
   - "Bash(gh pr list *)"
   - "Bash(gh pr checks *)"
+  - "Bash(gh api *)"
 metadata:
   author: fzymgc-house
   version: 0.1.0
@@ -62,7 +63,7 @@ Default: `all` (run every applicable aspect).
 
 ## Quick Checklist
 
-- [ ] Determine scope (parse PR number + aspects, gather PR diff)
+- [ ] Determine scope (parse PR number + aspects, gather PR diff + prior comments)
 - [ ] Select applicable agents based on changes and requested aspects
 - [ ] Choose model per agent (sonnet default, opus for complex/security)
 - [ ] Read agent prompts from `references/`
@@ -94,6 +95,19 @@ Gather context using the PR number:
 gh pr diff <number>                    # PR diff
 gh pr view <number> --json title,body  # PR metadata
 ```
+
+**Check for previous review rounds.** Fetch existing review comments
+and reviews to understand what's already been flagged:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/<number>/comments  # inline comments
+gh api repos/{owner}/{repo}/pulls/<number>/reviews    # review summaries
+```
+
+If previous comments exist, include a summary of prior feedback when
+passing context to each subagent. This prevents duplicate findings
+and lets agents focus on new or unresolved issues. Instruct agents:
+"Previous review comments exist — avoid re-flagging resolved items."
 
 ### 2. Select Applicable Agents
 

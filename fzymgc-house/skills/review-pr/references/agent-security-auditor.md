@@ -73,31 +73,47 @@ OWASP methodology and secure coding principles.
 5. Verify secrets are not exposed in any form
 6. For IaC changes, check permission scope and exposure
 
-## Output Format
+## Output Format — JSONL
 
-### Findings
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/security.jsonl`). Each line is a self-contained finding.
 
-For each finding:
+### Schema
 
-- **Severity**: CRITICAL / HIGH / MEDIUM / LOW
-- **Category**: Which audit area (e.g., "Injection", "Secrets")
-- **Location**: `file:line`
-- **Description**: What the vulnerability is
-- **Impact**: What an attacker could achieve
-- **Remediation**: Specific fix with code example
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-### Summary
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The vulnerability and its impact (what an attacker could achieve) |
+| `location` | no | `file:line` reference |
+| `fix` | no | Specific remediation with code example |
+| `category` | no | Audit area: `"injection"`, `"auth"`, `"secrets"`, `"crypto"`, `"config"`, `"iac-perms"` |
 
-Total findings by severity. Overall security posture assessment.
+### Severity Mapping
+
+- CRITICAL (exploitable, immediate risk) → `"critical"`
+- HIGH (significant weakness requiring remediation) → `"important"`
+- MEDIUM / LOW (defense-in-depth, hardening) → `"suggestion"`
+
+### Example Output
+
+```jsonl
+{"severity":"critical","description":"Hardcoded API key exposed in config — attacker with repo access gains full API control","location":"config/settings.py:23","fix":"Move to environment variable: os.environ['API_KEY']","category":"secrets"}
+{"severity":"important","description":"TLS verification disabled for internal API calls — enables MITM attacks on internal network","location":"api/client.py:88","fix":"Remove verify=False, add internal CA cert to trust store","category":"config"}
+{"severity":"suggestion","description":"Missing rate limiting on login endpoint — brute force attacks not mitigated","location":"api/auth.py:15","fix":"Add rate limiter middleware (e.g., slowapi with 5 req/min per IP)","category":"auth"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the
-task prompt (a file inside the session's `$REVIEW_DIR`). Return to
-the parent only a terse summary: finding counts by severity and the
-single most critical finding (if any). Target 2-3 lines maximum.
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the single most critical item.
+Target 2-3 lines maximum.
 
 Example return:
-> security-auditor: 1 critical, 2 high.
+> security-auditor: 1 critical, 2 important.
 > Critical: hardcoded API key in config/settings.py:23.
 > Full report written.

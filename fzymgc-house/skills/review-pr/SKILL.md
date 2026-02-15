@@ -69,7 +69,7 @@ Default: `all` (run every applicable aspect).
 - [ ] Choose model per agent (sonnet default, opus for complex/security)
 - [ ] Read agent prompts from `references/`
 - [ ] Launch subagents via Task tool (parallel for `all`, sequential for single)
-- [ ] Aggregate results from `$REVIEW_DIR/*.md` into unified summary
+- [ ] Aggregate results from `$REVIEW_DIR/*.jsonl` into unified summary
 - [ ] Offer to post findings as PR comment (confirm with user first), then clean up
 
 ## Workflow
@@ -171,17 +171,26 @@ Read the system prompt for each selected agent from `references/`:
 ### 5. Launch Subagents
 
 Use the `Task` tool to launch each selected agent. Each agent writes its
-detailed report to a temp file and returns only a terse summary.
+findings as JSONL (one JSON object per line) and returns only a terse summary.
 
-**Output convention**: `$REVIEW_DIR/<aspect>.md`
-(e.g. `$REVIEW_DIR/code.md`, `$REVIEW_DIR/errors.md`)
+**Output convention**: `$REVIEW_DIR/<aspect>.jsonl`
+(e.g. `$REVIEW_DIR/code.jsonl`, `$REVIEW_DIR/errors.jsonl`)
+
+**JSONL schema** (every agent uses the same format):
+
+```text
+{"severity":"critical|important|suggestion|praise","description":"...","location":"file:line","fix":"...","category":"..."}
+```
+
+- `severity` + `description`: required
+- `location`, `fix`, `category`: optional
 
 Each Task call should:
 
 1. Set the `model` parameter per the routing decision from step 3
 2. Include the git diff or changed file contents as context
 3. Include the full system prompt from the reference file
-4. Instruct the agent to write detailed findings to `$REVIEW_DIR/<aspect>.md`
+4. Instruct the agent to write findings to `$REVIEW_DIR/<aspect>.jsonl`
 5. Instruct the agent to return only a 2-3 line summary (issue counts + critical items)
 
 **Parallel execution** (default for `all`): Launch all agents simultaneously
@@ -192,27 +201,28 @@ one agent at a time for interactive review.
 
 ### 6. Aggregate Results
 
-Read the report files from `$REVIEW_DIR/*.md` to compile the unified
-report. Present the summary to the user.
+Read the JSONL files from `$REVIEW_DIR/*.jsonl`. Parse each line as a
+JSON object. Group all findings across agents by `severity`, then
+compile the unified report. Present the summary to the user.
 
 ```markdown
 # PR Review Summary
 
 ## Critical Issues (must fix before merge)
 
-- [agent]: Issue description [file:line]
+- [agent]: description [location]
 
 ## Important Issues (should fix)
 
-- [agent]: Issue description [file:line]
+- [agent]: description [location]
 
 ## Suggestions (nice to have)
 
-- [agent]: Suggestion [file:line]
+- [agent]: description [location]
 
 ## Strengths
 
-- What's well-done in this PR
+- [agent]: description [location]
 
 ## Recommended Action
 
@@ -221,6 +231,10 @@ report. Present the summary to the user.
 3. Consider suggestions
 4. Re-run review after fixes
 ```
+
+The `agent` label comes from the filename (e.g., `security.jsonl` →
+`security`). The `severity` field determines which section each finding
+appears in (`praise` → Strengths).
 
 ### 7. Offer to Post Findings
 

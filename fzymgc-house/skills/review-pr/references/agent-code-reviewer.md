@@ -35,33 +35,50 @@ established project standards.
 4. Check error handling completeness
 5. Verify naming conventions and code style consistency
 
-## Output Format
+## Output Format — JSONL
 
-List what is being reviewed, then group issues by severity:
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/code.jsonl`). Each line is a self-contained finding.
 
-### Critical (90-100)
+### Schema
 
-- **Description**: What the issue is
-- **Confidence**: Score
-- **Location**: `file:line`
-- **Reference**: CLAUDE.md rule or bug explanation
-- **Fix**: Suggested resolution
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-### Important (80-89)
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | What the issue is, with enough context to act on |
+| `location` | no | `file:line` reference |
+| `fix` | no | Suggested resolution |
+| `category` | no | e.g., `"guideline"`, `"logic-error"`, `"style"` |
 
-Same structure as Critical.
+### Severity Mapping
 
-### Summary
+- Confidence 90-100 → `"critical"`
+- Confidence 80-89 → `"important"`
+- Positive patterns worth noting → `"praise"`
 
-Confirm code meets standards if no high-confidence issues exist. Note any positive patterns observed.
+**Report only findings with confidence 80+.** Include praise for
+notable good patterns.
+
+### Example Output
+
+```jsonl
+{"severity":"critical","description":"Confidence 95: missing null check before accessing user.email — will throw TypeError when user is anonymous","location":"api/views.py:42","fix":"Add early return: if not user: return None","category":"logic-error"}
+{"severity":"important","description":"Confidence 83: import order violates project convention (stdlib before third-party)","location":"utils/helpers.py:3","fix":"Move os import above requests import","category":"guideline"}
+{"severity":"praise","description":"Clean separation of validation logic from business logic — easy to test independently","location":"services/auth.py:20"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the task prompt
-(a file inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: issue counts by severity and the single most critical finding (if any).
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the single most critical item.
 Target 2-3 lines maximum.
 
 Example return:
 > code-reviewer: 1 critical, 2 important.
-> Critical: SQL injection in api/routes.py:42. Full report written.
+> Critical: missing null check causes TypeError for anonymous users
+> (api/views.py:42). Full report written.

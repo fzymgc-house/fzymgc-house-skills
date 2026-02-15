@@ -64,44 +64,51 @@ in the existing codebase (implicit spec).
 5. Verify naming, structure, and convention adherence
 6. Flag any contradictions with ADRs or design decisions
 
-## Output Format
+## Output Format — JSONL
 
-### Spec Documents Found
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/spec.jsonl`). Each line is a self-contained finding.
 
-List all design authority documents consulted.
+Include a finding that lists the spec documents consulted (use `"praise"`
+severity with `"category":"spec-sources"` so the aggregator has context).
 
-### Violations
+### Schema
 
-Direct contradictions with documented decisions.
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-- **Spec**: Which document/section
-- **Requirement**: What was specified
-- **Implementation**: What was done instead
-- **Location**: `file:line`
-- **Resolution**: How to bring into compliance
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The compliance issue, referencing the spec/ADR and what was expected vs. implemented |
+| `location` | no | `file:line` reference |
+| `fix` | no | How to bring into compliance, or note that the spec may need updating |
+| `category` | no | e.g., `"violation"`, `"deviation"`, `"convention"`, `"spec-sources"` |
 
-### Deviations
+### Severity Mapping
 
-Inconsistencies with established patterns.
+- VIOLATION (directly contradicts documented decision) → `"critical"`
+- DEVIATION (inconsistent with established patterns) → `"important"`
+- SUGGESTION (could better align with spec) → `"suggestion"`
+- Spec documents consulted or good compliance → `"praise"`
 
-- **Pattern**: Expected pattern or convention
-- **Implementation**: What was done
-- **Location**: `file:line`
-- **Suggestion**: How to align
+### Example Output
 
-### Compliance Summary
-
-Overall alignment assessment. Note any areas where specs may
-need updating to reflect intentional changes.
+```jsonl
+{"severity":"praise","description":"Spec documents consulted: CLAUDE.md, docs/adr/003-event-sourcing.md, ARCHITECTURE.md","category":"spec-sources"}
+{"severity":"critical","description":"ADR-003 requires event sourcing for state changes but implementation uses direct DB writes — violates architectural decision","location":"services/orders.py:88","fix":"Emit OrderCreated event and handle via event store, or propose new ADR to supersede ADR-003","category":"violation"}
+{"severity":"important","description":"File placed in utils/ but ARCHITECTURE.md specifies validation logic belongs in domain/ layer","location":"utils/validators.py:1","fix":"Move to domain/validators.py to match documented layer boundaries","category":"deviation"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the
-task prompt (a file inside the session's `$REVIEW_DIR`). Return to
-the parent only a terse summary: violation/deviation counts and the
-most critical finding (if any). Target 2-3 lines maximum.
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the most critical item.
+Target 2-3 lines maximum.
 
 Example return:
-> spec-compliance: 1 violation, 2 deviations.
-> Violation: ADR-003 requires event sourcing but uses direct DB
-> writes. Full report written.
+> spec-compliance: 1 critical, 2 important.
+> Violation: ADR-003 requires event sourcing but uses direct DB writes.
+> Full report written.

@@ -38,43 +38,48 @@ behavior before they reach production.
 4. Check that retry logic has proper exhaustion handling
 5. Verify fallback values are appropriate and documented
 
-## Output Format
+## Output Format — JSONL
 
-Group findings by severity:
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/errors.jsonl`). Each line is a self-contained finding.
 
-### CRITICAL
+### Schema
 
-Findings that will cause silent data loss or mask production errors.
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-- **Pattern**: What the problem is
-- **Location**: `file:line`
-- **Impact**: What happens if this reaches production
-- **Fix**: Corrected code example
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The error handling problem and its production impact |
+| `location` | no | `file:line` reference |
+| `fix` | no | Corrected code or approach |
+| `category` | no | e.g., `"empty-catch"`, `"broad-except"`, `"silent-return"`, `"retry-exhaustion"` |
 
-### HIGH
+### Severity Mapping
 
-Findings that degrade error visibility or debugging ability.
+- CRITICAL (silent data loss, masked production errors) → `"critical"`
+- HIGH (degraded error visibility or debugging) → `"important"`
+- MEDIUM (suboptimal but not dangerous) → `"suggestion"`
+- Well-implemented error handling patterns → `"praise"`
 
-Same structure as CRITICAL.
+### Example Output
 
-### MEDIUM
-
-Findings that are suboptimal but not immediately dangerous.
-
-Same structure as CRITICAL.
-
-### Summary
-
-Overview of error handling quality. Note any well-implemented patterns.
+```jsonl
+{"severity":"critical","description":"Empty catch block swallows authentication errors — login failures will appear to succeed silently","location":"auth/login.py:87","fix":"Re-raise after logging: logger.error(e); raise","category":"empty-catch"}
+{"severity":"important","description":"Broad except Exception catches ConnectionError, masking network failures as generic errors","location":"api/client.py:42","fix":"Use except ConnectionError and re-raise after logging","category":"broad-except"}
+{"severity":"praise","description":"Retry logic correctly surfaces exhaustion with explicit RetryExhaustedError including attempt count","location":"services/queue.py:63"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the task prompt
-(a file inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical finding (if any).
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the single most critical item.
 Target 2-3 lines maximum.
 
 Example return:
-> silent-failure-hunter: 2 critical, 1 high.
+> silent-failure-hunter: 2 critical, 1 important.
 > Critical: empty catch swallows auth errors in auth/login.py:87.
 > Full report written.

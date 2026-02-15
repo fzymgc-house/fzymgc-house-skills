@@ -51,48 +51,59 @@ For each type in the diff:
 - Missing validation at construction boundaries
 - Types that rely on external code to maintain invariants
 
-## Output Format
+## Output Format — JSONL
 
-For each type analyzed:
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/types.jsonl`). Each line is a self-contained finding.
 
-```markdown
-## Type: [TypeName]
+Emit findings **per concern**, not per type. A type with multiple issues
+produces multiple lines. Include the type name in the description.
 
-### Invariants Identified
+### Schema
 
-- [List each invariant]
-
-### Ratings
-
-- **Encapsulation**: X/10 — [justification]
-- **Invariant Expression**: X/10 — [justification]
-- **Invariant Usefulness**: X/10 — [justification]
-- **Invariant Enforcement**: X/10 — [justification]
-
-### Strengths
-
-[What the type does well]
-
-### Concerns
-
-[Specific issues]
-
-### Recommended Improvements
-
-[Concrete, actionable suggestions]
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
 ```
 
-If no new types are found in the diff, report that and suggest whether
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The type design concern, including type name and relevant ratings |
+| `location` | no | `file:line` of type definition |
+| `fix` | no | Concrete improvement |
+| `category` | no | e.g., `"encapsulation"`, `"enforcement"`, `"expression"`, `"invariant"` |
+
+### Severity Mapping
+
+Rate each dimension (encapsulation, expression, usefulness, enforcement)
+1-10, then map to severity:
+
+- Any dimension rated ≤3 → `"critical"`
+- Any dimension rated 4-6 → `"important"`
+- Minor concerns on dimensions rated 7+ → `"suggestion"`
+- Strong type designs worth noting → `"praise"`
+
+Include the dimension name and rating in the description for context.
+
+### Example Output
+
+```jsonl
+{"severity":"critical","description":"UserAccount: enforcement 3/10 — constructor allows empty email string, creating invalid instances that propagate to downstream services","location":"models/user.py:12","fix":"Add email validation in __init__: if not email: raise ValueError","category":"enforcement"}
+{"severity":"important","description":"UserAccount: encapsulation 5/10 — mutable permissions list exposed via property, callers can modify internal state","location":"models/user.py:12","fix":"Return frozenset or copy from permissions property","category":"encapsulation"}
+{"severity":"praise","description":"SessionToken: strong invariant design — expiry enforced at construction, immutable fields, clear state transitions via revoke() method","location":"auth/token.py:8"}
+```
+
+If no new types are found in the diff, report that and check whether
 existing types touched by the changes maintain their invariants.
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the task prompt
-(a file inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
 summary: types analyzed, lowest rating, and the primary concern (if any).
 Target 2-3 lines maximum.
 
 Example return:
 > type-design-analyzer: 2 types analyzed.
-> UserAccount enforcement 4/10 — constructor allows invalid email.
+> UserAccount enforcement 3/10 — constructor allows invalid email.
 > Full report written.

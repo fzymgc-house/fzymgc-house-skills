@@ -60,46 +60,48 @@ Analyze any public interface consumers depend on:
 5. Assess whether changes are additive or subtractive
 6. Check for missing migration paths or deprecation notices
 
-## Output Format
+## Output Format — JSONL
 
-### Breaking Changes
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/api.jsonl`). Each line is a self-contained finding.
 
-Changes that will cause consumer failures.
+### Schema
 
-- **Interface**: What changed (endpoint, function, type)
-- **Change**: What specifically broke
-- **Location**: `file:line`
-- **Impact**: Which consumers are affected
-- **Migration**: How consumers should update
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-### Risky Changes
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The contract change, affected consumers, and migration path |
+| `location` | no | `file:line` reference |
+| `fix` | no | Migration guidance or deprecation notice to add |
+| `category` | no | e.g., `"removal"`, `"signature-change"`, `"behavior-change"`, `"schema-change"` |
 
-Changes that may cause issues.
+### Severity Mapping
 
-Same structure as Breaking Changes.
+- BREAKING (will cause immediate consumer failures) → `"critical"`
+- RISKY (may cause failures depending on usage) → `"important"`
+- COMPATIBLE (non-breaking, worth documenting) → `"suggestion"`
+- Good backward-compatible design choices → `"praise"`
 
-### Compatible Changes
+### Example Output
 
-Additive or non-breaking changes worth documenting.
-
-- **Interface**: What changed
-- **Change**: What was added/deprecated
-- **Location**: `file:line`
-
-### Summary
-
-Overall compatibility assessment. Note any missing deprecation
-notices or migration documentation.
+```jsonl
+{"severity":"critical","description":"Removed timeout param from Client.connect() — all callers passing timeout will get TypeError","location":"sdk/client.py:55","fix":"Add deprecated timeout param that logs warning and maps to new config.timeout_ms","category":"removal"}
+{"severity":"important","description":"Changed default page_size from 50 to 20 — consumers relying on implicit 50-item pages will get fewer results","location":"api/pagination.py:12","fix":"Document the change in CHANGELOG; consider keeping 50 as default for v1 API","category":"behavior-change"}
+{"severity":"suggestion","description":"New optional 'metadata' field added to response — additive, no consumer impact","location":"api/responses.py:30","category":"schema-change"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the
-task prompt (a file inside the session's `$REVIEW_DIR`). Return to
-the parent only a terse summary: breaking/risky/compatible counts
-and the most critical breaking change (if any).
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the most critical item.
 Target 2-3 lines maximum.
 
 Example return:
-> api-contract-checker: 1 breaking, 2 risky.
-> Breaking: removed `timeout` param from Client.connect().
+> api-contract-checker: 1 critical, 2 important.
+> Critical: removed timeout param from Client.connect().
 > Full report written.

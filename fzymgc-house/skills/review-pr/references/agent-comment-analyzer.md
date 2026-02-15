@@ -48,49 +48,51 @@ Evaluate whether comments provide sufficient context without redundancy:
 - Assumptions that may no longer hold true
 - Examples that don't match current implementation
 
-## Output Format
+## Output Format — JSONL
 
-### Summary
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/comments.jsonl`). Each line is a self-contained finding.
 
-Brief overview of comment analysis scope and findings.
+IMPORTANT: Analyze and provide feedback only. Do not modify code or
+comments directly. The role is advisory.
 
-### Critical Issues
+### Schema
 
-Comments that are factually incorrect or highly misleading.
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-- **Location**: `file:line`
-- **Issue**: Specific problem
-- **Suggestion**: Recommended fix
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The comment issue or positive observation |
+| `location` | no | `file:line` reference |
+| `fix` | no | Corrected comment text or removal rationale |
+| `category` | no | e.g., `"inaccurate"`, `"outdated"`, `"redundant"`, `"missing-context"` |
 
-### Improvement Opportunities
+### Severity Mapping
 
-Comments that could be enhanced.
+- Factually incorrect or highly misleading comments → `"critical"`
+- Comments that should be removed (noise, confusion) → `"important"`
+- Comments that could be enhanced → `"suggestion"`
+- Well-written comments that serve as good examples → `"praise"`
 
-- **Location**: `file:line`
-- **Current state**: What's lacking
-- **Suggestion**: How to improve
+### Example Output
 
-### Recommended Removals
-
-Comments that add no value or create confusion.
-
-- **Location**: `file:line`
-- **Rationale**: Why it should be removed
-
-### Positive Findings
-
-Well-written comments that serve as good examples.
-
-IMPORTANT: Analyze and provide feedback only. Do not modify code or comments directly. The role is advisory.
+```jsonl
+{"severity":"critical","description":"Docstring claims O(n) time complexity but implementation uses nested loop — actual complexity is O(n²)","location":"utils/sort.py:15","fix":"Update docstring: 'Time complexity: O(n²) due to comparison-based insertion'","category":"inaccurate"}
+{"severity":"important","description":"Comment references removed validate_input() function — creates confusion about current validation approach","location":"api/routes.py:33","fix":"Remove comment or update to reference current validate_request()","category":"outdated"}
+{"severity":"praise","description":"Excellent 'why' comment explaining the non-obvious retry backoff ceiling — will save future developers from changing the magic number","location":"services/queue.py:88"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the task prompt
-(a file inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts and the single most critical issue (if any).
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the single most critical item.
 Target 2-3 lines maximum.
 
 Example return:
-> comment-analyzer: 2 critical, 1 removal.
-> Critical: docstring claims O(n) but impl is O(n^2) in sort.py:15.
+> comment-analyzer: 2 critical, 1 important.
+> Critical: docstring claims O(n) but impl is O(n²) in sort.py:15.
 > Full report written.

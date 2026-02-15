@@ -45,47 +45,48 @@ functionality without being pedantic about 100% coverage.
 - **3-4**: Nice-to-have for completeness
 - **1-2**: Optional minor improvements
 
-## Output Format
+## Output Format — JSONL
 
-### Summary
+Write one JSON object per line to the output path provided in the task
+prompt (`$REVIEW_DIR/tests.jsonl`). Each line is a self-contained finding.
 
-Brief overview of test coverage quality.
+### Schema
 
-### Critical Gaps (rated 8-10)
+```text
+{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```
 
-Tests that must be added before merge.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
+| `description` | yes | The test gap, quality issue, or positive observation |
+| `location` | no | `file:line` of untested code or brittle test |
+| `fix` | no | What test to add or how to improve |
+| `category` | no | e.g., `"test-gap"`, `"brittle-test"`, `"missing-edge-case"`, `"missing-negative"` |
 
-- **What to test**: Description
-- **Rating**: X/10
-- **Why**: What bug or regression this prevents
-- **Location**: `file:line` of untested code
+### Severity Mapping
 
-### Important Improvements (rated 5-7)
+- Criticality 8-10 (data loss, security, system failure) → `"critical"`
+- Criticality 5-7 (user-facing errors, edge cases) → `"important"`
+- Criticality 1-4 (nice-to-have, completeness) → `"suggestion"`
+- Well-tested areas and good testing patterns → `"praise"`
 
-Tests that should be considered.
+### Example Output
 
-Same structure as Critical Gaps.
-
-### Test Quality Issues
-
-Tests that are brittle or overfit to implementation.
-
-- **Test**: `file:test_name`
-- **Issue**: What makes it fragile
-- **Fix**: How to improve resilience
-
-### Positive Observations
-
-What is well-tested and follows best practices.
+```jsonl
+{"severity":"critical","description":"No test for payment rollback on failure — if the charge succeeds but order creation fails, money is taken with no order created","location":"services/payment.py:95","fix":"Add test: charge succeeds, order fails → verify refund issued","category":"test-gap"}
+{"severity":"important","description":"Test is tightly coupled to implementation — asserts on internal method call count rather than observable behavior","location":"tests/test_cache.py:42","fix":"Assert on cache hit/miss outcome instead of mock.call_count","category":"brittle-test"}
+{"severity":"praise","description":"Excellent edge case coverage — tests boundary conditions for empty input, single item, and max-size collections","location":"tests/test_validators.py:15"}
+```
 
 ## Output Convention
 
-Write the full structured report to the output path provided in the task prompt
-(a file inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: gap counts by criticality and the single most critical gap (if any).
+Write the JSONL report to the path provided in the task prompt (a file
+inside the session's `$REVIEW_DIR`). Return to the parent only a terse
+summary: finding counts by severity and the single most critical item.
 Target 2-3 lines maximum.
 
 Example return:
-> pr-test-analyzer: 1 critical gap, 3 important.
-> Critical: no test for payment rollback on failure (10/10).
-> Full report written.
+> pr-test-analyzer: 1 critical, 3 important.
+> Critical: no test for payment rollback on failure
+> (services/payment.py:95). Full report written.

@@ -52,8 +52,9 @@ Skills should be self-contained and focused on specific tasks related to the fzy
   Use Loki/Prometheus FIRST for logs/metrics instead of kubectl.
 - **terraform** - Terraform Cloud operations (runs, workspaces, state management, registry documentation lookup)
 - **respond-to-pr-comments** - GitHub PR review comment management (list, acknowledge, respond to feedback, full review-response workflows)
-- **review-pr** - Comprehensive PR review using 6 specialized subagents (code quality, error handling, test coverage,
-  type design, comments, code simplification). User-invoked via `/review-pr [aspects]`.
+- **review-pr** - Comprehensive PR review using 9 specialized subagents (code quality, error handling, test coverage,
+  type design, comments, security, API compatibility, spec compliance, code simplification).
+  User-invoked via `/review-pr [aspects]`.
 - **skill-qa** - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
 
 ## Commit Workflow

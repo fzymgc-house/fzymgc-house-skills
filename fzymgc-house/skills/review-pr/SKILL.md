@@ -5,8 +5,8 @@ description: >-
   "review this PR", "check my PR", "review code quality", "run PR review",
   "analyze this pull request", or invokes /review-pr. Launches targeted review
   agents for code quality, error handling, test coverage, type design, comments,
-  and code simplification.
-argument-hint: "[aspects: all|code|errors|tests|types|comments|simplify]"
+  security, API compatibility, spec compliance, and code simplification.
+argument-hint: "[aspects: all|code|errors|tests|types|comments|security|api|spec|simplify]"
 allowed-tools:
   - Task
   - Read
@@ -45,6 +45,9 @@ independent report. Results are aggregated into a prioritized action plan.
 | `tests` | pr-test-analyzer | Test coverage quality, critical gaps |
 | `types` | type-design-analyzer | Type encapsulation, invariants |
 | `comments` | comment-analyzer | Comment accuracy, documentation rot |
+| `security` | security-auditor | OWASP, secrets, auth, injection, IaC perms |
+| `api` | api-contract-checker | Breaking changes, backward compat, schemas |
+| `spec` | spec-compliance | Design doc/ADR/requirements alignment |
 | `simplify` | code-simplifier | Clarity, redundancy, maintainability |
 
 Default: `all` (run every applicable aspect).
@@ -90,6 +93,9 @@ Based on changes and requested aspects:
 - **If comments/docstrings added or `comments` requested**: `comments`
 - **If error handling changed or `errors` requested**: `errors`
 - **If types added/modified or `types` requested**: `types`
+- **Always applicable**: `security` (security audit)
+- **If public interfaces changed or `api` requested**: `api`
+- **If spec/design docs exist or `spec` requested**: `spec`
 - **After other reviews pass or `simplify` requested**: `simplify`
 
 When `all` is requested, run every agent regardless of file heuristics.
@@ -114,8 +120,11 @@ straightforward reviews.
 | code-reviewer | sonnet | Large diff, security code |
 | silent-failure-hunter | sonnet | Complex error flows, auth code |
 | pr-test-analyzer | sonnet | Large test surface, async code |
-| type-design-analyzer | opus | Always — nuanced reasoning required |
+| type-design-analyzer | opus | Always — nuanced reasoning |
 | comment-analyzer | sonnet | Rarely needs opus |
+| security-auditor | opus | Always — security requires rigor |
+| api-contract-checker | sonnet | Many public interfaces changed |
+| spec-compliance | sonnet | Complex architectural changes |
 | code-simplifier | sonnet | Rarely needs opus |
 
 ### 4. Load Agent Prompts
@@ -127,6 +136,9 @@ Read the system prompt for each selected agent from `references/`:
 - `references/agent-pr-test-analyzer.md`
 - `references/agent-type-design-analyzer.md`
 - `references/agent-comment-analyzer.md`
+- `references/agent-security-auditor.md`
+- `references/agent-api-contract-checker.md`
+- `references/agent-spec-compliance.md`
 - `references/agent-code-simplifier.md`
 
 ### 5. Launch Subagents

@@ -28,6 +28,7 @@ allowed-tools:
   - "Bash(gh pr diff *)"
   - "Bash(gh pr list *)"
   - "Bash(gh pr checks *)"
+  - "Bash(gh pr comment *)"
   - "Bash(gh api *)"
 metadata:
   author: fzymgc-house
@@ -68,7 +69,8 @@ Default: `all` (run every applicable aspect).
 - [ ] Choose model per agent (sonnet default, opus for complex/security)
 - [ ] Read agent prompts from `references/`
 - [ ] Launch subagents via Task tool (parallel for `all`, sequential for single)
-- [ ] Aggregate results from `$REVIEW_DIR/*.md` into unified summary, then clean up
+- [ ] Aggregate results from `$REVIEW_DIR/*.md` into unified summary
+- [ ] Offer to post findings as PR comment (confirm with user first), then clean up
 
 ## Workflow
 
@@ -190,8 +192,8 @@ one agent at a time for interactive review.
 
 ### 6. Aggregate Results
 
-Read the report files from `$REVIEW_DIR/*.md` to compile the unified report.
-Delete the temp directory after aggregation: `rm -rf $REVIEW_DIR`.
+Read the report files from `$REVIEW_DIR/*.md` to compile the unified
+report. Present the summary to the user.
 
 ```markdown
 # PR Review Summary
@@ -219,6 +221,23 @@ Delete the temp directory after aggregation: `rm -rf $REVIEW_DIR`.
 3. Consider suggestions
 4. Re-run review after fixes
 ```
+
+### 7. Offer to Post Findings
+
+After presenting the summary, ask the user whether to post the review
+findings as a single comment on the PR. **Do NOT post without explicit
+user confirmation.**
+
+If confirmed, post using:
+
+```bash
+gh pr comment <number> --body-file "$REVIEW_DIR/summary.md"
+```
+
+Write the aggregated summary to `$REVIEW_DIR/summary.md` first to
+avoid shell escaping issues with inline text.
+
+After posting (or if declined), clean up: `rm -rf $REVIEW_DIR`.
 
 ## Usage Examples
 

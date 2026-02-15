@@ -28,6 +28,14 @@ allowed-tools:
   - "Bash(gh pr diff *)"
   - "Bash(gh pr list *)"
   - "Bash(gh pr checks *)"
+metadata:
+  author: fzymgc-house
+  version: 0.1.0
+  based-on: >-
+    anthropics/claude-plugins-official pr-review-toolkit
+    (https://github.com/anthropics/claude-plugins-official/tree/main/plugins/pr-review-toolkit)
+    — original 6 agents adapted from plugin format to skill references,
+    plus 3 new agents (security-auditor, api-contract-checker, spec-compliance)
 ---
 
 # Comprehensive PR Review

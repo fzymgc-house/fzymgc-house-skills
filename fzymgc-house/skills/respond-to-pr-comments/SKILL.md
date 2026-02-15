@@ -137,11 +137,15 @@ with the model from Phase 2. Each sub-agent should receive:
 - For bug/style: instructions to use TDD
 - For feature/design/question: the user's guidance from Step 2b
 
+**Concurrency limit: at most 3 sub-agents at a time.** If more than
+3 fixes are independent, batch them into groups of 3 and wait for each
+batch to finish before launching the next.
+
 1. **Bug and style:** launch sub-agent with recommended model.
    - Sub-agent writes a failing test (when testable), implements
      fix, confirms pass.
    - Acknowledge after sub-agent completes: `ack <pr> <comment-id>`
-   - Independent fixes MAY run as parallel sub-agents.
+   - Independent fixes MAY run as parallel sub-agents (up to 3).
 
 2. **Feature, design, question:** launch sub-agent with recommended
    model and the user's guidance from Step 2b.

@@ -6,7 +6,7 @@ description: >-
   "analyze this pull request", or invokes /review-pr. Launches targeted review
   agents for code quality, error handling, test coverage, type design, comments,
   security, API compatibility, spec compliance, and code simplification.
-argument-hint: "[aspects: all|code|errors|tests|types|comments|security|api|spec|simplify]"
+argument-hint: "PR# [aspects: all|code|errors|tests|types|comments|security|api|spec|simplify]"
 allowed-tools:
   - Task
   - Read
@@ -62,7 +62,7 @@ Default: `all` (run every applicable aspect).
 
 ## Quick Checklist
 
-- [ ] Determine scope (parse arguments, gather git diff)
+- [ ] Determine scope (parse PR number + aspects, gather PR diff)
 - [ ] Select applicable agents based on changes and requested aspects
 - [ ] Choose model per agent (sonnet default, opus for complex/security)
 - [ ] Read agent prompts from `references/`
@@ -73,7 +73,11 @@ Default: `all` (run every applicable aspect).
 
 ### 1. Determine Scope
 
-Parse `$ARGUMENTS` for requested aspects. If blank or `all`, run all aspects.
+Parse `$ARGUMENTS`:
+
+- **First token**: PR number (required). Use for `gh pr view <number>`
+  and `gh pr diff <number>` to get the review context.
+- **Remaining tokens**: Requested aspects. If blank or `all`, run all.
 
 Create an isolated temp directory for this review session:
 
@@ -84,12 +88,11 @@ REVIEW_DIR=$(mktemp -d /tmp/review-pr-XXXXXXXX)
 All agents write their reports into this directory. Pass the full
 `$REVIEW_DIR` path to each subagent.
 
-Gather context:
+Gather context using the PR number:
 
 ```bash
-git diff --name-only          # changed files
-git diff --stat               # change summary
-gh pr view --json title,body  # PR metadata (if PR exists)
+gh pr diff <number>                    # PR diff
+gh pr view <number> --json title,body  # PR metadata
 ```
 
 ### 2. Select Applicable Agents
@@ -206,16 +209,16 @@ Delete the temp directory after aggregation: `rm -rf $REVIEW_DIR`.
 ## Usage Examples
 
 ```bash
-# Full review (all aspects)
-/review-pr
+# Full review of PR #123 (all aspects)
+/review-pr 123
 
 # Specific aspects
-/review-pr code errors
-/review-pr tests
-/review-pr simplify
+/review-pr 123 code errors
+/review-pr 123 tests
+/review-pr 123 simplify
 
-# Review with PR number context
-/review-pr all
+# Security-focused review
+/review-pr 123 security
 ```
 
 ## Tips

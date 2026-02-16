@@ -1,0 +1,28 @@
+name: Check Skills
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release-please config covers all skills
+        run: |
+          actual=$(find fzymgc-house/skills -name SKILL.md -exec dirname {} \; | sort)
+          configured=$(jq -r '.packages | keys[] | select(. != ".")' release-please-config.json | sort)
+          if ! diff <(echo "$actual") <(echo "$configured"); then
+            echo "::error::Skill directories and release-please-config.json are out of sync"
+            exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install rumdl
+        run: cargo install rumdl
+      - name: Lint markdown
+        run: rumdl check fzymgc-house/skills/*/SKILL.md

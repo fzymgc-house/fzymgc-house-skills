@@ -88,3 +88,74 @@ bd dep add <lower-priority-finding> --depends-on <higher-priority-finding>
 The fix loop's "query ready findings" naturally respects the dependency
 graph — a finding cannot be picked up while its dependencies are still
 open.
+
+## Phase 3: Triage
+
+For each **open** finding bead, read its description and evaluate three
+dimensions to determine handling:
+
+1. **Complexity** — Is the fix straightforward or does it require judgment?
+2. **Scope of change** — Mechanical tweak or design/spec/contract shift?
+3. **Deviation** — Follows existing patterns or introduces new ones?
+
+**Auto-fixable** (no user input needed):
+
+- Clear bug with an obvious correct fix
+- Mechanical changes (formatting, naming, lint)
+- Low deviation from existing code and patterns
+
+**Needs human judgment** — present to user via `AskUserQuestion`:
+
+- Fix requires a design or architectural choice
+- Fix changes a spec, plan, or public contract
+- Multiple valid approaches with meaningful trade-offs
+- High deviation from existing patterns
+
+Note: The `aspect` label (which review agent found the issue) does NOT
+determine auto-fix vs needs-human. A security finding may be a simple
+one-liner; a code quality finding may require an architectural decision.
+The `aspect` label is used for model selection, not triage routing.
+
+For each needs-human finding, use `AskUserQuestion` with:
+
+- Concrete fix approach options (when the agent can propose them)
+- A recommendation marked "(Recommended)" when there's a clear winner
+- A "Defer" option
+- `AskUserQuestion` provides "Other" automatically
+
+**Complexity/model assignment:**
+
+| Complexity | Criteria | Model |
+|------------|---------------------------------------------|--------|
+| low | Single file, mechanical change, obvious fix | haiku |
+| medium | Few files, some judgment, clear approach | sonnet |
+| high | Cross-cutting, architectural, needs context | opus |
+
+**Deferral handling:**
+
+When the user chooses "Defer":
+
+1. Add `deferred` label to the finding:
+
+   ```bash
+   bd update <finding-id> --add-label deferred
+   ```
+
+2. Create a deferred work bead in the appropriate project epic (or
+   top-level if no clear epic):
+
+   ```bash
+   bd create "<description of the work>" \
+     --type task \
+     --parent <project-epic-id-or-omit> \
+     --labels "deferred,aspect:<aspect>,from-pr:<number>" \
+     --external-ref "https://github.com/{owner}/{repo}/pull/<number>" \
+     --description "<full context, file location, reason for deferral>" \
+     --silent
+   ```
+
+3. Link back to the finding:
+
+   ```bash
+   bd dep add <deferred-work-bead> --depends-on <finding-id> --type discovered-from
+   ```

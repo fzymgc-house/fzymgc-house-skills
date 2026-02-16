@@ -46,7 +46,7 @@ used by this skill.
 3. **Query the review epic bead:**
 
    ```bash
-   bd list --labels "pr-review,pr:<number>" --status open --json
+   bd list --label "pr-review,pr:<number>" --status open --json
    ```
 
    If no review epic exists, stop: "No review findings for PR #N.

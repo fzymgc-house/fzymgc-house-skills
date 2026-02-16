@@ -8,7 +8,7 @@ All commands use long flags only — no shorthand.
 ```bash
 bd list --parent <epic-id> --status open --json
 bd list --parent <epic-id> --status open --label "aspect:code" --json
-bd list --labels "pr-review,pr:<number>" --json
+bd list --label "pr-review,pr:<number>" --json
 ```
 
 ## bd create — Create work and deferred beads

@@ -84,7 +84,7 @@ bd create "<title — first sentence of finding>" \
 Query prior findings for your aspect:
 
 ```bash
-bd list --parent $PARENT_BEAD_ID --labels "aspect:types" --status open --json
+bd list --parent $PARENT_BEAD_ID --label "aspect:types" --status open --json
 ```
 
 For each prior finding:

@@ -53,6 +53,8 @@ Skills should be self-contained and focused on specific tasks related to the fzy
 - **terraform** - Terraform Cloud operations (runs, workspaces, state management, registry documentation lookup)
 - **respond-to-pr-comments** - GitHub PR review comment management (list, acknowledge, respond to feedback, full
   review-response workflows). Reads review findings from beads for context-aware responses.
+- **address-review-findings** - Processes review-pr findings by working through
+  beads in the review epic. Dependency-aware fix loop with batch review gates.
 - **review-pr** - Comprehensive PR review using 9 specialized subagents (code quality, error handling, test coverage,
   type design, comments, security, API compatibility, spec compliance, code simplification).
   Findings persisted as beads for cross-session context. User-invoked via `/review-pr [aspects]`.

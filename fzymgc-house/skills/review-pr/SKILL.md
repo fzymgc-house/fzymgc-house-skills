@@ -39,7 +39,7 @@ allowed-tools:
   - "Bash(bd config *)"
 metadata:
   author: fzymgc-house
-  version: 0.1.0
+  version: 0.3.0
   based-on: >-
     anthropics/claude-plugins-official pr-review-toolkit
     (https://github.com/anthropics/claude-plugins-official/tree/main/plugins/pr-review-toolkit)

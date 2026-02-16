@@ -10,6 +10,13 @@ allowed-tools:
   - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-pr-comments/scripts/pr_comments *)"
   - "Bash(git *)"
   - "Bash(gh *)"
+  - "Bash(bd create *)"
+  - "Bash(bd list *)"
+  - "Bash(bd update *)"
+  - "Bash(bd show *)"
+  - "Bash(bd dep *)"
+  - "Bash(bd query *)"
+  - "Bash(bd comments *)"
   - "Bash(task *)"
   - Read
   - Edit

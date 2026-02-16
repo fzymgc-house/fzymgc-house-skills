@@ -99,7 +99,7 @@ Parse `$ARGUMENTS`:
 Check for an existing PR review bead:
 
 ```bash
-bd list --labels "pr-review,pr:<number>" --json
+bd list --label "pr-review,pr:<number>" --json
 ```
 
 **First review** (no bead found): Create the PR review parent epic bead:

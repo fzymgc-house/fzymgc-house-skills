@@ -87,7 +87,7 @@ beads and run `bd init` in the target project."
    previously created beads for this PR:
 
    ```bash
-   bd list --labels "pr-review,pr:<number>" --json
+   bd list --label "pr-review,pr:<number>" --json
    ```
 
    If a review bead exists, load all child findings:

@@ -25,7 +25,7 @@ allowed-tools:
   - "Bash(bd search *)"
 metadata:
   author: fzymgc-house
-  version: 0.1.0
+  version: 0.1.0 # x-release-please-version
 ---
 
 # Address Review Findings

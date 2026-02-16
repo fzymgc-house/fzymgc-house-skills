@@ -25,7 +25,7 @@ allowed-tools:
   - Glob
 metadata:
   author: fzymgc-house
-  version: 0.4.0
+  version: 0.4.0 # x-release-please-version
 ---
 
 # PR Comment Operations

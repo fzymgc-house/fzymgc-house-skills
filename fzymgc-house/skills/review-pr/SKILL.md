@@ -102,11 +102,11 @@ Check for an existing PR review bead:
 bd list --labels "pr-review,pr:<number>" --json
 ```
 
-**First review** (no bead found): Create the PR review parent bead:
+**First review** (no bead found): Create the PR review parent epic bead:
 
 ```bash
 bd create "Review: PR #<number> — <title>" \
-  --type task \
+  --type epic \
   --labels "pr-review,pr:<number>,turn:1" \
   --external-ref "https://github.com/{owner}/{repo}/pull/<number>" \
   --description "<PR body summary>" \

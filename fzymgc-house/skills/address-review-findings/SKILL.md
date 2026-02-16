@@ -159,3 +159,64 @@ When the user chooses "Defer":
    ```bash
    bd dep add <deferred-work-bead> --depends-on <finding-id> --type discovered-from
    ```
+
+## Phase 4: Fix Loop
+
+Loop while open, non-deferred findings remain:
+
+1. **Query ready findings** (no unresolved deps among open beads):
+
+   ```bash
+   bd list --parent <epic-id> --status open --json
+   ```
+
+   Filter to findings whose dependencies are all closed.
+
+2. **Pick up to 3** ready findings.
+
+3. **For each non-trivial finding**, create a work bead first:
+
+   ```bash
+   bd create "Fix(<finding-id>): <short desc>" \
+     --type task \
+     --parent <review-epic-id> \
+     --description "<work to be done>" \
+     --deps "blocks:<finding-id>" \
+     --silent
+   ```
+
+   The work bead blocks the finding bead — the finding cannot be
+   closed until the fix work is complete.
+
+4. **Launch fix sub-agents** (up to 3 concurrent). Each receives:
+
+   - Finding bead ID and description
+   - Work bead ID (if created)
+   - File location and suggested fix from the finding
+   - Model assignment from triage
+
+   Sub-agent implements the fix and reports what it did.
+   Sub-agent does **NOT** close or update any beads.
+
+5. **Wait** for all sub-agents in this round to complete.
+
+6. **Launch a review agent** (sonnet) for this round's fixes. Receives:
+
+   - `git diff` of changes made
+   - Finding descriptions for each fix
+   - What each sub-agent reported
+
+   Returns per-finding: `PASS` | `FAIL: <reason>`
+
+7. **For PASS findings:**
+
+   - Orchestrator closes the work bead (if any):
+     `bd update <work-id> --status closed`
+   - Orchestrator closes the finding bead:
+     `bd update <finding-id> --status closed`
+
+8. **For FAIL findings:**
+
+   - Add comment: `bd comments add <finding-id> "Review failed: <reason>"`
+   - Re-queue (stays open, eligible for next round)
+   - Max 2 retries per finding. After 2 failures, escalate to user.

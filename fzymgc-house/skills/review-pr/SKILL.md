@@ -82,6 +82,12 @@ Default: `all` (run every applicable aspect).
 
 ## Workflow
 
+### 0. Prerequisites
+
+Verify `bd` is available: run `bd --version`. If it fails, stop and
+tell the user: "beads CLI (`bd`) is required but not found. Install
+beads and run `bd init` in the target project."
+
 ### 1. Determine Scope
 
 Parse `$ARGUMENTS`:

@@ -69,6 +69,12 @@ Copy this checklist and update as you go:
 - [ ] Phase 5: Commit, push, post bead-based summary comment
 ```
 
+### Phase 0: Prerequisites
+
+Verify `bd` is available: run `bd --version`. If it fails, stop and
+tell the user: "beads CLI (`bd`) is required but not found. Install
+beads and run `bd init` in the target project."
+
 ### Phase 1: Setup
 
 1. **Identify the PR.** Use `$ARGUMENTS` if provided, otherwise determine

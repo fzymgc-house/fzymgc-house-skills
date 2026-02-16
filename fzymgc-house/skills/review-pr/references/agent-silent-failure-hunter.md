@@ -38,48 +38,49 @@ behavior before they reach production.
 4. Check that retry logic has proper exhaustion handling
 5. Verify fallback values are appropriate and documented
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/errors.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `errors`.
 
-### Schema
+### Creating Findings
 
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:errors,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The error handling problem and its production impact |
-| `location` | no | `file:line` reference |
-| `fix` | no | Corrected code or approach |
-| `category` | no | e.g., `"empty-catch"`, `"broad-except"`, `"silent-return"`, `"retry-exhaustion"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- CRITICAL (silent data loss, masked production errors) → `"critical"`
-- HIGH (degraded error visibility or debugging) → `"important"`
-- MEDIUM (suboptimal but not dangerous) → `"suggestion"`
-- Well-implemented error handling patterns → `"praise"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"critical","description":"Empty catch block swallows authentication errors — login failures will appear to succeed silently","location":"auth/login.py:87","fix":"Re-raise after logging: logger.error(e); raise","category":"empty-catch"}
-{"severity":"important","description":"Broad except Exception catches ConnectionError, masking network failures as generic errors","location":"api/client.py:42","fix":"Use except ConnectionError and re-raise after logging","category":"broad-except"}
-{"severity":"praise","description":"Retry logic correctly surfaces exhaustion with explicit RetryExhaustedError including attempt count","location":"services/queue.py:63"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:errors" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> silent-failure-hunter: 2 critical, 1 important.
-> Critical: empty catch swallows auth errors in auth/login.py:87.
-> Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

@@ -30,6 +30,13 @@ allowed-tools:
   - "Bash(gh pr checks *)"
   - "Bash(gh pr comment *)"
   - "Bash(gh api *)"
+  - "Bash(bd create *)"
+  - "Bash(bd list *)"
+  - "Bash(bd update *)"
+  - "Bash(bd show *)"
+  - "Bash(bd dep *)"
+  - "Bash(bd query *)"
+  - "Bash(bd config *)"
 metadata:
   author: fzymgc-house
   version: 0.1.0
@@ -64,15 +71,22 @@ Default: `all` (run every applicable aspect).
 
 ## Quick Checklist
 
-- [ ] Determine scope (parse PR number + aspects, gather PR diff + prior comments)
+- [ ] Determine scope (parse PR number + aspects, check for existing review bead)
 - [ ] Select applicable agents based on changes and requested aspects
 - [ ] Choose model per agent (sonnet default, opus for complex/security)
 - [ ] Read agent prompts from `references/`
-- [ ] Launch subagents via Task tool (parallel for `all`, sequential for single)
-- [ ] Aggregate results from `$REVIEW_DIR/*.jsonl` into unified summary
-- [ ] Offer to post findings as PR comment (confirm with user first), then clean up
+- [ ] Create PR review parent bead (or find existing for re-review)
+- [ ] Launch subagents via Task tool (batched, max 3 concurrent)
+- [ ] Aggregate results from beads into unified summary
+- [ ] Offer to post findings as PR comment (confirm with user first)
 
 ## Workflow
+
+### 0. Prerequisites
+
+Verify `bd` is available: run `bd --version`. If it fails, stop and
+tell the user: "beads CLI (`bd`) is required but not found. Install
+beads and run `bd init` in the target project."
 
 ### 1. Determine Scope
 
@@ -82,34 +96,45 @@ Parse `$ARGUMENTS`:
   and `gh pr diff <number>` to get the review context.
 - **Remaining tokens**: Requested aspects. If blank or `all`, run all.
 
-Create an isolated temp directory for this review session:
+Check for an existing PR review bead:
 
 ```bash
-REVIEW_DIR=$(mktemp -d /tmp/review-pr-XXXXXXXX)
+bd list --labels "pr-review,pr:<number>" --json
 ```
 
-All agents write their reports into this directory. Pass the full
-`$REVIEW_DIR` path to each subagent.
+**First review** (no bead found): Create the PR review parent bead:
 
-Gather context using the PR number:
+```bash
+bd create "Review: PR #<number> — <title>" \
+  --type task \
+  --labels "pr-review,pr:<number>,turn:1" \
+  --external-ref "https://github.com/{owner}/{repo}/pull/<number>" \
+  --description "<PR body summary>" \
+  --parent <epic-id> \
+  --silent
+```
+
+The `--parent` flag is only included if an epic is found for this PR.
+
+**Re-review** (bead found): This is turn N+1. Read the existing bead ID
+and increment the turn label.
+
+Gather PR context:
 
 ```bash
 gh pr diff <number>                    # PR diff
 gh pr view <number> --json title,body  # PR metadata
 ```
 
-**Check for previous review rounds.** Fetch existing review comments
-and reviews to understand what's already been flagged:
+Optionally fetch GitHub review comments for supplementary context:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/<number>/comments  # inline comments
-gh api repos/{owner}/{repo}/pulls/<number>/reviews    # review summaries
+gh api repos/{owner}/{repo}/pulls/<number>/comments
+gh api repos/{owner}/{repo}/pulls/<number>/reviews
 ```
 
-If previous comments exist, include a summary of prior feedback when
-passing context to each subagent. This prevents duplicate findings
-and lets agents focus on new or unresolved issues. Instruct agents:
-"Previous review comments exist — avoid re-flagging resolved items."
+Beads are the primary source for prior findings; GitHub comments are
+supplementary.
 
 ### 2. Select Applicable Agents
 
@@ -170,28 +195,20 @@ Read the system prompt for each selected agent from `references/`:
 
 ### 5. Launch Subagents
 
-Use the `Task` tool to launch each selected agent. Each agent writes its
-findings as JSONL (one JSON object per line) and returns only a terse summary.
+Use the `Task` tool to launch each selected agent. Each agent creates
+finding beads directly via `bd create` and returns only a terse summary.
 
-**Output convention**: `$REVIEW_DIR/<aspect>.jsonl`
-(e.g. `$REVIEW_DIR/code.jsonl`, `$REVIEW_DIR/errors.jsonl`)
-
-**JSONL schema** (every agent uses the same format):
-
-```text
-{"severity":"critical|important|suggestion|praise","description":"...","location":"file:line","fix":"...","category":"..."}
-```
-
-- `severity` + `description`: required
-- `location`, `fix`, `category`: optional
+**Bead schema**: Each subagent creates finding beads with type, priority,
+labels (`aspect:*`, `severity:*`, `turn:*`), external-ref (PR URL), and
+description (full details + location + suggested fix).
 
 Each Task call should:
 
 1. Set the `model` parameter per the routing decision from step 3
 2. Include the git diff or changed file contents as context
 3. Include the full system prompt from the reference file
-4. Instruct the agent to write findings to `$REVIEW_DIR/<aspect>.jsonl`
-5. Instruct the agent to return only a 2-3 line summary (issue counts + critical items)
+4. Pass `PARENT_BEAD_ID`, `ASPECT`, `TURN`, `PR_URL` variables
+5. Instruct the agent to create beads directly and return a 2-3 line summary
 
 **Batched parallel execution** (default for `all`): Launch agents in
 batches of **at most 3 concurrent** Task tool calls per message. Wait for
@@ -203,28 +220,33 @@ one agent at a time for interactive review.
 
 ### 6. Aggregate Results
 
-Read the JSONL files from `$REVIEW_DIR/*.jsonl`. Parse each line as a
-JSON object. Group all findings across agents by `severity`, then
-compile the unified report. Present the summary to the user.
+Query all findings from beads:
+
+```bash
+bd list --parent <parent-bead-id> --status open --json
+```
+
+Group findings by severity label. Compile the unified report and present
+to the user:
 
 ```markdown
 # PR Review Summary
 
 ## Critical Issues (must fix before merge)
 
-- [agent]: description [location]
+- [aspect]: description [location]
 
 ## Important Issues (should fix)
 
-- [agent]: description [location]
+- [aspect]: description [location]
 
 ## Suggestions (nice to have)
 
-- [agent]: description [location]
+- [aspect]: description [location]
 
 ## Strengths
 
-- [agent]: description [location]
+- [aspect]: description [location]
 
 ## Recommended Action
 
@@ -234,9 +256,8 @@ compile the unified report. Present the summary to the user.
 4. Re-run review after fixes
 ```
 
-The `agent` label comes from the filename (e.g., `security.jsonl` →
-`security`). The `severity` field determines which section each finding
-appears in (`praise` → Strengths).
+The `aspect` label comes from the bead's `aspect:*` label. The `severity`
+label determines which section each finding appears in.
 
 ### 7. Offer to Post Findings
 
@@ -244,16 +265,45 @@ After presenting the summary, ask the user whether to post the review
 findings as a single comment on the PR. **Do NOT post without explicit
 user confirmation.**
 
-If confirmed, post using:
+If confirmed, write the comment to a temp file and post:
 
 ```bash
-gh pr comment <number> --body-file "$REVIEW_DIR/summary.md"
+gh pr comment <number> --body-file /tmp/pr-review-comment.md
 ```
 
-Write the aggregated summary to `$REVIEW_DIR/summary.md` first to
-avoid shell escaping issues with inline text.
+Use this comment template:
 
-After posting (or if declined), clean up: `rm -rf $REVIEW_DIR`.
+````markdown
+<!-- pr-review:<bead-id> -->
+## <bead-id> — PR Review
+
+`bd list --parent <bead-id> --status open`
+
+N critical · N important · N suggestions
+
+---
+
+### Critical
+
+**Finding title** `<finding-bead-id>`
+Up to two lines of summary describing the issue,
+its location, and the recommended fix.
+
+### Important
+
+**Finding title** `<finding-bead-id>`
+Summary.
+
+### Suggestions
+
+**Finding title** `<finding-bead-id>`
+Summary.
+````
+
+Every finding is listed. Each gets a bold title with bead ID, plus up to
+2 lines of summary (max 3 lines total per finding). Grouped by severity.
+The HTML comment marker `<!-- pr-review:<bead-id> -->` enables machine
+detection of prior review comments.
 
 ## Usage Examples
 

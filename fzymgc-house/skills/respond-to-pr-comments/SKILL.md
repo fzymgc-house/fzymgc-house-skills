@@ -10,6 +10,13 @@ allowed-tools:
   - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-pr-comments/scripts/pr_comments *)"
   - "Bash(git *)"
   - "Bash(gh *)"
+  - "Bash(bd create *)"
+  - "Bash(bd list *)"
+  - "Bash(bd update *)"
+  - "Bash(bd show *)"
+  - "Bash(bd dep *)"
+  - "Bash(bd query *)"
+  - "Bash(bd comments *)"
   - "Bash(task *)"
   - Read
   - Edit
@@ -55,12 +62,18 @@ Follow the workflow below.
 Copy this checklist and update as you go:
 
 ```text
-- [ ] Phase 1: Read unacked comments, gather review history, locate worktree
+- [ ] Phase 1: Read unacked comments, query beads for prior findings, cross-reference, locate worktree
 - [ ] Phase 2: Categorize comments, confirm with user
-- [ ] Phase 3: Implement fixes (bug/style) and ask about (feature/design/question)
+- [ ] Phase 3: Implement fixes, update beads (close findings, create work beads)
 - [ ] Phase 4: All quality gates pass (test, build, lint)
-- [ ] Phase 5: Commit, push, post summary comment
+- [ ] Phase 5: Commit, push, post bead-based summary comment
 ```
+
+### Phase 0: Prerequisites
+
+Verify `bd` is available: run `bd --version`. If it fails, stop and
+tell the user: "beads CLI (`bd`) is required but not found. Install
+beads and run `bd init` in the target project."
 
 ### Phase 1: Setup
 
@@ -70,7 +83,29 @@ Copy this checklist and update as you go:
 2. **Read all unresolved comments:** `list <pr-number> --unacked`.
    If none exist, report and stop.
 
-3. **Gather review history.** Fetch all prior reviews and comments
+3. **Query beads for prior review findings.** Check if a review-pr run
+   previously created beads for this PR:
+
+   ```bash
+   bd list --labels "pr-review,pr:<number>" --json
+   ```
+
+   If a review bead exists, load all child findings:
+
+   ```bash
+   bd list --parent <review-bead-id> --json
+   ```
+
+   This provides full context from prior review-pr runs without
+   re-deriving from PR comment text.
+
+4. **Cross-reference.** Match GitHub PR comments against existing finding
+   beads via `external-ref` URLs. Identify:
+   - Comments that align with existing findings (human flagged same thing)
+   - Comments that are new (not captured by review-pr)
+   - Findings with no corresponding reviewer comment (bot-only findings)
+
+5. **Gather review history.** Fetch all prior reviews and comments
    to understand the full conversation context:
 
    ```bash
@@ -83,7 +118,7 @@ Copy this checklist and update as you go:
    Pass this context to sub-agents in Phase 3 so they understand
    what was already attempted.
 
-4. **Locate the worktree.** Run `git worktree list` and check whether one
+6. **Locate the worktree.** Run `git worktree list` and check whether one
    exists for the PR's branch. If so, `cd` into it and verify with
    `git branch --show-current`. If not, ask the user whether to create one.
    **MUST** use an existing worktree if one matches.
@@ -95,6 +130,9 @@ This phase has three distinct steps. Do NOT combine them.
 **Step 2a — Categorize internally.** For each comment, assign a
 **category**, **complexity**, and **model**. Do not present to the
 user yet.
+
+If a PR comment matches an existing finding bead (from the cross-reference
+in Phase 1), note the finding bead ID for linking in Phase 3.
 
 | Category     | Description                        | Action |
 |--------------|------------------------------------|--------|
@@ -134,6 +172,7 @@ with the model from Phase 2. Each sub-agent should receive:
 
 - The comment text and file location
 - The category and what to do
+- The related finding bead ID (if one exists from Phase 1 cross-reference)
 - For bug/style: instructions to use TDD
 - For feature/design/question: the user's guidance from Step 2b
 
@@ -144,12 +183,19 @@ batch to finish before launching the next.
 1. **Bug and style:** launch sub-agent with recommended model.
    - Sub-agent writes a failing test (when testable), implements
      fix, confirms pass.
-   - Acknowledge after sub-agent completes: `ack <pr> <comment-id>`
+   - After sub-agent completes:
+     - If non-trivial, create a work bead:
+       `bd create "Fix: <description>" --type task --deps "discovered-from:<finding-bead-id>" --silent`
+     - Close the related finding bead: `bd update <finding-bead-id> --status closed`
+     - Acknowledge: `ack <pr> <comment-id>`
    - Independent fixes MAY run as parallel sub-agents (up to 3).
 
 2. **Feature, design, question:** launch sub-agent with recommended
    model and the user's guidance from Step 2b.
-   - Acknowledge after sub-agent completes: `ack <pr> <comment-id>`
+   - After sub-agent completes:
+     - Create a work bead if applicable
+     - Close the related finding bead if one exists
+     - Acknowledge: `ack <pr> <comment-id>`
 
 ### Phase 4: Verify
 
@@ -184,14 +230,15 @@ ONLY structured results (no explanations) to minimize token use:
 **Sub-agent task:**
 
 1. Read Phase 2 categorization (comment IDs, categories, user guidance)
-2. Run `git diff` to see actual changes
-3. For EACH comment ID, output one line:
+2. Query beads for review state: `bd list --parent <review-bead-id> --json`
+3. Run `git diff` to see actual changes
+4. For EACH comment ID, output one line:
 
    ```text
    <comment-id>: PASS | FAIL: <reason-if-fail>
    ```
 
-4. After all comments, output decision:
+5. After all comments, output decision:
 
    ```text
    DECISION: SHIP | BLOCK
@@ -215,9 +262,28 @@ If DECISION is SHIP, proceed to Phase 5.
 
 1. **Commit** using the `commit-commands:commit` skill.
 2. **Push** to the PR branch.
-3. **Post summary comment:** `comment <pr-number> --file /tmp/pr-summary.md`
-   - Bulleted list of each comment addressed and what was done.
-   - Any comments deferred or requiring further discussion.
+3. **Post summary comment** using the bead-based template:
+
+   Write to `/tmp/pr-response-comment.md` and post via
+   `comment <pr-number> --file /tmp/pr-response-comment.md`
+
+   Template:
+
+   ```markdown
+   <!-- pr-review:<bead-id>:response -->
+   ## <bead-id> — Review Response
+
+   `bd list --parent <bead-id>`
+
+   Addressed N/M · N deferred
+
+   | Finding | Status |
+   |---------|--------|
+   | <bead-id> | Fixed |
+   | <bead-id> | Deferred — reason |
+   ```
+
+   The HTML comment marker enables machine detection of response comments.
 
 ## Hard Constraints
 

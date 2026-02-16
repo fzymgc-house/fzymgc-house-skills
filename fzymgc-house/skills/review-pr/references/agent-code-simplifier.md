@@ -35,54 +35,49 @@ Operate on recently modified code unless directed otherwise.
 4. Propose specific simplifications with before/after examples
 5. Verify each suggestion preserves functionality
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/simplify.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `simplify`.
 
-IMPORTANT: Suggest changes only. Do not apply modifications directly.
-Include before/after context in the description so the developer can
-evaluate each suggestion independently.
+### Creating Findings
 
-### Schema
-
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:simplify,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | Current code pattern and why the simplification helps |
-| `location` | no | `file:line` reference |
-| `fix` | no | Simplified version or approach |
-| `category` | no | e.g., `"redundancy"`, `"naming"`, `"control-flow"`, `"consolidation"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- All simplification suggestions → `"suggestion"`
-- Code that is already clean and well-structured → `"praise"`
+### Re-reviews (turn > 1)
 
-Code-simplifier findings are inherently suggestions — they improve
-clarity without fixing bugs, so `"critical"` and `"important"` are
-not expected from this agent.
+Query prior findings for your aspect:
 
-### Example Output
-
-```jsonl
-{"severity":"suggestion","description":"Three duplicate validation blocks (lines 42, 67, 93) share identical logic — consolidating reduces maintenance surface","location":"forms/validators.py:42","fix":"Extract shared logic into validate_field(field, rules) helper","category":"consolidation"}
-{"severity":"suggestion","description":"Nested ternary is hard to parse at a glance: x = a if b else (c if d else e)","location":"utils/config.py:28","fix":"Replace with if/elif/else block for readability","category":"control-flow"}
-{"severity":"praise","description":"Clean use of dataclass with frozen=True — immutability makes state reasoning straightforward","location":"models/event.py:5"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:simplify" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding count and the highest-value suggestion (if any).
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> code-simplifier: 4 suggestions found.
-> Top: consolidate 3 duplicate validation blocks in
-> forms/validators.py. Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

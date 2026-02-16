@@ -51,59 +51,49 @@ For each type in the diff:
 - Missing validation at construction boundaries
 - Types that rely on external code to maintain invariants
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/types.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `types`.
 
-Emit findings **per concern**, not per type. A type with multiple issues
-produces multiple lines. Include the type name in the description.
+### Creating Findings
 
-### Schema
-
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:types,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The type design concern, including type name and relevant ratings |
-| `location` | no | `file:line` of type definition |
-| `fix` | no | Concrete improvement |
-| `category` | no | e.g., `"encapsulation"`, `"enforcement"`, `"expression"`, `"invariant"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-Rate each dimension (encapsulation, expression, usefulness, enforcement)
-1-10, then map to severity:
+### Re-reviews (turn > 1)
 
-- Any dimension rated ≤3 → `"critical"`
-- Any dimension rated 4-6 → `"important"`
-- Minor concerns on dimensions rated 7+ → `"suggestion"`
-- Strong type designs worth noting → `"praise"`
+Query prior findings for your aspect:
 
-Include the dimension name and rating in the description for context.
-
-### Example Output
-
-```jsonl
-{"severity":"critical","description":"UserAccount: enforcement 3/10 — constructor allows empty email string, creating invalid instances that propagate to downstream services","location":"models/user.py:12","fix":"Add email validation in __init__: if not email: raise ValueError","category":"enforcement"}
-{"severity":"important","description":"UserAccount: encapsulation 5/10 — mutable permissions list exposed via property, callers can modify internal state","location":"models/user.py:12","fix":"Return frozenset or copy from permissions property","category":"encapsulation"}
-{"severity":"praise","description":"SessionToken: strong invariant design — expiry enforced at construction, immutable fields, clear state transitions via revoke() method","location":"auth/token.py:8"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:types" --status open --json
 ```
 
-If no new types are found in the diff, report that and check whether
-existing types touched by the changes maintain their invariants.
+For each prior finding:
 
-## Output Convention
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: types analyzed, lowest rating, and the primary concern (if any).
-Target 2-3 lines maximum.
+### Return to Orchestrator
 
-Example return:
-> type-design-analyzer: 2 types analyzed.
-> UserAccount enforcement 3/10 — constructor allows invalid email.
-> Full report written.
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

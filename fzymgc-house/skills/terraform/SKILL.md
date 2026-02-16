@@ -13,6 +13,9 @@ allowed-tools:
   - Grep
   - Glob
   - Search
+metadata:
+  author: fzymgc-house
+  version: 0.1.0
 ---
 
 # Terraform Operations

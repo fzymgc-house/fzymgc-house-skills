@@ -30,6 +30,13 @@ allowed-tools:
   - "Bash(gh pr checks *)"
   - "Bash(gh pr comment *)"
   - "Bash(gh api *)"
+  - "Bash(bd create *)"
+  - "Bash(bd list *)"
+  - "Bash(bd update *)"
+  - "Bash(bd show *)"
+  - "Bash(bd dep *)"
+  - "Bash(bd query *)"
+  - "Bash(bd config *)"
 metadata:
   author: fzymgc-house
   version: 0.1.0

@@ -60,48 +60,49 @@ Analyze any public interface consumers depend on:
 5. Assess whether changes are additive or subtractive
 6. Check for missing migration paths or deprecation notices
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/api.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `api`.
 
-### Schema
+### Creating Findings
 
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:api,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The contract change, affected consumers, and migration path |
-| `location` | no | `file:line` reference |
-| `fix` | no | Migration guidance or deprecation notice to add |
-| `category` | no | e.g., `"removal"`, `"signature-change"`, `"behavior-change"`, `"schema-change"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- BREAKING (will cause immediate consumer failures) → `"critical"`
-- RISKY (may cause failures depending on usage) → `"important"`
-- COMPATIBLE (non-breaking, worth documenting) → `"suggestion"`
-- Good backward-compatible design choices → `"praise"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"critical","description":"Removed timeout param from Client.connect() — all callers passing timeout will get TypeError","location":"sdk/client.py:55","fix":"Add deprecated timeout param that logs warning and maps to new config.timeout_ms","category":"removal"}
-{"severity":"important","description":"Changed default page_size from 50 to 20 — consumers relying on implicit 50-item pages will get fewer results","location":"api/pagination.py:12","fix":"Document the change in CHANGELOG; consider keeping 50 as default for v1 API","category":"behavior-change"}
-{"severity":"suggestion","description":"New optional 'metadata' field added to response — additive, no consumer impact","location":"api/responses.py:30","category":"schema-change"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:api" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> api-contract-checker: 1 critical, 2 important.
-> Critical: removed timeout param from Client.connect().
-> Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

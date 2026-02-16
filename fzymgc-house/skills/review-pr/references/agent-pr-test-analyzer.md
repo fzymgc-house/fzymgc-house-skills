@@ -45,48 +45,49 @@ functionality without being pedantic about 100% coverage.
 - **3-4**: Nice-to-have for completeness
 - **1-2**: Optional minor improvements
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/tests.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `tests`.
 
-### Schema
+### Creating Findings
 
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:tests,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The test gap, quality issue, or positive observation |
-| `location` | no | `file:line` of untested code or brittle test |
-| `fix` | no | What test to add or how to improve |
-| `category` | no | e.g., `"test-gap"`, `"brittle-test"`, `"missing-edge-case"`, `"missing-negative"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- Criticality 8-10 (data loss, security, system failure) → `"critical"`
-- Criticality 5-7 (user-facing errors, edge cases) → `"important"`
-- Criticality 1-4 (nice-to-have, completeness) → `"suggestion"`
-- Well-tested areas and good testing patterns → `"praise"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"critical","description":"No test for payment rollback on failure — if the charge succeeds but order creation fails, money is taken with no order created","location":"services/payment.py:95","fix":"Add test: charge succeeds, order fails → verify refund issued","category":"test-gap"}
-{"severity":"important","description":"Test is tightly coupled to implementation — asserts on internal method call count rather than observable behavior","location":"tests/test_cache.py:42","fix":"Assert on cache hit/miss outcome instead of mock.call_count","category":"brittle-test"}
-{"severity":"praise","description":"Excellent edge case coverage — tests boundary conditions for empty input, single item, and max-size collections","location":"tests/test_validators.py:15"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:tests" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> pr-test-analyzer: 1 critical, 3 important.
-> Critical: no test for payment rollback on failure
-> (services/payment.py:95). Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

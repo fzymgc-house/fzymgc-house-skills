@@ -73,47 +73,49 @@ OWASP methodology and secure coding principles.
 5. Verify secrets are not exposed in any form
 6. For IaC changes, check permission scope and exposure
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/security.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `security`.
 
-### Schema
+### Creating Findings
 
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:security,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The vulnerability and its impact (what an attacker could achieve) |
-| `location` | no | `file:line` reference |
-| `fix` | no | Specific remediation with code example |
-| `category` | no | Audit area: `"injection"`, `"auth"`, `"secrets"`, `"crypto"`, `"config"`, `"iac-perms"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- CRITICAL (exploitable, immediate risk) → `"critical"`
-- HIGH (significant weakness requiring remediation) → `"important"`
-- MEDIUM / LOW (defense-in-depth, hardening) → `"suggestion"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"critical","description":"Hardcoded API key exposed in config — attacker with repo access gains full API control","location":"config/settings.py:23","fix":"Move to environment variable: os.environ['API_KEY']","category":"secrets"}
-{"severity":"important","description":"TLS verification disabled for internal API calls — enables MITM attacks on internal network","location":"api/client.py:88","fix":"Remove verify=False, add internal CA cert to trust store","category":"config"}
-{"severity":"suggestion","description":"Missing rate limiting on login endpoint — brute force attacks not mitigated","location":"api/auth.py:15","fix":"Add rate limiter middleware (e.g., slowapi with 5 req/min per IP)","category":"auth"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:security" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> security-auditor: 1 critical, 2 important.
-> Critical: hardcoded API key in config/settings.py:23.
-> Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

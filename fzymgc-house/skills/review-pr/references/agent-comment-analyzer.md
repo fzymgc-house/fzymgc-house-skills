@@ -48,51 +48,49 @@ Evaluate whether comments provide sufficient context without redundancy:
 - Assumptions that may no longer hold true
 - Examples that don't match current implementation
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/comments.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `comments`.
 
-IMPORTANT: Analyze and provide feedback only. Do not modify code or
-comments directly. The role is advisory.
+### Creating Findings
 
-### Schema
-
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:comments,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The comment issue or positive observation |
-| `location` | no | `file:line` reference |
-| `fix` | no | Corrected comment text or removal rationale |
-| `category` | no | e.g., `"inaccurate"`, `"outdated"`, `"redundant"`, `"missing-context"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- Factually incorrect or highly misleading comments → `"critical"`
-- Comments that should be removed (noise, confusion) → `"important"`
-- Comments that could be enhanced → `"suggestion"`
-- Well-written comments that serve as good examples → `"praise"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"critical","description":"Docstring claims O(n) time complexity but implementation uses nested loop — actual complexity is O(n²)","location":"utils/sort.py:15","fix":"Update docstring: 'Time complexity: O(n²) due to comparison-based insertion'","category":"inaccurate"}
-{"severity":"important","description":"Comment references removed validate_input() function — creates confusion about current validation approach","location":"api/routes.py:33","fix":"Remove comment or update to reference current validate_request()","category":"outdated"}
-{"severity":"praise","description":"Excellent 'why' comment explaining the non-obvious retry backoff ceiling — will save future developers from changing the magic number","location":"services/queue.py:88"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:comments" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> comment-analyzer: 2 critical, 1 important.
-> Critical: docstring claims O(n) but impl is O(n²) in sort.py:15.
-> Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

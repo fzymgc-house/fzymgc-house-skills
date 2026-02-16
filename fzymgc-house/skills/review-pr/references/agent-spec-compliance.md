@@ -64,51 +64,49 @@ in the existing codebase (implicit spec).
 5. Verify naming, structure, and convention adherence
 6. Flag any contradictions with ADRs or design decisions
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/spec.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `spec`.
 
-Include a finding that lists the spec documents consulted (use `"praise"`
-severity with `"category":"spec-sources"` so the aggregator has context).
+### Creating Findings
 
-### Schema
-
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:spec,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | The compliance issue, referencing the spec/ADR and what was expected vs. implemented |
-| `location` | no | `file:line` reference |
-| `fix` | no | How to bring into compliance, or note that the spec may need updating |
-| `category` | no | e.g., `"violation"`, `"deviation"`, `"convention"`, `"spec-sources"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- VIOLATION (directly contradicts documented decision) → `"critical"`
-- DEVIATION (inconsistent with established patterns) → `"important"`
-- SUGGESTION (could better align with spec) → `"suggestion"`
-- Spec documents consulted or good compliance → `"praise"`
+### Re-reviews (turn > 1)
 
-### Example Output
+Query prior findings for your aspect:
 
-```jsonl
-{"severity":"praise","description":"Spec documents consulted: CLAUDE.md, docs/adr/003-event-sourcing.md, ARCHITECTURE.md","category":"spec-sources"}
-{"severity":"critical","description":"ADR-003 requires event sourcing for state changes but implementation uses direct DB writes — violates architectural decision","location":"services/orders.py:88","fix":"Emit OrderCreated event and handle via event store, or propose new ADR to supersede ADR-003","category":"violation"}
-{"severity":"important","description":"File placed in utils/ but ARCHITECTURE.md specifies validation logic belongs in domain/ layer","location":"utils/validators.py:1","fix":"Move to domain/validators.py to match documented layer boundaries","category":"deviation"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:spec" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> spec-compliance: 1 critical, 2 important.
-> Violation: ADR-003 requires event sourcing but uses direct DB writes.
-> Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

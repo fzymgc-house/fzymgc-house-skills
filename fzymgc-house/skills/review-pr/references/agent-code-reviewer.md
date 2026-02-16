@@ -35,50 +35,49 @@ established project standards.
 4. Check error handling completeness
 5. Verify naming conventions and code style consistency
 
-## Output Format — JSONL
+## Bead Output
 
-Write one JSON object per line to the output path provided in the task
-prompt (`$REVIEW_DIR/code.jsonl`). Each line is a self-contained finding.
+Create a bead for each finding via `bd create`. The orchestrator provides
+these variables in the task prompt: `PARENT_BEAD_ID`, `TURN`, `PR_URL`.
+Your aspect is `code`.
 
-### Schema
+### Creating Findings
 
-```text
-{"severity":"<level>","description":"...","location":"file:line","fix":"...","category":"..."}
+```bash
+bd create "<title — first sentence of finding>" \
+  --parent $PARENT_BEAD_ID \
+  --type <bug|task|feature> \
+  --priority <0-3> \
+  --labels "pr-review-finding,aspect:code,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --external-ref "$PR_URL" \
+  --description "<full details: what's wrong, file:line location, suggested fix>" \
+  --silent
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `severity` | yes | `critical`, `important`, `suggestion`, or `praise` |
-| `description` | yes | What the issue is, with enough context to act on |
-| `location` | no | `file:line` reference |
-| `fix` | no | Suggested resolution |
-| `category` | no | e.g., `"guideline"`, `"logic-error"`, `"style"` |
+**Severity → priority mapping:**
 
-### Severity Mapping
+| Severity | Priority | Default type |
+|----------|----------|-------------|
+| critical | 0 | bug |
+| important | 1 | bug or task |
+| suggestion | 2 | task |
+| praise | 3 | task (label with `praise`) |
 
-- Confidence 90-100 → `"critical"`
-- Confidence 80-89 → `"important"`
-- Positive patterns worth noting → `"praise"`
+### Re-reviews (turn > 1)
 
-**Report only findings with confidence 80+.** Include praise for
-notable good patterns.
+Query prior findings for your aspect:
 
-### Example Output
-
-```jsonl
-{"severity":"critical","description":"Confidence 95: missing null check before accessing user.email — will throw TypeError when user is anonymous","location":"api/views.py:42","fix":"Add early return: if not user: return None","category":"logic-error"}
-{"severity":"important","description":"Confidence 83: import order violates project convention (stdlib before third-party)","location":"utils/helpers.py:3","fix":"Move os import above requests import","category":"guideline"}
-{"severity":"praise","description":"Clean separation of validation logic from business logic — easy to test independently","location":"services/auth.py:20"}
+```bash
+bd list --parent $PARENT_BEAD_ID --labels "aspect:code" --status open --json
 ```
 
-## Output Convention
+For each prior finding:
 
-Write the JSONL report to the path provided in the task prompt (a file
-inside the session's `$REVIEW_DIR`). Return to the parent only a terse
-summary: finding counts by severity and the single most critical item.
-Target 2-3 lines maximum.
+- **Resolved** (no longer applies): `bd update <id> --status closed`
+- **Still present**: Leave open, do not create a duplicate
+- **New issue**: Create a new bead with the current turn number
 
-Example return:
-> code-reviewer: 1 critical, 2 important.
-> Critical: missing null check causes TypeError for anonymous users
-> (api/views.py:42). Full report written.
+### Return to Orchestrator
+
+Return only a terse summary (2-3 lines): finding counts by severity and the
+single most critical item. Do NOT return JSONL or full finding details.

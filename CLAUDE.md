@@ -107,6 +107,20 @@ rumdl check <file>
 rumdl fmt <file>
 ```
 
+### Release Versioning
+
+Versions are managed by release-please. Do NOT manually bump versions
+in `marketplace.json`, `plugin.json`, or SKILL.md `metadata.version`
+fields.
+
+When adding or removing a skill, update both:
+
+- `release-please-config.json` (add/remove package entry)
+- `.release-please-manifest.json` (add/remove version entry)
+
+CI will fail if skill directories and release-please config fall out
+of sync.
+
 ## MCP Servers
 
 The following MCP servers are available in `.mcp.json`:

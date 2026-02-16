@@ -14,6 +14,9 @@ description: |
   (6) OnCall - Grafana OnCall schedules, shifts, who's on-call,
   (7) Profiling - Pyroscope CPU/memory profiles.
   Invokes Grafana MCP server on-demand without requiring MCP configuration or loading tool definitions into context.
+metadata:
+  author: fzymgc-house
+  version: 0.1.0 # x-release-please-version
 ---
 
 # Grafana Operations
@@ -22,6 +25,7 @@ description: |
 >
 > When investigating logs or metrics, **DO NOT** use `kubectl logs`, Kubernetes MCP tools, or direct Kubernetes API calls.
 > Instead, use this skill's Loki (logs) and Prometheus (metrics) workflows:
+>
 > - **Logs**: `recent-logs`, `investigate-logs`, or `query_loki_logs`
 > - **Metrics**: `investigate-metrics`, `quick-status`, or `query_prometheus`
 >
@@ -72,10 +76,14 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs --minute
 
 ## Compound Workflows
 
-**PREFER these over raw MCP tools** - they handle datasource discovery, time formatting, and multi-step operations automatically. Only use raw tools (e.g., `query_loki_logs`, `query_prometheus`) when workflows don't meet your specific needs:
+**PREFER these over raw MCP tools** - they handle datasource discovery, time formatting,
+and multi-step operations automatically. Only use raw tools (e.g., `query_loki_logs`,
+`query_prometheus`) when workflows don't meet your specific needs:
 
 ### investigate-logs
+
 Find errors in Loki logs for an application:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs --app nginx --time-range 1h --pattern error
 ```
@@ -83,7 +91,9 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs --a
 Options: `--app`, `--namespace`, `--time-range` (default: 1h), `--pattern`
 
 ### investigate-metrics
+
 Check Prometheus metric health:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics --job api --metric http_requests_total
 ```
@@ -91,19 +101,25 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics 
 Options: `--job`, `--metric`, `--time-range` (default: 1h)
 
 ### quick-status
+
 System health overview from Prometheus/Loki:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status
 ```
 
 ### find-dashboard
+
 Search Grafana dashboards:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard "api latency"
 ```
 
 ### recent-logs
+
 View recent Loki logs (cluster-wide or filtered):
+
 ```bash
 # Last 5 minutes of all cluster logs
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py recent-logs
@@ -128,22 +144,26 @@ Options: `--minutes` (default: 5), `--app`, `--namespace`, `--label KEY=VALUE` (
 ### Investigate an Issue
 
 1. **Find relevant datasources**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_datasources '{"type":"loki"}'
    ```
 
 2. **Check log patterns** (Loki)
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"...\"}"}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"...\"} |= \"error\"","limit":20}'
    ```
 
 3. **Check metrics** (Prometheus)
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_prometheus '{"datasourceUid":"...","expr":"rate(errors[5m])","startTime":"now-1h","queryType":"range","stepSeconds":60}'
    ```
 
 4. **Use Sift for AI analysis**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_error_pattern_logs '{"name":"Investigation","labels":{"service":"..."}}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find_slow_requests '{"name":"Latency check","labels":{"service":"..."}}'
@@ -154,11 +174,13 @@ For detailed query syntax: [loki.md](references/loki.md), [prometheus.md](refere
 ### Explore Available Data
 
 1. **List datasources**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_datasources '{}'
    ```
 
 2. **Discover labels/metrics**
+
    ```bash
    # Prometheus
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_prometheus_label_names '{"datasourceUid":"..."}'
@@ -170,6 +192,7 @@ For detailed query syntax: [loki.md](references/loki.md), [prometheus.md](refere
    ```
 
 3. **Find existing dashboards**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
@@ -178,17 +201,20 @@ For detailed query syntax: [loki.md](references/loki.md), [prometheus.md](refere
 ### Manage Dashboards
 
 1. **Find dashboard**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py search_dashboards '{"query":"..."}'
    ```
 
 2. **Understand structure**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_summary '{"uid":"..."}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_dashboard_panel_queries '{"uid":"..."}'
    ```
 
 3. **Modify with patches**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py update_dashboard '{"uid":"...","operations":[...],"message":"..."}'
    ```
@@ -198,6 +224,7 @@ For full operations: [dashboards.md](references/dashboards.md)
 ### Set Up Alerting
 
 1. **Review existing rules**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_rules '{"limit":20}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_contact_points '{}'
@@ -210,16 +237,19 @@ For alert configuration: [alerting.md](references/alerting.md)
 ### Handle Incidents
 
 1. **Check active incidents**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_incidents '{"status":"active"}'
    ```
 
 2. **Create incident** (notifies people - confirm first)
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py create_incident '{"title":"...","severity":"...","roomPrefix":"inc"}'
    ```
 
 3. **Add investigation notes**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py add_activity_to_incident '{"incidentId":"...","body":"Findings..."}'
    ```
@@ -229,12 +259,14 @@ For incident management: [incidents.md](references/incidents.md)
 ### Check On-Call
 
 1. **Find who's on-call**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_oncall_schedules '{}'
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py get_current_oncall_users '{"scheduleId":"..."}'
    ```
 
 2. **Review alert groups**
+
    ```bash
    ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_alert_groups '{"state":"new"}'
    ```
@@ -267,7 +299,10 @@ Load these as needed for detailed operations:
 
 ## Best Practices
 
-- **Prefer workflows over raw tools**: Use `recent-logs` instead of manual `query_loki_logs`, `investigate-logs` instead of hand-crafting Loki queries, etc. Workflows handle datasource discovery, time formatting, and label normalization automatically
+- **Prefer workflows over raw tools**: Use `recent-logs` instead of manual
+  `query_loki_logs`, `investigate-logs` instead of hand-crafting Loki queries, etc.
+  Workflows handle datasource discovery, time formatting, and label normalization
+  automatically
 - **Use `describe`** before calling unfamiliar raw tools to see required parameters
 - **Query stats before logs**: Use `query_loki_stats` to check volume before `query_loki_logs`
 - **Use dashboard summary**: Prefer `get_dashboard_summary` over full `get_dashboard_by_uid`

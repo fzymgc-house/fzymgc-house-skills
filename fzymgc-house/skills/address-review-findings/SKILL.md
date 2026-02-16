@@ -63,3 +63,28 @@ used by this skill.
    exists for the PR's branch. If so, `cd` into it and verify with
    `git branch --show-current`. If not, ask the user whether to create
    one. **MUST** use an existing worktree if one matches.
+
+## Phase 2: Analyze Dependencies
+
+Review all open findings and identify dependency relationships:
+
+**File overlap** — Two findings touching the same file should not be
+fixed concurrently. Set a dependency so the higher-priority or
+earlier-in-file finding is addressed first.
+
+**Conceptual overlap** — A design finding and a bug finding about the
+same component. The design finding should be resolved first (it may
+change the fix approach).
+
+**Severity ordering** — Critical findings block lower-severity findings
+in the same file or area.
+
+Encode all relationships using `bd dep add`:
+
+```bash
+bd dep add <lower-priority-finding> --depends-on <higher-priority-finding>
+```
+
+The fix loop's "query ready findings" naturally respects the dependency
+graph — a finding cannot be picked up while its dependencies are still
+open.

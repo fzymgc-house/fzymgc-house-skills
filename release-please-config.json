@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "fzymgc-house-skills",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/marketplace.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "fzymgc-house/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "fzymgc-house/skills/grafana": {
+      "release-type": "simple",
+      "package-name": "grafana",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/grafana/SKILL.md"
+        }
+      ]
+    },
+    "fzymgc-house/skills/terraform": {
+      "release-type": "simple",
+      "package-name": "terraform",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/terraform/SKILL.md"
+        }
+      ]
+    },
+    "fzymgc-house/skills/review-pr": {
+      "release-type": "simple",
+      "package-name": "review-pr",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/review-pr/SKILL.md"
+        }
+      ]
+    },
+    "fzymgc-house/skills/respond-to-pr-comments": {
+      "release-type": "simple",
+      "package-name": "respond-to-pr-comments",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/respond-to-pr-comments/SKILL.md"
+        }
+      ]
+    },
+    "fzymgc-house/skills/address-review-findings": {
+      "release-type": "simple",
+      "package-name": "address-review-findings",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/address-review-findings/SKILL.md"
+        }
+      ]
+    },
+    "fzymgc-house/skills/skill-qa": {
+      "release-type": "simple",
+      "package-name": "skill-qa",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "fzymgc-house/skills/skill-qa/SKILL.md"
+        }
+      ]
+    }
+  }
+}

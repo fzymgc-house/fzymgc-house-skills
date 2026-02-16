@@ -244,9 +244,9 @@ to the user:
 
 - [aspect]: description [location]
 
-## Strengths
+## Strengths (from agent summaries, no beads)
 
-- [aspect]: description [location]
+- [aspect]: description
 
 ## Recommended Action
 

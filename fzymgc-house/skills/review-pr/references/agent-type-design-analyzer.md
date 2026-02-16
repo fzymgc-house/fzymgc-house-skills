@@ -64,7 +64,7 @@ bd create "<title — first sentence of finding>" \
   --parent $PARENT_BEAD_ID \
   --type <bug|task|feature> \
   --priority <0-3> \
-  --labels "pr-review-finding,aspect:types,severity:<critical|important|suggestion|praise>,turn:$TURN" \
+  --labels "pr-review-finding,aspect:types,severity:<critical|important|suggestion>,turn:$TURN" \
   --external-ref "$PR_URL" \
   --description "<full details: what's wrong, file:line location, suggested fix>" \
   --silent
@@ -77,7 +77,9 @@ bd create "<title — first sentence of finding>" \
 | critical | 0 | bug |
 | important | 1 | bug or task |
 | suggestion | 2 | task |
-| praise | 3 | task (label with `praise`) |
+
+**Praise**: Do NOT create beads for praise findings. Instead, mention
+noteworthy strengths in your return summary.
 
 ### Re-reviews (turn > 1)
 

@@ -220,3 +220,57 @@ Loop while open, non-deferred findings remain:
    - Add comment: `bd comments add <finding-id> "Review failed: <reason>"`
    - Re-queue (stays open, eligible for next round)
    - Max 2 retries per finding. After 2 failures, escalate to user.
+
+## Phase 5: Verify
+
+Launch a **sonnet sub-agent** to run quality gates:
+
+1. Detect project type (`Taskfile.yml`, `pyproject.toml`, `Cargo.toml`,
+   `package.json`, `build.gradle`, etc.)
+2. Run appropriate commands for unit tests, integration tests, build,
+   and lint
+3. If failures: sub-agent reviews error, fixes, re-runs
+4. **Max 3 attempts.** If gates still fail after 3 rounds, report the
+   remaining failures to the user for guidance.
+5. Do NOT proceed to Phase 6 until all gates pass.
+
+## Phase 6: Ship
+
+1. **Commit** using the `commit-commands:commit` skill.
+2. **Push** to the PR branch.
+3. **Post summary comment** on the PR:
+
+   Write to a temp file and post:
+
+   ```bash
+   gh pr comment <number> --body-file /tmp/review-response.md
+   ```
+
+   Template:
+
+   ```markdown
+   <!-- address-review:<epic-id>:response -->
+   ## Review Response
+
+   `bd list --parent <epic-id>`
+
+   Fixed N | Deferred N | Failed N
+
+   | Finding | Status | Work |
+   |---------|--------|------|
+   | <finding-id> | Fixed | <work-bead-id> |
+   | <finding-id> | Deferred | <deferred-bead-id> |
+   | <finding-id> | Failed (escalated) | -- |
+   ```
+
+## Hard Constraints
+
+| Constraint | Reason |
+|------------------------------|---------------------------|
+| **MUST NOT** close the review epic | PR merge triggers closure |
+| **MUST NOT** merge the PR | Reviewer's decision |
+| **MUST** use worktree | Avoid branch conflicts |
+| **MUST** use `AskUserQuestion` for human judgment | Structured input with options |
+| **MUST** filter `--status open` in all bead queries | Skip already-handled findings |
+| **MUST NOT** let sub-agents close beads | Orchestrator owns bead lifecycle |
+| **MUST** use long flags for all `bd` commands | Clarity for sub-agents |

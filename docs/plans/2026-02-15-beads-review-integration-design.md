@@ -68,7 +68,7 @@ All queries filter by label, not by prefix.
 
 | Field | Value |
 |-------|-------|
-| type | `task` |
+| type | `epic` |
 | title | `Review: PR #<number> — <pr-title>` |
 | external-ref | `https://github.com/{owner}/{repo}/pull/<number>` |
 | labels | `pr-review`, `pr:<number>` |
@@ -114,7 +114,7 @@ bd list --labels "pr-review,pr:123" --json
 
 ```bash
 bd create "Review: PR #123 — <title>" \
-  --type task \
+  --type epic \
   --labels "pr-review,pr:123,turn:1" \
   --external-ref "https://github.com/{owner}/{repo}/pull/123" \
   --description "<PR body summary>" \

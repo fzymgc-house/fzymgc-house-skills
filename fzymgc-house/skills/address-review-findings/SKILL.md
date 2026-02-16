@@ -14,6 +14,7 @@ allowed-tools:
   - Glob
   - "Bash(git *)"
   - "Bash(gh *)"
+  - "Bash(bd --version)"
   - "Bash(bd create *)"
   - "Bash(bd list *)"
   - "Bash(bd update *)"

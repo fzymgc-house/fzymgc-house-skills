@@ -73,7 +73,7 @@ Default: `all` (run every applicable aspect).
 
 - [ ] Determine scope (parse PR number + aspects, check for existing review bead)
 - [ ] Select applicable agents based on changes and requested aspects
-- [ ] Choose model per agent (sonnet default, opus for complex/security)
+- [ ] Choose model per agent (sonnet default, opus only for vague/novel tasks)
 - [ ] Read agent prompts from `references/`
 - [ ] Create PR review parent bead (or find existing for re-review)
 - [ ] Launch subagents via Task tool (batched, max 3 concurrent)
@@ -157,26 +157,25 @@ When `all` is requested, run every agent regardless of file heuristics.
 Assess the diff to assign `sonnet` or `opus` to each subagent via the
 Task tool's `model` parameter.
 
-**Use `opus` when any of these apply:**
+**Use `sonnet` (default)** — Sonnet 4.6 handles the vast majority of
+review tasks well.
 
-- Diff exceeds ~300 lines changed
-- Security-sensitive code (auth, crypto, permissions, secrets)
-- Complex type design or architectural changes
-- Multiple languages or cross-cutting concerns
+**Escalate to `opus` only when:**
 
-**Use `sonnet` (default) otherwise** — faster and sufficient for
-straightforward reviews.
+- The task is vague or under-specified with no clear precedent
+- Novel architectural reasoning is required (not just reviewing existing patterns)
+- Crypto protocol design or complex threat modeling
 
 | Agent | Default | Upgrade to opus when |
 |-------|---------|----------------------|
-| code-reviewer | sonnet | Large diff, security code |
-| silent-failure-hunter | sonnet | Complex error flows, auth code |
-| pr-test-analyzer | sonnet | Large test surface, async code |
-| type-design-analyzer | opus | Always — nuanced reasoning |
+| code-reviewer | sonnet | Large diff (300+ lines) AND security code |
+| silent-failure-hunter | sonnet | Complex error flows across many modules |
+| pr-test-analyzer | sonnet | Rarely needs opus |
+| type-design-analyzer | sonnet | Novel/ambiguous type design with no clear precedent |
 | comment-analyzer | sonnet | Rarely needs opus |
-| security-auditor | opus | Always — security requires rigor |
-| api-contract-checker | sonnet | Many public interfaces changed |
-| spec-compliance | sonnet | 2+ design docs found, or architectural changes |
+| security-auditor | sonnet | Crypto, auth protocol design, or threat modeling |
+| api-contract-checker | sonnet | Rarely needs opus |
+| spec-compliance | sonnet | Vague spec with significant architectural changes |
 | code-simplifier | sonnet | Rarely needs opus |
 
 ### 4. Load Agent Prompts

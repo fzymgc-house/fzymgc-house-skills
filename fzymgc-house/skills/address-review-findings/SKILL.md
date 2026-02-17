@@ -128,9 +128,15 @@ For each needs-human finding, use `AskUserQuestion` with:
 
 | Complexity | Criteria | Model |
 |------------|---------------------------------------------|--------|
-| low | Single file, mechanical change, obvious fix | haiku |
+| low | Single file, mechanical change, obvious fix | sonnet |
 | medium | Few files, some judgment, clear approach | sonnet |
-| high | Cross-cutting, architectural, needs context | opus |
+| high | Cross-cutting, architectural, needs context | sonnet |
+
+Escalate to **opus** when:
+
+- The task is vague, under-specified, or has no clear precedent
+- Design-related changes requiring architectural judgment
+- The fix touches a significant fraction of the codebase
 
 **Deferral handling:**
 

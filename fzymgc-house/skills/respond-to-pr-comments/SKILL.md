@@ -144,9 +144,15 @@ in Phase 1), note the finding bead ID for linking in Phase 3.
 
 | Complexity | Criteria                                    | Model  |
 |------------|---------------------------------------------|--------|
-| **low**    | Single file, mechanical change, obvious fix  | haiku  |
+| **low**    | Single file, mechanical change, obvious fix  | sonnet |
 | **medium** | Few files, some judgment, clear approach     | sonnet |
-| **high**   | Cross-cutting, architectural, needs context  | opus   |
+| **high**   | Cross-cutting, architectural, needs context  | sonnet |
+
+Escalate to **opus** when:
+
+- The task is vague, under-specified, or has no clear precedent
+- Design-related changes or questions (category **design**)
+- The fix touches a significant fraction of the codebase
 
 **Step 2b — Gather clarifications.** For every comment categorized as
 feature, design, or question: present it to the user one at a time
@@ -224,7 +230,7 @@ Launch a **sonnet sub-agent** to run quality gates and fix any failures:
 - Any bug fix (category "bug")
 - User explicitly requests review before shipping
 
-Launch an **opus sub-agent** (independent context) to review. Sub-agent outputs
+Launch a **sonnet sub-agent** (independent context) to review. Sub-agent outputs
 ONLY structured results (no explanations) to minimize token use:
 
 **Sub-agent task:**

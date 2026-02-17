@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-review-findings-v0.2.0...address-review-findings-v0.3.0) (2026-02-17)
+
+
+### Features
+
+* **skills:** update model routing to prefer Sonnet 4.6 ([#16](https://github.com/fzymgc-house/fzymgc-house-skills/issues/16)) ([ddb71eb](https://github.com/fzymgc-house/fzymgc-house-skills/commit/ddb71eb64883d9e7ef8f0591c939a101590286a0))
+
 ## [0.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-review-findings-v0.1.0...address-review-findings-v0.2.0) (2026-02-16)
 
 

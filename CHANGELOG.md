@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v0.6.1...fzymgc-house-skills-v0.7.0) (2026-02-17)
+
+
+### Features
+
+* **skills:** update model routing to prefer Sonnet 4.6 ([#16](https://github.com/fzymgc-house/fzymgc-house-skills/issues/16)) ([ddb71eb](https://github.com/fzymgc-house/fzymgc-house-skills/commit/ddb71eb64883d9e7ef8f0591c939a101590286a0))
+
 ## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v0.6.0...fzymgc-house-skills-v0.6.1) (2026-02-16)
 
 

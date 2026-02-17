@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v0.6.0...fzymgc-house-skills-v0.6.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **review-pr:** stop creating beads for praise findings ([#14](https://github.com/fzymgc-house/fzymgc-house-skills/issues/14)) ([114edf0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/114edf0cfefce369295b960a1c53d2cabed260f2))
+
 ## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v0.5.0...fzymgc-house-skills-v0.6.0) (2026-02-16)
 
 

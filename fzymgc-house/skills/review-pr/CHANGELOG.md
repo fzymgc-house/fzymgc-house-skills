@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/review-pr-v0.4.0...review-pr-v0.4.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **review-pr:** stop creating beads for praise findings ([#14](https://github.com/fzymgc-house/fzymgc-house-skills/issues/14)) ([114edf0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/114edf0cfefce369295b960a1c53d2cabed260f2))
+
 ## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/review-pr-v0.3.0...review-pr-v0.4.0) (2026-02-16)
 
 

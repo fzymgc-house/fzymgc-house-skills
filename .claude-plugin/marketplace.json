@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "fzymgc-house-skills",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Skills for use with fzymgc-house self-hosted cluster",
   "owner": {
     "name": "Sean Brandt",

@@ -1,9 +1,9 @@
 {
-  ".": "0.6.1",
+  ".": "0.7.0",
   "fzymgc-house/skills/grafana": "0.2.0",
   "fzymgc-house/skills/terraform": "0.2.0",
-  "fzymgc-house/skills/review-pr": "0.4.1",
-  "fzymgc-house/skills/respond-to-pr-comments": "0.5.0",
-  "fzymgc-house/skills/address-review-findings": "0.2.0",
+  "fzymgc-house/skills/review-pr": "0.5.0",
+  "fzymgc-house/skills/respond-to-pr-comments": "0.6.0",
+  "fzymgc-house/skills/address-review-findings": "0.3.0",
   "fzymgc-house/skills/skill-qa": "0.2.0"
 }

@@ -23,6 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install rumdl
-        run: cargo install rumdl
+        run: |
+          tag=$(gh release view --repo rvben/rumdl --json tagName -q .tagName)
+          gh release download "$tag" --repo rvben/rumdl \
+            --pattern "rumdl-${tag}-x86_64-unknown-linux-gnu.tar.gz" --output - \
+            | tar xz -C /usr/local/bin rumdl
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Lint markdown
         run: rumdl check fzymgc-house/skills/*/SKILL.md

@@ -20,15 +20,20 @@ lefthook run pre-commit --all-files  # Run linters on all files
 ## Structure
 
 ```text
-.claude-plugin/
-  marketplace.json    # Plugin metadata (name, version, owner)
 homelab/
-  plugin.json         # Plugin definition
+  plugin.json         # Homelab plugin (grafana, terraform)
   skills/
     <skill-name>/
       SKILL.md        # Skill definition (required)
       scripts/        # Executable scripts (optional)
       references/     # Additional resources (optional)
+pr-review/
+  plugin.json         # PR review plugin (review-pr, respond-to-comments, address-findings, skill-qa)
+  skills/
+    <skill-name>/
+      SKILL.md
+      scripts/
+      references/
 ```
 
 ## Creating Skills
@@ -44,18 +49,18 @@ description: Brief description for skill discovery
 # Skill content and instructions
 ```
 
-Skills should be self-contained and focused on specific tasks related to the homelab infrastructure.
+Skills should be self-contained and focused on specific tasks related to either homelab infrastructure or PR review workflows.
 
 ## Available Skills
 
 - **grafana** - Grafana, Loki, Prometheus operations (dashboards, logs, metrics, alerting, incidents, OnCall, profiling).
   Use Loki/Prometheus FIRST for logs/metrics instead of kubectl.
 - **terraform** - Terraform Cloud operations (runs, workspaces, state management, registry documentation lookup)
-- **respond-to-pr-comments** - GitHub PR review comment management (list, acknowledge, respond to feedback, full
+- **respond-to-comments** (`pr-review` plugin) - GitHub PR review comment management (list, acknowledge, respond to feedback, full
   review-response workflows). Reads review findings from beads for context-aware responses.
-- **address-review-findings** - Processes review-pr findings by working through
+- **address-findings** (`pr-review` plugin) - Processes review-pr findings by working through
   beads in the review epic. Dependency-aware fix loop with batch review gates.
-- **review-pr** - Comprehensive PR review using 9 specialized subagents (code quality, error handling, test coverage,
+- **review-pr** (`pr-review` plugin) - Comprehensive PR review using 9 specialized subagents (code quality, error handling, test coverage,
   type design, comments, security, API compatibility, spec compliance, code simplification).
   Findings persisted as beads for cross-session context. User-invoked via `/review-pr [aspects]`.
 - **skill-qa** - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)

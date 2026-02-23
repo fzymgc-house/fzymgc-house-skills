@@ -32,6 +32,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Lint markdown
         run: |
-          rumdl check homelab/skills/*/SKILL.md
-          rumdl check pr-review/skills/*/SKILL.md 2>/dev/null || true
-          rumdl check pr-review/agents/*.md 2>/dev/null || true
+          rumdl check homelab/skills/*/SKILL.md \
+            pr-review/skills/*/SKILL.md \
+            pr-review/agents/*.md

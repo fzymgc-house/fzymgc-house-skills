@@ -9,16 +9,6 @@
           "type": "json",
           "path": ".claude-plugin/marketplace.json",
           "jsonpath": "$.version"
-        },
-        {
-          "type": "json",
-          "path": "homelab/plugin.json",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "json",
-          "path": "pr-review/.claude-plugin/plugin.json",
-          "jsonpath": "$.version"
         }
       ]
     },
@@ -58,7 +48,7 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "pr-review/.claude-plugin/plugin.json",
+          "path": "pr-review/plugin.json",
           "jsonpath": "$.version"
         }
       ]

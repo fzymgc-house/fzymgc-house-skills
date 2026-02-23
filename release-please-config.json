@@ -14,6 +14,11 @@
           "type": "json",
           "path": "homelab/plugin.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "pr-review/.claude-plugin/plugin.json",
+          "jsonpath": "$.version"
         }
       ]
     },
@@ -44,6 +49,47 @@
         {
           "type": "generic",
           "path": "homelab/skills/skill-qa/SKILL.md"
+        }
+      ]
+    },
+    "pr-review": {
+      "release-type": "simple",
+      "package-name": "pr-review",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "pr-review/.claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "pr-review/skills/review-pr": {
+      "release-type": "simple",
+      "package-name": "review-pr",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "pr-review/skills/review-pr/SKILL.md"
+        }
+      ]
+    },
+    "pr-review/skills/address-findings": {
+      "release-type": "simple",
+      "package-name": "address-findings",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "pr-review/skills/address-findings/SKILL.md"
+        }
+      ]
+    },
+    "pr-review/skills/respond-to-comments": {
+      "release-type": "simple",
+      "package-name": "respond-to-comments",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "pr-review/skills/respond-to-comments/SKILL.md"
         }
       ]
     }

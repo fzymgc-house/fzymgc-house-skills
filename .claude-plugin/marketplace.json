@@ -12,6 +12,11 @@
       "name": "homelab",
       "description": "Infrastructure skills for homelab cluster (Grafana, Terraform)",
       "source": "./homelab"
+    },
+    {
+      "name": "pr-review",
+      "description": "PR review workflow with specialized review agents and automated fix loop",
+      "source": "./pr-review"
     }
   ]
 }

@@ -21,14 +21,16 @@ lefthook run pre-commit --all-files  # Run linters on all files
 
 ```text
 homelab/
-  plugin.json         # Homelab plugin (grafana, terraform)
+  plugin.json         # Homelab plugin (grafana, terraform, skill-qa)
   skills/
     <skill-name>/
       SKILL.md        # Skill definition (required)
       scripts/        # Executable scripts (optional)
       references/     # Additional resources (optional)
 pr-review/
-  plugin.json         # PR review plugin (review-pr, respond-to-comments, address-findings, skill-qa)
+  plugin.json         # PR review plugin (review-pr, address-findings, respond-to-comments)
+  agents/             # True agents with isolation: worktree
+    <agent-name>.md   # Agent definition (YAML frontmatter + system prompt)
   skills/
     <skill-name>/
       SKILL.md
@@ -63,7 +65,7 @@ Skills should be self-contained and focused on specific tasks related to either 
 - **review-pr** (`pr-review` plugin) - Comprehensive PR review using 9 specialized subagents (code quality, error handling, test coverage,
   type design, comments, security, API compatibility, spec compliance, code simplification).
   Findings persisted as beads for cross-session context. User-invoked via `/review-pr [aspects]`.
-- **skill-qa** - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
+- **skill-qa** (`homelab` plugin) - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
 
 ## Commit Workflow
 

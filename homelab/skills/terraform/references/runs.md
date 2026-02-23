@@ -2,7 +2,7 @@
 
 ## Run Status Lifecycle
 
-```
+```text
 pending → planning → planned → [cost_estimating →] [policy_checking →] confirmed → applying → applied
     ↓         ↓         ↓                              ↓                    ↓          ↓
 canceled   errored  discarded                   policy_soft_failed      canceled    errored
@@ -44,5 +44,6 @@ requiring override. Plan-only runs end at `planned_and_finished`.
 ## Direct HCP API
 
 For log streaming, the skill uses direct HCP Terraform API:
+
 - `GET /api/v2/plans/:id` - Get plan with log URL
 - `GET /api/v2/applies/:id` - Get apply with log URL

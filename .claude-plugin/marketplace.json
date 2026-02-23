@@ -9,9 +9,9 @@
   },
   "plugins": [
     {
-      "name": "fzymgc-house",
-      "description": "Skills for fzymgc-house infrastructure including Grafana operations and PR workflow automation",
-      "source": "./fzymgc-house"
+      "name": "homelab",
+      "description": "Infrastructure skills for homelab cluster (Grafana, Terraform)",
+      "source": "./homelab"
     }
   ]
 }

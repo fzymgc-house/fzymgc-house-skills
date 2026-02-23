@@ -47,7 +47,9 @@ class MCPClient:
         self.request_id += 1
         return self.request_id
 
-    def _request(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request(
+        self, method: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Send a JSON-RPC 2.0 request to the MCP server."""
         payload = {
             "jsonrpc": "2.0",
@@ -72,7 +74,11 @@ class MCPClient:
         except httpx.ConnectError as e:
             return {"error": {"message": f"Connection failed: {e}"}}
         except httpx.HTTPStatusError as e:
-            return {"error": {"message": f"HTTP error {e.response.status_code}: {e.response.text}"}}
+            return {
+                "error": {
+                    "message": f"HTTP error {e.response.status_code}: {e.response.text}"
+                }
+            }
         except httpx.TimeoutException:
             return {"error": {"message": f"Request timed out after {TIMEOUT}s"}}
         except json.JSONDecodeError as e:
@@ -80,14 +86,14 @@ class MCPClient:
 
     def initialize(self) -> dict[str, Any]:
         """Initialize the MCP session."""
-        return self._request("initialize", {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {
-                "name": "grafana-mcp-gateway",
-                "version": "1.0.0"
-            }
-        })
+        return self._request(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "grafana-mcp-gateway", "version": "1.0.0"},
+            },
+        )
 
     def list_tools(self) -> dict[str, Any]:
         """List all available tools from the MCP server."""
@@ -130,7 +136,7 @@ class MCPClient:
                             "name": tool["name"],
                             "description": tool.get("description", ""),
                             "inputSchema": tool.get("inputSchema", {}),
-                        }
+                        },
                     }
 
             # Tool not found - suggest similar names
@@ -153,10 +159,13 @@ class MCPClient:
             if "error" in init_result:
                 return {"success": False, "error": init_result["error"]["message"]}
 
-        result = self._request("tools/call", {
-            "name": tool_name,
-            "arguments": arguments,
-        })
+        result = self._request(
+            "tools/call",
+            {
+                "name": tool_name,
+                "arguments": arguments,
+            },
+        )
 
         if "error" in result:
             return {"success": False, "error": result["error"]["message"]}
@@ -191,11 +200,19 @@ def apply_brief_filter(data: Any, tool_name: str) -> Any:
 
     # Handle list of objects
     if isinstance(data, list):
-        return [{k: v for k, v in obj.items() if k in fields} for obj in data if isinstance(obj, dict)]
+        return [
+            {k: v for k, v in obj.items() if k in fields}
+            for obj in data
+            if isinstance(obj, dict)
+        ]
 
     # Handle dict with "items" key
     if isinstance(data, dict) and "items" in data:
-        filtered_items = [{k: v for k, v in obj.items() if k in fields} for obj in data["items"] if isinstance(obj, dict)]
+        filtered_items = [
+            {k: v for k, v in obj.items() if k in fields}
+            for obj in data["items"]
+            if isinstance(obj, dict)
+        ]
         return {**data, "items": filtered_items}
 
     return data
@@ -235,7 +252,9 @@ def format_output(data: Any, fmt: str) -> str:
         return yaml.dump(data, default_flow_style=False, sort_keys=False)
 
 
-def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+def workflow_investigate_logs(
+    client: MCPClient, params: dict[str, Any], fmt: str
+) -> int:
     """Find errors in logs for a service."""
     app = params.get("app", "")
     time_range = params.get("timeRange", "1h")
@@ -248,7 +267,9 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
     # Step 1: Find Loki datasource
     ds_result = client.call_tool("list_datasources", {"type": "loki"})
     if not ds_result.get("success"):
-        print(f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr)
+        print(
+            f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr
+        )
         return 1
 
     loki_uid = None
@@ -270,11 +291,14 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
     logql = f'{{app="{app}"}}'
 
     # Step 2: Query stats
-    stats_result = client.call_tool("query_loki_stats", {
-        "datasourceUid": loki_uid,
-        "logql": logql,
-        "startRfc3339": f"now-{time_range}",
-    })
+    stats_result = client.call_tool(
+        "query_loki_stats",
+        {
+            "datasourceUid": loki_uid,
+            "logql": logql,
+            "startRfc3339": f"now-{time_range}",
+        },
+    )
 
     stats = {"streams": 0, "entries": 0, "bytes": 0}
     if stats_result.get("success"):
@@ -288,12 +312,15 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
 
     # Step 3: Query logs with error pattern
     error_logql = f'{{app="{app}"}} |= "{pattern}"'
-    logs_result = client.call_tool("query_loki_logs", {
-        "datasourceUid": loki_uid,
-        "logql": error_logql,
-        "limit": 20,
-        "startRfc3339": f"now-{time_range}",
-    })
+    logs_result = client.call_tool(
+        "query_loki_logs",
+        {
+            "datasourceUid": loki_uid,
+            "logql": error_logql,
+            "limit": 20,
+            "startRfc3339": f"now-{time_range}",
+        },
+    )
 
     errors = []
     if logs_result.get("success"):
@@ -303,8 +330,10 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
                 try:
                     log_entries = json.loads(item["text"])
                     if isinstance(log_entries, list):
-                        errors = [f"{e.get('timestamp', '')} {e.get('line', '')[:100]}"
-                                  for e in log_entries[:5]]
+                        errors = [
+                            f"{e.get('timestamp', '')} {e.get('line', '')[:100]}"
+                            for e in log_entries[:5]
+                        ]
                 except (json.JSONDecodeError, TypeError):
                     pass
 
@@ -317,14 +346,16 @@ def workflow_investigate_logs(client: MCPClient, params: dict[str, Any], fmt: st
         "errors": {
             "count": len(errors),
             "sample": errors,
-        }
+        },
     }
 
     print(format_output(output, fmt))
     return 0
 
 
-def workflow_investigate_metrics(client: MCPClient, params: dict[str, Any], fmt: str) -> int:
+def workflow_investigate_metrics(
+    client: MCPClient, params: dict[str, Any], fmt: str
+) -> int:
     """Check metric health for a job/service.
 
     Args:
@@ -338,7 +369,10 @@ def workflow_investigate_metrics(client: MCPClient, params: dict[str, Any], fmt:
     # Find Prometheus datasource
     ds_result = client.call_tool("list_datasources", {"type": "prometheus"})
     if not ds_result.get("success"):
-        print(f"Error finding Prometheus datasource: {ds_result.get('error')}", file=sys.stderr)
+        print(
+            f"Error finding Prometheus datasource: {ds_result.get('error')}",
+            file=sys.stderr,
+        )
         return 1
 
     prom_uid = None
@@ -364,12 +398,15 @@ def workflow_investigate_metrics(client: MCPClient, params: dict[str, Any], fmt:
         expr = metric
 
     # Query current value
-    query_result = client.call_tool("query_prometheus", {
-        "datasourceUid": prom_uid,
-        "expr": expr,
-        "startTime": f"now-{time_range}",
-        "queryType": "instant",
-    })
+    query_result = client.call_tool(
+        "query_prometheus",
+        {
+            "datasourceUid": prom_uid,
+            "expr": expr,
+            "startTime": f"now-{time_range}",
+            "queryType": "instant",
+        },
+    )
 
     value = None
     if query_result.get("success"):
@@ -446,7 +483,9 @@ def workflow_find_dashboard(client: MCPClient, params: dict[str, Any], fmt: str)
     # Search dashboards
     search_result = client.call_tool("search_dashboards", {"query": query})
     if not search_result.get("success"):
-        print(f"Error searching dashboards: {search_result.get('error')}", file=sys.stderr)
+        print(
+            f"Error searching dashboards: {search_result.get('error')}", file=sys.stderr
+        )
         return 1
 
     dashboards = []
@@ -486,7 +525,7 @@ def workflow_find_dashboard(client: MCPClient, params: dict[str, Any], fmt: str)
             "types": summary.get("panelTypes", []),
             "variables": summary.get("variables", []),
             "url": top.get("url", ""),
-        }
+        },
     }
 
     print(format_output(output, fmt))
@@ -523,7 +562,9 @@ def workflow_recent_logs(client: MCPClient, params: dict[str, Any], fmt: str) ->
     # Find Loki datasource
     ds_result = client.call_tool("list_datasources", {"type": "loki"})
     if not ds_result.get("success"):
-        print(f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr)
+        print(
+            f"Error finding Loki datasource: {ds_result.get('error')}", file=sys.stderr
+        )
         return 1
 
     loki_uid = None
@@ -564,14 +605,17 @@ def workflow_recent_logs(client: MCPClient, params: dict[str, Any], fmt: str) ->
         logql = f'{logql} |= "{line_filter}"'
 
     # Query logs with proper RFC3339 timestamps
-    logs_result = client.call_tool("query_loki_logs", {
-        "datasourceUid": loki_uid,
-        "logql": logql,
-        "limit": limit,
-        "startRfc3339": start_rfc3339,
-        "endRfc3339": end_rfc3339,
-        "direction": "backward",
-    })
+    logs_result = client.call_tool(
+        "query_loki_logs",
+        {
+            "datasourceUid": loki_uid,
+            "logql": logql,
+            "limit": limit,
+            "startRfc3339": start_rfc3339,
+            "endRfc3339": end_rfc3339,
+            "direction": "backward",
+        },
+    )
 
     logs = []
     if logs_result.get("success"):
@@ -614,9 +658,16 @@ def main():
             sys.argv = [sys.argv[0], "describe"] + sys.argv[2:]
         elif first_arg.startswith("--"):
             pass  # Regular flag
-        elif first_arg not in ["tool", "list-tools", "describe", "investigate-logs",
-                                "investigate-metrics", "quick-status", "find-dashboard",
-                                "recent-logs"]:
+        elif first_arg not in [
+            "tool",
+            "list-tools",
+            "describe",
+            "investigate-logs",
+            "investigate-metrics",
+            "quick-status",
+            "find-dashboard",
+            "recent-logs",
+        ]:
             # Old style: tool_name '{args}' -> tool tool_name '{args}'
             sys.argv = [sys.argv[0], "tool"] + sys.argv[1:]
 
@@ -647,41 +698,80 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Tool operations
-    tool_parser = subparsers.add_parser("tool", help="Call an MCP tool", parents=[common_parser])
+    tool_parser = subparsers.add_parser(
+        "tool", help="Call an MCP tool", parents=[common_parser]
+    )
     tool_parser.add_argument("name", help="Tool name")
-    tool_parser.add_argument("arguments", nargs="?", default="{}", help="JSON arguments")
+    tool_parser.add_argument(
+        "arguments", nargs="?", default="{}", help="JSON arguments"
+    )
 
     # List tools
-    subparsers.add_parser("list-tools", help="List available MCP tools", parents=[common_parser])
+    subparsers.add_parser(
+        "list-tools", help="List available MCP tools", parents=[common_parser]
+    )
 
     # Describe tool
-    describe_parser = subparsers.add_parser("describe", help="Describe a tool's schema", parents=[common_parser])
+    describe_parser = subparsers.add_parser(
+        "describe", help="Describe a tool's schema", parents=[common_parser]
+    )
     describe_parser.add_argument("name", help="Tool name")
 
     # Workflows
-    investigate_logs = subparsers.add_parser("investigate-logs", help="Find errors in Loki logs", parents=[common_parser])
-    investigate_logs.add_argument("--app", help="Application name (app.kubernetes.io/name)")
+    investigate_logs = subparsers.add_parser(
+        "investigate-logs", help="Find errors in Loki logs", parents=[common_parser]
+    )
+    investigate_logs.add_argument(
+        "--app", help="Application name (app.kubernetes.io/name)"
+    )
     investigate_logs.add_argument("--namespace", help="Kubernetes namespace")
-    investigate_logs.add_argument("--time-range", default="1h", help="Time range (e.g., 1h, 30m, 2d)")
+    investigate_logs.add_argument(
+        "--time-range", default="1h", help="Time range (e.g., 1h, 30m, 2d)"
+    )
     investigate_logs.add_argument("--pattern", help="Error pattern to search for")
 
-    investigate_metrics = subparsers.add_parser("investigate-metrics", help="Check Prometheus metric health", parents=[common_parser])
+    investigate_metrics = subparsers.add_parser(
+        "investigate-metrics",
+        help="Check Prometheus metric health",
+        parents=[common_parser],
+    )
     investigate_metrics.add_argument("--job", help="Prometheus job name")
     investigate_metrics.add_argument("--metric", help="Metric name to investigate")
-    investigate_metrics.add_argument("--time-range", default="1h", help="Time range (e.g., 1h, 30m)")
+    investigate_metrics.add_argument(
+        "--time-range", default="1h", help="Time range (e.g., 1h, 30m)"
+    )
 
-    quick_status = subparsers.add_parser("quick-status", help="System health overview from Prometheus/Loki", parents=[common_parser])
+    subparsers.add_parser(
+        "quick-status",
+        help="System health overview from Prometheus/Loki",
+        parents=[common_parser],
+    )
 
-    find_dashboard = subparsers.add_parser("find-dashboard", help="Search Grafana dashboards", parents=[common_parser])
+    find_dashboard = subparsers.add_parser(
+        "find-dashboard", help="Search Grafana dashboards", parents=[common_parser]
+    )
     find_dashboard.add_argument("query", help="Dashboard search query")
 
-    recent_logs = subparsers.add_parser("recent-logs", help="View recent Loki logs", parents=[common_parser])
-    recent_logs.add_argument("--minutes", type=int, default=5, help="Time range in minutes (default: 5)")
+    recent_logs = subparsers.add_parser(
+        "recent-logs", help="View recent Loki logs", parents=[common_parser]
+    )
+    recent_logs.add_argument(
+        "--minutes", type=int, default=5, help="Time range in minutes (default: 5)"
+    )
     recent_logs.add_argument("--app", help="Filter by app.kubernetes.io/name label")
     recent_logs.add_argument("--namespace", help="Filter by namespace")
-    recent_logs.add_argument("--label", action="append", metavar="KEY=VALUE", help="Additional label filter (repeatable)")
-    recent_logs.add_argument("--filter", dest="line_filter", help="Log line pattern to match")
-    recent_logs.add_argument("--limit", type=int, default=50, help="Max log entries (default: 50)")
+    recent_logs.add_argument(
+        "--label",
+        action="append",
+        metavar="KEY=VALUE",
+        help="Additional label filter (repeatable)",
+    )
+    recent_logs.add_argument(
+        "--filter", dest="line_filter", help="Log line pattern to match"
+    )
+    recent_logs.add_argument(
+        "--limit", type=int, default=50, help="Max log entries (default: 50)"
+    )
 
     args = parser.parse_args()
     client = MCPClient(args.url)
@@ -757,7 +847,10 @@ def main():
                         key, value = lbl.split("=", 1)
                         labels[key] = value
                     else:
-                        print(f"Error: Invalid label format '{lbl}', expected KEY=VALUE", file=sys.stderr)
+                        print(
+                            f"Error: Invalid label format '{lbl}', expected KEY=VALUE",
+                            file=sys.stderr,
+                        )
                         sys.exit(1)
             params = {
                 "minutes": args.minutes,

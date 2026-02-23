@@ -22,7 +22,7 @@ lefthook run pre-commit --all-files  # Run linters on all files
 ```text
 .claude-plugin/
   marketplace.json    # Plugin metadata (name, version, owner)
-fzymgc-house/
+homelab/
   plugin.json         # Plugin definition
   skills/
     <skill-name>/
@@ -44,7 +44,7 @@ description: Brief description for skill discovery
 # Skill content and instructions
 ```
 
-Skills should be self-contained and focused on specific tasks related to the fzymgc-house infrastructure.
+Skills should be self-contained and focused on specific tasks related to the homelab infrastructure.
 
 ## Available Skills
 

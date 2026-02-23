@@ -6,10 +6,8 @@
 """Tests for terraform_mcp.py using real MCP response fixtures."""
 
 import json
-import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -49,7 +47,9 @@ class TestParseProviderSearchMarkdown:
         assert len(entries) >= 5
 
         # Should find connect_lambda_function_association
-        connect_entries = [e for e in entries if e["title"] == "connect_lambda_function_association"]
+        connect_entries = [
+            e for e in entries if e["title"] == "connect_lambda_function_association"
+        ]
         assert len(connect_entries) == 1
         assert connect_entries[0]["id"] == "10930629"
         assert connect_entries[0]["category"] == "resources"
@@ -86,7 +86,9 @@ class TestParseProviderSearchMarkdown:
         fixture = load_fixture("search_providers")
         text = fixture["result"]["content"][0]["text"]
 
-        entries = parse_provider_search_markdown(text, target_slug="nonexistent_resource")
+        entries = parse_provider_search_markdown(
+            text, target_slug="nonexistent_resource"
+        )
 
         # Should return all entries since no exact match
         assert len(entries) >= 5

@@ -1,6 +1,7 @@
 # Loki Reference
 
 ## Table of Contents
+
 - [Querying Logs](#querying-logs)
 - [Log Statistics](#log-statistics)
 - [Labels](#labels)
@@ -9,6 +10,7 @@
 ## Querying Logs
 
 ### Query logs
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_logs '{"datasourceUid":"...","logql":"{app=\"nginx\"} |= \"error\"","limit":20,"direction":"backward"}'
 ```
@@ -16,12 +18,14 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_logs '{"d
 **Returns:** Array of {timestamp, labels, line/value}
 
 ### Direction
+
 - `backward`: Newest first (default)
 - `forward`: Oldest first
 
 ## Log Statistics
 
 ### Check stream size before querying
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py query_loki_stats '{"datasourceUid":"...","logql":"{app=\"nginx\"}"}'
 ```
@@ -33,11 +37,13 @@ Use this first to understand data volume before running expensive queries.
 ## Labels
 
 ### List label names
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_names '{"datasourceUid":"..."}'
 ```
 
 ### List label values
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_values '{"datasourceUid":"...","labelName":"app"}'
 ```
@@ -45,6 +51,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_valu
 ## LogQL Patterns
 
 ### Basic selectors
+
 ```logql
 {app="nginx"}                    # exact match
 {app=~"nginx|apache"}            # regex match
@@ -53,6 +60,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_valu
 ```
 
 ### Line filters
+
 ```logql
 {app="nginx"} |= "error"         # contains
 {app="nginx"} != "debug"         # not contains
@@ -61,6 +69,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_valu
 ```
 
 ### Parsing and filtering
+
 ```logql
 {app="nginx"}
   | json
@@ -69,6 +78,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py list_loki_label_valu
 ```
 
 ### Metric queries
+
 ```logql
 rate({app="nginx"} |= "error" [5m])           # errors per second
 count_over_time({app="nginx"}[1h])            # log count
@@ -78,11 +88,13 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 ## Common Patterns
 
 ### Find errors in last hour
+
 1. Check stats: `query_loki_stats` with `{app="..."}`
 2. Query: `{app="..."} |= "error" | json`
 3. Increase limit if needed
 
 ### Explore available log streams
+
 1. `list_loki_label_names` to see labels
 2. `list_loki_label_values` for each interesting label
 3. Build selector from discovered labels
@@ -90,6 +102,7 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 ## Tool Reference
 
 ### query_loki_logs
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | From list_datasources |
@@ -100,6 +113,7 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 | endRfc3339 | | string | End time |
 
 ### query_loki_stats
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -108,6 +122,7 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 | endRfc3339 | | string | Default: now |
 
 ### list_loki_label_names
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -115,6 +130,7 @@ sum by (status) (count_over_time({app="nginx"} | json [1h]))
 | endRfc3339 | | string | |
 
 ### list_loki_label_values
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |

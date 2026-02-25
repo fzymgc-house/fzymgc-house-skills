@@ -11,8 +11,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check release-please config covers all skills
         run: |
-          actual=$(find fzymgc-house/skills -name SKILL.md -exec dirname {} \; | sort)
-          configured=$(jq -r '.packages | keys[] | select(. != ".")' release-please-config.json | sort)
+          actual=$(find homelab/skills pr-review/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
+          configured=$(jq -r '.packages | keys[] | select(. != "." and (. | test("/skills/")))' release-please-config.json | sort)
           if ! diff <(echo "$actual") <(echo "$configured"); then
             echo "::error::Skill directories and release-please-config.json are out of sync"
             exit 1
@@ -31,4 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Lint markdown
-        run: rumdl check fzymgc-house/skills/*/SKILL.md
+        run: |
+          rumdl check homelab/skills/*/SKILL.md \
+            pr-review/skills/*/SKILL.md \
+            pr-review/agents/*.md

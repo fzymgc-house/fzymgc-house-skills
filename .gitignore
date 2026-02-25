@@ -10,6 +10,15 @@ __pycache__/
 .venv/
 venv/
 
+# Environment
+.envrc
+
+# Serena
+.serena/
+
+# Test caches
+.pytest_cache/
+
 # OS
 .DS_Store
 .worktrees/

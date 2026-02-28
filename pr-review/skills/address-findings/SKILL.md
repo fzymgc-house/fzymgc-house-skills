@@ -61,6 +61,27 @@ batch-reviewed, and closed.
 5. No manual worktree discovery needed -- fix-worker agents create
    their own worktrees via `isolation: worktree`.
 
+6. **Validate findings against HEAD.** For each finding, verify the
+   referenced file and line range still exist and the code matches
+   the review snapshot. Discard stale findings:
+
+   ```bash
+   # Check file exists and content matches the finding's context
+   git log --oneline -1  # note current HEAD
+   ```
+
+   For each finding, read the referenced file location. If the code
+   has changed since the review (e.g., the finding references code
+   that no longer exists or has been refactored), close it as stale:
+
+   ```bash
+   bd update <finding-id> --status closed
+   bd comments add <finding-id> "Closed: finding is stale — code at \
+     <path>:<line> has changed since review. Re-run /review-pr if needed."
+   ```
+
+   Report discarded findings to the user before continuing.
+
 ## Phase 2: Analyze Dependencies
 
 Review all open findings and identify dependency relationships:
@@ -138,6 +159,16 @@ For needs-human findings, use `AskUserQuestion` with:
 
 ## Phase 4: Fix Loop
 
+**Before entering the loop**, ensure the working tree is clean:
+
+```bash
+git status --porcelain
+```
+
+If there are uncommitted changes, commit them first. A clean
+working tree is required before dispatching worktree-isolated agents
+to prevent branch reference corruption.
+
 Loop while open, non-deferred findings remain:
 
 1. **Query ready findings** (deps all closed):
@@ -192,6 +223,19 @@ For each FIXED result, in dependency order:
 3. Clean up: `git worktree remove <worktree-path>`
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
+
+4. **Commit after each merge round.** After all branches in a batch
+   are merged, create a checkpoint commit before the next loop
+   iteration:
+
+   ```bash
+   git add -A && git commit -m "fix: address review findings (batch N)"
+   ```
+
+   This prevents worktree-isolated agents in the next round from
+   corrupting the working tree via stale branch references. Never
+   dispatch new fix-worker agents with uncommitted changes in the
+   main working tree.
 
 ### Phase 4c: Review Gate
 
@@ -268,3 +312,6 @@ prompt: |
 | **MUST** filter `--status open` in all bead queries | Skip handled findings |
 | **MUST NOT** let sub-agents close beads | Orchestrator owns lifecycle |
 | **MUST** use long flags for all `bd` commands | Clarity for agents |
+| **MUST** validate findings against HEAD before fixing | Prevent stale false positives |
+| **MUST** commit between fix-worker rounds | Prevent worktree branch corruption |
+| **MUST** verify clean working tree before dispatching agents | Prevent data loss |

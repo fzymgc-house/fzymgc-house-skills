@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v2.0.0...address-findings-v2.0.1) (2026-03-04)
+
+
+### Bug Fixes
+
+* **address-findings:** checkout PR branch before dispatching worktree agents ([#22](https://github.com/fzymgc-house/fzymgc-house-skills/issues/22)) ([5c582e2](https://github.com/fzymgc-house/fzymgc-house-skills/commit/5c582e2d07d762e9163f234643e233c65a96a89b))
+
 ## [2.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v1.0.0...address-findings-v2.0.0) (2026-02-28)
 
 

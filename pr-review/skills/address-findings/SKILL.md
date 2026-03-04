@@ -41,7 +41,20 @@ batch-reviewed, and closed.
 1. **Identify the PR.** Use `$ARGUMENTS` if provided, otherwise ask.
 2. **Verify `bd`**: run `bd --version`. If it fails, stop and tell the
    user: "beads CLI (`bd`) is required but not found."
-3. **Query the review epic:**
+3. **Check out the PR branch.** Worktree-isolated agents inherit
+   their base from the orchestrator's current HEAD. If you are on
+   `main`, every worktree will be based on `main` and agents will
+   not see PR-specific code.
+
+   ```bash
+   gh pr checkout <number>
+   git branch --show-current   # confirm you are on the PR branch
+   ```
+
+   If checkout fails (e.g., dirty working tree), resolve before
+   continuing. **Do NOT proceed on `main`.**
+
+4. **Query the review epic:**
 
    ```bash
    bd list --label "pr-review,pr:<number>" --status open --json
@@ -50,7 +63,7 @@ batch-reviewed, and closed.
    If no epic exists, stop: "No review findings for PR #N. Run
    `/review-pr <number>` first."
 
-4. **Load all open findings:**
+5. **Load all open findings:**
 
    ```bash
    bd list --parent <epic-id> --status open --json
@@ -58,10 +71,10 @@ batch-reviewed, and closed.
 
    If none, report "All findings already addressed" and stop.
 
-5. No manual worktree discovery needed -- fix-worker agents create
+6. No manual worktree discovery needed -- fix-worker agents create
    their own worktrees via `isolation: worktree`.
 
-6. **Validate findings against HEAD.** For each finding, verify the
+7. **Validate findings against PR branch HEAD.** For each finding, verify the
    referenced file and line range still exist and the code matches
    the review snapshot. Discard stale findings:
 
@@ -159,15 +172,16 @@ For needs-human findings, use `AskUserQuestion` with:
 
 ## Phase 4: Fix Loop
 
-**Before entering the loop**, ensure the working tree is clean:
+**Before entering the loop**, verify branch and working tree state:
 
 ```bash
-git status --porcelain
+git branch --show-current   # MUST be the PR branch, NOT main
+git status --porcelain      # MUST be clean
 ```
 
-If there are uncommitted changes, commit them first. A clean
-working tree is required before dispatching worktree-isolated agents
-to prevent branch reference corruption.
+If on `main`, stop — you skipped step 3. If there are uncommitted
+changes, commit them first. A clean working tree on the correct PR
+branch is required before dispatching worktree-isolated agents.
 
 Loop while open, non-deferred findings remain:
 
@@ -315,3 +329,5 @@ prompt: |
 | **MUST** validate findings against HEAD before fixing | Prevent stale false positives |
 | **MUST** commit between fix-worker rounds | Prevent worktree branch corruption |
 | **MUST** verify clean working tree before dispatching agents | Prevent data loss |
+| **MUST** be on the PR branch before dispatching agents | Worktrees inherit base from HEAD |
+| **MUST NOT** proceed with fixes while on `main` | Agents would work against wrong code |

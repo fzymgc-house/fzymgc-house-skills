@@ -66,7 +66,7 @@ test -d .jj && echo "jj" || echo "git"
 ```
 
 - If `.jj/` exists: colocated jj repo. Use jj for ALL VCS operations.
-  Consult `pr-review/references/vcs-equivalence.md` for command equivalents.
+  Consult `references/vcs-equivalence.md` for command equivalents.
 - Otherwise: standard git repo. Use git commands as written below.
 
 GitHub operations (`gh` CLI) are VCS-independent — use them regardless.

@@ -17,7 +17,7 @@ allowed-tools:
 ## Steps
 
 1. **Check prerequisites** — Run `git rev-parse --show-toplevel` to confirm this is a git
-   repository. If not, tell the user to run `git init` first or use `jj init` for a standalone
+   repository. If not, tell the user to run `git init` first or use `jj git init` for a standalone
    (non-colocated) repo.
 
 2. **Check if already initialized** — Run `test -d .jj`. If the directory exists, tell the user
@@ -29,8 +29,8 @@ allowed-tools:
    jj git init --colocate
    ```
 
-   The `--colocate` flag ensures jj shares the working copy with git
-   (required on jj 0.15+; harmless on older versions).
+   The `--colocate` flag ensures jj shares the working copy with git.
+   This flag is required on jj 0.15+ where colocation is no longer the default.
 
 4. **Add .jj/ to .gitignore** — Check whether `.gitignore` exists and already contains `.jj/`.
    If not present, append `.jj/` to `.gitignore`:

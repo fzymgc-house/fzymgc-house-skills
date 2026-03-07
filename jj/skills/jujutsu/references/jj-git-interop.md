@@ -12,8 +12,8 @@ an up-to-date `.git/` at all times.
 
 jj **bookmarks** map directly to git **branches**:
 
-- On every `jj` command, git branches are auto-imported as jj bookmarks
-- On every `jj` command, jj bookmark changes are auto-exported as git branches
+- On most `jj` commands, git branches are auto-imported as jj bookmarks
+- On most `jj` commands, jj bookmark changes are auto-exported as git branches
 - `jj bookmark list` shows all bookmarks (equivalent to `git branch -a` after import)
 - `jj bookmark create <name> -r @` creates a bookmark at the current change
 - `jj bookmark set <name> -r @` moves an existing bookmark to the current change

@@ -11,12 +11,23 @@ jobs:
       - uses: actions/checkout@v6
       - name: Check release-please config covers all skills
         run: |
-          actual=$(find homelab/skills pr-review/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
+          actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
           configured=$(jq -r '.packages | keys[] | select(. != "." and (. | test("/skills/")))' release-please-config.json | sort)
           if ! diff <(echo "$actual") <(echo "$configured"); then
             echo "::error::Skill directories and release-please-config.json are out of sync"
             exit 1
           fi
+
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install bats
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bats
+      - name: Run hook tests
+        run: bats .claude/hooks/tests/
 
   lint:
     runs-on: ubuntu-latest
@@ -34,4 +45,5 @@ jobs:
         run: |
           rumdl check homelab/skills/*/SKILL.md \
             pr-review/skills/*/SKILL.md \
+            jj/skills/*/SKILL.md \
             pr-review/agents/*.md

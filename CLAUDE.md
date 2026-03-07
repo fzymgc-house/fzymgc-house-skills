@@ -36,6 +36,15 @@ pr-review/
       SKILL.md
       scripts/
       references/
+jj/
+  plugin.json         # jj (Jujutsu) VCS plugin
+  skills/
+    jujutsu/
+      SKILL.md        # Core jj workflow guidance
+      references/
+        jj-git-interop.md
+  commands/
+    jj-init.md        # /jj-init slash command
 ```
 
 ## Creating Skills
@@ -66,6 +75,8 @@ Skills should be self-contained and focused on specific tasks related to either 
   type design, comments, security, API compatibility, spec compliance, code simplification).
   Findings persisted as beads for cross-session context. User-invoked via `/review-pr [aspects]`.
 - **skill-qa** (`homelab` plugin) - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
+- **jujutsu** (`jj` plugin) - Jujutsu (jj) VCS workflow guidance. Activates when `.jj/` exists in repo root
+  or user mentions jj/jujutsu. Covers core concepts, bookmarks, workspaces, and git interop.
 
 ## Commit Workflow
 
@@ -163,8 +174,9 @@ repos (which confuses LSP servers):
 ```
 
 WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
-this automatically. Do NOT manually create worktrees inside
-`.claude/worktrees/`.
+this automatically. In jj repos, hooks use `jj workspace add/forget`
+instead of `git worktree add/remove`. Do NOT manually create worktrees
+inside `.claude/worktrees/`.
 
 ### Skill Invocation
 

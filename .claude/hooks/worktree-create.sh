@@ -29,7 +29,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
     exit 1
   fi
-  # Verify jj supports --name flag (added in 0.21)
+  # Runtime version probe: jj is user-installed and can be updated
+  # independently, so we check --name support on each invocation
   if ! jj workspace add --help 2>&1 | grep -q -- '--name'; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported (need jj >= 0.21)" >&2
     exit 1
@@ -47,6 +48,7 @@ else
   mkdir -p "$WORKTREE_PARENT"
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $git_err" >&2
+    [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
     exit 1
   fi
 fi

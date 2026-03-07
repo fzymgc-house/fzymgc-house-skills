@@ -81,8 +81,10 @@ batch-reviewed, and closed.
 
    In jj repos, after `gh pr checkout <number>`, run
    `jj new <pr-bookmark>` to create a new working-copy change on top
-   of the PR bookmark. Verify with `jj log -r @ --no-graph -n 1`
-   instead of `git branch --show-current`.
+   of the PR bookmark. Verify with `jj log -r @- --no-graph -n 1`
+   (note `@-` = parent) to confirm the parent is the PR bookmark,
+   not `main`. If `jj new` fails (e.g., bookmark not found), report
+   the error and stop.
 
    If checkout fails, check the error:
    - **PR not found** (GraphQL/404 error): stop and tell the user
@@ -118,7 +120,10 @@ batch-reviewed, and closed.
 
    ```bash
    # Check file exists and content matches the finding's context
+   # git repos:
    git log --oneline -1  # note current HEAD
+   # jj repos:
+   jj log -r @- --no-graph -n 1  # note current HEAD (parent of working copy)
    ```
 
    For each finding, read the referenced file location. If the code
@@ -218,7 +223,7 @@ git branch --show-current   # MUST be the PR branch, NOT main
 git status --porcelain      # MUST be clean
 
 # jj repos:
-jj log -r @ --no-graph -n 1   # MUST show PR bookmark
+jj log -r @- --no-graph -n 1   # MUST show PR bookmark (parent of working copy)
 jj st                          # MUST be clean
 ```
 
@@ -272,6 +277,13 @@ Loop while open, non-deferred findings remain:
 
 ### Phase 4b: Integrate Fix Commits
 
+Integration method depends on VCS:
+
+| VCS | Integration | Identifier | Cleanup |
+|-----|-------------|------------|---------|
+| git | `git cherry-pick` | WORKTREE_BRANCH | `git worktree remove` |
+| jj | `jj rebase` + `jj bookmark set` | CHANGE_ID | `jj workspace forget` + `rm -rf` |
+
 #### Git repos
 
 For each FIXED result, in dependency order:
@@ -309,11 +321,16 @@ WORKTREE_BRANCH):
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
+   If rebase fails (conflict), run `jj undo`, mark FAILED, add bead
+   comment, re-queue for next round.
+
 2. Update the bookmark:
 
    ```bash
    jj bookmark set <pr-bookmark> -r <change-id>
    ```
+
+   If bookmark set fails, run `jj undo` to revert the rebase too.
 
 3. Forget the workspace and remove the directory:
 

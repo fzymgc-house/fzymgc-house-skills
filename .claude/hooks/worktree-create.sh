@@ -31,21 +31,21 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
     exit 1
   fi
-  (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
-    --name "worktree-${NAME}")
-
-  # Install git hooks in the new workspace
-  if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
-    (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+  if ! (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
+    --name "worktree-${NAME}"); then
+    echo "ERROR: jj workspace add failed" >&2
+    [[ -d "$WORKTREE_PATH" ]] && rm -rf "$WORKTREE_PATH"
+    [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
+    exit 1
   fi
 else
   # Standard git worktree
   git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD
+fi
 
-  # Install git hooks in the new worktree
-  if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
-    (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
-  fi
+# Install hooks in the new workspace (lefthook works in both VCS modes)
+if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
+  (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
 fi
 
 echo "$WORKTREE_PATH"

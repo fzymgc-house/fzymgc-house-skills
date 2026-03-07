@@ -15,7 +15,7 @@ WORKTREE_PATH=$(realpath "$WORKTREE_PATH")
 
 # Validate basename has safe characters only (matches worktree-create.sh)
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
-if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] ]]; then
+if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] || "$WORKSPACE_NAME" == "." || "$WORKSPACE_NAME" == ".." || "$WORKSPACE_NAME" == *".."* ]]; then
   echo "ERROR: invalid worktree name '$WORKSPACE_NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
   exit 1
 fi
@@ -37,15 +37,21 @@ case "$WORKTREE_PATH" in
 esac
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace cleanup — log errors instead of silently suppressing
-  if ! (cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
+  # jj workspace cleanup — verify jj is installed first
+  if ! command -v jj &>/dev/null; then
+    echo "ERROR: .jj/ directory found but jj is not installed — cannot forget workspace" >&2
+    # Still remove the directory since it's just a workspace copy
+    rm -rf "$WORKTREE_PATH"
+  elif ! (cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
     echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}" >&2
+    rm -rf "$WORKTREE_PATH"
+  else
+    rm -rf "$WORKTREE_PATH"
   fi
-  rm -rf "$WORKTREE_PATH"
 else
   # Standard git worktree cleanup — log errors instead of suppressing
-  if ! git worktree remove --force "$WORKTREE_PATH" 2>&1; then
-    echo "WARNING: git worktree remove failed for '$WORKTREE_PATH'" >&2
+  if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
+    echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $git_err" >&2
     # Fall back to manual cleanup
     rm -rf "$WORKTREE_PATH"
     git worktree prune 2>/dev/null || true

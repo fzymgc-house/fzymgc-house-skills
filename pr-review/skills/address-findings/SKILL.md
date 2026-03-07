@@ -321,9 +321,9 @@ WORKTREE_BRANCH):
    jj bookmark set <pr-bookmark> -r <change-id>
    ```
 
-   If bookmark set fails, run `jj undo` to revert the bookmark set,
-   then run `jj undo` again to revert the rebase (each `jj undo`
-   reverts only the most recent operation).
+   If bookmark set fails, run `jj undo` once to revert the rebase
+   (the failed bookmark set was not recorded as an operation).
+   Mark FAILED, add bead comment, re-queue for next round.
 
 3. Forget the workspace and remove the directory:
 

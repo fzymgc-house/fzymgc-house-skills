@@ -80,12 +80,18 @@ FINDING: <bead-id>
 FILES_CHANGED: <file1>, <file2>, ...
 DESCRIPTION: <one-line summary of what was changed>
 VCS: git | jj
-WORKTREE_BRANCH: <branch name>  (git repos only)
-CHANGE_ID: <change-id>          (jj repos only)
+WORKTREE_BRANCH: <branch name>
+CHANGE_ID: <change-id>
 ```
 
 Report `VCS: git` or `VCS: jj` based on the detected VCS, plus the
 matching identifier field.
+
+**Discriminated union rules:**
+
+- When `VCS: git` — `WORKTREE_BRANCH` MUST be present, `CHANGE_ID` MUST be omitted
+- When `VCS: jj` — `CHANGE_ID` MUST be present, `WORKTREE_BRANCH` MUST be omitted
+- Omit means do not include the line at all (not an empty value)
 
 ## Constraints
 

@@ -125,7 +125,7 @@ For more details, see README.md and docs/QUICKSTART.md.
 
 ## Landing the Plane (Session Completion)
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until push succeeds (`git push` or `jj git push --all`).
 
 **MANDATORY WORKFLOW:**
 

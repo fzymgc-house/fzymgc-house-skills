@@ -44,17 +44,9 @@ metadata:
 
 ## VCS Detection
 
-Before any VCS operation, detect which VCS is active:
-
-```bash
-test -d .jj && echo "jj" || echo "git"
-```
-
-- If `.jj/` exists: colocated jj repo. Use jj for ALL VCS operations.
-  Consult `references/vcs-equivalence.md` for command equivalents.
-- Otherwise: standard git repo. Use git commands as written below.
-
-GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
+Follow the procedure in `references/vcs-detection-preamble.md` to
+detect git vs jj and verify your location. Use `gh` CLI for GitHub
+operations regardless of VCS.
 
 Process findings from a `review-pr` run by working through beads in the
 review epic. Findings are triaged, fixed by isolated agents in worktrees,

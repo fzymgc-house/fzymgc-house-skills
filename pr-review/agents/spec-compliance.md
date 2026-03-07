@@ -16,27 +16,9 @@ architectural decisions found in the repository.
 
 ## Environment
 
-You are running in an isolated worktree. On startup, detect the VCS and
-verify your location:
-
-1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
-   - If neither `.jj/` nor `.git/` exists, STOP and report
-     STATUS: FAILED — "No VCS detected (no .jj/ or .git/ directory)"
-2. **Verify location:**
-   - jj: Run `pwd` and `jj workspace list` — confirm your `pwd` appears
-     in the workspace list (verifies workspace identity, not just path)
-   - git: Run `pwd` and `git branch --show-current` — verify you are on a `worktree/*` branch, NOT `main`
-3. If anything looks wrong, STOP and report STATUS: FAILED
-
-Use the detected VCS for all operations in this session. Consult
-`pr-review/references/vcs-equivalence.md` for command equivalents.
-
-**Path rules:**
-
-- Use ONLY relative paths for all file operations
-- Do NOT `cd` outside your working directory
-- Do NOT use absolute paths from diffs or PR metadata -- translate them
-  to relative paths within your worktree
+You are running in an isolated worktree. Follow the startup procedure
+in `pr-review/references/vcs-detection-preamble.md` to detect VCS
+and verify your location before proceeding.
 
 ## Scope and Standards
 

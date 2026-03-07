@@ -57,7 +57,28 @@ files or logic unrelated to the stated problem, that is a finding
 (scope creep), not a feature. Be ruthless about YAGNI -- if a change
 wasn't necessary to address the specific finding, flag it.
 
-### 2. Fix Alignment
+### 2. Project Standards
+
+Before evaluating fix alignment, understand the project's rules.
+These are the authority on how code in this repo should look and behave.
+
+1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
+   commit format, code style expectations, and workflow constraints.
+2. Check CI/lint/CQ configuration files that define enforceable standards:
+   - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
+     `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
+   - Formatter config: `.editorconfig`, `.prettierrc`, `rustfmt.toml`
+   - Commit validation: `cog.toml`, `commitlint.config.*`
+   - Pre-commit hooks: `lefthook.yml`, `.pre-commit-config.yaml`
+   - Type checking: `mypy.ini`, `tsconfig.json`, `pyrightconfig.json`
+3. Any fix that violates these standards is MISALIGNED, even if it
+   solves the stated problem. A correct fix that breaks project
+   conventions is not correct.
+
+You do not need to memorize every config option -- focus on rules
+that are relevant to the changed files and the type of change made.
+
+### 3. Fix Alignment
 
 For each finding in the manifest:
 
@@ -80,7 +101,7 @@ renaming, import reordering) do not need tests. Behavioral changes
 (logic, error handling, control flow, new code paths) always do.
 If the fix-worker skipped tests, that is a verification failure.
 
-### 3. Quality Gates
+### 4. Quality Gates
 
 Detect project type by checking for:
 
@@ -93,7 +114,7 @@ Detect project type by checking for:
 
 Run each applicable gate in order: lint, build, test.
 
-### 4. Fix-up (if needed)
+### 5. Fix-up (if needed)
 
 If a lint gate fails with auto-fixable issues:
 
@@ -108,7 +129,7 @@ If a lint gate fails with auto-fixable issues:
 
 4. Max 3 attempts per gate
 
-### 5. Report
+### 6. Report
 
 Return the structured result. Every MISALIGNED finding must include
 a specific, actionable reason. Vague assessments like "looks off" or
@@ -119,6 +140,11 @@ and what should change.
 
 ```text
 STATUS: PASS | FAIL
+
+## Project Standards
+CLAUDE.md: READ | NOT FOUND
+CI/lint config: <files checked>
+violations: <list or "none">
 
 ## Fix Alignment
 <finding-id>: ALIGNED | MISALIGNED: <specific reason>
@@ -132,7 +158,8 @@ tests: PASS | FAIL
 FAILURES: <details or "none">
 ```
 
-STATUS is FAIL if **any** finding is MISALIGNED or **any** gate fails.
+STATUS is FAIL if **any** finding is MISALIGNED, **any** standards
+violation is found, or **any** gate fails.
 
 ## Constraints
 

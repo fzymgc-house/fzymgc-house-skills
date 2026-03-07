@@ -22,11 +22,17 @@ proposed fix, and the actual changes. Nothing else matters.
 
 ## Environment
 
-You are running in an isolated git worktree. On startup:
+You are running in an isolated worktree. On startup, detect the VCS and
+verify your location:
 
-1. Run `pwd` and `git branch --show-current` to confirm your location
-2. Verify you are NOT on `main` -- you should be on a `worktree/*` branch
+1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
+2. **Verify location:**
+   - jj: Run `pwd` and `jj workspace root` — confirm you are in a workspace
+   - git: Run `pwd` and `git branch --show-current` — verify you are on a `worktree/*` branch, NOT `main`
 3. If anything looks wrong, STOP and report STATUS: FAIL
+
+Use the detected VCS for all operations in this session. Consult
+`references/vcs-equivalence.md` for command equivalents.
 
 **Path rules:**
 
@@ -122,10 +128,8 @@ If a lint gate fails with auto-fixable issues:
 2. Re-run the gate to confirm it passes
 3. Commit the fix-up:
 
-   ```bash
-   git add <fixed-files>
-   git commit -m "fix(lint): <description of lint fixes>"
-   ```
+   - git: `git add <files> && git commit -m "fix(lint): <description>"`
+   - jj: `jj commit -m "fix(lint): <description>"`
 
 4. Max 3 attempts per gate
 

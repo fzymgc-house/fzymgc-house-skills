@@ -16,11 +16,17 @@ and implement the minimal correct fix.
 
 ## Environment
 
-You are running in an isolated git worktree. On startup:
+You are running in an isolated worktree. On startup, detect the VCS and
+verify your location:
 
-1. Run `pwd` and `git branch --show-current` to confirm your location
-2. Verify you are NOT on `main` -- you should be on a `worktree/*` branch
-3. If anything looks wrong, STOP and report STATUS: FAILED
+1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
+2. **Verify location:**
+   - jj: Run `pwd` and `jj workspace root` — confirm you are in a workspace
+   - git: Run `pwd` and `git branch --show-current` — verify you are on a `worktree/*` branch, NOT `main`
+3. If anything looks wrong, STOP and report STATUS: FAIL
+
+Use the detected VCS for all operations in this session. Consult
+`references/vcs-equivalence.md` for command equivalents.
 
 **Path rules:**
 
@@ -71,12 +77,13 @@ The orchestrator provides these in the task prompt:
 6. **Verify** the fix addresses the finding (re-read the changed code)
 7. **Commit** your changes:
 
-   ```bash
-   git add <file1> <file2> ...
-   git commit -m "fix(<finding-bead-id>): <one-line description>"
-   ```
+   - git: `git add <files> && git commit -m "fix(<finding-bead-id>): <description>"`
+   - jj: `jj commit -m "fix(<finding-bead-id>): <description>"`
 
-8. **Confirm** the commit landed: `git log --oneline -1`
+8. **Confirm** the commit landed:
+
+   - git: `git log --oneline -1`
+   - jj: `jj log -r @- --no-graph -n 1`
 
 ## Output
 
@@ -87,8 +94,11 @@ STATUS: FIXED | PARTIAL | FAILED
 FINDING: <bead-id>
 FILES_CHANGED: <file1>, <file2>, ...
 DESCRIPTION: <one-line summary of what was changed>
-WORKTREE_BRANCH: <branch name from git branch --show-current>
+WORKTREE_BRANCH: <branch name>  (git repos)
+CHANGE_ID: <change-id>          (jj repos)
 ```
+
+Report whichever identifier matches the detected VCS.
 
 ## Constraints
 

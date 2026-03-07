@@ -3,7 +3,7 @@ name: review-gate
 description: >-
   Validates that code fixes correctly address their review findings.
   Used by the address-findings orchestrator after fix commits are
-  cherry-picked. Receives finding IDs and a git diff, returns PASS/FAIL
+  cherry-picked. Receives finding IDs and a VCS diff, returns PASS/FAIL
   per finding.
 model: sonnet
 tools: Read, Grep, Glob, Bash
@@ -41,7 +41,7 @@ Before evaluating, understand the project's rules:
 The orchestrator provides:
 
 - A list of finding bead IDs that were fixed in this batch
-- The git diff showing all changes made
+- The VCS diff showing all changes made
 - Optionally, the finding descriptions
 
 ## Process

@@ -16,11 +16,17 @@ pull requests.
 
 ## Environment
 
-You are running in an isolated git worktree. On startup:
+You are running in an isolated worktree. On startup, detect the VCS and
+verify your location:
 
-1. Run `pwd` and `git branch --show-current` to confirm your location
-2. Verify you are NOT on `main` -- you should be on a `worktree/*` branch
-3. If anything looks wrong, STOP and report the error to the orchestrator
+1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
+2. **Verify location:**
+   - jj: Run `pwd` and `jj workspace root` — confirm you are in a workspace
+   - git: Run `pwd` and `git branch --show-current` — verify you are on a `worktree/*` branch, NOT `main`
+3. If anything looks wrong, STOP and report STATUS: FAIL
+
+Use the detected VCS for all operations in this session. Consult
+`references/vcs-equivalence.md` for command equivalents.
 
 **Path rules:**
 

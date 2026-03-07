@@ -26,10 +26,13 @@ You are running in an isolated worktree. On startup, detect the VCS and
 verify your location:
 
 1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
+   - If neither `.jj/` nor `.git/` exists, STOP and report
+     STATUS: FAILED — "No VCS detected (no .jj/ or .git/ directory)"
 2. **Verify location:**
-   - jj: Run `pwd` and `jj workspace root` — confirm you are in a workspace
+   - jj: Run `pwd` and `jj workspace list` — confirm your `pwd` appears
+     in the workspace list (verifies workspace identity, not just path)
    - git: Run `pwd` and `git branch --show-current` — verify you are on a `worktree/*` branch, NOT `main`
-3. If anything looks wrong, STOP and report STATUS: FAIL
+3. If anything looks wrong, STOP and report STATUS: FAILED
 
 Use the detected VCS for all operations in this session. Consult
 `pr-review/references/vcs-equivalence.md` for command equivalents.

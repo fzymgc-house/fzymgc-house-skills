@@ -31,6 +31,17 @@ metadata:
 
 # Address Findings
 
+## Contents
+
+- [VCS Detection](#vcs-detection)
+- [Phase 1: Load](#phase-1-load)
+- [Phase 2: Analyze Dependencies](#phase-2-analyze-dependencies)
+- [Phase 3: Triage](#phase-3-triage)
+- [Phase 4: Fix Loop](#phase-4-fix-loop)
+- [Phase 5: Verify](#phase-5-verify)
+- [Phase 6: Ship](#phase-6-ship)
+- [Hard Constraints](#hard-constraints)
+
 ## VCS Detection
 
 Before any VCS operation, detect which VCS is active:

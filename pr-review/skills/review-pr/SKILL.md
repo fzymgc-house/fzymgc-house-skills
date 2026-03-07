@@ -44,6 +44,12 @@ metadata:
 
 # Comprehensive PR Review
 
+## Contents
+
+- [VCS Detection](#vcs-detection)
+- [Review Aspects](#review-aspects)
+- [Workflow](#workflow)
+
 ## VCS Detection
 
 Before any VCS operation, detect which VCS is active:

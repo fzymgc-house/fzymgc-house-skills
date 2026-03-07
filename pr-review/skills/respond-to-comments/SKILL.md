@@ -31,6 +31,15 @@ metadata:
 
 # PR Comment Operations
 
+## Contents
+
+- [VCS Detection](#vcs-detection)
+- [Commands](#commands)
+- [Quick lookup vs full workflow](#quick-lookup-vs-full-workflow)
+- [Full Review-Response Workflow](#full-review-response-workflow)
+- [Hard Constraints](#hard-constraints)
+- [Notes](#notes)
+
 ## VCS Detection
 
 Before any VCS operation, detect which VCS is active:

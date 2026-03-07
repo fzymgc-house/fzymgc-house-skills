@@ -33,6 +33,11 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
   (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}")
+
+  # Install git hooks in the new workspace
+  if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
+    (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+  fi
 else
   # Standard git worktree
   git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD

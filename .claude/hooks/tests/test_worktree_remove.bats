@@ -42,3 +42,43 @@ teardown() {
   [[ "$output" == *"invalid worktree name"* ]]
   rmdir "$evil_path" 2>/dev/null || true
 }
+
+# --- jj code path tests ---
+
+setup_jj_worktree() {
+  mkdir -p "${REPO_ROOT}/.jj"
+  mkdir -p "${REPO_ROOT}_worktrees/test-jj-wt"
+}
+
+@test "jj path: removes workspace directory" {
+  setup_jj_worktree
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "forget" ]]; then exit 0; fi
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+}
+
+@test "jj path: handles missing jj binary gracefully" {
+  setup_jj_worktree
+  PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+}
+
+@test "jj path: handles workspace forget failure" {
+  setup_jj_worktree
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+}

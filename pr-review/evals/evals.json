@@ -263,6 +263,27 @@
           "check": "git cherry-pick"
         }
       ]
+    },
+    {
+      "id": "B-JJ2",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "fix-worker returned: STATUS: FIXED, VCS: jj, CHANGE_ID: abc123. Integrate this fix.",
+      "expected_output": "Should use jj rebase and jj bookmark set with the CHANGE_ID",
+      "assertions": [
+        {
+          "name": "uses-jj-rebase-with-change-id",
+          "description": "Uses jj rebase with the reported CHANGE_ID",
+          "type": "output_contains",
+          "check": "jj rebase"
+        },
+        {
+          "name": "uses-bookmark-set",
+          "description": "Updates bookmark after rebase",
+          "type": "output_contains",
+          "check": "jj bookmark set"
+        }
+      ]
     }
   ]
 }

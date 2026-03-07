@@ -39,3 +39,55 @@ teardown() {
   run bash -c 'echo "{\"name\": \"\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 1 ]
 }
+
+# --- jj code path tests ---
+
+setup_jj() {
+  mkdir -p "${REPO_ROOT}/.jj"
+}
+
+@test "jj path: rejects when jj not installed" {
+  setup_jj
+  PATH="/usr/bin:/bin" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"jj is not installed"* ]]
+}
+
+@test "jj path: creates workspace with mock jj" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  # Skip --help check for mock
+  if [[ "$3" == "--help" ]]; then
+    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+    echo "  --name <NAME>"
+    exit 0
+  fi
+  mkdir -p "$3"
+  exit 0
+fi
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/test-jj-wt"* ]]
+}
+
+@test "jj path: cleans up on jj workspace add failure" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "  --name <NAME>"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"fail-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [ ! -d "${REPO_ROOT}_worktrees/fail-wt" ]
+}

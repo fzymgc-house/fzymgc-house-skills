@@ -4,6 +4,11 @@ Use this reference when the repo has `.jj/` (colocated jj repo).
 In jj repos, use jj for ALL VCS operations.
 Only `gh` CLI remains for GitHub API calls.
 
+**Note:** The detection pattern `test -d .jj && echo "jj" || echo "git"` assumes
+a git repo exists when `.jj/` is absent. Agents verify VCS availability in their
+Environment startup check (step 2) — if `git branch --show-current` fails, they
+STOP and report STATUS: FAIL.
+
 ## Command Mapping
 
 | Operation | git | jj |

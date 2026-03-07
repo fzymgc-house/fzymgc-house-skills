@@ -13,6 +13,19 @@ metadata:
 
 # Jujutsu (jj) VCS Workflow
 
+## Contents
+
+- [Detection](#detection)
+- [Agent Environment Rules](#agent-environment-rules)
+- [Core Concepts](#core-concepts)
+- [Essential Workflow](#essential-workflow)
+- [Refining Commits](#refining-commits)
+- [Bookmarks](#bookmarks)
+- [Workspaces](#workspaces)
+- [Git Integration](#git-integration)
+- [Conflict Handling](#conflict-handling)
+- [Quick Reference](#quick-reference)
+
 ## Detection
 
 Before any VCS operation, check for `.jj/` in the repo root:

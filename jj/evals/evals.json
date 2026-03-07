@@ -1,0 +1,138 @@
+{
+  "skill_name": "jj-plugin",
+  "evals": [
+    {
+      "id": "T1",
+      "type": "triggering",
+      "prompt": "I need to use jj to commit my changes",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should trigger jujutsu skill based on jj mention",
+      "assertions": []
+    },
+    {
+      "id": "T2",
+      "type": "triggering",
+      "prompt": "how do I create a bookmark in jujutsu?",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should trigger jujutsu skill based on jujutsu mention",
+      "assertions": []
+    },
+    {
+      "id": "T3",
+      "type": "triggering",
+      "prompt": "help me set up jj in this repo",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should trigger jujutsu skill; may also suggest /jj-init command",
+      "assertions": []
+    },
+    {
+      "id": "T4",
+      "type": "triggering",
+      "prompt": "what's the jj equivalent of git cherry-pick?",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should trigger jujutsu skill and reference rebase",
+      "assertions": []
+    },
+    {
+      "id": "T5",
+      "type": "triggering",
+      "prompt": "commit this with a message",
+      "expected_skill": "NOT jujutsu (unless .jj/ detected)",
+      "expected_output": "Generic commit request should NOT trigger jujutsu unless .jj/ is present",
+      "assertions": []
+    },
+    {
+      "id": "B1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "check my repo status (in a repo with .jj/ directory)",
+      "expected_output": "Should use jj st instead of git status. Should detect .jj/ and activate jujutsu skill.",
+      "assertions": [
+        {
+          "name": "uses-jj-status",
+          "description": "Uses jj st for status check",
+          "type": "output_contains",
+          "check": "jj st"
+        },
+        {
+          "name": "does-not-use-git-status",
+          "description": "Does not fall back to git status",
+          "type": "manual",
+          "check": "Verify no git status command was run"
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "commit these changes with message 'fix: update config' (in a jj repo)",
+      "expected_output": "Should use jj commit -m, not jj desc + jj new, and not git add + git commit",
+      "assertions": [
+        {
+          "name": "uses-jj-commit",
+          "description": "Uses jj commit -m for committing",
+          "type": "output_contains",
+          "check": "jj commit -m"
+        },
+        {
+          "name": "no-staging",
+          "description": "Does not use git add or jj track for regular files",
+          "type": "manual",
+          "check": "Verify no staging step before commit"
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "push my changes to the remote (in a jj repo with bookmark 'feature-x')",
+      "expected_output": "Should use jj git push -b feature-x, not git push",
+      "assertions": [
+        {
+          "name": "uses-jj-git-push",
+          "description": "Uses jj git push with bookmark flag",
+          "type": "output_contains",
+          "check": "jj git push"
+        },
+        {
+          "name": "specifies-bookmark",
+          "description": "Includes -b or --bookmark flag",
+          "type": "output_contains",
+          "check": "-b OR --bookmark"
+        }
+      ]
+    },
+    {
+      "id": "B4",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "split this commit into two (in a jj repo)",
+      "expected_output": "Should refuse or warn that jj split is interactive and cannot be used by agents",
+      "assertions": [
+        {
+          "name": "warns-interactive",
+          "description": "Warns that split is interactive",
+          "type": "manual",
+          "check": "Output mentions that jj split is interactive and not agent-safe"
+        }
+      ]
+    },
+    {
+      "id": "B5",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "run git rebase in this repo (in a repo with .jj/ directory)",
+      "expected_output": "Should warn against using mutating git commands in colocated jj repo",
+      "assertions": [
+        {
+          "name": "warns-no-git-mutate",
+          "description": "Warns against git mutating commands in jj repos",
+          "type": "manual",
+          "check": "Output warns that mutating git commands should not be used in jj repos"
+        }
+      ]
+    }
+  ]
+}

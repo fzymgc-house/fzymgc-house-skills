@@ -58,6 +58,10 @@ test -d .jj && echo "jj" || echo "git"
 
 GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 
+In jj repos, key substitutions for this skill: `jj st` for `git status`,
+`jj diff` for `git diff`, `jj log --no-graph` for `git log --oneline`,
+`jj show` for `git show`, `jj file list` for `git ls-files`.
+
 Orchestrate specialized review agents against a PR's changes. Each agent
 runs as an independent Task with its own system prompt, tools, and
 isolation. Results are aggregated into a prioritized action plan.

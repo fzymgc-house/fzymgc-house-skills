@@ -2,8 +2,8 @@
 name: review-gate
 description: >-
   Validates that code fixes correctly address their review findings.
-  Used by the address-findings orchestrator after fix branches are
-  merged. Receives finding IDs and a git diff, returns PASS/FAIL
+  Used by the address-findings orchestrator after fix commits are
+  cherry-picked. Receives finding IDs and a git diff, returns PASS/FAIL
   per finding.
 model: sonnet
 tools: Read, Grep, Glob, Bash

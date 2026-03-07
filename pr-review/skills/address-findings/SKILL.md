@@ -232,19 +232,25 @@ Loop while open, non-deferred findings remain:
 5. **Collect results** from each agent: STATUS, FILES_CHANGED,
    DESCRIPTION, WORKTREE_BRANCH.
 
-### Phase 4b: Merge Fix Branches
+### Phase 4b: Cherry-Pick Fix Commits
 
 For each FIXED result, in dependency order:
 
-1. Merge into the PR branch:
+1. Identify the fix commit on the worktree branch:
 
    ```bash
-   git merge --no-ff <worktree-branch> -m "fix(<finding-id>): <description>"
+   git log --oneline <worktree-branch> -1
    ```
 
-2. If merge conflict: mark FAILED, add bead comment, re-queue for
-   next round.
-3. Clean up worktree (sibling directory):
+2. Cherry-pick onto the PR branch:
+
+   ```bash
+   git cherry-pick <commit-sha>
+   ```
+
+3. If cherry-pick conflict: abort (`git cherry-pick --abort`), mark
+   FAILED, add bead comment, re-queue for next round.
+4. Clean up worktree (sibling directory):
 
    ```bash
    git worktree remove ../<repo>_worktrees/<worktree-name>
@@ -252,12 +258,12 @@ For each FIXED result, in dependency order:
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
 
-4. **Commit after each merge round.** After all branches in a batch
-   are merged, create a checkpoint commit before the next loop
-   iteration:
+5. **Verify clean state after each batch.** After all commits in a
+   batch are cherry-picked, verify the working tree is clean before
+   the next loop iteration:
 
    ```bash
-   git add -A && git commit -m "fix: address review findings (batch N)"
+   git status --porcelain
    ```
 
    This prevents worktree-isolated agents in the next round from
@@ -275,7 +281,7 @@ model: sonnet
 prompt: |
   FINDING_IDS: <comma-separated>
   Review the following changes against the original findings.
-  <git diff of merged changes>
+  <git diff of cherry-picked changes>
   Return per-finding: PASS | FAIL: <reason>
 ```
 

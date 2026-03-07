@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.0.2...fzymgc-house-skills-v1.0.3) (2026-03-07)
+
+
+### Bug Fixes
+
+* **address-findings:** replace git merge with cherry-pick ([#29](https://github.com/fzymgc-house/fzymgc-house-skills/issues/29)) ([c44219b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c44219bb1135181ae4eca427fa1bef8a4ae2069b))
+
 ## [1.0.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.0.1...fzymgc-house-skills-v1.0.2) (2026-03-07)
 
 

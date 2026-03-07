@@ -18,11 +18,19 @@ WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 mkdir -p "$WORKTREE_PARENT"
-git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD
 
-# Install git hooks in the new worktree
-if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
-  (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+if [[ -d "${REPO_ROOT}/.jj" ]]; then
+  # jj workspace — no git worktree needed
+  (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
+    --name "worktree-${NAME}")
+else
+  # Standard git worktree
+  git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD
+
+  # Install git hooks in the new worktree
+  if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
+    (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+  fi
 fi
 
 echo "$WORKTREE_PATH"

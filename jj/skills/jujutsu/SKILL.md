@@ -287,6 +287,7 @@ environments.
 | Undo last operation | `jj undo` |
 | Restore working copy | `jj restore` |
 | Rebase onto new parent | `jj rebase -s <src> -d <dest>` |
+| Cherry-pick (single rev) | `jj rebase -r <change-id> -d <dest>` |
 | Create bookmark | `jj bookmark create <name>` |
 | Move bookmark | `jj bookmark set <name> -r <rev>` |
 | Push bookmark | `jj git push -b <name>` |

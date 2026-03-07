@@ -284,6 +284,27 @@
           "check": "jj bookmark set"
         }
       ]
+    },
+    {
+      "id": "B-JJ3",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "fix-worker returned: STATUS: FIXED, VCS: jj, CHANGE_ID: kkmpptxz, FILES_CHANGED: src/config.py. Worktree at ../repo_worktrees/fix-abc. Integrate and clean up.",
+      "expected_output": "Should use jj rebase, jj bookmark set, jj workspace forget, and rm -rf for cleanup",
+      "assertions": [
+        {
+          "name": "uses-workspace-forget",
+          "description": "Cleans up jj workspace after integration",
+          "type": "output_contains",
+          "check": "jj workspace forget"
+        },
+        {
+          "name": "removes-directory",
+          "description": "Removes worktree directory after workspace forget",
+          "type": "output_contains",
+          "check": "rm -rf"
+        }
+      ]
     }
   ]
 }

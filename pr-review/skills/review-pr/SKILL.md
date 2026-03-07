@@ -23,6 +23,7 @@ allowed-tools:
   - "Bash(git ls-files *)"
   - "Bash(git rev-parse *)"
   - "Bash(git merge-base *)"
+  - "Bash(jj *)"
   - "Bash(gh pr view *)"
   - "Bash(gh pr diff *)"
   - "Bash(gh pr list *)"
@@ -42,6 +43,20 @@ metadata:
 ---
 
 # Comprehensive PR Review
+
+## VCS Detection
+
+Before any VCS operation, detect which VCS is active:
+
+```bash
+test -d .jj && echo "jj" || echo "git"
+```
+
+- If `.jj/` exists: colocated jj repo. Use jj for ALL VCS operations.
+  Consult `references/vcs-equivalence.md` for command equivalents.
+- Otherwise: standard git repo. Use git commands as written below.
+
+GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 
 Orchestrate specialized review agents against a PR's changes. Each agent
 runs as an independent Task with its own system prompt, tools, and

@@ -9,6 +9,7 @@ argument-hint: "[pr-number]"
 allowed-tools:
   - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-comments/scripts/pr_comments *)"
   - "Bash(git *)"
+  - "Bash(jj *)"
   - "Bash(gh *)"
   - "Bash(bd create *)"
   - "Bash(bd list *)"
@@ -29,6 +30,20 @@ metadata:
 ---
 
 # PR Comment Operations
+
+## VCS Detection
+
+Before any VCS operation, detect which VCS is active:
+
+```bash
+test -d .jj && echo "jj" || echo "git"
+```
+
+- If `.jj/` exists: colocated jj repo. Use jj for ALL VCS operations.
+  Consult `references/vcs-equivalence.md` for command equivalents.
+- Otherwise: standard git repo. Use git commands as written below.
+
+GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 
 **Execute** the bundled script using the full absolute path from
 your allowed-tools Bash pattern. The script outputs ready-to-run
@@ -123,6 +138,8 @@ beads and run `bd init` in the target project."
    `<repo>_worktrees/` directory. If one matches, `cd` into it and
    verify with `git branch --show-current`. If not, ask the user
    whether to create one.
+   In jj repos, use `jj workspace list` and `jj workspace root`
+   instead of `git worktree list` and `git branch --show-current`.
    **MUST** use an existing worktree if one matches.
 
 ### Phase 2: Categorize, clarify, and confirm

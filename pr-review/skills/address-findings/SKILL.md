@@ -13,6 +13,7 @@ allowed-tools:
   - Grep
   - Glob
   - "Bash(git *)"
+  - "Bash(jj *)"
   - "Bash(gh *)"
   - "Bash(bd --version)"
   - "Bash(bd create *)"
@@ -29,6 +30,20 @@ metadata:
 ---
 
 # Address Findings
+
+## VCS Detection
+
+Before any VCS operation, detect which VCS is active:
+
+```bash
+test -d .jj && echo "jj" || echo "git"
+```
+
+- If `.jj/` exists: colocated jj repo. Use jj for ALL VCS operations.
+  Consult `references/vcs-equivalence.md` for command equivalents.
+- Otherwise: standard git repo. Use git commands as written below.
+
+GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 
 Process findings from a `review-pr` run by working through beads in the
 review epic. Findings are triaged, fixed by isolated agents in worktrees,
@@ -50,6 +65,11 @@ batch-reviewed, and closed.
    gh pr checkout <number>
    git branch --show-current   # confirm you are on the PR branch
    ```
+
+   In jj repos, after `gh pr checkout <number>`, run
+   `jj new <pr-bookmark>` to create a new working-copy change on top
+   of the PR bookmark. Verify with `jj log -r @ --no-graph -n 1`
+   instead of `git branch --show-current`.
 
    If checkout fails, check the error:
    - **PR not found** (GraphQL/404 error): stop and tell the user
@@ -180,8 +200,13 @@ For needs-human findings, use `AskUserQuestion` with:
 **Before entering the loop**, verify branch and working tree state:
 
 ```bash
+# git repos:
 git branch --show-current   # MUST be the PR branch, NOT main
 git status --porcelain      # MUST be clean
+
+# jj repos:
+jj log -r @ --no-graph -n 1   # MUST show PR bookmark
+jj st                          # MUST be clean
 ```
 
 If on `main`, stop — you skipped step 3. If there are uncommitted
@@ -222,7 +247,7 @@ Loop while open, non-deferred findings remain:
      SUGGESTED_FIX: <from finding description>
      Implement the fix. Commit with message:
        fix(<finding-id>): <one-line description>
-     Report STATUS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH.
+     Report STATUS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
      Do NOT close or update any beads.
    ```
 
@@ -232,7 +257,9 @@ Loop while open, non-deferred findings remain:
 5. **Collect results** from each agent: STATUS, FILES_CHANGED,
    DESCRIPTION, WORKTREE_BRANCH.
 
-### Phase 4b: Cherry-Pick Fix Commits
+### Phase 4b: Integrate Fix Commits
+
+#### Git repos
 
 For each FIXED result, in dependency order:
 
@@ -258,12 +285,39 @@ For each FIXED result, in dependency order:
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
 
+#### Jj repos
+
+For each FIXED result (fix worker reports CHANGE_ID instead of
+WORKTREE_BRANCH):
+
+1. Rebase the fix onto the PR bookmark:
+
+   ```bash
+   jj rebase -r <change-id> -d <pr-bookmark>
+   ```
+
+2. Update the bookmark:
+
+   ```bash
+   jj bookmark set <pr-bookmark> -r <change-id>
+   ```
+
+3. Forget the workspace and remove the directory:
+
+   ```bash
+   jj workspace forget worktree-<name>
+   rm -rf ../<repo>_worktrees/<worktree-name>
+   ```
+
+#### Post-batch verification
+
 5. **Verify clean state after each batch.** After all commits in a
-   batch are cherry-picked, verify the working tree is clean before
+   batch are integrated, verify the working tree is clean before
    the next loop iteration:
 
    ```bash
-   git status --porcelain
+   git status --porcelain   # git repos
+   jj st                    # jj repos
    ```
 
    This prevents worktree-isolated agents in the next round from
@@ -329,7 +383,7 @@ prompt: |
 ## Phase 6: Ship
 
 1. **Commit** using the `commit-commands:commit` skill.
-2. **Push** to the PR branch: `git push`
+2. **Push** to the PR branch: `git push` (or `jj git push --bookmark <pr-bookmark>` in jj repos)
 3. **Post summary comment** on the PR:
 
    ```bash

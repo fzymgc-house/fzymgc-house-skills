@@ -213,14 +213,19 @@ Loop while open, non-deferred findings remain:
    prompt: |
      FINDING_BEAD_ID: <finding-id>
      WORK_BEAD_ID: <work-bead-id>
-     FILE_LOCATION: <path:line>
+     FILE_LOCATION: <relative-path:line>
      SUGGESTED_FIX: <from finding description>
-     Implement the fix. Report STATUS, FILES_CHANGED, WORKTREE_BRANCH.
+     Implement the fix. Commit with message:
+       fix(<finding-id>): <one-line description>
+     Report STATUS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH.
      Do NOT close or update any beads.
    ```
 
+   Note: FILE_LOCATION **must** use a relative path. Strip any absolute
+   prefix before dispatching.
+
 5. **Collect results** from each agent: STATUS, FILES_CHANGED,
-   WORKTREE_BRANCH.
+   DESCRIPTION, WORKTREE_BRANCH.
 
 ### Phase 4b: Merge Fix Branches
 
@@ -234,7 +239,11 @@ For each FIXED result, in dependency order:
 
 2. If merge conflict: mark FAILED, add bead comment, re-queue for
    next round.
-3. Clean up: `git worktree remove <worktree-path>`
+3. Clean up worktree (sibling directory):
+
+   ```bash
+   git worktree remove ../<repo>_worktrees/<worktree-name>
+   ```
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
 
@@ -274,22 +283,37 @@ Max 2 retries per finding. After 2 failures, escalate to user.
 
 ## Phase 5: Verify
 
+Build a **fix manifest** from the collected fix-worker results:
+
+| Finding | Problem | Proposed Fix | Actual Changes |
+|---------|---------|--------------|----------------|
+| bead-id | from finding description | suggested fix | files + description from fix-worker |
+
+Select the verification model based on batch complexity:
+
+| Batch composition | Model |
+|---|---|
+| All mechanical / single-file fixes | sonnet |
+| Any cross-cutting / architectural / vague fix in batch | opus |
+
 Dispatch a verification-runner agent:
 
 ```text
 subagent_type: "verification-runner"
 isolation: worktree
-model: sonnet
+model: <sonnet or opus per table above>
 prompt: |
-  Run all quality gates for this project:
-  1. Detect project type (Taskfile.yml, pyproject.toml, package.json, etc.)
-  2. Run unit tests, integration tests, build, lint
-  3. If failures: review error, fix, re-run (max 3 attempts)
-  4. Report PASS or FAIL with details
+  ## Fix Manifest
+
+  <fix manifest table from above>
+
+  Validate fix alignment and run quality gates.
+  Report per-finding alignment AND gate status.
 ```
 
-- **FAIL**: report failure details to user. Do NOT proceed to Phase 6.
-- **PASS**: proceed.
+- **Any MISALIGNED finding**: treat as review-gate FAIL, re-queue
+- **Gate FAIL**: report failure details to user. Do NOT proceed to Phase 6.
+- **All ALIGNED + gates PASS**: proceed.
 
 ## Phase 6: Ship
 

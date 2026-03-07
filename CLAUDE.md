@@ -178,6 +178,11 @@ this automatically. In jj repos, hooks use `jj workspace add/forget`
 instead of `git worktree add/remove`. Do NOT manually create worktrees
 inside `.claude/worktrees/`.
 
+**VCS-specific behavior:**
+
+- **git**: fix-worker reports `WORKTREE_BRANCH`; orchestrator uses cherry-pick to integrate
+- **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase` to integrate (no cherry-pick)
+
 ### Skill Invocation
 
 Skills are **model-invoked** (Claude decides when to use them), not user-invoked slash commands.

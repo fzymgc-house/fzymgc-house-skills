@@ -47,7 +47,7 @@ The orchestrator provides:
 ## Process
 
 1. For each finding, read its description: `bd show <finding-id>`
-2. Examine the git diff for changes related to that finding
+2. Examine the VCS diff for changes related to that finding
 3. Assess whether the fix:
    - Addresses the root cause (not just symptoms)
    - Doesn't introduce new issues

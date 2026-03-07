@@ -27,7 +27,7 @@ verify your location:
 3. If anything looks wrong, STOP and report STATUS: FAIL
 
 Use the detected VCS for all operations in this session. Consult
-`references/vcs-equivalence.md` for command equivalents.
+`pr-review/references/vcs-equivalence.md` for command equivalents.
 
 **Path rules:**
 

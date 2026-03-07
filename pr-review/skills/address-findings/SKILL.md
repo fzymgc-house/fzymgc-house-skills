@@ -266,7 +266,7 @@ Loop while open, non-deferred findings remain:
    prefix before dispatching.
 
 5. **Collect results** from each agent: STATUS, FILES_CHANGED,
-   DESCRIPTION, WORKTREE_BRANCH.
+   DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
 
 ### Phase 4b: Integrate Fix Commits
 
@@ -346,7 +346,7 @@ model: sonnet
 prompt: |
   FINDING_IDS: <comma-separated>
   Review the following changes against the original findings.
-  <git diff of cherry-picked changes>
+  <VCS diff of integrated changes>
   Return per-finding: PASS | FAIL: <reason>
 ```
 

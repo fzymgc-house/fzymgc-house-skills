@@ -12,6 +12,12 @@ if [[ -z "$NAME" ]]; then
   exit 1
 fi
 
+# Reject names with path-traversal or shell metacharacters
+if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == *".."* ]]; then
+  echo "ERROR: invalid worktree name '$NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
+  exit 1
+fi
+
 REPO_ROOT=$(git rev-parse --show-toplevel)
 REPO_NAME=$(basename "$REPO_ROOT")
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
@@ -20,7 +26,11 @@ WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 mkdir -p "$WORKTREE_PARENT"
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace — no git worktree needed
+  # jj workspace — verify jj is installed
+  if ! command -v jj &>/dev/null; then
+    echo "ERROR: .jj/ directory found but jj is not installed" >&2
+    exit 1
+  fi
   (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}")
 else

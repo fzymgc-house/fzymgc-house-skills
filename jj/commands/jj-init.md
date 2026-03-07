@@ -26,10 +26,11 @@ allowed-tools:
 3. **Initialize colocated repo** — Run:
 
    ```bash
-   jj git init
+   jj git init --colocate
    ```
 
-   Colocation is the default behavior; no extra flags are needed.
+   The `--colocate` flag ensures jj shares the working copy with git
+   (required on jj 0.15+; harmless on older versions).
 
 4. **Add .jj/ to .gitignore** — Check whether `.gitignore` exists and already contains `.jj/`.
    If not present, append `.jj/` to `.gitignore`:

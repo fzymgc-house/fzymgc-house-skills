@@ -100,7 +100,7 @@
           "name": "specifies-bookmark",
           "description": "Includes -b or --bookmark flag",
           "type": "output_contains",
-          "check": "-b OR --bookmark"
+          "check": "-b "
         }
       ]
     },
@@ -131,6 +131,36 @@
           "description": "Warns against git mutating commands in jj repos",
           "type": "manual",
           "check": "Output warns that mutating git commands should not be used in jj repos"
+        }
+      ]
+    },
+    {
+      "id": "B6",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "create a jj workspace with the same name as an existing one (in a jj repo)",
+      "expected_output": "Should detect the naming collision and either use a unique name or report the conflict",
+      "assertions": [
+        {
+          "name": "handles-collision",
+          "description": "Handles workspace name collision gracefully",
+          "type": "manual",
+          "check": "Verify the agent detects or handles workspace name collision"
+        }
+      ]
+    },
+    {
+      "id": "B7",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "initialize jj in this repo (repo already has .jj/ directory)",
+      "expected_output": "Should detect existing .jj/ and inform user that jj is already initialized",
+      "assertions": [
+        {
+          "name": "detects-existing",
+          "description": "Detects existing jj initialization",
+          "type": "output_contains",
+          "check": "already"
         }
       ]
     }

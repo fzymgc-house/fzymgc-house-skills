@@ -26,7 +26,7 @@ verify your location:
 3. If anything looks wrong, STOP and report STATUS: FAIL
 
 Use the detected VCS for all operations in this session. Consult
-`references/vcs-equivalence.md` for command equivalents.
+`pr-review/references/vcs-equivalence.md` for command equivalents.
 
 **Path rules:**
 
@@ -94,11 +94,13 @@ STATUS: FIXED | PARTIAL | FAILED
 FINDING: <bead-id>
 FILES_CHANGED: <file1>, <file2>, ...
 DESCRIPTION: <one-line summary of what was changed>
-WORKTREE_BRANCH: <branch name>  (git repos)
-CHANGE_ID: <change-id>          (jj repos)
+VCS: git | jj
+WORKTREE_BRANCH: <branch name>  (git repos only)
+CHANGE_ID: <change-id>          (jj repos only)
 ```
 
-Report whichever identifier matches the detected VCS.
+Report `VCS: git` or `VCS: jj` based on the detected VCS, plus the
+matching identifier field.
 
 ## Constraints
 

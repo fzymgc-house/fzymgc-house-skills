@@ -77,6 +77,11 @@ batch-reviewed, and closed.
      `jj log -r @- --no-graph -n 1` (parent should be the PR bookmark).
      If `jj new` fails (e.g., bookmark not found), report the error and stop.
 
+   **jj note:** `gh pr checkout` creates a local git branch. In colocated
+   repos, jj auto-imports it as a bookmark on the next `jj` command.
+   If the bookmark doesn't appear in `jj bookmark list`, run
+   `jj git fetch` to force import.
+
    If checkout fails, check the error:
    - **PR not found** (GraphQL/404 error): stop and tell the user
      "PR #N not found. Verify the number and try again."
@@ -312,8 +317,13 @@ WORKTREE_BRANCH):
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
-   If rebase fails (conflict), run `jj undo`, mark FAILED, add bead
-   comment, re-queue for next round.
+   If rebase fails (conflict):
+
+   1. Run `jj undo`
+   2. Verify undo succeeded: `jj log -r @ --no-graph -n 1` — confirm the
+      working copy parent matches the pre-rebase state. If not, STOP and
+      report STATUS: FAILED with "jj undo did not restore expected state".
+   3. Mark FAILED, add bead comment, re-queue for next round.
 
 2. Update the bookmark:
 
@@ -321,9 +331,12 @@ WORKTREE_BRANCH):
    jj bookmark set <pr-bookmark> -r <change-id>
    ```
 
-   If bookmark set fails, run `jj undo` once to revert the rebase
-   (the failed bookmark set was not recorded as an operation).
-   Mark FAILED, add bead comment, re-queue for next round.
+   If bookmark set fails:
+
+   1. Run `jj undo` to revert the rebase (bookmark set failure is not
+      recorded as a jj operation, so one undo reverts the rebase).
+   2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
+   3. Mark FAILED, add bead comment, re-queue for next round.
 
 3. Forget the workspace and remove the directory:
 
@@ -411,7 +424,10 @@ prompt: |
 
 1. **Commit** changes:
    - git repos: Use the `commit-commands:commit` skill.
-   - jj repos: Run `jj commit -m "fix: address review findings for PR #<number>"`
+   - jj repos: All fixes are already committed (fix-workers commit individually,
+     orchestrator integrates via `jj rebase`). Skip unless the working copy has
+     uncommitted manual edits, in which case run
+     `jj commit -m "fix: address review findings for PR #<number>"`.
 2. **Push** to the PR branch: `git push` (or `jj git push -b <pr-bookmark>` in jj repos)
 3. **Post summary comment** on the PR:
 

@@ -4,7 +4,7 @@ How jj and git coexist in colocated repositories.
 
 ## Colocated Repo Behavior
 
-A colocated repo has both `.jj/` and `.git/` directories. Every `jj` command automatically syncs
+A colocated repo has both `.jj/` and `.git/` directories. Most `jj` commands automatically sync
 state to the underlying git repo. This means git-based tools (GitHub CLI, IDE git integration) see
 an up-to-date `.git/` at all times.
 

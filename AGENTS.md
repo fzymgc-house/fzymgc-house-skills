@@ -150,7 +150,8 @@ For more details, see README.md and docs/QUICKSTART.md.
    fi
 
    # Verify
-   git status  # MUST show "up to date with origin"
+   # git repos: git status
+   # jj repos: jj st
    ```
 
 5. **Clean up** - Clear stashes, prune remote branches

@@ -15,12 +15,13 @@ WORKTREE_PATH=$(realpath "$WORKTREE_PATH")
 
 # Validate basename has safe characters only (matches worktree-create.sh)
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
-if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] || "$WORKSPACE_NAME" == "." || "$WORKSPACE_NAME" == ".." || "$WORKSPACE_NAME" == *".."* ]]; then
+if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] || "$WORKSPACE_NAME" == .* || "$WORKSPACE_NAME" == *".."* ]]; then
   echo "ERROR: invalid worktree name '$WORKSPACE_NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
   exit 1
 fi
 
-# Detect repo root — require git rev-parse to succeed
+# Detect repo root — git rev-parse works in colocated jj repos (.git/ present)
+# Non-colocated jj repos are out of scope (see CLAUDE.md: "colocated repos")
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "ERROR: could not determine repo root (git rev-parse failed)" >&2
   exit 1
@@ -40,8 +41,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
-  elif ! (cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-    echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}" >&2
+  elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
+    echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $jj_err" >&2
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing

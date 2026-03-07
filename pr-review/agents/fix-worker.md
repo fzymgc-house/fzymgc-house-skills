@@ -29,6 +29,29 @@ You are running in an isolated git worktree. On startup:
 - Do NOT use absolute paths from finding descriptions -- translate them
   to relative paths within your worktree
 
+## Scope and Standards
+
+### Scope
+
+Your scope is **exactly** the finding you were assigned. Fix ONLY that
+finding -- no drive-by improvements, no "while I'm here" changes, no
+scope creep. If the fix requires touching code beyond the finding's
+scope, report STATUS: PARTIAL and explain what else is needed.
+
+### Project Standards
+
+Before implementing, understand the project's rules:
+
+1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
+   code style, and workflow constraints.
+2. Check CI/lint/CQ configuration relevant to files you will change:
+   - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
+     `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
+   - Formatter config: `.editorconfig`, `.prettierrc`, `rustfmt.toml`
+   - Commit validation: `cog.toml`, `commitlint.config.*`
+3. Your fix must conform to these standards. A correct fix that violates
+   project conventions will be rejected by the verification-runner.
+
 ## Input Variables
 
 The orchestrator provides these in the task prompt:

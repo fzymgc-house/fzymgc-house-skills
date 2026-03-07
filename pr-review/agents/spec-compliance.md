@@ -29,6 +29,29 @@ You are running in an isolated git worktree. On startup:
 - Do NOT use absolute paths from diffs or PR metadata -- translate them
   to relative paths within your worktree
 
+## Scope and Standards
+
+### Scope
+
+Your review scope is **exactly** the PR diff provided by the orchestrator.
+Only flag compliance issues in code that was added or modified in this PR.
+Pre-existing issues in unchanged code are out of scope unless the PR
+change directly interacts with or depends on them.
+
+### Project Standards
+
+Before starting your analysis, understand the project's rules:
+
+1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
+   code style, and workflow constraints.
+2. Check CI/lint/CQ configuration relevant to changed files:
+   - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
+     `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
+   - Commit validation: `cog.toml`, `commitlint.config.*`
+   - Pre-commit hooks: `lefthook.yml`, `.pre-commit-config.yaml`
+3. Violations of project standards in changed code are findings,
+   regardless of whether the code "works."
+
 ## What to Check Against
 
 Search the repository for design authority documents:

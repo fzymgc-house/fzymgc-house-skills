@@ -4,7 +4,7 @@ setup() {
   export REPO_ROOT=$(mktemp -d)
   cd "$REPO_ROOT"
   git init -q
-  git commit --allow-empty -m "init" -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
 }
 
 teardown() {
@@ -79,8 +79,15 @@ if [[ "$1" == "workspace" && "$2" == "add" ]]; then
     echo "  --name <NAME>"
     exit 0
   fi
-  mkdir -p "$3"
-  exit 0
+  # Verify --name flag is actually passed
+  for arg in "$@"; do
+    if [[ "$arg" == "--name" ]]; then
+      mkdir -p "$3"
+      exit 0
+    fi
+  done
+  echo "ERROR: --name flag not passed to jj workspace add" >&2
+  exit 1
 fi
 MOCK
   chmod +x "${REPO_ROOT}/bin/jj"

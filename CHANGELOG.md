@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.0.1...fzymgc-house-skills-v1.0.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* **pr-review:** worktree isolation, commit protocol, and verification alignment ([#27](https://github.com/fzymgc-house/fzymgc-house-skills/issues/27)) ([74c5e29](https://github.com/fzymgc-house/fzymgc-house-skills/commit/74c5e2983c07bb76f7d85de85adf3a475a7285e6))
+
 ## [1.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.0.0...fzymgc-house-skills-v1.0.1) (2026-03-04)
 
 

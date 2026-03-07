@@ -76,15 +76,14 @@ batch-reviewed, and closed.
 
    ```bash
    gh pr checkout <number>
-   git branch --show-current   # confirm you are on the PR branch
    ```
 
-   In jj repos, after `gh pr checkout <number>`, run
-   `jj new <pr-bookmark>` to create a new working-copy change on top
-   of the PR bookmark. Verify with `jj log -r @- --no-graph -n 1`
-   (note `@-` = parent) to confirm the parent is the PR bookmark,
-   not `main`. If `jj new` fails (e.g., bookmark not found), report
-   the error and stop.
+   **Verify checkout (VCS-dependent):**
+   - git: `git branch --show-current` — confirm you are on the PR branch
+   - jj: After checkout, run `jj new <pr-bookmark>` to create a working-copy
+     change on top of the PR bookmark. Verify with
+     `jj log -r @- --no-graph -n 1` (parent should be the PR bookmark).
+     If `jj new` fails (e.g., bookmark not found), report the error and stop.
 
    If checkout fails, check the error:
    - **PR not found** (GraphQL/404 error): stop and tell the user
@@ -341,6 +340,10 @@ WORKTREE_BRANCH):
    rm -rf ../<repo>_worktrees/<worktree-name>
    ```
 
+   If `jj workspace forget` fails (e.g., workspace already forgotten
+   or jj not installed), log a warning but proceed with directory
+   cleanup. The directory removal is the critical step.
+
 #### Post-batch verification
 
 5. **Verify clean state after each batch.** After all commits in a
@@ -414,7 +417,9 @@ prompt: |
 
 ## Phase 6: Ship
 
-1. **Commit** using the `commit-commands:commit` skill.
+1. **Commit** changes:
+   - git repos: Use the `commit-commands:commit` skill.
+   - jj repos: Run `jj commit -m "fix: address review findings for PR #<number>"`
 2. **Push** to the PR branch: `git push` (or `jj git push --bookmark <pr-bookmark>` in jj repos)
 3. **Post summary comment** on the PR:
 

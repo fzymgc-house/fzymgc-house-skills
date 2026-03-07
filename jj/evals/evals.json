@@ -172,8 +172,10 @@
       "expected_output": "Should reference VCS detection preamble and jj commands for agents",
       "assertions": [
         {
+          "name": "references-vcs-detection",
+          "description": "References the VCS detection preamble command",
           "type": "output_contains",
-          "value": "test -d .jj"
+          "check": "test -d .jj"
         }
       ]
     }

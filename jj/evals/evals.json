@@ -7,7 +7,7 @@
       "prompt": "I need to use jj to commit my changes",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill based on jj mention",
-      "assertions": []
+      "assertions": [{"type": "skill_triggered", "value": "jujutsu"}]
     },
     {
       "id": "T2",
@@ -15,7 +15,7 @@
       "prompt": "how do I create a bookmark in jujutsu?",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill based on jujutsu mention",
-      "assertions": []
+      "assertions": [{"type": "skill_triggered", "value": "jujutsu"}]
     },
     {
       "id": "T3",
@@ -23,7 +23,7 @@
       "prompt": "help me set up jj in this repo",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill; may also suggest /jj-init command",
-      "assertions": []
+      "assertions": [{"type": "skill_triggered", "value": "jujutsu"}]
     },
     {
       "id": "T4",
@@ -31,7 +31,7 @@
       "prompt": "what's the jj equivalent of git cherry-pick?",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill and reference rebase",
-      "assertions": []
+      "assertions": [{"type": "skill_triggered", "value": "jujutsu"}]
     },
     {
       "id": "T5",
@@ -39,7 +39,7 @@
       "prompt": "commit this with a message",
       "expected_skill": "NOT jujutsu (unless .jj/ detected)",
       "expected_output": "Generic commit request should NOT trigger jujutsu unless .jj/ is present",
-      "assertions": []
+      "assertions": [{"type": "skill_not_triggered", "value": "jujutsu"}]
     },
     {
       "id": "B1",
@@ -161,6 +161,19 @@
           "description": "Detects existing jj initialization",
           "type": "output_contains",
           "check": "already"
+        }
+      ]
+    },
+    {
+      "id": "B8",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "I'm in a jj repo and need to review a PR — what VCS commands should agents use?",
+      "expected_output": "Should reference VCS detection preamble and jj commands for agents",
+      "assertions": [
+        {
+          "type": "output_contains",
+          "value": "test -d .jj"
         }
       ]
     }

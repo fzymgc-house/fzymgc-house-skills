@@ -242,6 +242,23 @@
           "check": "worktree"
         }
       ]
+    },
+    {
+      "id": "B-JJ1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "address the review findings for PR #99 (in a repo with .jj/ directory)",
+      "expected_output": "Should detect jj repo and use jj commands for integration (rebase, bookmark set, workspace forget) instead of git cherry-pick",
+      "assertions": [
+        {
+          "type": "output_contains",
+          "value": "jj rebase"
+        },
+        {
+          "type": "output_not_contains",
+          "value": "git cherry-pick"
+        }
+      ]
     }
   ]
 }

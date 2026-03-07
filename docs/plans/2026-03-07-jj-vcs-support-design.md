@@ -47,7 +47,7 @@ Covers:
 User-invoked slash command:
 
 1. Check `.jj/` doesn't already exist
-2. Run `jj git init --colocate`
+2. Run `jj git init` (colocation is the default)
 3. Add `.jj/` to `.gitignore` if not already present
 4. Verify with `jj st`
 
@@ -87,7 +87,7 @@ GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 | Show commit | `git show <ref>` | `jj show <ref>` |
 | Current location | `git branch --show-current` | `jj log -r @ --no-graph -n 1` |
 | File list | `git ls-files` | `jj file list` |
-| Commit | `git add <files> && git commit -m "..."` | `jj desc -m "..." && jj new` |
+| Commit | `git add <files> && git commit -m "..."` | `jj commit -m "..."` |
 | Push | `git push` | `jj git push --bookmark <name>` |
 | Cherry-pick | `git cherry-pick <sha>` | `jj rebase -r <change-id> -d <target>` |
 | Undo | `git reset` / `git revert` | `jj undo` |
@@ -110,12 +110,12 @@ across workspaces.
 
 **jj flow:**
 
-1. Fix worker describes and commits: `jj desc -m "..." && jj new`
+1. Fix worker commits: `jj commit -m "..."`
 2. Fix worker reports `CHANGE_ID` (not `WORKTREE_BRANCH`)
 3. Orchestrator rebases change onto PR bookmark:
    `jj rebase -r <change-id> -d <pr-bookmark>`
 4. Orchestrator updates bookmark:
-   `jj bookmark set <pr-bookmark> -r <change-id>`
+   `jj bookmark set <pr-bookmark> -r <change-id>` (set creates or moves)
 5. Orchestrator forgets workspace: `jj workspace forget <name>`
 
 **Key advantages:**
@@ -148,7 +148,7 @@ CHANGE_ID: kkmpptxz
 | Remove workspace | `git worktree remove` | `jj workspace forget` + rm directory |
 | Post-batch verify | `git status --porcelain` | `jj st` |
 | Push | `git push` | `jj git push --bookmark <pr-bookmark>` |
-| Ship commit | `commit-commands:commit` skill | `jj desc -m "..." && jj new` |
+| Ship commit | `commit-commands:commit` skill | `jj commit -m "..."` |
 
 ## 3. Hook Integration — VCS-Aware Isolation
 

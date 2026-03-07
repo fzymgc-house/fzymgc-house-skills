@@ -148,7 +148,7 @@ Body steps:
 
 1. Check prerequisites — `git rev-parse --show-toplevel`
 2. Check if already initialized — `test -d .jj`
-3. Initialize — `jj git init --colocate`
+3. Initialize — `jj git init` (colocation is the default)
 4. Add `.jj/` to `.gitignore` if not present
 5. Verify — `jj st` and `jj log --no-graph -n 3`
 
@@ -183,8 +183,8 @@ Full git-to-jj command mapping. Include these operations:
 | Show commit | `git show <ref>` | `jj show <ref>` |
 | Current location | `git branch --show-current` | `jj log -r @ --no-graph -n 1` |
 | File list | `git ls-files` | `jj file list` |
-| Stage + commit | `git add && git commit -m` | `jj desc -m && jj new` |
-| Push | `git push` | `jj git push --bookmark` |
+| Stage + commit | `git add && git commit -m` | `jj commit -m "..."` |
+| Push | `git push` | `jj git push -b <name>` |
 | Fetch | `git fetch` | `jj git fetch` |
 | Cherry-pick | `git cherry-pick <sha>` | `jj rebase -r <id> -d <target>` |
 | Undo | `git reset`/`git revert` | `jj undo` |
@@ -193,7 +193,8 @@ Full git-to-jj command mapping. Include these operations:
 | List workspaces | `git worktree list` | `jj workspace list` |
 
 Also include: key differences section, agent output format
-(CHANGE_ID vs WORKTREE_BRANCH), and operations that stay git/gh.
+(CHANGE_ID vs WORKTREE_BRANCH), operations that stay git/gh,
+and `jj git push --change <id>` shortcut (auto-generates bookmark).
 
 #### Step 2: Verify
 
@@ -236,8 +237,8 @@ Add `"Bash(jj *)"` to each skill's `allowed-tools` list.
 
 Rename to "Phase 4b: Integrate Fix Commits". Add git and jj
 sub-sections. git: cherry-pick flow (unchanged). jj: rebase
-flow using CHANGE_ID, `jj rebase`, `jj bookmark set`,
-`jj workspace forget`.
+flow using CHANGE_ID, `jj rebase`, `jj bookmark set`
+(creates or moves), `jj workspace forget`.
 
 #### Step 5: Update address-findings Phase 1
 
@@ -277,7 +278,7 @@ commands (`jj workspace root`, `jj log -r @`), git startup commands
 Replace git-only commit with VCS-conditional:
 
 - git: `git add <files> && git commit -m "fix(...)"`
-- jj: `jj desc -m "fix(...)" && jj new`
+- jj: `jj commit -m "fix(...)"`
 
 #### Step 3: Update fix-worker output format
 
@@ -289,7 +290,7 @@ for git repos. Report whichever matches the VCS.
 Add jj alternative for lint fix commits:
 
 - git: `git add && git commit -m "fix(lint): ..."`
-- jj: `jj desc -m "fix(lint): ..." && jj new`
+- jj: `jj commit -m "fix(lint): ..."`
 
 #### Step 5: Update review-gate references
 

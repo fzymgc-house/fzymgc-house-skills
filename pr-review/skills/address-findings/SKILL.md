@@ -412,7 +412,7 @@ prompt: |
 1. **Commit** changes:
    - git repos: Use the `commit-commands:commit` skill.
    - jj repos: Run `jj commit -m "fix: address review findings for PR #<number>"`
-2. **Push** to the PR branch: `git push` (or `jj git push --bookmark <pr-bookmark>` in jj repos)
+2. **Push** to the PR branch: `git push` (or `jj git push -b <pr-bookmark>` in jj repos)
 3. **Post summary comment** on the PR:
 
    ```bash

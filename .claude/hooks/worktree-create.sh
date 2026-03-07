@@ -13,7 +13,7 @@ if [[ -z "$NAME" ]]; then
 fi
 
 # Reject names with path-traversal or shell metacharacters
-if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == *".."* ]]; then
+if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == "." || "$NAME" == ".." || "$NAME" == *".."* ]]; then
   echo "ERROR: invalid worktree name '$NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
   exit 1
 fi
@@ -22,8 +22,6 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 REPO_NAME=$(basename "$REPO_ROOT")
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
-
-mkdir -p "$WORKTREE_PARENT"
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
@@ -36,6 +34,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported (need jj >= 0.21)" >&2
     exit 1
   fi
+  mkdir -p "$WORKTREE_PARENT"
   if ! (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}"); then
     echo "ERROR: jj workspace add failed" >&2
@@ -45,7 +44,11 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree
-  git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD
+  mkdir -p "$WORKTREE_PARENT"
+  if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
+    echo "ERROR: git worktree add failed: $git_err" >&2
+    exit 1
+  fi
 fi
 
 # Install hooks in the new workspace (lefthook works in both VCS modes)

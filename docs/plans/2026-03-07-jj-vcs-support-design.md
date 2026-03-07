@@ -47,7 +47,7 @@ Covers:
 User-invoked slash command:
 
 1. Check `.jj/` doesn't already exist
-2. Run `jj git init` (colocation is the default)
+2. Run `jj git init --colocate` (`--colocate` required on jj >= 0.15)
 3. Add `.jj/` to `.gitignore` if not already present
 4. Verify with `jj st`
 

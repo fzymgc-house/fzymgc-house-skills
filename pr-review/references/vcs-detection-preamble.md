@@ -5,8 +5,8 @@ repositories that may use git or jj (Jujutsu).
 
 ## Steps
 
-1. **Detect VCS:** `test -d .jj && echo "jj" || echo "git"`
-   - If neither `.jj/` nor `.git/` exists, STOP and report
+1. **Detect VCS:** `if test -d .jj; then echo "jj"; elif test -d .git; then echo "git"; else echo "none"; fi`
+   - If the result is "none", STOP and report
      STATUS: FAILED -- "No VCS detected (no .jj/ or .git/ directory)"
 2. **Verify location:**
    - jj: Run `pwd` and `jj workspace list` -- confirm your `pwd` appears

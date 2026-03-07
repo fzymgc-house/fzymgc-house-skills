@@ -12,7 +12,21 @@ jobs:
       - name: Check release-please config covers all skills
         run: |
           actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
-          configured=$(jq -r '.packages | keys[] | select(. != "." and (. | test("/skills/")))' release-please-config.json | sort)
+          # Extract all config keys, then resolve to skill directories:
+          # - Keys with /skills/ are skill-level entries (use directly)
+          # - Other keys (plugin-level) expand to their skill dirs,
+          #   but only if no sibling skill-level keys already cover them
+          all_keys=$(jq -r '.packages | keys[] | select(. != ".")' release-please-config.json)
+          configured=$(echo "$all_keys" | while read -r key; do
+            if [[ "$key" == */skills/* ]]; then
+              echo "$key"
+            elif [[ -d "$key/skills" ]]; then
+              # Only expand if no skill-level keys exist under this plugin
+              if ! echo "$all_keys" | grep -q "^${key}/skills/"; then
+                find "$key/skills" -name SKILL.md -exec dirname {} \;
+              fi
+            fi
+          done | sort)
           if ! diff <(echo "$actual") <(echo "$configured"); then
             echo "::error::Skill directories and release-please-config.json are out of sync"
             exit 1

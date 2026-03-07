@@ -37,26 +37,23 @@ case "$WORKTREE_PATH" in
 esac
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace cleanup — verify jj is installed first
+  # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
-    echo "ERROR: .jj/ directory found but jj is not installed — cannot forget workspace" >&2
-    # Still remove the directory since it's just a workspace copy
-    rm -rf "$WORKTREE_PATH"
+    echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
   elif ! (cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
     echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}" >&2
-    rm -rf "$WORKTREE_PATH"
-  else
-    rm -rf "$WORKTREE_PATH"
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $git_err" >&2
-    # Fall back to manual cleanup
-    rm -rf "$WORKTREE_PATH"
     git worktree prune 2>/dev/null || true
   fi
 fi
+
+# Always remove directory (git worktree remove already did this on success;
+# rm -rf on an already-removed path is a no-op)
+rm -rf "$WORKTREE_PATH"
 
 # Clean up empty parent directory
 PARENT=$(dirname "$WORKTREE_PATH")

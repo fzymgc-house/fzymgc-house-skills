@@ -16,6 +16,16 @@ teardown() {
 }
 
 @test "removes valid worktree" {
+  [ -d "${REPO_ROOT}_worktrees/test-wt" ]
+  run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
+}
+
+@test "falls back to rm when git worktree remove fails" {
+  # Create a plain directory (not a real worktree) to force git worktree remove failure
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  mkdir -p "${REPO_ROOT}_worktrees/test-wt"
   run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
@@ -55,7 +65,8 @@ setup_jj_worktree() {
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "forget" ]]; then exit 0; fi
+if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then exit 0; fi
+exit 1
 MOCK
   chmod +x "${REPO_ROOT}/bin/jj"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
@@ -63,11 +74,12 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
-@test "jj path: handles missing jj binary gracefully" {
+@test "jj path: warns but still removes directory when jj not installed" {
   setup_jj_worktree
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+  [[ "$output" == *"WARNING"* ]]
 }
 
 @test "jj path: handles workspace forget failure" {

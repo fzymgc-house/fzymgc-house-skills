@@ -3,7 +3,7 @@ name: review-gate
 description: >-
   Validates that code fixes correctly address their review findings.
   Used by the address-findings orchestrator after fix commits are
-  cherry-picked. Receives finding IDs and a VCS diff, returns PASS/FAIL
+  integrated. Receives finding IDs and a VCS diff, returns PASS/FAIL
   per finding.
 model: sonnet
 tools: Read, Grep, Glob, Bash

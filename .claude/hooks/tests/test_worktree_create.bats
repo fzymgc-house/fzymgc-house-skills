@@ -30,6 +30,18 @@ teardown() {
   [[ "$output" == *"invalid worktree name"* ]]
 }
 
+@test "rejects dot name" {
+  run bash -c 'echo "{\"name\": \".\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
+@test "rejects dotdot name" {
+  run bash -c 'echo "{\"name\": \"..\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
 @test "accepts valid alphanumeric name" {
   run bash -c 'echo "{\"name\": \"fix-worker-abc123\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]

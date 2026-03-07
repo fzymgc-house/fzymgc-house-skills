@@ -33,7 +33,7 @@ teardown() {
 
 @test "rejects path outside expected parent" {
   mkdir -p /tmp/evil-test-dir
-  run bash -c 'echo "{\"path\": \"/tmp/evil-test-dir\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  run bash -c 'echo "{\"path\": \"/tmp/evil-test-dir\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"outside expected parent"* || "$output" == *"invalid worktree name"* ]]
   rmdir /tmp/evil-test-dir 2>/dev/null || true
@@ -47,7 +47,7 @@ teardown() {
 @test "rejects names with shell metacharacters" {
   evil_path="${REPO_ROOT}_worktrees/evil;rm"
   mkdir -p "$evil_path"
-  run bash -c 'echo "{\"path\": \"'"$evil_path"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  run bash -c 'echo "{\"path\": \"'"$evil_path"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"invalid worktree name"* ]]
   rmdir "$evil_path" 2>/dev/null || true
@@ -76,7 +76,7 @@ MOCK
 
 @test "jj path: warns but still removes directory when jj not installed" {
   setup_jj_worktree
-  PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]

@@ -150,6 +150,22 @@ PostToolUse hooks (`.claude/settings.json`) auto-format files after Edit/Write:
 This prevents commit hook failures by fixing issues immediately.
 If you see files change after editing, this is expected behavior.
 
+### Worktree Layout
+
+Agent worktrees are created in a **sibling directory** to avoid nesting
+repos (which confuses LSP servers):
+
+```text
+<repo>/                    # main repo
+<repo>_worktrees/          # worktree parent (sibling)
+  fix-worker-abc/          # one worktree per agent invocation
+  verification-runner-def/
+```
+
+WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
+this automatically. Do NOT manually create worktrees inside
+`.claude/worktrees/`.
+
 ### Skill Invocation
 
 Skills are **model-invoked** (Claude decides when to use them), not user-invoked slash commands.

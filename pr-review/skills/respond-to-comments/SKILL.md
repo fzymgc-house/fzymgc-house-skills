@@ -119,8 +119,10 @@ beads and run `bd init` in the target project."
    what was already attempted.
 
 6. **Locate the worktree.** Run `git worktree list` and check whether one
-   exists for the PR's branch. If so, `cd` into it and verify with
-   `git branch --show-current`. If not, ask the user whether to create one.
+   exists for the PR's branch. Worktrees are in the sibling
+   `<repo>_worktrees/` directory. If one matches, `cd` into it and
+   verify with `git branch --show-current`. If not, ask the user
+   whether to create one.
    **MUST** use an existing worktree if one matches.
 
 ### Phase 2: Categorize, clarify, and confirm

@@ -85,9 +85,24 @@ bd list --label "pr-review,pr:<number>" --json
 ### 3. Gather PR Context
 
 ```bash
-gh pr diff <number>
 gh pr view <number> --json title,body
 ```
+
+If this fails with a 404 or "not found" error, stop and tell the user:
+"PR #N not found. Verify the number and try again."
+
+Then fetch the diff and changed file list:
+
+```bash
+gh pr diff <number>                  # full patch diff
+gh pr diff <number> --name-only      # changed file names only
+```
+
+**`gh pr diff` only supports these flags:** `--color`, `--name-only`,
+`--patch`, `--web`. There is NO `--stat` flag -- do not use it.
+Use `--name-only` to get the list of changed files, or parse the
+full diff output. For additions/deletions counts, use
+`gh pr view <number> --json additions,deletions,changedFiles`.
 
 Optionally fetch GitHub review comments for supplementary context:
 

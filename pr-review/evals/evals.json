@@ -1,0 +1,247 @@
+{
+  "skill_name": "pr-review-plugin",
+  "evals": [
+    {
+      "id": "T1",
+      "type": "triggering",
+      "prompt": "review PR #42 for security issues",
+      "expected_skill": "review-pr",
+      "expected_output": "Should trigger review-pr with aspects: security",
+      "assertions": []
+    },
+    {
+      "id": "T2",
+      "type": "triggering",
+      "prompt": "fix the issues from the PR review",
+      "expected_skill": "address-findings",
+      "expected_output": "Should trigger address-findings, not respond-to-comments",
+      "assertions": []
+    },
+    {
+      "id": "T3",
+      "type": "triggering",
+      "prompt": "what did the reviewer say on my PR?",
+      "expected_skill": "respond-to-comments",
+      "expected_output": "Should trigger respond-to-comments quick lookup",
+      "assertions": []
+    },
+    {
+      "id": "T4",
+      "type": "triggering",
+      "prompt": "address the findings from the code review",
+      "expected_skill": "address-findings",
+      "expected_output": "Should trigger address-findings based on 'findings' keyword",
+      "assertions": []
+    },
+    {
+      "id": "T5",
+      "type": "triggering",
+      "prompt": "check PR #15 feedback and fix it",
+      "expected_skill": "respond-to-comments",
+      "expected_output": "Should trigger respond-to-comments full workflow",
+      "assertions": []
+    },
+    {
+      "id": "T6",
+      "type": "triggering",
+      "prompt": "run a comprehensive analysis of PR 7",
+      "expected_skill": "review-pr",
+      "expected_output": "Should trigger review-pr despite indirect phrasing",
+      "assertions": []
+    },
+    {
+      "id": "T7",
+      "type": "triggering",
+      "prompt": "I need to work through the review beads for PR 23",
+      "expected_skill": "address-findings",
+      "expected_output": "Should trigger address-findings based on 'review beads'",
+      "assertions": []
+    },
+    {
+      "id": "T8",
+      "type": "triggering",
+      "prompt": "acknowledge the comments on PR 11",
+      "expected_skill": "respond-to-comments",
+      "expected_output": "Should trigger respond-to-comments for ack operation",
+      "assertions": []
+    },
+    {
+      "id": "T9",
+      "type": "triggering",
+      "prompt": "can you look at the code quality of this pull request",
+      "expected_skill": "review-pr",
+      "expected_output": "Should trigger review-pr for code quality analysis",
+      "assertions": []
+    },
+    {
+      "id": "T10",
+      "type": "triggering",
+      "prompt": "the reviewer left some changes requested, help me fix them",
+      "expected_skill": "respond-to-comments",
+      "expected_output": "Should trigger respond-to-comments full workflow",
+      "assertions": []
+    },
+    {
+      "id": "B1",
+      "type": "behavioral",
+      "skill": "review-pr",
+      "prompt": "/review-pr 42 security api",
+      "expected_output": "Should select only security-auditor, api-contract-checker, and code-reviewer (always-on). Should NOT launch tests, types, comments, simplify, spec, errors agents.",
+      "assertions": [
+        {
+          "name": "selects-security-agent",
+          "description": "Launches security-auditor agent",
+          "type": "output_contains",
+          "check": "security-auditor OR security"
+        },
+        {
+          "name": "selects-api-agent",
+          "description": "Launches api-contract-checker agent",
+          "type": "output_contains",
+          "check": "api-contract-checker OR api"
+        },
+        {
+          "name": "selects-code-agent-always-on",
+          "description": "Launches code-reviewer (always-on)",
+          "type": "output_contains",
+          "check": "code-reviewer OR code"
+        },
+        {
+          "name": "does-not-launch-all",
+          "description": "Does not launch all 9 agents when specific aspects requested",
+          "type": "manual",
+          "check": "Verify only 3 agents launched, not all 9"
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "type": "behavioral",
+      "skill": "review-pr",
+      "prompt": "/review-pr 99",
+      "expected_output": "Full all mode. Creates parent bead with pr-review label. Batches security+code first. Uses sonnet by default.",
+      "assertions": [
+        {
+          "name": "creates-parent-bead",
+          "description": "Attempts bd create with pr-review label",
+          "type": "output_contains",
+          "check": "bd create"
+        },
+        {
+          "name": "batches-security-code-first",
+          "description": "First batch includes security and code agents",
+          "type": "manual",
+          "check": "Security and code agents in first batch of Task calls"
+        },
+        {
+          "name": "uses-sonnet-default",
+          "description": "Default model is sonnet for agents",
+          "type": "manual",
+          "check": "Agent dispatches use sonnet model"
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "/address-findings 42",
+      "expected_output": "Checks out PR branch, runs bd list, finds no findings, reports 'No review findings for PR #42. Run /review-pr first.'",
+      "assertions": [
+        {
+          "name": "checks-out-pr-branch",
+          "description": "Runs gh pr checkout before querying beads",
+          "type": "output_contains",
+          "check": "gh pr checkout"
+        },
+        {
+          "name": "verifies-bd-available",
+          "description": "Runs bd --version as prerequisite",
+          "type": "output_contains",
+          "check": "bd --version"
+        },
+        {
+          "name": "queries-review-epic",
+          "description": "Queries beads for review findings",
+          "type": "output_contains",
+          "check": "bd list"
+        },
+        {
+          "name": "graceful-stop-no-findings",
+          "description": "Reports no findings and suggests running review-pr",
+          "type": "manual",
+          "check": "Output mentions running /review-pr when no findings exist"
+        }
+      ]
+    },
+    {
+      "id": "B4",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "/address-findings",
+      "expected_output": "Should ask the user for the PR number since none was provided in ARGUMENTS",
+      "assertions": [
+        {
+          "name": "asks-for-pr-number",
+          "description": "Prompts user for PR number when not provided",
+          "type": "manual",
+          "check": "Output asks for PR number or attempts to infer from context"
+        }
+      ]
+    },
+    {
+      "id": "B5",
+      "type": "behavioral",
+      "skill": "respond-to-comments",
+      "prompt": "/respond-to-comments list 15",
+      "expected_output": "Quick lookup path: runs scripts/pr_comments list 15 and presents output. Does NOT enter full workflow.",
+      "assertions": [
+        {
+          "name": "runs-list-command",
+          "description": "Executes the list subcommand",
+          "type": "output_contains",
+          "check": "pr_comments list"
+        },
+        {
+          "name": "quick-lookup-not-workflow",
+          "description": "Does not start the full 5-phase workflow",
+          "type": "manual",
+          "check": "No Phase 1/Phase 2 workflow steps, just command output"
+        }
+      ]
+    },
+    {
+      "id": "B6",
+      "type": "behavioral",
+      "skill": "respond-to-comments",
+      "prompt": "/respond-to-comments 15",
+      "expected_output": "Full workflow: checks bd prerequisite, reads unacked comments, queries beads for prior findings. Should locate worktree in sibling directory.",
+      "assertions": [
+        {
+          "name": "checks-bd-prerequisite",
+          "description": "Runs bd --version as prerequisite",
+          "type": "output_contains",
+          "check": "bd --version"
+        },
+        {
+          "name": "reads-unacked-comments",
+          "description": "Lists unacked comments first",
+          "type": "output_contains",
+          "check": "unacked"
+        },
+        {
+          "name": "queries-beads-for-context",
+          "description": "Cross-references with existing beads",
+          "type": "output_contains",
+          "check": "bd list"
+        },
+        {
+          "name": "locates-sibling-worktree",
+          "description": "Checks for worktree in sibling directory",
+          "type": "output_contains",
+          "check": "worktree"
+        }
+      ]
+    }
+  ]
+}

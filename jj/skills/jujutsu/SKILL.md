@@ -6,6 +6,7 @@ description: >-
   mentions jj, jujutsu, or when a colocated jj repo is detected.
 allowed-tools:
   - "Bash(jj *)"
+  - "Bash(test *)"
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version

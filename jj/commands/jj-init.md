@@ -7,6 +7,9 @@ user_invocable: true
 allowed-tools:
   - "Bash(jj *)"
   - "Bash(git *)"
+  - "Bash(test *)"
+  - "Bash(grep *)"
+  - "Bash(echo *)"
   - Read
   - Edit
   - Write

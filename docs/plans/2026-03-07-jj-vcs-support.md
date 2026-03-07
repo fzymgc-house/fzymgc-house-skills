@@ -148,7 +148,7 @@ Body steps:
 
 1. Check prerequisites — `git rev-parse --show-toplevel`
 2. Check if already initialized — `test -d .jj`
-3. Initialize — `jj git init` (colocation is the default)
+3. Initialize — `jj git init --colocate` (`--colocate` required for colocation)
 4. Add `.jj/` to `.gitignore` if not present
 5. Verify — `jj st` and `jj log --no-graph -n 3`
 

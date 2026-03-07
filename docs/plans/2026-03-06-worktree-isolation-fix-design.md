@@ -38,13 +38,14 @@ Implemented via WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json`.
 `.claude/hooks/worktree-create.sh`:
 
 - Derives `<repo>_worktrees/` path from repo root
-- Creates `git worktree add` in sibling directory
-- Installs lefthook in the new worktree
+- Detects VCS: creates `jj workspace add` (jj) or `git worktree add` (git)
+- Installs lefthook in the new workspace
 - Outputs the worktree path for the framework
 
 `.claude/hooks/worktree-remove.sh`:
 
-- Runs `git worktree remove` on the given path
+- Detects VCS: runs `jj workspace forget` (jj) or `git worktree remove` (git)
+- Always removes the directory via `rm -rf` as final cleanup
 - Cleans up empty parent directory if needed
 
 ### 3. Agent Prompt Changes

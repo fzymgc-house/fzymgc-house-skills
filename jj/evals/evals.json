@@ -37,7 +37,7 @@
       "id": "T5",
       "type": "triggering",
       "prompt": "commit this with a message",
-      "expected_skill": "NOT jujutsu (unless .jj/ detected)",
+      "expected_skill": null,
       "expected_output": "Generic commit request should NOT trigger jujutsu unless .jj/ is present",
       "assertions": [{"type": "skill_not_triggered", "value": "jujutsu"}]
     },

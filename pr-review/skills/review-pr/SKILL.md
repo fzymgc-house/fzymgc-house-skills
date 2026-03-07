@@ -85,8 +85,16 @@ bd list --label "pr-review,pr:<number>" --json
 ### 3. Gather PR Context
 
 ```bash
-gh pr diff <number>
 gh pr view <number> --json title,body
+```
+
+If this fails with a 404 or "not found" error, stop and tell the user:
+"PR #N not found. Verify the number and try again."
+
+Then fetch the diff and optionally review comments:
+
+```bash
+gh pr diff <number>
 ```
 
 Optionally fetch GitHub review comments for supplementary context:

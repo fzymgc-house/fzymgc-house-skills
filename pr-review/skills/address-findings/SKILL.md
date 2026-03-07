@@ -51,8 +51,13 @@ batch-reviewed, and closed.
    git branch --show-current   # confirm you are on the PR branch
    ```
 
-   If checkout fails (e.g., dirty working tree), resolve before
-   continuing. **Do NOT proceed on `main`.**
+   If checkout fails, check the error:
+   - **PR not found** (GraphQL/404 error): stop and tell the user
+     "PR #N not found. Verify the number and try again."
+   - **Dirty working tree**: commit or stash, then retry.
+   - **Other error**: report the error and stop.
+
+   **Do NOT proceed on `main`.**
 
 4. **Query the review epic:**
 

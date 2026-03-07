@@ -65,8 +65,10 @@ batch-reviewed, and closed.
 ## Phase 1: Load
 
 1. **Identify the PR.** Use `$ARGUMENTS` if provided, otherwise ask.
+
 2. **Verify `bd`**: run `bd --version`. If it fails, stop and tell the
    user: "beads CLI (`bd`) is required but not found."
+
 3. **Check out the PR branch.** Worktree-isolated agents inherit
    their base from the orchestrator's current HEAD. If you are on
    `main`, every worktree will be based on `main` and agents will

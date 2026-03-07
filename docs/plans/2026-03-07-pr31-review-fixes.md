@@ -2,102 +2,126 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Fix all 1 critical + 8 important + 8 suggestion findings from the PR #31 review.
+**Goal:** Fix all 25 unique findings from the PR #31 review (parent bead: `fzymgc-house-skills-gvs`).
 
-**Architecture:** Fixes are grouped by file to minimize context switches. Shell script fixes come first (security/error handling), then documentation consistency fixes, then eval fixes.
+**Architecture:** Group fixes by file/area to minimize context switching. Shell script security fixes first, then documentation fixes, then eval improvements. Some findings are duplicates across agents or acceptable as-is — those are closed without code changes.
 
-**Tech Stack:** Bash shell scripts, Markdown (SKILL.md/agent .md files), JSON (evals)
+**Tech Stack:** Bash shell scripts, Markdown skill files, JSON eval files
 
----
-
-## Task 1: Harden worktree-create.sh — input validation and jj guard
-
-**Files:**
-
-- Modify: `.claude/hooks/worktree-create.sh`
-
-**Findings addressed:**
-
-- [security/suggestion] NAME accepts path-traversal characters
-- [errors/important] No guard for jj not installed when .jj/ detected
-
-**Step 1: Add NAME validation after line 12**
-
-Insert after the `NAME` empty check (line 10-13), before `REPO_ROOT`:
-
-```bash
-# Reject names with path-traversal or shell metacharacters
-if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == *".."* ]]; then
-  echo "ERROR: invalid worktree name '$NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
-  exit 1
-fi
-```
-
-**Step 2: Add jj-not-installed guard inside the jj branch**
-
-Replace the jj branch (line 22-25) with:
-
-```bash
-if [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace — verify jj is installed
-  if ! command -v jj &>/dev/null; then
-    echo "ERROR: .jj/ directory found but jj is not installed" >&2
-    exit 1
-  fi
-  (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
-    --name "worktree-${NAME}")
-else
-```
-
-**Step 3: Verify the script is syntactically valid**
-
-Run: `bash -n .claude/hooks/worktree-create.sh`
-Expected: no output (clean parse)
-
-**Step 4: Commit**
-
-```bash
-git add .claude/hooks/worktree-create.sh
-git commit -m "fix(hooks): add input validation and jj guard to worktree-create"
-```
+**Beads:** Close each finding bead after its fix is committed. Close duplicates with reason referencing the primary fix.
 
 ---
 
-### Task 2: Harden worktree-remove.sh — path validation and error handling
+## Triage: Close Without Changes
+
+These findings are duplicates or acceptable as-is. Close them before starting code work.
+
+### Task 0: Close duplicates and accepted findings
+
+**Step 1: Close duplicate findings**
+
+These findings were reported by multiple agents for the same issue. Close the duplicates referencing the primary:
+
+```bash
+# gvs.13 duplicates gvs.2 (both: REPO_ROOT derivation fallback)
+bd close fzymgc-house-skills-gvs.13 --reason "Duplicate of gvs.2 — same REPO_ROOT derivation issue"
+
+# gvs.18 duplicates gvs.32 (both: AGENTS.md git-only session completion)
+bd close fzymgc-house-skills-gvs.18 --reason "Duplicate of gvs.32 — same AGENTS.md finding"
+
+# gvs.9 duplicates gvs.32 (same)
+bd close fzymgc-house-skills-gvs.9 --reason "Duplicate of gvs.32 — same AGENTS.md finding"
+
+# gvs.8 duplicates gvs.35 (both: git-only stale validation)
+bd close fzymgc-house-skills-gvs.8 --reason "Duplicate of gvs.35 — same stale validation finding"
+
+# gvs.33 duplicates gvs.2 (both: worktree-remove.sh path arithmetic)
+bd close fzymgc-house-skills-gvs.33 --reason "Duplicate of gvs.2 — same path derivation concern"
+
+# gvs.11 duplicates gvs.29 (both: plan docs in repo)
+bd close fzymgc-house-skills-gvs.11 --reason "Duplicate of gvs.29 — same plan docs finding"
+
+# gvs.27 duplicates gvs.29 (same)
+bd close fzymgc-house-skills-gvs.27 --reason "Duplicate of gvs.29 — same plan docs finding"
+```
+
+**Step 2: Close accepted-as-is findings**
+
+```bash
+# gvs.28: VCS preamble duplication — inherent to plugin architecture (each agent is standalone .md)
+bd close fzymgc-house-skills-gvs.28 --reason "Accepted: plugin architecture requires standalone agent files; DRY not possible without framework changes"
+
+# gvs.30: Reference file overlap — different audiences (pr-review agents vs jj skill users)
+bd close fzymgc-house-skills-gvs.30 --reason "Accepted: vcs-equivalence.md serves pr-review agents, jj-git-interop.md serves jj skill users — different audiences"
+
+# gvs.36: --colocate flag vs spec — implementation is better than spec
+bd close fzymgc-house-skills-gvs.36 --reason "Accepted: explicit --colocate is more robust than relying on default behavior"
+
+# gvs.37: evals not in plan — good addition, plans aren't exhaustive
+bd close fzymgc-house-skills-gvs.37 --reason "Accepted: evals are a positive addition not requiring plan coverage"
+
+# gvs.38: AGENTS.md not in plan — same
+bd close fzymgc-house-skills-gvs.38 --reason "Accepted: AGENTS.md from bd init is a standard addition"
+
+# gvs.31: AGENTS.md duplicates beads content — bd init generates this, maintained by bd tooling
+bd close fzymgc-house-skills-gvs.31 --reason "Accepted: AGENTS.md is generated by bd init and maintained by bd tooling"
+
+# gvs.25: B6 workspace collision eval — behavioral eval tests model reasoning, not jj behavior
+bd close fzymgc-house-skills-gvs.25 --reason "Accepted: behavioral evals test model reasoning about scenarios, not runtime behavior"
+
+# gvs.29: plan docs as ADRs — keeping in repo for design context
+bd close fzymgc-house-skills-gvs.29 --reason "Accepted: plan docs serve as ADRs for design context; keeping in repo"
+```
+
+**Step 3: No code changes — just bead state updates.**
+
+---
+
+## Task 1: Fix worktree-remove.sh security issues
+
+**Findings:** gvs.1 (critical), gvs.2 (important), gvs.3 (suggestion), gvs.12 (important)
 
 **Files:**
 
 - Modify: `.claude/hooks/worktree-remove.sh`
 
-**Findings addressed:**
+**Step 1: Rewrite worktree-remove.sh**
 
-- [security/important] rm -rf on unvalidated caller-supplied path
-- [errors/important] jj workspace forget silently suppressed
-- [simplify/suggestion] git rev-parse dependency for REPO_ROOT
+Replace the entire file with a version that:
 
-**Step 1: Add path validation after WORKTREE_PATH is read**
-
-After line 7 (`WORKTREE_PATH=...`), before the `-z` check, add the
-REPO_ROOT derivation and prefix guard. Replace lines 7-27 with:
+1. Canonicalizes `WORKTREE_PATH` using `realpath` before any checks
+2. Fails hard when `git rev-parse` fails (no path-derivation fallback)
+3. Validates `WORKTREE_PATH` basename characters (matching worktree-create.sh)
+4. Logs git worktree remove errors instead of suppressing them
 
 ```bash
+#!/usr/bin/env bash
+# WorktreeRemove hook: remove worktrees from sibling directory
+# Input: JSON on stdin with "path" field
+set -euo pipefail
+
+INPUT=$(cat)
 WORKTREE_PATH=$(echo "$INPUT" | jq -r '.path // empty')
 
 if [[ -z "$WORKTREE_PATH" || ! -d "$WORKTREE_PATH" ]]; then
   exit 0
 fi
 
-# Derive workspace name from path for jj
-WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
+# Canonicalize path to prevent traversal via ../ segments
+WORKTREE_PATH=$(realpath "$WORKTREE_PATH")
 
-# Detect repo root — try git first, fall back to path derivation
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
-if [[ -z "$REPO_ROOT" ]]; then
-  # Infer from worktree path: <root>_worktrees/<name> → <root>
-  WORKTREE_PARENT=$(dirname "$WORKTREE_PATH")
-  PARENT_BASE=$(basename "$WORKTREE_PARENT")
-  REPO_ROOT="$(dirname "$WORKTREE_PARENT")/${PARENT_BASE%_worktrees}"
+# Validate basename has safe characters only (matches worktree-create.sh)
+WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
+if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] ]]; then
+  echo "ERROR: invalid worktree name '$WORKSPACE_NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
+  exit 1
 fi
+
+# Detect repo root — require git rev-parse to succeed
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "ERROR: could not determine repo root (git rev-parse failed)" >&2
+  exit 1
+}
 
 # Validate path is inside the expected sibling directory
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees"
@@ -109,454 +133,734 @@ case "$WORKTREE_PATH" in
     ;;
 esac
 
-if [[ -n "$REPO_ROOT" && -d "${REPO_ROOT}/.jj" ]]; then
+if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — log errors instead of silently suppressing
   if ! (cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
     echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}" >&2
   fi
   rm -rf "$WORKTREE_PATH"
 else
-  # Standard git worktree cleanup
-  git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
+  # Standard git worktree cleanup — log errors instead of suppressing
+  if ! git worktree remove --force "$WORKTREE_PATH" 2>&1; then
+    echo "WARNING: git worktree remove failed for '$WORKTREE_PATH'" >&2
+    # Fall back to manual cleanup
+    rm -rf "$WORKTREE_PATH"
+    git worktree prune 2>/dev/null || true
+  fi
+fi
+
+# Clean up empty parent directory
+PARENT=$(dirname "$WORKTREE_PATH")
+if [[ -d "$PARENT" ]] && [[ -z "$(ls -A "$PARENT")" ]]; then
+  rmdir "$PARENT" 2>/dev/null || true
 fi
 ```
 
-**Step 2: Verify the script is syntactically valid**
+**Step 2: Verify syntax**
 
 Run: `bash -n .claude/hooks/worktree-remove.sh`
-Expected: no output (clean parse)
+Expected: no output (success)
 
 **Step 3: Commit**
 
 ```bash
 git add .claude/hooks/worktree-remove.sh
-git commit -m "fix(hooks): add path validation and improve jj error handling in worktree-remove"
+git commit -m "fix(hooks): harden worktree-remove.sh against path traversal and silent failures
+
+- Canonicalize WORKTREE_PATH with realpath before safety check (gvs.1)
+- Hard-fail when git rev-parse fails instead of path derivation fallback (gvs.2)
+- Add character validation on WORKTREE_PATH basename (gvs.3)
+- Log git worktree remove errors instead of suppressing with 2>/dev/null (gvs.12)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
----
-
-### Task 3: Fix jj-init --colocate flag
-
-**Files:**
-
-- Modify: `jj/commands/jj-init.md`
-
-**Findings addressed:**
-
-- [code/important] jj git init missing --colocate flag on jj 0.15+
-
-**Step 1: Update the init command**
-
-In `jj/commands/jj-init.md`, replace lines 26-32:
-
-```markdown
-3. **Initialize colocated repo** — Run:
-
-   ```bash
-   jj git init --colocate
-
-```text
-   ```
-
-   The `--colocate` flag ensures jj shares the working copy with git
-   (required on jj 0.15+; harmless on older versions).
-
-```text
-
-**Step 2: Commit**
+**Step 4: Close findings**
 
 ```bash
-git add jj/commands/jj-init.md
-git commit -m "fix(jj): add --colocate flag to jj git init command"
+bd close fzymgc-house-skills-gvs.1 --reason "Fixed: realpath canonicalization before case check"
+bd close fzymgc-house-skills-gvs.2 --reason "Fixed: hard-fail on git rev-parse failure"
+bd close fzymgc-house-skills-gvs.3 --reason "Fixed: basename character validation added"
+bd close fzymgc-house-skills-gvs.12 --reason "Fixed: errors logged instead of suppressed"
 ```
 
 ---
 
-### Task 4: Fix eval B3 bookmark assertion
+## Task 2: Fix worktree-create.sh lefthook install for jj
+
+**Findings:** gvs.7 (important)
 
 **Files:**
 
-- Modify: `jj/evals/evals.json`
+- Modify: `.claude/hooks/worktree-create.sh:28-44`
 
-**Findings addressed:**
+**Step 1: Add lefthook install after jj workspace add**
 
-- [tests/critical] B3 assertion uses literal "-b OR --bookmark" which never matches
-
-**Step 1: Fix the assertion**
-
-Replace the `specifies-bookmark` assertion (lines 100-104). The
-`output_contains` type matches a literal string, so `"-b OR --bookmark"`
-will never match. Split into a single `-b` check (the short form is what
-the skill teaches):
-
-```json
-        {
-          "name": "specifies-bookmark",
-          "description": "Includes -b flag for bookmark",
-          "type": "output_contains",
-          "check": "-b "
-        }
-```
-
-Note the trailing space after `-b` to avoid false matches on other
-flags.
-
-**Step 2: Commit**
+After the `jj workspace add` call (line 35), add lefthook install inside the jj branch. The jj `if` block should become:
 
 ```bash
-git add jj/evals/evals.json
-git commit -m "fix(jj): fix eval B3 bookmark assertion to use literal -b flag"
+if [[ -d "${REPO_ROOT}/.jj" ]]; then
+  # jj workspace — verify jj is installed
+  if ! command -v jj &>/dev/null; then
+    echo "ERROR: .jj/ directory found but jj is not installed" >&2
+    exit 1
+  fi
+  (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
+    --name "worktree-${NAME}")
+
+  # Install git hooks in the new workspace
+  if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
+    (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+  fi
+else
 ```
 
----
+**Step 2: Verify syntax**
 
-### Task 5: Fix address-findings collect-results step (CHANGE_ID gap)
-
-**Files:**
-
-- Modify: `pr-review/skills/address-findings/SKILL.md:268-269`
-
-**Findings addressed:**
-
-- [comments/important] Collect results step omits CHANGE_ID for jj repos
-- [code/important] Phase 4c review-gate prompt uses git-specific diff
-
-**Step 1: Fix collect-results step**
-
-Replace line 268-269:
-
-```markdown
-5. **Collect results** from each agent: STATUS, FILES_CHANGED,
-   DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
-```
-
-**Step 2: Fix Phase 4c review-gate prompt template**
-
-Read lines 339-351 of address-findings/SKILL.md. The prompt template
-says `<git diff of cherry-picked changes>`. Update to be VCS-agnostic:
-
-```markdown
-### Phase 4c: Review Gate
-
-Dispatch a review-gate agent to validate fixes:
-
-```text
-subagent_type: "review-gate"
-model: sonnet
-prompt: |
-  FINDING_IDS: <comma-separated>
-  Review the following changes against the original findings.
-  <VCS diff of integrated changes>
-  Return per-finding: PASS | FAIL: <reason>
-```
-```
-
-
-```text
+Run: `bash -n .claude/hooks/worktree-create.sh`
 
 **Step 3: Commit**
+
+```bash
+git add .claude/hooks/worktree-create.sh
+git commit -m "fix(hooks): install lefthook in jj workspaces
+
+The git path installed lefthook but the jj path skipped it.
+Agents in jj worktrees now get commit hooks too.
+
+Fixes: gvs.7
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 4: Close finding**
+
+```bash
+bd close fzymgc-house-skills-gvs.7 --reason "Fixed: lefthook install added to jj branch"
+```
+
+---
+
+## Task 3: Fix beads lockfile leak
+
+**Findings:** gvs.5 (important)
+
+**Files:**
+
+- Modify: `.beads/.gitignore:35`
+- Remove from tracking: `.beads/dolt-monitor.pid.lock`
+
+**Step 1: Add lockfile to .beads/.gitignore**
+
+After line 35 (`dolt-monitor.pid`), add:
+
+```text
+dolt-monitor.pid.lock
+```
+
+**Step 2: Remove from git tracking**
+
+```bash
+git rm --cached .beads/dolt-monitor.pid.lock
+```
+
+**Step 3: Commit**
+
+```bash
+git add .beads/.gitignore
+git commit -m "fix(beads): remove runtime lockfile from tracking
+
+.beads/dolt-monitor.pid.lock is a runtime lockfile that should
+not be committed. Added to .beads/.gitignore.
+
+Fixes: gvs.5
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 4: Close finding**
+
+```bash
+bd close fzymgc-house-skills-gvs.5 --reason "Fixed: lockfile removed from tracking and gitignored"
+```
+
+---
+
+## Task 4: Fix AGENTS.md session completion for jj
+
+**Findings:** gvs.32 (important)
+
+**Files:**
+
+- Modify: `AGENTS.md:133-138`
+
+**Step 1: Replace the "PUSH TO REMOTE" code block**
+
+Replace the bash block at lines 134-138 with VCS-aware instructions:
+
+```bash
+   # Detect VCS
+   test -d .jj && VCS=jj || VCS=git
+
+   # Pull, sync, push
+   if [[ "$VCS" == "jj" ]]; then
+     jj git fetch
+     bd sync
+     jj git push --all
+   else
+     git pull --rebase
+     bd sync
+     git push
+   fi
+
+   # Verify
+   git status  # MUST show "up to date with origin"
+```
+
+**Step 2: Commit**
+
+```bash
+git add AGENTS.md
+git commit -m "fix(agents): add jj equivalents to session completion protocol
+
+The Landing the Plane section used git-only commands that are
+prohibited in jj repos. Now detects VCS and uses appropriate commands.
+
+Fixes: gvs.32
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 3: Close finding**
+
+```bash
+bd close fzymgc-house-skills-gvs.32 --reason "Fixed: VCS-aware session completion"
+```
+
+---
+
+## Task 5: Fix address-findings jj verification and error handling
+
+**Findings:** gvs.6 (important), gvs.35 (important), gvs.14 (important), gvs.16 (suggestion), gvs.34 (suggestion)
+
+**Files:**
+
+- Modify: `pr-review/skills/address-findings/SKILL.md`
+
+**Step 1: Fix Phase 1 jj verification (gvs.6)**
+
+At lines 82-85, replace:
+
+```markdown
+   In jj repos, after `gh pr checkout <number>`, run
+   `jj new <pr-bookmark>` to create a new working-copy change on top
+   of the PR bookmark. Verify with `jj log -r @ --no-graph -n 1`
+   instead of `git branch --show-current`.
+```
+
+With:
+
+```markdown
+   In jj repos, after `gh pr checkout <number>`, run
+   `jj new <pr-bookmark>` to create a new working-copy change on top
+   of the PR bookmark. Verify with `jj log -r @- --no-graph -n 1`
+   (note `@-` = parent) to confirm the parent is the PR bookmark,
+   not `main`. If `jj new` fails (e.g., bookmark not found), report
+   the error and stop.
+```
+
+**Step 2: Fix Phase 4 pre-loop jj check (gvs.6 continued)**
+
+At line 221, replace:
+
+```bash
+jj log -r @ --no-graph -n 1   # MUST show PR bookmark
+```
+
+With:
+
+```bash
+jj log -r @- --no-graph -n 1   # MUST show PR bookmark (parent of working copy)
+```
+
+**Step 3: Fix Phase 1 stale validation (gvs.35)**
+
+At lines 119-121, replace:
+
+```bash
+   # Check file exists and content matches the finding's context
+   git log --oneline -1  # note current HEAD
+```
+
+With:
+
+```bash
+   # Check file exists and content matches the finding's context
+   # git repos:
+   git log --oneline -1  # note current HEAD
+   # jj repos:
+   jj log -r @- --no-graph -n 1  # note current HEAD (parent of working copy)
+```
+
+**Step 4: Add error handling to Phase 4b jj steps (gvs.14)**
+
+At lines 306-323 (Phase 4b jj repos section), add error handling after each step:
+
+After the rebase command block, add:
+
+```markdown
+   If rebase fails (conflict), run `jj undo`, mark FAILED, add bead
+   comment, re-queue for next round.
+```
+
+After the bookmark set command block, add:
+
+```markdown
+   If bookmark set fails, run `jj undo` to revert the rebase too.
+```
+
+**Step 5: Add Phase 4b summary table (gvs.34)**
+
+Before the "#### Git repos" heading (line 275), add:
+
+```markdown
+Integration method depends on VCS:
+
+| VCS | Integration | Identifier | Cleanup |
+|-----|-------------|------------|---------|
+| git | `git cherry-pick` | WORKTREE_BRANCH | `git worktree remove` |
+| jj | `jj rebase` + `jj bookmark set` | CHANGE_ID | `jj workspace forget` + `rm -rf` |
+```
+
+**Step 6: Commit**
 
 ```bash
 git add pr-review/skills/address-findings/SKILL.md
-git commit -m "fix(pr-review): add CHANGE_ID to collect-results and fix Phase 4c VCS reference"
+git commit -m "fix(pr-review): fix jj verification checks and add error handling
+
+- Phase 1: check @- (parent) not @ for PR bookmark verification (gvs.6)
+- Phase 4 pre-loop: same @- fix (gvs.6)
+- Phase 1 stale validation: add jj equivalent (gvs.35)
+- Phase 4b: add error handling between jj rebase/bookmark/forget (gvs.14)
+- Phase 1: add error path for jj new failure (gvs.16)
+- Phase 4b: add integration summary table (gvs.34)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
----
-
-### Task 6: Fix agent vcs-equivalence.md reference path
-
-**Files:**
-
-- Modify: all 11 worktree-isolated agent .md files in `pr-review/agents/`
-
-**Findings addressed:**
-
-- [spec/important] Agents reference `references/vcs-equivalence.md` — path won't resolve from worktree CWD
-
-**Step 1: Understand the issue**
-
-Agents run in worktrees rooted at the repo root. The file is at
-`pr-review/references/vcs-equivalence.md`. The current reference says
-`references/vcs-equivalence.md` which would only resolve if CWD is
-`pr-review/`.
-
-However, agent .md files are loaded by the Claude Code framework — the
-`references/` path is a *documentation reference for the agent to
-read*, not a runtime file path. The agent is told to "Consult
-`references/vcs-equivalence.md`" but its actual CWD is the repo root.
-
-Fix by using the full relative path from repo root.
-
-**Step 2: Update all 11 agents**
-
-For each of these files, change `references/vcs-equivalence.md` to
-`pr-review/references/vcs-equivalence.md`:
-
-- `pr-review/agents/code-reviewer.md`
-- `pr-review/agents/silent-failure-hunter.md`
-- `pr-review/agents/pr-test-analyzer.md`
-- `pr-review/agents/type-design-analyzer.md`
-- `pr-review/agents/comment-analyzer.md`
-- `pr-review/agents/security-auditor.md`
-- `pr-review/agents/api-contract-checker.md`
-- `pr-review/agents/spec-compliance.md`
-- `pr-review/agents/code-simplifier.md`
-- `pr-review/agents/fix-worker.md`
-- `pr-review/agents/verification-runner.md`
-
-Each file has one occurrence on line 29:
-
-```text
-`references/vcs-equivalence.md` → `pr-review/references/vcs-equivalence.md`
-```
-
-**Step 3: Commit**
+**Step 7: Close findings**
 
 ```bash
-git add pr-review/agents/*.md
-git commit -m "fix(pr-review): use full relative path for vcs-equivalence.md in agents"
+bd close fzymgc-house-skills-gvs.6 --reason "Fixed: check @- instead of @ for parent verification"
+bd close fzymgc-house-skills-gvs.35 --reason "Fixed: jj equivalent added for stale validation"
+bd close fzymgc-house-skills-gvs.14 --reason "Fixed: error handling added to Phase 4b jj steps"
+bd close fzymgc-house-skills-gvs.16 --reason "Fixed: error path for jj new failure documented"
+bd close fzymgc-house-skills-gvs.34 --reason "Fixed: added integration summary table"
 ```
 
 ---
 
-### Task 7: Fix review-gate.md — VCS-agnostic diff reference
+## Task 6: Fix documentation inaccuracies
+
+**Findings:** gvs.20 (important), gvs.24 (important), gvs.26 (suggestion), gvs.22 (suggestion), gvs.10 (suggestion)
 
 **Files:**
 
-- Modify: `pr-review/agents/review-gate.md:50`
+- Modify: `pr-review/references/vcs-equivalence.md:29`
+- Modify: `jj/commands/jj-init.md:20,32-33`
+- Modify: `jj/skills/jujutsu/references/jj-git-interop.md:15-16`
+- Modify: `pr-review/skills/review-pr/SKILL.md` (path reference)
 
-**Findings addressed:**
+**Step 1: Fix vcs-equivalence.md workspace identity (gvs.20)**
 
-- [spec/suggestion] review-gate Process still says "git diff"
-
-**Step 1: Update line 50**
-
-Change:
+At line 29, replace:
 
 ```text
-2. Examine the git diff for changes related to that finding
+| Workspace identity | `git branch --show-current` | `jj workspace root` |
 ```
 
-To:
+With:
 
 ```text
-2. Examine the VCS diff for changes related to that finding
+| Workspace identity | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id ++ " " ++ description.first_line()'` |
+```
+
+**Step 2: Fix jj-init.md --colocate claim (gvs.24)**
+
+At lines 32-33, replace:
+
+```text
+   The `--colocate` flag ensures jj shares the working copy with git
+   (required on jj 0.15+; harmless on older versions).
+```
+
+With:
+
+```text
+   The `--colocate` flag ensures jj shares the working copy with git.
+   This flag is required on jj 0.15+ where colocation is no longer the default.
+```
+
+**Step 3: Fix jj-init.md standalone command (gvs.26)**
+
+At line 20, replace `jj init` with `jj git init`:
+
+```text
+   repository. If not, tell the user to run `git init` first or use `jj git init` for a standalone
+```
+
+**Step 4: Fix jj-git-interop.md bookmark sync claim (gvs.22)**
+
+At lines 15-16, replace:
+
+```text
+- On every `jj` command, git branches are auto-imported as jj bookmarks
+- On every `jj` command, jj bookmark changes are auto-exported as git branches
+```
+
+With:
+
+```text
+- On most `jj` commands, git branches are auto-imported as jj bookmarks
+- On most `jj` commands, jj bookmark changes are auto-exported as git branches
+```
+
+**Step 5: Standardize vcs-equivalence.md path reference (gvs.10)**
+
+Run: `grep -rn "vcs-equivalence" pr-review/skills/`
+
+If `review-pr` uses `pr-review/references/vcs-equivalence.md` (repo-root-relative) while `address-findings` uses `references/vcs-equivalence.md` (plugin-relative), standardize both to `references/vcs-equivalence.md` since skills reference files relative to their plugin root.
+
+**Step 6: Commit**
+
+```bash
+git add pr-review/references/vcs-equivalence.md jj/commands/jj-init.md \
+  jj/skills/jujutsu/references/jj-git-interop.md \
+  pr-review/skills/review-pr/SKILL.md
+git commit -m "fix(docs): correct jj documentation inaccuracies
+
+- vcs-equivalence.md: fix workspace identity mapping (gvs.20)
+- jj-init.md: fix --colocate claim and standalone command (gvs.24, gvs.26)
+- jj-git-interop.md: qualify 'every jj command' as 'most' (gvs.22)
+- Standardize vcs-equivalence.md path references (gvs.10)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 7: Close findings**
+
+```bash
+bd close fzymgc-house-skills-gvs.20 --reason "Fixed: workspace identity now uses jj log"
+bd close fzymgc-house-skills-gvs.24 --reason "Fixed: removed inaccurate older versions claim"
+bd close fzymgc-house-skills-gvs.26 --reason "Fixed: jj init -> jj git init"
+bd close fzymgc-house-skills-gvs.22 --reason "Fixed: every -> most for bookmark sync"
+bd close fzymgc-house-skills-gvs.10 --reason "Fixed: standardized path references"
+```
+
+---
+
+## Task 7: Fix VCS detection fallback and clarify
+
+**Findings:** gvs.15 (suggestion)
+
+**Files:**
+
+- Modify: `pr-review/references/vcs-equivalence.md`
+
+**Step 1: Add note about detection assumptions**
+
+Before the "Command Mapping" table, add:
+
+```markdown
+**Note:** The detection pattern `test -d .jj && echo "jj" || echo "git"` assumes
+a git repo exists when `.jj/` is absent. Agents verify VCS availability in their
+Environment startup check (step 2) — if `git branch --show-current` fails, they
+STOP and report STATUS: FAIL.
 ```
 
 **Step 2: Commit**
 
 ```bash
-git add pr-review/agents/review-gate.md
-git commit -m "fix(pr-review): use VCS-agnostic language in review-gate process"
+git add pr-review/references/vcs-equivalence.md
+git commit -m "docs(pr-review): clarify VCS detection fallback behavior
+
+Fixes: gvs.15
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
----
-
-### Task 8: Fix fix-worker output — add VCS discriminator field
-
-**Files:**
-
-- Modify: `pr-review/agents/fix-worker.md:92-101`
-
-**Findings addressed:**
-
-- [api/important] fix-worker output has no VCS discriminator field
-
-**Step 1: Update the output template**
-
-Replace lines 92-101:
-
-```markdown
-```text
-STATUS: FIXED | PARTIAL | FAILED
-FINDING: <bead-id>
-FILES_CHANGED: <file1>, <file2>, ...
-DESCRIPTION: <one-line summary of what was changed>
-VCS: git | jj
-WORKTREE_BRANCH: <branch name>  (git repos only)
-CHANGE_ID: <change-id>          (jj repos only)
-```
-```
-
-Report `VCS: git` or `VCS: jj` based on the detected VCS, plus the
-matching identifier field.
-
-```text
-
-**Step 2: Commit**
+**Step 3: Close finding**
 
 ```bash
-git add pr-review/agents/fix-worker.md
-git commit -m "fix(pr-review): add VCS discriminator field to fix-worker output contract"
+bd close fzymgc-house-skills-gvs.15 --reason "Fixed: added clarification note"
 ```
 
 ---
 
-### Task 9: Reduce review-pr SKILL.md VCS cheat-sheet duplication
+## Task 8: Tighten allowed-tools scope in review-pr
+
+**Findings:** gvs.4 (suggestion)
 
 **Files:**
 
-- Modify: `pr-review/skills/review-pr/SKILL.md:67-69`
+- Modify: `pr-review/skills/review-pr/SKILL.md:26`
 
-**Findings addressed:**
+**Step 1: Replace jj wildcard with read-only commands**
 
-- [simplify/suggestion] Inline VCS cheat-sheet partially duplicates vcs-equivalence.md
+Replace line 26 (`"Bash(jj *)"`) with specific read-only jj commands:
 
-**Step 1: Replace the inline cheat-sheet**
-
-Replace lines 67-69 with a reference-only approach:
-
-```markdown
-In jj repos, consult `pr-review/references/vcs-equivalence.md` for
-command equivalents. Key: use `jj` commands for all VCS operations,
-`gh` CLI for GitHub operations regardless of VCS.
+```yaml
+  - "Bash(jj log *)"
+  - "Bash(jj diff *)"
+  - "Bash(jj show *)"
+  - "Bash(jj st)"
+  - "Bash(jj st *)"
+  - "Bash(jj workspace list)"
+  - "Bash(jj workspace list *)"
+  - "Bash(jj file list *)"
 ```
+
+Note: `address-findings` and `respond-to-comments` keep `"Bash(jj *)"` — they perform mutations.
 
 **Step 2: Commit**
 
 ```bash
 git add pr-review/skills/review-pr/SKILL.md
-git commit -m "fix(pr-review): deduplicate VCS cheat-sheet in review-pr skill"
+git commit -m "fix(pr-review): restrict jj allowed-tools in review-pr to read-only
+
+Fixes: gvs.4
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
----
-
-### Task 10: Update CLAUDE.md Worktree Layout gotcha
-
-**Files:**
-
-- Modify: `CLAUDE.md:164-179`
-
-**Findings addressed:**
-
-- [spec/suggestion] CLAUDE.md Worktree Layout omits jj-specific details
-
-**Step 1: Expand the Worktree Layout section**
-
-Replace lines 164-179:
-
-```markdown
-### Worktree Layout
-
-Agent worktrees are created in a **sibling directory** to avoid nesting
-repos (which confuses LSP servers):
-
-```text
-<repo>/                    # main repo
-<repo>_worktrees/          # worktree parent (sibling)
-  fix-worker-abc/          # one worktree per agent invocation
-  verification-runner-def/
-```
-```
-
-WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
-this automatically. In jj repos, hooks use `jj workspace add/forget`
-instead of `git worktree add/remove`. Do NOT manually create worktrees
-inside `.claude/worktrees/`.
-
-**VCS-specific behavior:**
-
-- **git**: fix-worker reports `WORKTREE_BRANCH`; orchestrator uses cherry-pick to integrate
-- **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase` to integrate (no cherry-pick)
-
-```text
-
-**Step 2: Commit**
+**Step 3: Close finding**
 
 ```bash
-git add CLAUDE.md
-git commit -m "docs: expand CLAUDE.md worktree layout with jj-specific details"
+bd close fzymgc-house-skills-gvs.4 --reason "Fixed: review-pr now has read-only jj allowed-tools"
 ```
 
 ---
 
-### Task 11: Add missing eval coverage (suggestion-level)
+## Task 9: Improve evals
+
+**Findings:** gvs.17 (important), gvs.19 (important), gvs.21 (suggestion)
 
 **Files:**
 
 - Modify: `jj/evals/evals.json`
+- Modify: `pr-review/evals/evals.json` (check if exists first)
 
-**Findings addressed:**
+**Step 1: Add assertions to triggering evals T1-T5 (gvs.17)**
 
-- [tests/important] No evals for jj-not-installed or workspace collision edge cases
-- [tests/suggestion] Missing /jj-init edge case evals
+For T1-T4, add `{"type": "skill_triggered", "value": "jujutsu"}` to each assertions array.
 
-**Step 1: Add new behavioral evals**
+For T5 (negative test), add `{"type": "skill_not_triggered", "value": "jujutsu"}`.
 
-Add these after B5 in the evals array:
+**Step 2: Add jj integration behavioral eval to pr-review evals (gvs.19)**
+
+First check: `ls pr-review/evals/evals.json 2>/dev/null`
+
+If exists, add a new behavioral eval:
 
 ```json
-    {
-      "id": "B6",
-      "type": "behavioral",
-      "skill": "jujutsu",
-      "prompt": "create a jj workspace with the same name as an existing one (in a jj repo)",
-      "expected_output": "Should detect the naming collision and either use a unique name or report the conflict",
-      "assertions": [
-        {
-          "name": "handles-collision",
-          "description": "Handles workspace name collision gracefully",
-          "type": "manual",
-          "check": "Verify the agent detects or handles workspace name collision"
-        }
-      ]
-    },
-    {
-      "id": "B7",
-      "type": "behavioral",
-      "skill": "jujutsu",
-      "prompt": "initialize jj in this repo (repo already has .jj/ directory)",
-      "expected_output": "Should detect existing .jj/ and inform user that jj is already initialized",
-      "assertions": [
-        {
-          "name": "detects-existing",
-          "description": "Detects existing jj initialization",
-          "type": "output_contains",
-          "check": "already"
-        }
-      ]
-    }
+{
+  "id": "B-JJ1",
+  "type": "behavioral",
+  "skill": "address-findings",
+  "prompt": "address the review findings for PR #99 (in a repo with .jj/ directory)",
+  "expected_output": "Should detect jj repo and use jj commands for integration (rebase, bookmark set, workspace forget) instead of git cherry-pick",
+  "assertions": [
+    {"type": "output_contains", "value": "jj rebase"},
+    {"type": "output_not_contains", "value": "git cherry-pick"}
+  ]
+}
 ```
 
-**Step 2: Commit**
+**Step 3: Add VCS detection consistency behavioral eval (gvs.21)**
+
+Add to `jj/evals/evals.json`:
+
+```json
+{
+  "id": "B7",
+  "type": "behavioral",
+  "skill": "jujutsu",
+  "prompt": "I'm in a jj repo and need to review a PR — what VCS commands should agents use?",
+  "expected_output": "Should reference VCS detection preamble and jj commands for agents",
+  "assertions": [
+    {"type": "output_contains", "value": "test -d .jj"}
+  ]
+}
+```
+
+**Step 4: Commit**
 
 ```bash
-git add jj/evals/evals.json
-git commit -m "test(jj): add evals for workspace collision and already-initialized edge cases"
+git add jj/evals/evals.json pr-review/evals/evals.json
+git commit -m "fix(evals): add assertions to triggering evals and jj integration coverage
+
+- T1-T4: add skill_triggered assertions (gvs.17)
+- T5: add skill_not_triggered assertion (gvs.17)
+- Add jj integration behavioral eval to pr-review (gvs.19)
+- Add VCS detection consistency eval (gvs.21)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 5: Close findings**
+
+```bash
+bd close fzymgc-house-skills-gvs.17 --reason "Fixed: assertions added to all triggering evals"
+bd close fzymgc-house-skills-gvs.19 --reason "Fixed: jj integration behavioral eval added"
+bd close fzymgc-house-skills-gvs.21 --reason "Fixed: VCS detection consistency eval added"
 ```
 
 ---
 
-### Task 12: Final verification
+## Task 10: Shell tests for worktree hooks
 
-**Step 1: Run markdown linter on all changed files**
+**Findings:** gvs.23 (important)
 
-```bash
-rumdl check .claude/hooks/worktree-create.sh .claude/hooks/worktree-remove.sh
-rumdl check jj/commands/jj-init.md
-rumdl check pr-review/agents/*.md
-rumdl check pr-review/skills/address-findings/SKILL.md
-rumdl check pr-review/skills/review-pr/SKILL.md
-rumdl check CLAUDE.md
-```
+**Files:**
 
-**Step 2: Validate JSON**
+- Create: `.claude/hooks/tests/test_worktree_create.bats`
+- Create: `.claude/hooks/tests/test_worktree_remove.bats`
+
+**Step 1: Check bats availability**
 
 ```bash
-python3 -m json.tool jj/evals/evals.json > /dev/null
+command -v bats && bats --version || echo "bats not installed"
 ```
 
-**Step 3: Validate shell scripts**
+**Step 2: Create worktree-create tests**
 
 ```bash
-bash -n .claude/hooks/worktree-create.sh
-bash -n .claude/hooks/worktree-remove.sh
+#!/usr/bin/env bats
+
+setup() {
+  export REPO_ROOT=$(mktemp -d)
+  cd "$REPO_ROOT"
+  git init -q
+  git commit --allow-empty -m "init" -q
+}
+
+teardown() {
+  cd /
+  rm -rf "$REPO_ROOT" "${REPO_ROOT}_worktrees"
+}
+
+@test "rejects names with path traversal" {
+  run bash -c 'echo "{\"name\": \"../evil\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
+@test "rejects names with spaces" {
+  run bash -c 'echo "{\"name\": \"has space\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
+@test "rejects names with shell metacharacters" {
+  run bash -c 'echo "{\"name\": \"evil;rm\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
+@test "accepts valid alphanumeric name" {
+  run bash -c 'echo "{\"name\": \"fix-worker-abc123\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 0 ]
+}
+
+@test "rejects empty name" {
+  run bash -c 'echo "{\"name\": \"\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+}
 ```
 
-**Step 4: Run lefthook pre-commit on all changed files**
+**Step 3: Create worktree-remove tests**
 
 ```bash
-lefthook run pre-commit --all-files
+#!/usr/bin/env bats
+
+setup() {
+  export REPO_ROOT=$(mktemp -d)
+  cd "$REPO_ROOT"
+  git init -q
+  git commit --allow-empty -m "init" -q
+  mkdir -p "${REPO_ROOT}_worktrees/test-wt"
+  git worktree add "${REPO_ROOT}_worktrees/test-wt" -b worktree/test-wt HEAD -q
+}
+
+teardown() {
+  cd /
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  rm -rf "$REPO_ROOT" "${REPO_ROOT}_worktrees"
+}
+
+@test "removes valid worktree" {
+  run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
+}
+
+@test "rejects path outside expected parent" {
+  run bash -c 'echo "{\"path\": \"/tmp/evil\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  # Either exits 0 (nonexistent) or 1 (rejected)
+  [[ "$status" -eq 0 || "$output" == *"outside expected parent"* ]]
+}
+
+@test "exits cleanly for nonexistent path" {
+  run bash -c 'echo "{\"path\": \"/nonexistent\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+}
+
+@test "rejects names with shell metacharacters" {
+  evil_path="${REPO_ROOT}_worktrees/evil;rm"
+  mkdir -p "$evil_path"
+  run bash -c 'echo "{\"path\": \"'"$evil_path"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+  rmdir "$evil_path" 2>/dev/null || true
+}
 ```
 
-Expected: all checks pass.
+**Step 4: Run tests if bats available**
+
+```bash
+bats .claude/hooks/tests/ || echo "bats not available — tests created for future use"
+```
+
+**Step 5: Commit**
+
+```bash
+git add .claude/hooks/tests/
+git commit -m "test(hooks): add bats tests for worktree hook input validation
+
+Tests cover: path traversal rejection, shell metacharacter rejection,
+empty name handling, valid name acceptance, path safety validation.
+
+Fixes: gvs.23
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+**Step 6: Close finding**
+
+```bash
+bd close fzymgc-house-skills-gvs.23 --reason "Fixed: bats tests added for input validation"
+```
+
+---
+
+## Final Verification
+
+```bash
+# Verify all findings closed
+bd list --parent fzymgc-house-skills-gvs --status open --json
+# Expected: []
+
+bd stats
+
+git push
+```

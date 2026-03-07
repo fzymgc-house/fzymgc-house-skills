@@ -91,3 +91,19 @@ MOCK
   [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/fail-wt" ]
 }
+
+@test "jj path: rejects old jj without --name support" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "Usage: jj workspace add <path>"
+  exit 0
+fi
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--name"* ]]
+}

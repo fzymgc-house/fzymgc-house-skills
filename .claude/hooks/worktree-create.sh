@@ -31,6 +31,11 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
     exit 1
   fi
+  # Verify jj supports --name flag (added in 0.21)
+  if ! jj workspace add --help 2>&1 | grep -q -- '--name'; then
+    echo "ERROR: jj version too old — 'jj workspace add --name' not supported (need jj >= 0.21)" >&2
+    exit 1
+  fi
   if ! (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}"); then
     echo "ERROR: jj workspace add failed" >&2

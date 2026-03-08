@@ -274,8 +274,8 @@ Loop while open, non-deferred findings remain:
    1. Detect VCS from the current repo: `test -d .jj && echo jj || echo git`
    2. If git, derive branch from worktree path:
       `git -C <worktree-path> branch --show-current`
-   3. If jj, list workspaces and match by path:
-      `jj workspace list | grep <worktree-name>`
+   3. If jj, list workspaces and match by name:
+      `jj workspace list | grep "^worktree-<name>:"`
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 
 ### Phase 4b: Integrate Fix Commits
@@ -340,10 +340,10 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` to revert the rebase. A failed `jj bookmark set`
-      does not create an operation log entry (jj only records
-      successful operations), so `jj undo` directly reverts the
-      preceding rebase.
+   1. Run `jj undo` to revert the rebase. (A failed `jj bookmark set`
+      does not create an operation log entry — jj only records
+      successful mutations — so `jj undo` targets the preceding
+      rebase.)
    2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
    3. Mark FAILED, add bead comment, re-queue for next round.
 

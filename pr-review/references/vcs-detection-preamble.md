@@ -12,7 +12,10 @@ repositories that may use git or jj (Jujutsu).
 2. **Verify location:**
    - jj: Determine the current workspace name from the working directory
      path — sibling worktrees live at `<repo>_worktrees/<workspace-name>/`,
-     so the last path component is the workspace name. Alternatively run
+     so the last path component is the workspace name. Run
+     `basename "$(pwd)"` to extract it. If the result is empty or the
+     command fails, STOP and report STATUS: FAILED -- "Cannot determine
+     workspace name from working directory path." Alternatively run
      `jj workspace root` and compare against `pwd`. Do NOT rely on
      `jj workspace list` output to identify the current workspace; jj 0.39+
      does not emit a `(current)` marker. Verify the current workspace name

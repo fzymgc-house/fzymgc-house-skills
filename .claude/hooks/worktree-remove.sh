@@ -85,7 +85,4 @@ if ! rm -rf "$WORKTREE_PATH"; then
 fi
 
 # Clean up empty parent directory
-PARENT=$(dirname "$WORKTREE_PATH")
-if [[ -d "$PARENT" ]] && [[ -z "$(ls -A "$PARENT")" ]]; then
-  rmdir "$PARENT" 2>/dev/null || echo "WARNING: failed to remove empty parent '$PARENT'" >&2
-fi
+cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"

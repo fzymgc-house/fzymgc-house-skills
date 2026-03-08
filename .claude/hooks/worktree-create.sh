@@ -28,9 +28,7 @@ WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 cleanup_on_error() {
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
-  if [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]]; then
-    rmdir "$WORKTREE_PARENT" 2>/dev/null || echo "WARNING: failed to remove empty parent '$WORKTREE_PARENT'" >&2
-  fi
+  cleanup_empty_parent "$WORKTREE_PARENT"
 }
 
 mkdir -p "$WORKTREE_PARENT" || {

@@ -22,6 +22,15 @@ validate_safe_name() {
   fi
 }
 
+# Remove parent directory if it exists and is empty. Safe to call even if the
+# directory does not exist.
+cleanup_empty_parent() {
+  local parent="$1"
+  if [[ -d "$parent" ]] && [[ -z "$(ls -A "$parent")" ]]; then
+    rmdir "$parent" 2>/dev/null || echo "WARNING: failed to remove empty parent '$parent'" >&2
+  fi
+}
+
 # Detect repo root. Supports colocated jj repos (have .git/) and falls back
 # to 'jj root' for non-colocated repos when .jj/ exists.
 detect_repo_root() {

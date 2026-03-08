@@ -45,7 +45,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # and the actual workspace add, but the practical risk of jj being
   # replaced between two calls in the same hook invocation is negligible.
   if ! jj_help=$(jj workspace add --help 2>&1); then
-    echo "ERROR: jj failed to run: $(echo "${jj_help:0:200}" | tr -d '\033')" >&2
+    echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:200}")" >&2
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then
@@ -59,7 +59,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # From here on, WORKTREE_PARENT exists — cleanup_on_error handles it
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
-    echo "ERROR: jj workspace add failed: $(echo "${jj_out:0:200}" | tr -d '\033')" >&2
+    echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:200}")" >&2
     cleanup_on_error
     exit 1
   fi
@@ -70,7 +70,7 @@ else
     exit 1
   }
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
-    echo "ERROR: git worktree add failed: $(echo "${git_err:0:200}" | tr -d '\033')" >&2
+    echo "ERROR: git worktree add failed: $(sanitize_for_output "${git_err:0:200}")" >&2
     cleanup_on_error
     exit 1
   fi
@@ -79,7 +79,7 @@ fi
 # Install hooks in the new workspace (lefthook works in both VCS modes)
 if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   if ! lh_err=$(cd "$WORKTREE_PATH" && lefthook install 2>&1); then
-    echo "WARNING: lefthook install failed in worktree: $(echo "${lh_err:0:200}" | tr -d '\033')" >&2
+    echo "WARNING: lefthook install failed in worktree: $(sanitize_for_output "${lh_err:0:200}")" >&2
   fi
 fi
 

@@ -139,9 +139,9 @@ beads and run `bd init` in the target project."
    `<repo>_worktrees/` directory. If one matches, `cd` into it and
    verify with `git branch --show-current`. If not, ask the user
    whether to create one.
-   In jj repos, use `jj workspace list` to find existing workspaces
-   and verify the current workspace by checking that `pwd` appears
-   in the workspace list output.
+   In jj repos, use `jj workspace list` to find existing workspaces.
+   Output format is `<name>: <change-id> <commit-id> <description>`.
+   Verify you are in a `worktree-*` workspace (not `default`).
    **MUST** use an existing worktree if one matches.
 
 ### Phase 2: Categorize, clarify, and confirm

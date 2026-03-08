@@ -29,7 +29,13 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 }
 
 # Validate path is inside the expected sibling directory
-EXPECTED_PARENT=$(realpath "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees" 2>/dev/null || echo "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees")
+REPO_NAME=$(basename "$REPO_ROOT")
+EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
+# Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
+EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || {
+  echo "ERROR: expected worktree parent does not exist: $EXPECTED_PARENT" >&2
+  exit 1
+}
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent
   *)
@@ -49,7 +55,9 @@ else
   # Standard git worktree cleanup — log errors instead of suppressing
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $git_err" >&2
-    git worktree prune 2>/dev/null || true
+    if ! prune_err=$(git worktree prune 2>&1); then
+      echo "WARNING: git worktree prune also failed: $prune_err" >&2
+    fi
   fi
 fi
 

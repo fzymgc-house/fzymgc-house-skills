@@ -258,14 +258,15 @@ Loop while open, non-deferred findings remain:
      SUGGESTED_FIX: <from finding description>
      Implement the fix. Commit with message:
        fix(<finding-id>): <one-line description>
-     Report STATUS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
+     Report STATUS, VCS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
+    VCS must be "git" or "jj" to indicate which integration method to use.
      Do NOT close or update any beads.
    ```
 
    Note: FILE_LOCATION **must** use a relative path. Strip any absolute
    prefix before dispatching.
 
-5. **Collect results** from each agent: STATUS, FILES_CHANGED,
+5. **Collect results** from each agent: STATUS, VCS, FILES_CHANGED,
    DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
 
 ### Phase 4b: Integrate Fix Commits

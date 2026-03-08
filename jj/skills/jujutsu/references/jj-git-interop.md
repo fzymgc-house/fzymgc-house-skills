@@ -15,8 +15,8 @@ jj **bookmarks** map directly to git **branches**:
 - On most `jj` commands, git branches are auto-imported as jj bookmarks
 - On most `jj` commands, jj bookmark changes are auto-exported as git branches
 - `jj bookmark list` shows all bookmarks (equivalent to `git branch -a` after import)
-- `jj bookmark create <name> -r @` creates a bookmark at the current change
-- `jj bookmark set <name> -r @` moves an existing bookmark to the current change
+- `jj bookmark create <name>` creates a bookmark at the current change (`@`)
+- `jj bookmark set <name> -r <rev>` creates or moves a bookmark to the specified revision
 
 ## Push and Fetch
 
@@ -49,19 +49,8 @@ Ensure the bookmark is pushed (`jj git push -b <name>`) before creating a PR.
 
 ## Workspaces
 
-Workspaces provide isolated working copies that share the same underlying repo:
-
-```bash
-jj workspace add ../my-workspace --name my-workspace  # Create a new workspace
-jj workspace list                       # List all workspaces
-jj workspace forget <name>             # De-register workspace (does NOT delete files)
-```
-
-Key behaviors:
-
-- Each workspace has its own working-copy commit (`@`)
-- Changes committed in one workspace are **immediately visible** in others (shared repo storage)
-- Workspaces replace git worktrees in the jj workflow
+Workspaces replace git worktrees in the jj workflow. See the [Workspaces section in
+SKILL.md](../SKILL.md#workspaces) for full command reference and key behaviors.
 
 ## What NOT To Do
 

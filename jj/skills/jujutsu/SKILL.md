@@ -140,8 +140,8 @@ jj squash --into <rev>
 jj absorb
 ```
 
-This is the jj equivalent of `git absorb` -- it automatically routes each hunk to the
-right ancestor commit.
+This automatically routes each hunk to the right ancestor commit (similar to the
+third-party `git-absorb` tool, but built into jj).
 
 ### Abandon, Undo, and Restore
 

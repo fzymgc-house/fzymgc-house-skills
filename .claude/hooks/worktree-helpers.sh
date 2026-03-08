@@ -9,6 +9,10 @@ sanitize_for_output() {
 
 validate_safe_name() {
   local name="$1" label="$2"
+  if [[ -z "$name" ]]; then
+    echo "ERROR: ${label} must not be empty" >&2
+    return 1
+  fi
   if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* || "$name" == *. ]]; then
     local safe_name safe_label
     safe_name=$(sanitize_for_output "$name")

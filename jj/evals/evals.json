@@ -2,7 +2,7 @@
   "skill_name": "jujutsu",
   "evals": [
     {
-      "id": "T1",
+      "id": "JJ-T1",
       "type": "triggering",
       "prompt": "I need to use jj to commit my changes",
       "expected_skill": "jujutsu",
@@ -10,7 +10,7 @@
       "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T2",
+      "id": "JJ-T2",
       "type": "triggering",
       "prompt": "how do I create a bookmark in jujutsu?",
       "expected_skill": "jujutsu",
@@ -18,7 +18,7 @@
       "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T3",
+      "id": "JJ-T3",
       "type": "triggering",
       "prompt": "help me set up jj in this repo",
       "expected_skill": "jujutsu",
@@ -26,7 +26,7 @@
       "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T4",
+      "id": "JJ-T4",
       "type": "triggering",
       "prompt": "what's the jj equivalent of git cherry-pick?",
       "expected_skill": "jujutsu",
@@ -34,7 +34,7 @@
       "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T5",
+      "id": "JJ-T5",
       "type": "triggering",
       "prompt": "commit this with a message",
       "expected_skill": null,
@@ -42,7 +42,7 @@
       "assertions": [{"name": "does-not-trigger-jujutsu", "description": "Does not trigger jujutsu skill for generic commit", "type": "skill_not_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T6",
+      "id": "JJ-T6",
       "type": "triggering",
       "prompt": "check my repo status",
       "context": "Repo root contains .jj/ directory",
@@ -51,7 +51,7 @@
       "assertions": [{"name": "triggers-jujutsu-via-dotjj", "description": "Triggers jujutsu skill from .jj/ directory presence", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "T7",
+      "id": "JJ-T7",
       "type": "triggering",
       "prompt": "run /jj-init to set up jujutsu in this repo",
       "expected_skill": null,
@@ -66,7 +66,7 @@
       ]
     },
     {
-      "id": "T8",
+      "id": "JJ-T8",
       "type": "triggering",
       "prompt": "help me resolve this git merge conflict",
       "context": "Repo has .git/ directory but no .jj/ directory",
@@ -75,16 +75,17 @@
       "assertions": [{"name": "does-not-trigger-jujutsu-for-git", "description": "Does not trigger jujutsu skill for git-only workflow", "type": "skill_not_triggered", "check": "jujutsu"}]
     },
     {
-      "id": "B1",
+      "id": "JJ-B1",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "check my repo status (in a repo with .jj/ directory)",
+      "prompt": "check my repo status",
+      "context": "Repo root contains .jj/ directory",
       "expected_output": "Should use jj st instead of git status. Should detect .jj/ and activate jujutsu skill.",
       "assertions": [
         {
           "name": "uses-jj-status",
           "description": "Uses jj st for status check",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj st"
         },
         {
@@ -96,16 +97,17 @@
       ]
     },
     {
-      "id": "B2",
+      "id": "JJ-B2",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "commit these changes with message 'fix: update config' (in a jj repo)",
+      "prompt": "commit these changes with message 'fix: update config'",
+      "context": "Active repo is a jj repo",
       "expected_output": "Should use jj commit -m, not jj desc + jj new, and not git add + git commit",
       "assertions": [
         {
           "name": "uses-jj-commit",
           "description": "Uses jj commit -m for committing",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj commit -m"
         },
         {
@@ -117,31 +119,33 @@
       ]
     },
     {
-      "id": "B3",
+      "id": "JJ-B3",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "push my changes to the remote (in a jj repo with bookmark 'feature-x')",
+      "prompt": "push my changes to the remote",
+      "context": "Active jj repo has bookmark 'feature-x'",
       "expected_output": "Should use jj git push -b feature-x, not git push",
       "assertions": [
         {
           "name": "uses-jj-git-push",
           "description": "Uses jj git push with bookmark flag",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj git push"
         },
         {
           "name": "specifies-bookmark",
           "description": "Includes -b or --bookmark flag",
-          "type": "output_contains",
+          "type": "contains",
           "check": "-b "
         }
       ]
     },
     {
-      "id": "B4",
+      "id": "JJ-B4",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "split this commit into two (in a jj repo)",
+      "prompt": "split this commit into two",
+      "context": "Active repo is a jj repo",
       "expected_output": "Should refuse or warn that jj split is interactive and cannot be used by agents",
       "assertions": [
         {
@@ -153,10 +157,11 @@
       ]
     },
     {
-      "id": "B5",
+      "id": "JJ-B5",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "run git rebase in this repo (in a repo with .jj/ directory)",
+      "prompt": "run git rebase in this repo",
+      "context": "Repo root contains .jj/ directory",
       "expected_output": "Should warn against using mutating git commands in colocated jj repo",
       "assertions": [
         {
@@ -168,10 +173,11 @@
       ]
     },
     {
-      "id": "B6",
+      "id": "JJ-B6",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "create a jj workspace with the same name as an existing one (in a jj repo)",
+      "prompt": "create a jj workspace with the same name as an existing one",
+      "context": "Active repo is a jj repo",
       "expected_output": "Should detect the naming collision and either use a unique name or report the conflict",
       "assertions": [
         {
@@ -183,22 +189,23 @@
       ]
     },
     {
-      "id": "B7",
+      "id": "JJ-B7",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "initialize jj in this repo (repo already has .jj/ directory)",
+      "prompt": "initialize jj in this repo",
+      "context": "Repo already has .jj/ directory",
       "expected_output": "Should detect existing .jj/ and inform user that jj is already initialized",
       "assertions": [
         {
           "name": "detects-existing",
           "description": "Detects existing jj initialization",
-          "type": "output_contains",
+          "type": "contains",
           "check": "already"
         }
       ]
     },
     {
-      "id": "B8",
+      "id": "JJ-B8",
       "type": "behavioral",
       "skill": "jujutsu",
       "prompt": "I'm in a jj repo and need to review a PR — what VCS commands should agents use?",
@@ -207,16 +214,17 @@
         {
           "name": "references-vcs-detection",
           "description": "References the VCS detection preamble command",
-          "type": "output_contains",
+          "type": "contains",
           "check": "test -d .jj"
         }
       ]
     },
     {
-      "id": "B9",
+      "id": "JJ-B9",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "check repo status (in a directory with no .jj/ or .git/)",
+      "prompt": "check repo status",
+      "context": "Directory has no .jj/ or .git/ present",
       "expected_output": "Should detect no VCS and report appropriately",
       "assertions": [
         {

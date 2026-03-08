@@ -91,19 +91,19 @@
         {
           "name": "selects-security-agent",
           "description": "Launches security-auditor agent",
-          "type": "output_contains",
+          "type": "contains",
           "check": "security-auditor OR security"
         },
         {
           "name": "selects-api-agent",
           "description": "Launches api-contract-checker agent",
-          "type": "output_contains",
+          "type": "contains",
           "check": "api-contract-checker OR api"
         },
         {
           "name": "selects-code-agent-always-on",
           "description": "Launches code-reviewer (always-on)",
-          "type": "output_contains",
+          "type": "contains",
           "check": "code-reviewer OR code"
         },
         {
@@ -124,7 +124,7 @@
         {
           "name": "creates-parent-bead",
           "description": "Attempts bd create with pr-review label",
-          "type": "output_contains",
+          "type": "contains",
           "check": "bd create"
         },
         {
@@ -151,19 +151,19 @@
         {
           "name": "checks-out-pr-branch",
           "description": "Runs gh pr checkout before querying beads",
-          "type": "output_contains",
+          "type": "contains",
           "check": "gh pr checkout"
         },
         {
           "name": "verifies-bd-available",
           "description": "Runs bd --version as prerequisite",
-          "type": "output_contains",
+          "type": "contains",
           "check": "bd --version"
         },
         {
           "name": "queries-review-epic",
           "description": "Queries beads for review findings",
-          "type": "output_contains",
+          "type": "contains",
           "check": "bd list"
         },
         {
@@ -199,7 +199,7 @@
         {
           "name": "runs-list-command",
           "description": "Executes the list subcommand",
-          "type": "output_contains",
+          "type": "contains",
           "check": "pr_comments list"
         },
         {
@@ -220,25 +220,25 @@
         {
           "name": "checks-bd-prerequisite",
           "description": "Runs bd --version as prerequisite",
-          "type": "output_contains",
+          "type": "contains",
           "check": "bd --version"
         },
         {
           "name": "reads-unacked-comments",
           "description": "Lists unacked comments first",
-          "type": "output_contains",
+          "type": "contains",
           "check": "unacked"
         },
         {
           "name": "queries-beads-for-context",
           "description": "Cross-references with existing beads",
-          "type": "output_contains",
+          "type": "contains",
           "check": "bd list"
         },
         {
           "name": "locates-sibling-worktree",
           "description": "Checks for worktree in sibling directory",
-          "type": "output_contains",
+          "type": "contains",
           "check": "worktree"
         }
       ]
@@ -247,19 +247,20 @@
       "id": "B-JJ1",
       "type": "behavioral",
       "skill": "address-findings",
-      "prompt": "address the review findings for PR #99 (in a repo with .jj/ directory)",
+      "prompt": "address the review findings for PR #99",
+      "context": "Repo root contains .jj/ directory",
       "expected_output": "Should detect jj repo and use jj commands for integration (rebase, bookmark set, workspace forget) instead of git cherry-pick",
       "assertions": [
         {
           "name": "uses-jj-rebase",
           "description": "Uses jj rebase for integration instead of cherry-pick",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj rebase"
         },
         {
           "name": "no-git-cherry-pick",
           "description": "Does not use git cherry-pick in jj repos",
-          "type": "output_not_contains",
+          "type": "not_contains",
           "check": "git cherry-pick"
         }
       ]
@@ -274,13 +275,13 @@
         {
           "name": "uses-jj-rebase-with-change-id",
           "description": "Uses jj rebase with the reported CHANGE_ID",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj rebase"
         },
         {
           "name": "uses-bookmark-set",
           "description": "Updates bookmark after rebase",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj bookmark set"
         }
       ]
@@ -295,13 +296,13 @@
         {
           "name": "uses-workspace-forget",
           "description": "Cleans up jj workspace after integration",
-          "type": "output_contains",
+          "type": "contains",
           "check": "jj workspace forget"
         },
         {
           "name": "removes-directory",
           "description": "Removes worktree directory after workspace forget",
-          "type": "output_contains",
+          "type": "contains",
           "check": "rm -rf"
         },
         {
@@ -316,13 +317,14 @@
       "id": "B-JJ4",
       "type": "behavioral",
       "skill": "address-findings",
-      "prompt": "verification-runner returned: STATUS: PASS, VCS: jj, CHANGE_ID: kkmpptxz. All checks green. (in a repo with .jj/ directory)",
+      "prompt": "verification-runner returned: STATUS: PASS, VCS: jj, CHANGE_ID: kkmpptxz. All checks green.",
+      "context": "Repo root contains .jj/ directory",
       "expected_output": "Should use jj commands for any post-verification VCS operations and report CHANGE_ID in summary",
       "assertions": [
         {
           "name": "reports-change-id",
           "description": "Reports CHANGE_ID in verification summary, not WORKTREE_BRANCH",
-          "type": "output_contains",
+          "type": "contains",
           "check": "CHANGE_ID"
         },
         {
@@ -344,13 +346,13 @@
         {
           "name": "reports-failed-status",
           "description": "Reports STATUS: FAILED when in default workspace",
-          "type": "output_contains",
+          "type": "contains",
           "check": "STATUS: FAILED"
         },
         {
           "name": "mentions-default-workspace",
           "description": "Error message references default workspace as the reason",
-          "type": "output_contains",
+          "type": "contains",
           "check": "default workspace"
         },
         {

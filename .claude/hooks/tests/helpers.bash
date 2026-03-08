@@ -83,12 +83,24 @@ if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
 fi
 if [[ "$1" == "workspace" && "$2" == "add" ]]; then
   echo "$@" > "${REPO_ROOT}/jj-args.log"
-  mkdir -p "$3"
-  exit 0
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      *) mkdir -p "$arg"; exit 0 ;;
+    esac
+  done
+  exit 1
 fi
-if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
-  echo "$3" > "${REPO_ROOT}/forget-arg.log"
-  exit 0
+if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      worktree-*) echo "$arg" > "${REPO_ROOT}/forget-arg.log"; exit 0 ;;
+    esac
+  done
+  exit 1
 fi
 if [[ "$1" == "root" ]]; then
   git rev-parse --show-toplevel 2>/dev/null

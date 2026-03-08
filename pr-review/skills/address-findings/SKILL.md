@@ -22,6 +22,9 @@ allowed-tools:
   - "Bash(jj bookmark *)"
   - "Bash(jj git *)"
   - "Bash(jj undo *)"
+  - "Bash(jj describe *)"
+  - "Bash(jj new *)"
+  - "Bash(jj commit *)"
   - "Bash(gh *)"
   - "Bash(bd --version)"
   - "Bash(bd create *)"
@@ -348,11 +351,12 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` once — this reverts the rebase (jj does NOT record
-      failed commands in its operation log, so there is no bookmark-set
-      operation to undo):
+   1. Run `jj undo` twice — jj records ALL operations including
+      failures, so the first undo reverts the failed bookmark set
+      and the second reverts the rebase:
 
       ```bash
+      jj undo  # revert the failed bookmark set
       jj undo  # revert the rebase
       ```
 

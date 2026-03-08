@@ -338,7 +338,7 @@
       "type": "behavioral",
       "skill": "address-findings",
       "prompt": "Fix finding fzymgc-house-skills-qsh.99 in this repo",
-      "context": "Agent is in a jj repo. jj workspace list shows 'default: /path/to/repo (current)' — agent is in the default workspace, not a worktree workspace.",
+      "context": "Agent is in a jj repo. jj workspace list shows the default workspace with its current commit — agent is in the default workspace, not a worktree workspace.",
       "expected_output": "Agent reports STATUS: FAILED with message about default workspace and does not proceed with file operations",
       "assertions": [
         {

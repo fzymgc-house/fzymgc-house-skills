@@ -64,6 +64,41 @@ teardown() {
   rm -rf "$NON_GIT"
 }
 
+# --- detect_repo_root fallback tests ---
+
+@test "detect_repo_root falls back to jj root when git rev-parse fails" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  # Mock jj that responds to 'root' with the directory path
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${NON_GIT}"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
+  echo "  --name <NAME>"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  shift 2
+  for arg in "\$@"; do
+    case "\$arg" in
+      -*) ;;
+      *) mkdir -p "\$arg"; exit 0 ;;
+    esac
+  done
+fi
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  PATH="${NON_GIT}/bin:$PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"name\": \"jj-root-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/jj-root-test"* ]]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 # --- jj code path tests ---
 
 setup_jj() {

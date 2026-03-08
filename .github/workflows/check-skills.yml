@@ -20,12 +20,15 @@ jobs:
           # - Keys with /skills/ are skill-level entries (use directly)
           # - Other keys (plugin-level) expand to their skill dirs
           all_keys=$(jq -r '.packages | keys[] | select(. != ".")' release-please-config.json)
-          configured=$(echo "$all_keys" | while read -r key; do
-            # Validate key contains only safe path characters
+          # Validate keys in the main shell (not a subshell) so exit 1
+          # actually aborts the step.
+          while read -r key; do
             if [[ "$key" =~ [^a-zA-Z0-9_./-] ]]; then
               echo "::error::Unsafe character in release-please key: $key"
               exit 1
             fi
+          done <<< "$all_keys"
+          configured=$(echo "$all_keys" | while read -r key; do
             case "$key" in
               */skills/*) echo "$key" ;;
               *) find "$key/skills" -name SKILL.md -exec dirname {} \; 2>/dev/null ;;

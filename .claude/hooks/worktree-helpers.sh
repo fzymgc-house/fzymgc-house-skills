@@ -3,7 +3,7 @@
 
 validate_safe_name() {
   local name="$1" label="$2"
-  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* ]]; then
+  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* || "$name" == *. ]]; then
     echo "ERROR: invalid ${label} '${name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
     return 1
   fi

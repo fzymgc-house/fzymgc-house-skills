@@ -55,14 +55,14 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-    echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $jj_err (run 'jj workspace forget worktree-${WORKSPACE_NAME}' manually to clean up)" >&2
+    echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $(echo "${jj_err:0:200}" | tr -d '\033') (run 'jj workspace forget worktree-${WORKSPACE_NAME}' manually to clean up)" >&2
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-    echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $git_err" >&2
+    echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $(echo "${git_err:0:200}" | tr -d '\033')" >&2
     if ! prune_err=$(git worktree prune 2>&1); then
-      echo "WARNING: git worktree prune also failed: $prune_err" >&2
+      echo "WARNING: git worktree prune also failed: $(echo "${prune_err:0:200}" | tr -d '\033')" >&2
     fi
   fi
 fi

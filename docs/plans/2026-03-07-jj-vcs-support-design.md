@@ -152,6 +152,12 @@ CHANGE_ID: kkmpptxz
 
 ## 3. Hook Integration — VCS-Aware Isolation
 
+### worktree-helpers.sh
+
+A shared helper library extracted during implementation for DRY reasons. Contains common
+functions (`detect_vcs`, `get_repo_root`) used by both `worktree-create.sh` and
+`worktree-remove.sh` to avoid duplicating VCS detection logic.
+
 ### worktree-create.sh
 
 Becomes VCS-aware:
@@ -184,12 +190,13 @@ Zero git commands needed in jj repos, even for agent isolation.
 
 ## 4. Reference Files
 
-Two reference files, each consumed by different skills:
+Three reference files (a third was extracted during implementation for DRY reasons):
 
 | File | Purpose | Consumer |
 |------|---------|----------|
 | `pr-review/references/vcs-equivalence.md` | git↔jj command mapping | pr-review detection preamble |
 | `jj/skills/jujutsu/references/jj-git-interop.md` | Colocated repo specifics, bookmark↔branch sync, workspace behavior | jj skill SKILL.md |
+| `pr-review/references/vcs-detection-preamble.md` | Shared VCS detection shell snippet included by all agents and skills | All pr-review agents and skills (DRY extraction) |
 
 ## Out of Scope
 

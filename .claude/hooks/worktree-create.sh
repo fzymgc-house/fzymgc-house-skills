@@ -40,11 +40,6 @@ cleanup_on_error() {
   fi
 }
 
-mkdir -p "$WORKTREE_PARENT" || {
-  echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
-  exit 1
-}
-
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
   if ! command -v jj &>/dev/null; then
@@ -61,6 +56,10 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
     exit 1
   fi
+  mkdir -p "$WORKTREE_PARENT" || {
+    echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
+    exit 1
+  }
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $jj_out" >&2
@@ -69,6 +68,10 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree
+  mkdir -p "$WORKTREE_PARENT" || {
+    echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
+    exit 1
+  }
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $git_err" >&2
     cleanup_on_error

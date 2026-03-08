@@ -222,3 +222,60 @@ MOCK
   run bash -c 'echo "{\"name\": \"no-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
 }
+
+# --- orphan directory leak tests ---
+
+@test "jj path: cleans up WORKTREE_PARENT when jj not installed" {
+  setup_jj
+  PATH="/usr/bin:/bin" run bash -c 'echo "{\"name\": \"orphan-nojj\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"jj is not installed"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
+@test "jj path: cleans up WORKTREE_PARENT when jj version too old" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "Usage: jj workspace add <path>"
+  exit 0
+fi
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"orphan-old\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--name"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
+@test "jj path: cleans up WORKTREE_PARENT when jj --help fails" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"orphan-helpfail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"jj failed to run"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
+@test "fails gracefully when mkdir -p fails" {
+  # Create a nested temp dir so we can chmod the parent
+  SANDBOX=$(mktemp -d)
+  NESTED="${SANDBOX}/repos/myrepo"
+  mkdir -p "$NESTED"
+  cd "$NESTED"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  # Make the repos/ dir read-only so mkdir -p for _worktrees sibling fails
+  chmod a-w "${SANDBOX}/repos"
+  run bash -c 'echo "{\"name\": \"mkdir-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  chmod a+w "${SANDBOX}/repos"
+  rm -rf "$SANDBOX"
+  [ "$status" -eq 1 ]
+}

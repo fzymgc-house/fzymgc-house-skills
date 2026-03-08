@@ -35,7 +35,14 @@ WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 cleanup_on_error() {
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
-  [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
+  if [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]]; then
+    rmdir "$WORKTREE_PARENT" 2>/dev/null || echo "WARNING: failed to remove empty parent '$WORKTREE_PARENT'" >&2
+  fi
+}
+
+mkdir -p "$WORKTREE_PARENT" || {
+  echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
+  exit 1
 }
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
@@ -47,14 +54,13 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # Runtime version probe: jj is user-installed and can be updated
   # independently, so we check --name support on each invocation
   if ! jj_help=$(jj workspace add --help 2>&1); then
-    echo "ERROR: jj failed to run: $jj_help" >&2
+    echo "ERROR: jj failed to run: ${jj_help:0:200}" >&2
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
     exit 1
   fi
-  mkdir -p "$WORKTREE_PARENT"
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $jj_out" >&2
@@ -63,7 +69,6 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree
-  mkdir -p "$WORKTREE_PARENT"
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $git_err" >&2
     cleanup_on_error

@@ -22,10 +22,15 @@ jj **bookmarks** map directly to git **branches**:
 
 ```bash
 jj git push -b <bookmark>      # Push a specific bookmark to its remote
+jj git push --change <rev>     # Auto-create bookmark and push (e.g., push-kxryzmsp)
 jj git push --all               # Push all bookmarks
 jj git fetch                    # Fetch from all remotes
 jj git fetch --remote origin    # Fetch from a specific remote
 ```
+
+`jj git push --change <rev>` automatically creates a bookmark named `push-<change-id-prefix>` (e.g.,
+`push-kxryzmsp`). The exact prefix length may vary by jj version. Use `jj bookmark list` after pushing
+to see the auto-created bookmark name.
 
 After fetching, new remote branches appear as `<bookmark>@<remote>` (e.g., `main@origin`).
 

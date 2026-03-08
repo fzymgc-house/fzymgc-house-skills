@@ -20,7 +20,7 @@ they STOP and report STATUS: FAILED.
 | Log | `git log --oneline` | `jj log --no-graph` |
 | Log (with patch) | `git log -p` | `jj log -p` |
 | Show commit | `git show <ref>` | `jj show <ref>` |
-| Current location | `git branch --show-current` | `jj log -r @ --no-graph -T change_id` |
+| Current location | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id.short(8)'` |
 | File list | `git ls-files` | `jj file list` |
 | Stage + commit | `git add <files> && git commit -m "..."` | `jj commit -m "..."` |
 | Push | `git push` | `jj git push -b <name>` |
@@ -31,7 +31,7 @@ they STOP and report STATUS: FAILED.
 | Create workspace | `git worktree add <path> -b <branch> HEAD` | `jj workspace add <path> --name <name>` |
 | Remove workspace | `git worktree remove <path>` | `jj workspace forget <name>` + `rm -rf <path>` |
 | List workspaces | `git worktree list` | `jj workspace list` |
-| Workspace identity | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id ++ " " ++ description.first_line()'` |
+| Workspace identity | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id.short(8) ++ " " ++ description.first_line()'` |
 
 ## Key Differences
 

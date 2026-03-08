@@ -346,9 +346,14 @@ WORKTREE_BRANCH):
    or jj not installed), log a warning but proceed with directory
    cleanup. The directory removal is the critical step.
 
+   Note: the `WorktreeRemove` hook (`.claude/hooks/worktree-remove.sh`)
+   performs the same `jj workspace forget` + `rm -rf` sequence. The
+   explicit instructions here are for orchestrators running outside
+   the hook system (e.g., direct Task dispatch without worktree hooks).
+
 #### Post-batch verification
 
-5. **Verify clean state after each batch.** After all commits in a
+**Post-batch: Verify clean state.** After all commits in a
    batch are integrated, verify the working tree is clean before
    the next loop iteration:
 
@@ -373,6 +378,9 @@ prompt: |
   FINDING_IDS: <comma-separated>
   Review the following changes against the original findings.
   <VCS diff of integrated changes>
+  Generate the diff:
+  - git: git diff <before-sha>..HEAD
+  - jj: jj diff --from <pre-rebase-change-id> --to <pr-bookmark>
   Return per-finding: PASS | FAIL: <reason>
 ```
 

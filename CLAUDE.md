@@ -176,7 +176,7 @@ repos (which confuses LSP servers):
 WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
 this automatically. In jj repos, hooks use `jj workspace add/forget`
 instead of `git worktree add/remove`. Do NOT manually create worktrees
-inside `.claude/worktrees/`.
+inside the `<repo>_worktrees/` sibling directory.
 
 **VCS-specific behavior:**
 

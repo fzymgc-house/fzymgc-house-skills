@@ -197,3 +197,27 @@ setup_jj_worktree() {
   [[ "$output" == *"could not determine repo root"* ]]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
+
+@test "detect_repo_root falls back to jj root when git rev-parse fails" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  mkdir -p "${NON_GIT}_worktrees/jj-fallback-wt"
+  # Mock jj that responds to 'root' with the directory path and handles 'workspace forget'
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${NON_GIT}"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  PATH="${NON_GIT}/bin:$PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/jj-fallback-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${NON_GIT}_worktrees/jj-fallback-wt" ]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}

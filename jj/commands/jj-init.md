@@ -45,6 +45,10 @@ allowed-tools:
    grep -qxF '.jj/' .gitignore 2>/dev/null || echo '.jj/' >> .gitignore
    ```
 
+   If the append fails (non-zero exit code), inform the user: "Could not update `.gitignore`
+   automatically. Please add `.jj/` to `.gitignore` manually to prevent jj internals from
+   being tracked by git."
+
 5. **Verify** — Run `jj st` and `jj log --no-graph -n 3` to confirm the repo is working.
    Report success: "Colocated jj repo initialized. Both `jj` and `git` commands work in this
    directory."

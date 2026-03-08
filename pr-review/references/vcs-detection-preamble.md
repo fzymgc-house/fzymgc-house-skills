@@ -9,13 +9,14 @@ repositories that may use git or jj (Jujutsu).
    - If the result is "none", STOP and report
      STATUS: FAILED -- "No VCS detected (no .jj/ or .git/ directory)"
 2. **Verify location:**
-   - jj: Run `jj workspace list` and extract the workspace entry whose
-     path EXACTLY matches your `pwd` (each line shows `<name>: <path>`).
-     Then verify the workspace name starts with `worktree-`. If you are
-     in the `default` workspace, STOP and report STATUS: FAILED --
-     "Operating in default workspace (main equivalent). Dispatch to a
-     worktree workspace instead." Do NOT accept substring matches --
-     compare the full path component.
+   - jj: Run `jj workspace list`. Output format is
+     `<name>: <change-id> <commit-id> <description>` (the current
+     workspace has a `(current)` suffix). Extract the workspace name
+     from the line whose name matches your expected workspace prefix
+     `worktree-`. Verify the workspace name starts with `worktree-`.
+     If you are in the `default` workspace, STOP and report
+     STATUS: FAILED -- "Operating in default workspace (main
+     equivalent). Dispatch to a worktree workspace instead."
    - git: Run `pwd` and `git branch --show-current` -- verify you are on
      a `worktree/*` branch, NOT `main`
 3. If anything looks wrong, STOP and report STATUS: FAILED

@@ -124,6 +124,7 @@ MOCK
   [ "$status" -eq 1 ]
   [[ "$output" == *"ERROR"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/fail-test" ]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
 @test "rejects dot-prefixed names" {
@@ -155,12 +156,30 @@ MOCK
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
 #!/bin/bash
-echo "lefthook-installed"
+touch ./lefthook-marker
 MOCK
   chmod +x "${REPO_ROOT}/bin/lefthook"
   PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/jj-hook-test"* ]]
+  [ -f "${REPO_ROOT}_worktrees/jj-hook-test/lefthook-marker" ]
+}
+
+@test "jj path: warns when lefthook install fails" {
+  setup_jj
+  create_mock_jj
+  touch "${REPO_ROOT}/lefthook.yml"
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
+#!/bin/bash
+echo "mock error" >&2
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/lefthook"
+  PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-lh-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"_worktrees/jj-lh-fail"* ]]
 }
 
 # --- lefthook integration tests ---
@@ -170,12 +189,13 @@ MOCK
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
 #!/bin/bash
-echo "lefthook-installed"
+touch ./lefthook-marker
 MOCK
   chmod +x "${REPO_ROOT}/bin/lefthook"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/hook-test"* ]]
+  [ -f "${REPO_ROOT}_worktrees/hook-test/lefthook-marker" ]
 }
 
 @test "warns when lefthook install fails" {

@@ -210,7 +210,7 @@ jj workspace update-stale
 
 Key behaviors:
 
-- `jj workspace list` shows all workspaces with their change-id, commit-id, and description (not paths)
+- `jj workspace list` shows all workspaces with their change-id, commit-id, and description
 - Each workspace has its own working-copy commit (`@`)
 - Changes committed in one workspace are immediately visible in others
 - Use `jj workspace update-stale` if a workspace falls behind
@@ -293,7 +293,7 @@ environments.
 | Push bookmark | `jj git push -b <name>` |
 | Fetch remotes | `jj git fetch` |
 | List files | `jj file list` |
-| Current location | `jj log -r @ --no-graph -n 1` |
+| Current location | `jj log -r @ --no-graph -T 'change_id.short(8)'` |
 | Add workspace | `jj workspace add <path> --name <name>` |
 | List workspaces | `jj workspace list` |
 | Remove workspace | `jj workspace forget <name>` |

@@ -115,6 +115,45 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
 
+# Create a mock jj for a pure jj repo (no .git/).
+# Unlike create_mock_jj, the 'root' command echoes JJ_REPO_ROOT directly
+# instead of delegating to git rev-parse (which would fail without .git/).
+# Requires JJ_REPO_ROOT to be set in the environment before calling this helper
+# and before running the test binary.
+create_pure_jj_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+_mock_workspace_add() {
+  if [[ "$1" == "--help" ]]; then
+    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+    echo "  --name <NAME>"
+    exit 0
+  fi
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      *) mkdir -p "$arg"; exit 0 ;;
+    esac
+  done
+  exit 1
+}
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  shift 2; _mock_workspace_add "$@"
+fi
+if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
+  exit 0
+fi
+if [[ "$1" == "root" ]]; then
+  echo "$JJ_REPO_ROOT"
+  exit 0
+fi
+echo "ERROR: unexpected jj invocation: $*" >&2
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
 # Create a mock jj that responds to --help but fails on workspace add.
 # Used for testing cleanup-on-failure paths.
 create_failing_jj_mock() {

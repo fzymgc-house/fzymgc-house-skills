@@ -223,6 +223,25 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "jj path: pure jj repo (no .git) uses jj root fallback for repo root detection" {
+  # Create a temp directory with only .jj/ — no git init, no .git/
+  PURE_JJ=$(mktemp -d)
+  mkdir -p "${PURE_JJ}/.jj"
+  # create_pure_jj_mock writes to MOCK_JJ_BIN_DIR which defaults to REPO_ROOT/bin;
+  # override REPO_ROOT temporarily so the bin dir is inside PURE_JJ.
+  ORIG_REPO_ROOT="$REPO_ROOT"
+  REPO_ROOT="$PURE_JJ"
+  create_pure_jj_mock
+  REPO_ROOT="$ORIG_REPO_ROOT"
+  # Pass JJ_REPO_ROOT so the mock's 'root' command returns the pure-jj directory.
+  PATH="${PURE_JJ}/bin:$PATH" JJ_REPO_ROOT="${PURE_JJ}" run bash -c \
+    'cd '"$PURE_JJ"' && echo "{\"name\": \"pure-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/pure-jj-wt"* ]]
+  [ -d "${PURE_JJ}_worktrees/pure-jj-wt" ]
+  rm -rf "$PURE_JJ" "${PURE_JJ}_worktrees"
+}
+
 # --- lefthook integration tests ---
 # Lefthook runs on shared post-VCS code (identical for git and jj paths),
 # so these tests cover both code paths without duplication.

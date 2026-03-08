@@ -269,6 +269,15 @@ Loop while open, non-deferred findings remain:
 5. **Collect results** from each agent: STATUS, VCS, FILES_CHANGED,
    DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
 
+   If `VCS` is missing from the fix-worker response:
+
+   1. Detect VCS from the current repo: `test -d .jj && echo jj || echo git`
+   2. If git, derive branch from worktree path:
+      `git -C <worktree-path> branch --show-current`
+   3. If jj, list workspaces and match by path:
+      `jj workspace list | grep <worktree-name>`
+   4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
+
 ### Phase 4b: Integrate Fix Commits
 
 Integration method depends on VCS:

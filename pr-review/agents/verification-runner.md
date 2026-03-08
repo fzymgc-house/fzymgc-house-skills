@@ -131,6 +131,9 @@ and what should change.
 
 ```text
 STATUS: PASS | FAIL
+VCS: git | jj
+WORKTREE_BRANCH: <branch>   (git only)
+CHANGE_ID: <change-id>      (jj only)
 
 ## Project Standards
 CLAUDE.md: READ | NOT FOUND
@@ -148,6 +151,10 @@ tests: PASS | FAIL
 
 FAILURES: <details or "none">
 ```
+
+The VCS discriminant fields follow the same rules as fix-worker:
+when `VCS: git`, include `WORKTREE_BRANCH` and omit `CHANGE_ID`;
+when `VCS: jj`, include `CHANGE_ID` and omit `WORKTREE_BRANCH`.
 
 STATUS is FAIL if **any** finding is MISALIGNED, **any** standards
 violation is found, or **any** gate fails.

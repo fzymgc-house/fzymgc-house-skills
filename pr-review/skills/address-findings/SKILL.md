@@ -357,10 +357,21 @@ WORKTREE_BRANCH):
 
       ```bash
       jj undo  # revert the failed bookmark set
+      ```
+
+      If this `jj undo` fails, STOP and report STATUS: FAILED with
+      "jj undo failed to revert bookmark set — manual recovery required".
+
+      ```bash
       jj undo  # revert the rebase
       ```
 
+      If this `jj undo` fails, STOP and report STATUS: FAILED with
+      "jj undo failed to revert rebase — manual recovery required".
+
    2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
+      If verification fails, STOP and report STATUS: FAILED with
+      "jj undo did not restore expected state".
    3. Mark FAILED, add bead comment, re-queue for next round.
 
 3. Forget the workspace and remove the directory:

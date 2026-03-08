@@ -153,6 +153,24 @@ MOCK
   rm -rf "$(dirname "$UNSAFE_ROOT")" "${UNSAFE_ROOT}_worktrees"
 }
 
+@test "exits cleanly when _worktrees parent dir does not exist" {
+  # Set up a repo whose _worktrees sibling doesn't exist, but the worktree
+  # path is inside a differently-named parent that DOES exist.
+  # This triggers the realpath failure on EXPECTED_PARENT.
+  ALT_ROOT=$(mktemp -d)
+  cd "$ALT_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  # Create a worktree dir under a different name (not ${REPO_NAME}_worktrees)
+  mkdir -p "${ALT_ROOT}_other/some-worktree"
+  # The script computes EXPECTED_PARENT as ${REPO_PARENT}/${REPO_NAME}_worktrees
+  # which doesn't exist — realpath should fail gracefully
+  run bash -c 'echo "{\"path\": \"'"${ALT_ROOT}_other/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  cd /
+  rm -rf "$ALT_ROOT" "${ALT_ROOT}_other"
+}
+
 @test "fails when git rev-parse cannot determine repo root" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}_worktrees/orphan-wt"

@@ -42,10 +42,10 @@ fi
 
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
-EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || {
-  echo "ERROR: expected worktree parent does not exist: $EXPECTED_PARENT" >&2
-  exit 1
-}
+# If the _worktrees parent doesn't exist, worktree is already gone — exit cleanly
+if ! EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null); then
+  exit 0
+fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent
   *)

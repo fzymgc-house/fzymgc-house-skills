@@ -31,6 +31,8 @@ cleanup_on_error() {
   [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
 }
 
+mkdir -p "$WORKTREE_PARENT"
+
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
   if ! command -v jj &>/dev/null; then
@@ -39,11 +41,14 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
   # Runtime version probe: jj is user-installed and can be updated
   # independently, so we check --name support on each invocation
-  if ! jj workspace add --help 2>&1 | grep -q -- '--name'; then
+  jj_help=$(jj workspace add --help 2>&1) || {
+    echo "ERROR: jj failed to run (exit $?): $jj_help" >&2
+    exit 1
+  }
+  if ! echo "$jj_help" | grep -q -- '--name'; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
     exit 1
   fi
-  mkdir -p "$WORKTREE_PARENT"
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $jj_out" >&2
@@ -52,7 +57,6 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree
-  mkdir -p "$WORKTREE_PARENT"
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $git_err" >&2
     cleanup_on_error
@@ -62,7 +66,9 @@ fi
 
 # Install hooks in the new workspace (lefthook works in both VCS modes)
 if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
-  (cd "$WORKTREE_PATH" && lefthook install 2>/dev/null) || true
+  if ! lh_err=$(cd "$WORKTREE_PATH" && lefthook install 2>&1); then
+    echo "WARNING: lefthook install failed in worktree: $lh_err" >&2
+  fi
 fi
 
 echo "$WORKTREE_PATH"

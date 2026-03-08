@@ -155,8 +155,9 @@ CHANGE_ID: kkmpptxz
 ### worktree-helpers.sh
 
 A shared helper library extracted during implementation for DRY reasons. Contains common
-functions (`detect_vcs`, `get_repo_root`) used by both `worktree-create.sh` and
-`worktree-remove.sh` to avoid duplicating VCS detection logic.
+functions (`sanitize_for_output`, `validate_safe_name`, `detect_repo_root`) used by both
+`worktree-create.sh` and `worktree-remove.sh` to avoid duplicating validation and VCS
+detection logic.
 
 ### worktree-create.sh
 

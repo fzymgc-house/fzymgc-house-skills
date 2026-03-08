@@ -42,6 +42,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
   if ! command -v jj &>/dev/null; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
+    cleanup_on_error
     exit 1
   fi
   # Runtime version probe: jj is user-installed and can be updated
@@ -51,10 +52,12 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # replaced between two calls in the same hook invocation is negligible.
   if ! jj_help=$(jj workspace add --help 2>&1); then
     echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:200}")" >&2
+    cleanup_on_error
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
+    cleanup_on_error
     exit 1
   fi
   # WORKTREE_PARENT exists — cleanup_on_error handles it

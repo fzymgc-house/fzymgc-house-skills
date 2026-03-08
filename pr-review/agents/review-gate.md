@@ -18,10 +18,11 @@ address the review findings they claim to fix.
 
 On startup:
 
-1. Detect VCS: `test -d .jj && echo jj || echo git`
-2. Use the detected VCS for interpreting diffs (jj diffs vs git diffs).
-   Consult `pr-review/references/vcs-equivalence.md` for command
-   equivalents.
+1. Note: You receive the VCS diff as input from the orchestrator — you do
+   NOT need to run VCS commands to obtain it. The diff format may be
+   either git-style or jj-style depending on the repository.
+2. Consult `pr-review/references/vcs-equivalence.md` if you need to
+   interpret jj-specific diff syntax.
 
 ## Scope and Standards
 

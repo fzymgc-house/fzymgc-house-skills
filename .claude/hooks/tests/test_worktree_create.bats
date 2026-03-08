@@ -163,6 +163,28 @@ MOCK
   [[ "$output" == *"--name"* ]]
 }
 
+@test "jj path: exits with error when jj workspace add --help fails" {
+  setup_jj
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/jj"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"help-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"jj failed to run"* ]]
+}
+
+@test "jj path: removes empty WORKTREE_PARENT on jj workspace add failure" {
+  setup_jj
+  create_failing_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"cleanup-parent\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [ ! -d "${REPO_ROOT}_worktrees/cleanup-parent" ]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
 # --- lefthook integration tests ---
 # Lefthook runs on shared post-VCS code (identical for git and jj paths),
 # so these tests cover both code paths without duplication.

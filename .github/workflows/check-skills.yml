@@ -8,7 +8,7 @@ jobs:
   drift-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Check release-please config covers all skills
         run: |
           actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
@@ -42,7 +42,7 @@ jobs:
   bats:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Install bats
         run: |
           sudo apt-get update -qq
@@ -53,7 +53,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Install rumdl
         run: |
           RUMDL_VERSION="v0.1.43"

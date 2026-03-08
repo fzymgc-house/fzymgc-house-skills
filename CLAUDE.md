@@ -183,6 +183,15 @@ inside the `<repo>_worktrees/` sibling directory.
 - **git**: fix-worker reports `WORKTREE_BRANCH`; orchestrator uses cherry-pick to integrate
 - **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase` to integrate (no cherry-pick)
 
+### jj Operation Log Semantics
+
+jj's op log only records **successful** operations (unlike git's reflog).
+A failed `jj bookmark set` leaves no op-log entry — `jj undo` skips past
+it to the previous successful op. Never "undo twice" to account for failures.
+
+In jj, `@` is the working-copy commit (typically empty). Use `@-` (parent)
+when verifying committed state (e.g., after `jj undo` or `jj commit`).
+
 ### Skill Invocation
 
 Skills are **model-invoked** (Claude decides when to use them), not user-invoked slash commands.

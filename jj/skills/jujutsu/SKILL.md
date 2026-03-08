@@ -49,7 +49,7 @@ Agents run non-interactively. Follow these constraints strictly:
 
 - Always use `-m` for commit/describe messages -- never open an editor
 - Verify state with `jj st` after any mutation
-- Always use `--no-pager` or set `JJ_CONFIG='ui.paginate="never"'` if pager interferes
+- Always use `--no-pager` or pass `--config ui.paginate=never` if pager interferes
 
 **Never use these interactive commands:**
 

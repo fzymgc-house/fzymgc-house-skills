@@ -187,6 +187,21 @@
           "check": "test -d .jj"
         }
       ]
+    },
+    {
+      "id": "B9",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "check repo status (in a directory with no .jj/ or .git/)",
+      "expected_output": "Should detect no VCS and report appropriately",
+      "assertions": [
+        {
+          "name": "detects-no-vcs",
+          "description": "Reports no VCS detected when neither .jj/ nor .git/ exists",
+          "type": "manual",
+          "check": "Verify agent reports no VCS or asks user to initialize"
+        }
+      ]
     }
   ]
 }

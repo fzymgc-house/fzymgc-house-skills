@@ -83,6 +83,7 @@ setup_jj() {
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/test-jj-wt"* ]]
+  [ -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
 @test "jj path: forwards --name flag to jj workspace add" {
@@ -175,6 +176,21 @@ MOCK
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/hook-test"* ]]
+}
+
+@test "warns when lefthook install fails" {
+  touch "${REPO_ROOT}/lefthook.yml"
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
+#!/bin/bash
+echo "mock error" >&2
+exit 1
+MOCK
+  chmod +x "${REPO_ROOT}/bin/lefthook"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"lh-fail-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"_worktrees/lh-fail-test"* ]]
 }
 
 @test "skips lefthook install when lefthook.yml absent" {

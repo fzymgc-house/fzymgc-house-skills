@@ -1,11 +1,16 @@
 # Shared test helpers for worktree hook BATS tests
 
+# Ensure MOCK_JJ_BIN_DIR is set and the directory exists.
+_setup_mock_bin_dir() {
+  MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"
+  mkdir -p "$MOCK_JJ_BIN_DIR"
+}
+
 # Create a mock jj binary that handles common workspace operations.
 # Uses REPO_ROOT (must be set before calling).
 # Sets MOCK_JJ_BIN_DIR for PATH prepending.
 create_mock_jj() {
-  MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"
-  mkdir -p "$MOCK_JJ_BIN_DIR"
+  _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
 if [[ "$1" == "workspace" && "$2" == "add" ]]; then
@@ -48,8 +53,7 @@ MOCK
 # Create a mock jj that responds to --help but fails on workspace add.
 # Used for testing cleanup-on-failure paths.
 create_failing_jj_mock() {
-  MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"
-  mkdir -p "$MOCK_JJ_BIN_DIR"
+  _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
 if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then

@@ -331,9 +331,10 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` once to revert the rebase. The failed `jj bookmark
-      set` also created an operation entry, but `jj undo` undoes the
-      most recent successful state change, which is the preceding rebase.
+   1. Run `jj undo` to revert the rebase. A failed `jj bookmark set`
+      does not create an operation log entry (jj only records
+      successful operations), so `jj undo` directly reverts the
+      preceding rebase.
    2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
    3. Mark FAILED, add bead comment, re-queue for next round.
 

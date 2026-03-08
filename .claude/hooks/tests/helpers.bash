@@ -33,6 +33,10 @@ fi
 if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
   exit 0
 fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
 echo "ERROR: unexpected jj invocation: $*" >&2
 exit 1
 MOCK

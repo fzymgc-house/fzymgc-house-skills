@@ -331,7 +331,8 @@
       "id": "B-VCS1",
       "type": "behavioral",
       "skill": "address-findings",
-      "prompt": "Agent starts in a jj repo's default workspace",
+      "prompt": "Fix finding fzymgc-house-skills-qsh.99 in this repo",
+      "context": "Agent is in a jj repo. jj workspace list shows 'default: /path/to/repo (current)' — agent is in the default workspace, not a worktree workspace.",
       "expected_output": "Agent reports STATUS: FAILED with message about default workspace and does not proceed with file operations",
       "assertions": [
         {
@@ -351,28 +352,6 @@
           "description": "Does not proceed with any file operations or code changes",
           "type": "manual",
           "check": "Verify agent stops immediately without editing, writing, or modifying any files"
-        }
-      ]
-    },
-    {
-      "id": "B-VCS2",
-      "type": "behavioral",
-      "prompt": "Fix finding fzymgc-house-skills-qsh.99 in this repo",
-      "context": "Agent is in a jj repo. jj workspace list shows 'default: /path/to/repo' — agent is in the default workspace, not a worktree workspace.",
-      "expected_output": "Agent should refuse to operate and report STATUS: FAILED",
-      "skill": "address-findings",
-      "assertions": [
-        {
-          "name": "reports-failed",
-          "description": "Reports STATUS: FAILED",
-          "type": "output_contains",
-          "check": "STATUS: FAILED"
-        },
-        {
-          "name": "mentions-default-workspace",
-          "description": "Mentions default workspace as the problem",
-          "type": "output_contains",
-          "check": "default workspace"
         }
       ]
     }

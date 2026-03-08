@@ -4,13 +4,9 @@
 # Output: print the worktree path to stdout (framework reads this)
 set -euo pipefail
 
-validate_safe_name() {
-  local name="$1" label="$2"
-  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* ]]; then
-    echo "ERROR: invalid ${label} '${name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
-    return 1
-  fi
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=.claude/hooks/worktree-helpers.sh
+source "${SCRIPT_DIR}/worktree-helpers.sh"
 
 INPUT=$(cat)
 NAME=$(echo "$INPUT" | jq -r '.name // empty')
@@ -22,10 +18,7 @@ fi
 
 validate_safe_name "$NAME" "worktree name" || exit 1
 
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
-  echo "ERROR: not inside a git/jj repository (git rev-parse failed)" >&2
-  exit 1
-}
+REPO_ROOT=$(detect_repo_root) || exit 1
 REPO_NAME=$(basename "$REPO_ROOT")
 
 validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
@@ -60,6 +53,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
     exit 1
   }
+  # From here on, WORKTREE_PARENT exists — cleanup_on_error handles it
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $jj_out" >&2

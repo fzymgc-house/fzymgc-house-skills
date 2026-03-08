@@ -12,6 +12,7 @@ allowed-tools:
   - Write
   - Grep
   - Glob
+  - "Bash(test *)"
   - "Bash(git *)"
   - "Bash(jj *)"
   - "Bash(gh *)"
@@ -274,8 +275,11 @@ Loop while open, non-deferred findings remain:
    1. Detect VCS from the current repo: `test -d .jj && echo jj || echo git`
    2. If git, derive branch from worktree path:
       `git -C <worktree-path> branch --show-current`
-   3. If jj, list workspaces and match by name:
-      `jj workspace list | grep "^worktree-<name>:"`
+   3. If jj, recover CHANGE_ID from the worktree workspace:
+      `jj --at-operation=@ -R <worktree-path> log -r @- --no-graph -T 'change_id.short(8)'`
+      This reads the parent of the working copy in the worktree (the
+      committed fix). If the command fails, mark FAILED with
+      "Could not recover CHANGE_ID from worktree".
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 
 ### Phase 4b: Integrate Fix Commits
@@ -340,13 +344,12 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` twice — once to revert the failed `jj bookmark set`
-      (jj records all operations, including failures), and once more
-      to revert the preceding `jj rebase`:
+   1. Run `jj undo` once — this reverts the rebase (jj does NOT record
+      failed commands in its operation log, so there is no bookmark-set
+      operation to undo):
 
       ```bash
-      jj undo  # revert failed bookmark set
-      jj undo  # revert rebase
+      jj undo  # revert the rebase
       ```
 
    2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.

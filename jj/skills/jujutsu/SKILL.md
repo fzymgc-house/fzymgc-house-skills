@@ -26,6 +26,7 @@ metadata:
 - [Git Integration](#git-integration)
 - [Conflict Handling](#conflict-handling)
 - [Quick Reference](#quick-reference)
+- [See Also](#see-also)
 
 ## Detection
 
@@ -210,7 +211,8 @@ jj workspace update-stale
 
 Key behaviors:
 
-- `jj workspace list` shows all workspaces with their path (format: `<name>: <path>`)
+- `jj workspace list` shows all workspaces (format: `<name>: <commit summary>`,
+  with `(current)` appended to the active workspace's line)
 - Each workspace has its own working-copy commit (`@`)
 - Changes committed in one workspace are immediately visible in others
 - Use `jj workspace update-stale` if a workspace falls behind

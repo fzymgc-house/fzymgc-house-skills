@@ -260,7 +260,7 @@ ONLY structured results (no explanations) to minimize token use:
 
 1. Read Phase 2 categorization (comment IDs, categories, user guidance)
 2. Query beads for review state: `bd list --parent <review-bead-id> --json`
-3. Run `git diff` to see actual changes
+3. Run VCS diff to see actual changes (`git diff` or `jj diff`)
 4. For EACH comment ID, output one line:
 
    ```text

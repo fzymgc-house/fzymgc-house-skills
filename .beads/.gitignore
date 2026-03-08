@@ -38,6 +38,9 @@ dolt-monitor.pid.lock
 # Backup data (auto-exported JSONL, local-only)
 backup/
 
+# Corrupt database backups (may contain credential keys)
+dolt.*.corrupt.backup/
+
 # Legacy files (from pre-Dolt versions)
 *.db
 *.db?*

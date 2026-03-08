@@ -3,13 +3,9 @@
 # Input: JSON on stdin with "path" field
 set -euo pipefail
 
-validate_safe_name() {
-  local name="$1" label="$2"
-  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* ]]; then
-    echo "ERROR: invalid ${label} '${name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
-    return 1
-  fi
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=.claude/hooks/worktree-helpers.sh
+source "${SCRIPT_DIR}/worktree-helpers.sh"
 
 INPUT=$(cat)
 WORKTREE_PATH=$(echo "$INPUT" | jq -r '.path // empty')
@@ -74,7 +70,8 @@ fi
 # Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
 # so this is safe even when git worktree remove already cleaned up.
 if ! rm -rf "$WORKTREE_PATH" 2>/dev/null; then
-  echo "WARNING: failed to remove worktree directory '$WORKTREE_PATH'" >&2
+  echo "ERROR: failed to remove worktree directory '$WORKTREE_PATH'" >&2
+  exit 1
 fi
 
 # Clean up empty parent directory

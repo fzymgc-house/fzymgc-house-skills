@@ -44,3 +44,20 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
+
+# Create a mock jj that responds to --help but fails on workspace add.
+# Used for testing cleanup-on-failure paths.
+create_failing_jj_mock() {
+  MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"
+  mkdir -p "$MOCK_JJ_BIN_DIR"
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+  echo "  --name <NAME>"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}

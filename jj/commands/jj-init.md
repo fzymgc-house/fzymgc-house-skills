@@ -3,7 +3,7 @@ name: jj-init
 description: >-
   Initialize a colocated jj repo in an existing git repository.
   Use when the user asks to "set up jj", "init jj", or "colocate jj".
-user_invocable: true
+user-invocable: true
 allowed-tools:
   - "Bash(jj *)"
   - "Bash(git *)"

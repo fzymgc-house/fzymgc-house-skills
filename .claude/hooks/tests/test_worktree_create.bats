@@ -56,6 +56,14 @@ teardown() {
   [ "$status" -eq 1 ]
 }
 
+@test "fails when not inside a git repo (git rev-parse failure)" {
+  NON_GIT=$(mktemp -d)
+  run bash -c 'cd '"$NON_GIT"' && echo "{\"name\": \"orphan-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"not inside a git repository"* ]]
+  rm -rf "$NON_GIT"
+}
+
 # --- jj code path tests ---
 
 setup_jj() {
@@ -103,17 +111,8 @@ MOCK
 
 @test "jj path: cleans up on jj workspace add failure" {
   setup_jj
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "  --name <NAME>"
-  exit 0
-fi
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"fail-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  create_failing_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"fail-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/fail-wt" ]
 }
@@ -146,6 +145,21 @@ MOCK
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"--name"* ]]
+}
+
+@test "jj path: runs lefthook install when lefthook.yml exists" {
+  setup_jj
+  create_mock_jj
+  touch "${REPO_ROOT}/lefthook.yml"
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
+#!/bin/bash
+echo "lefthook-installed"
+MOCK
+  chmod +x "${REPO_ROOT}/bin/lefthook"
+  PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/jj-hook-test"* ]]
 }
 
 # --- lefthook integration tests ---

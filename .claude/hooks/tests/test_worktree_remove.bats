@@ -33,6 +33,15 @@ teardown() {
   [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
 }
 
+@test "git path: surfaces warning when git worktree remove fails" {
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  mkdir -p "${REPO_ROOT}_worktrees/test-wt"
+  run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
+  [[ "$output" == *"WARNING"* ]]
+}
+
 @test "rejects path outside expected parent" {
   mkdir -p /tmp/evil-test-dir
   run bash -c 'echo "{\"path\": \"/tmp/evil-test-dir\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'

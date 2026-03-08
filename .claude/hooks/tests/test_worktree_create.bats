@@ -135,8 +135,7 @@ MOCK
   git -c commit.gpgsign=false commit --allow-empty -m "init" -q
   run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
-  [[ "$output" == *"repository directory name"* ]]
-  [[ "$output" == *"unsafe characters"* ]]
+  [[ "$output" == *"invalid repository directory name"* ]]
   cd /
   rm -rf "$(dirname "$UNSAFE_ROOT")"
 }

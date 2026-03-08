@@ -147,8 +147,7 @@ MOCK
   mkdir -p "${UNSAFE_ROOT}_worktrees/test-wt"
   run bash -c 'echo "{\"path\": \"'"${UNSAFE_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 1 ]
-  [[ "$output" == *"repository directory name"* ]]
-  [[ "$output" == *"unsafe characters"* ]]
+  [[ "$output" == *"invalid repository directory name"* ]]
   cd /
   rm -rf "$(dirname "$UNSAFE_ROOT")" "${UNSAFE_ROOT}_worktrees"
 }

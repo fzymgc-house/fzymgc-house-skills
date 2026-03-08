@@ -4,6 +4,14 @@
 # Output: print the worktree path to stdout (framework reads this)
 set -euo pipefail
 
+validate_safe_name() {
+  local name="$1" label="$2"
+  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* ]]; then
+    echo "ERROR: invalid ${label} '${name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
+    return 1
+  fi
+}
+
 INPUT=$(cat)
 NAME=$(echo "$INPUT" | jq -r '.name // empty')
 
@@ -12,11 +20,7 @@ if [[ -z "$NAME" ]]; then
   exit 1
 fi
 
-# Reject names with path-traversal or shell metacharacters
-if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == .* || "$NAME" == *".."* ]]; then
-  echo "ERROR: invalid worktree name '$NAME' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
-  exit 1
-fi
+validate_safe_name "$NAME" "worktree name" || exit 1
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "ERROR: not inside a git/jj repository (git rev-parse failed)" >&2
@@ -24,11 +28,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 }
 REPO_NAME=$(basename "$REPO_ROOT")
 
-# Validate repo directory name (same rules as worktree NAME)
-if [[ "$REPO_NAME" =~ [^a-zA-Z0-9_.-] || "$REPO_NAME" == .* || "$REPO_NAME" == *".."* ]]; then
-  echo "ERROR: repository directory name '$REPO_NAME' contains unsafe characters" >&2
-  exit 1
-fi
+validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
 
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"

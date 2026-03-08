@@ -20,24 +20,14 @@ if [[ "$1" == "workspace" && "$2" == "add" ]]; then
     echo "  --name <NAME>"
     exit 0
   fi
-  # Parse args: find --name flag and destination path
-  # Real invocation: jj workspace add <path> --name <name>
-  shift 2  # drop "workspace" "add"
-  dest_path=""
-  has_name=false
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --name) has_name=true; shift ;;
+  # Find the destination path (first non-flag argument after "workspace add")
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
       -*) ;;
-      *) dest_path="$1" ;;
+      *) mkdir -p "$arg"; exit 0 ;;
     esac
-    shift
   done
-  if [[ "$has_name" == true && -n "$dest_path" ]]; then
-    mkdir -p "$dest_path"
-    exit 0
-  fi
-  echo "ERROR: --name flag or destination not passed to jj workspace add" >&2
   exit 1
 fi
 if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then

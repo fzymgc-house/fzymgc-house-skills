@@ -35,6 +35,9 @@ allowed-tools:
    The `--colocate` flag ensures jj shares the working copy with git.
    Always use `--colocate` when initializing in an existing git repo.
 
+   **If the command fails**, report the error to the user and stop.
+   Do NOT proceed to modify `.gitignore` or run verification steps.
+
 4. **Add .jj/ to .gitignore** — Check whether `.gitignore` exists and already contains `.jj/`.
    If not present, append `.jj/` to `.gitignore`:
 

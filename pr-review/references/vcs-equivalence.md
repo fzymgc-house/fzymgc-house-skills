@@ -30,7 +30,7 @@ they STOP and report STATUS: FAILED.
 | Create workspace | `git worktree add <path> -b <branch> HEAD` | `jj workspace add <path> --name <name>` |
 | Remove workspace | `git worktree remove <path>` | `jj workspace forget <name>` + `rm -rf <path>` |
 | List workspaces | `git worktree list` | `jj workspace list` |
-| Workspace identity | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id.short(8) ++ " " ++ description.first_line()'` |
+| Current location | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id.short(8) ++ " " ++ description.first_line()'` |
 
 ## Key Differences
 

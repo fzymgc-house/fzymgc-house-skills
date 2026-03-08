@@ -29,9 +29,9 @@ fi
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
 validate_safe_name "$WORKSPACE_NAME" "worktree name" || exit 1
 
-# Detect repo root — requires .git/ directory (present in colocated jj repos).
-# Non-colocated jj repos may reach this path if worktrees were created via
-# detect_repo_root's jj fallback; however, git rev-parse will fail here.
+# Detect repo root — works with both .git/ (via git rev-parse) and .jj/
+# (via jj root fallback). Handles git repos, colocated jj repos, and
+# non-colocated jj repos.
 REPO_ROOT=$(detect_repo_root) || {
   echo "ERROR: could not determine repo root" >&2
   exit 1

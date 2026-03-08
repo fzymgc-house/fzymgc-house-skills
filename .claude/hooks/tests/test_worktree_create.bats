@@ -163,40 +163,9 @@ MOCK
   [[ "$output" == *"--name"* ]]
 }
 
-@test "jj path: runs lefthook install when lefthook.yml exists" {
-  setup_jj
-  create_mock_jj
-  touch "${REPO_ROOT}/lefthook.yml"
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
-#!/bin/bash
-touch ./lefthook-marker
-MOCK
-  chmod +x "${REPO_ROOT}/bin/lefthook"
-  PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"_worktrees/jj-hook-test"* ]]
-  [ -f "${REPO_ROOT}_worktrees/jj-hook-test/lefthook-marker" ]
-}
-
-@test "jj path: warns when lefthook install fails" {
-  setup_jj
-  create_mock_jj
-  touch "${REPO_ROOT}/lefthook.yml"
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
-#!/bin/bash
-echo "mock error" >&2
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/lefthook"
-  PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-lh-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"_worktrees/jj-lh-fail"* ]]
-}
-
 # --- lefthook integration tests ---
+# Lefthook runs on shared post-VCS code (identical for git and jj paths),
+# so these tests cover both code paths without duplication.
 
 @test "runs lefthook install when lefthook.yml exists" {
   touch "${REPO_ROOT}/lefthook.yml"

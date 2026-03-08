@@ -28,7 +28,6 @@ if [[ "$1" == "workspace" && "$2" == "add" ]]; then
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --name) has_name=true; shift ;;
-      --name=*) has_name=true ;;
       -*) ;;
       *) dest_path="$1" ;;
     esac

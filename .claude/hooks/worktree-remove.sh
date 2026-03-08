@@ -33,6 +33,13 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 
 # Validate path is inside the expected sibling directory
 REPO_NAME=$(basename "$REPO_ROOT")
+
+# Validate repo directory name (same rules as worktree NAME)
+if [[ "$REPO_NAME" =~ [^a-zA-Z0-9_.-] || "$REPO_NAME" == .* || "$REPO_NAME" == *".."* ]]; then
+  echo "ERROR: repository directory name '$REPO_NAME' contains unsafe characters" >&2
+  exit 1
+fi
+
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
 EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || {

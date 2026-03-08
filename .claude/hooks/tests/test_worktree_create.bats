@@ -127,6 +127,20 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "rejects repo directory name with spaces" {
+  UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
+  mkdir -p "$UNSAFE_ROOT"
+  cd "$UNSAFE_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"repository directory name"* ]]
+  [[ "$output" == *"unsafe characters"* ]]
+  cd /
+  rm -rf "$(dirname "$UNSAFE_ROOT")"
+}
+
 @test "rejects dot-prefixed names" {
   run bash -c 'echo "{\"name\": \".hidden\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]

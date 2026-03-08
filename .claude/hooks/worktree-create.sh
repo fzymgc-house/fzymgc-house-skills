@@ -23,6 +23,13 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   exit 1
 }
 REPO_NAME=$(basename "$REPO_ROOT")
+
+# Validate repo directory name (same rules as worktree NAME)
+if [[ "$REPO_NAME" =~ [^a-zA-Z0-9_.-] || "$REPO_NAME" == .* || "$REPO_NAME" == *".."* ]]; then
+  echo "ERROR: repository directory name '$REPO_NAME' contains unsafe characters" >&2
+  exit 1
+fi
+
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 

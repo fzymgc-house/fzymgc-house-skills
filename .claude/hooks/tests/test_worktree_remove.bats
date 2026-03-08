@@ -138,6 +138,21 @@ MOCK
   [[ "$output" == *"jj workspace forget failed"* ]]
 }
 
+@test "rejects repo directory name with spaces" {
+  UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
+  mkdir -p "$UNSAFE_ROOT"
+  cd "$UNSAFE_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  mkdir -p "${UNSAFE_ROOT}_worktrees/test-wt"
+  run bash -c 'echo "{\"path\": \"'"${UNSAFE_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"repository directory name"* ]]
+  [[ "$output" == *"unsafe characters"* ]]
+  cd /
+  rm -rf "$(dirname "$UNSAFE_ROOT")" "${UNSAFE_ROOT}_worktrees"
+}
+
 @test "fails when git rev-parse cannot determine repo root" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}_worktrees/orphan-wt"

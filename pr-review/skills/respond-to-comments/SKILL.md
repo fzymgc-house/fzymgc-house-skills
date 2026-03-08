@@ -140,7 +140,7 @@ beads and run `bd init` in the target project."
      the PR's branch. If one matches, `cd` into it and verify with
      `git branch --show-current`.
    - **jj:** Run `jj workspace list` to find existing workspaces.
-     Output format is `<name>: <change-id> <commit-id> <description>`.
+     Output format is `<name>: <path>` (e.g., `default: /path/to/repo`).
      Verify you are in a `worktree-*` workspace (not `default`).
    If no worktree matches, ask the user whether to create one.
 

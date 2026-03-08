@@ -208,6 +208,16 @@ setup_jj_worktree() {
   [[ "$output" == *"failed to remove worktree directory"* ]]
 }
 
+@test "jj path: reports error when rm -rf fails to remove worktree directory" {
+  setup_jj_worktree
+  create_mock_jj
+  chmod a-w "${REPO_ROOT}_worktrees"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  chmod a+w "${REPO_ROOT}_worktrees"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to remove worktree directory"* ]]
+}
+
 @test "detect_repo_root falls back to jj root when git rev-parse fails" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

@@ -464,18 +464,10 @@ prompt: |
   Report per-finding alignment AND gate status.
 ```
 
-**Parse verification-runner output with VCS awareness:**
-
-The verification-runner reports `VCS: git | jj` along with the STATUS field. If
-`VCS` is missing, assume `git` for backward compatibility. VCS-discriminated
-fields follow the same rules as fix-worker output:
-
-- `VCS: git` — expect `WORKTREE_BRANCH`; `CHANGE_ID` is absent
-- `VCS: jj` — expect `CHANGE_ID`; `WORKTREE_BRANCH` is absent
-- `VCS` absent — treat as git; log warning "verification-runner omitted VCS field — assumed git"
-
-These fields are informational (the verification-runner runs in an isolated worktree
-and does not produce commits to integrate); the primary result field is `STATUS`.
+**Parse verification-runner output:** The verification-runner uses the same
+VCS field protocol as fix-worker (see Phase 4 step 5). These identifiers
+are informational — the verification-runner runs in an isolated worktree and
+does not produce commits to integrate — the primary result field is `STATUS`.
 
 - **Any MISALIGNED finding**: treat as review-gate FAIL, re-queue
 - **Gate FAIL**: report failure details to user. Do NOT proceed to Phase 6.

@@ -303,6 +303,12 @@
           "description": "Removes worktree directory after workspace forget",
           "type": "output_contains",
           "check": "rm -rf"
+        },
+        {
+          "name": "forget-before-rm",
+          "description": "jj workspace forget must precede rm -rf (workspace metadata cleaned before directory removed)",
+          "type": "manual",
+          "check": "Verify jj workspace forget appears BEFORE rm -rf in the output sequence"
         }
       ]
     },

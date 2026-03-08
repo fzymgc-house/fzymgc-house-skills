@@ -75,6 +75,7 @@ setup_jj() {
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"jj is not installed"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
 @test "jj path: creates workspace with mock jj" {
@@ -110,12 +111,13 @@ MOCK
   [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-named-wt"* ]]
 }
 
-@test "jj path: cleans up on jj workspace add failure" {
+@test "jj path: cleans up worktree and parent on workspace add failure" {
   setup_jj
   create_failing_jj_mock
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"fail-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/fail-wt" ]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
 @test "git path: cleans up empty parent on worktree add failure" {
@@ -148,39 +150,19 @@ MOCK
 
 @test "jj path: rejects old jj without --name support" {
   setup_jj
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "Usage: jj workspace add <path>"
-  exit 0
-fi
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  create_old_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"--name"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
 @test "jj path: exits with error when jj workspace add --help fails" {
   setup_jj
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"help-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  create_always_failing_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"help-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"jj failed to run"* ]]
-}
-
-@test "jj path: removes empty WORKTREE_PARENT on jj workspace add failure" {
-  setup_jj
-  create_failing_jj_mock
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"cleanup-parent\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
-  [ "$status" -eq 1 ]
-  [ ! -d "${REPO_ROOT}_worktrees/cleanup-parent" ]
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
@@ -220,47 +202,6 @@ MOCK
 @test "skips lefthook install when lefthook.yml absent" {
   run bash -c 'echo "{\"name\": \"no-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
-}
-
-# --- orphan directory leak tests ---
-
-@test "jj path: cleans up WORKTREE_PARENT when jj not installed" {
-  setup_jj
-  PATH="/usr/bin:/bin" run bash -c 'echo "{\"name\": \"orphan-nojj\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"jj is not installed"* ]]
-  [ ! -d "${REPO_ROOT}_worktrees" ]
-}
-
-@test "jj path: cleans up WORKTREE_PARENT when jj version too old" {
-  setup_jj
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "Usage: jj workspace add <path>"
-  exit 0
-fi
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"orphan-old\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"--name"* ]]
-  [ ! -d "${REPO_ROOT}_worktrees" ]
-}
-
-@test "jj path: cleans up WORKTREE_PARENT when jj --help fails" {
-  setup_jj
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"orphan-helpfail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"jj failed to run"* ]]
-  [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
 @test "fails gracefully when mkdir -p fails" {

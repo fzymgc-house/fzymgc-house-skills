@@ -42,6 +42,32 @@ teardown() {
   [[ "$output" == *"WARNING"* ]]
 }
 
+@test "git path: emits second warning when git worktree prune also fails" {
+  # Remove the real worktree so we have a plain directory
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  mkdir -p "${REPO_ROOT}_worktrees/test-wt"
+  # Mock git that delegates rev-parse to real git but fails worktree ops
+  local real_git
+  real_git="$(command -v git)"
+  mkdir -p "${REPO_ROOT}/bin"
+  # Write mock with real git path baked in (unquoted heredoc expands vars)
+  cat > "${REPO_ROOT}/bin/git" <<GITEOF
+#!/bin/bash
+case "\$1:\$2" in
+  rev-parse:*) exec ${real_git} "\$@" ;;
+  worktree:remove) echo "mock remove failure" >&2; exit 1 ;;
+  worktree:prune) echo "mock prune failure" >&2; exit 1 ;;
+  *) exec ${real_git} "\$@" ;;
+esac
+GITEOF
+  chmod +x "${REPO_ROOT}/bin/git"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
+  [[ "$output" == *"git worktree remove failed"* ]]
+  [[ "$output" == *"git worktree prune also failed"* ]]
+}
+
 @test "cleans up empty parent directory after removal" {
   [ -d "${REPO_ROOT}_worktrees/test-wt" ]
   run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
@@ -125,13 +151,8 @@ MOCK
 
 @test "jj path: handles workspace forget failure" {
   setup_jj_worktree
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  create_always_failing_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]

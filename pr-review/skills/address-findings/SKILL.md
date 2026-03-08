@@ -14,7 +14,14 @@ allowed-tools:
   - Glob
   - "Bash(test *)"
   - "Bash(git *)"
-  - "Bash(jj *)"
+  - "Bash(jj st *)"
+  - "Bash(jj log *)"
+  - "Bash(jj diff *)"
+  - "Bash(jj workspace *)"
+  - "Bash(jj rebase *)"
+  - "Bash(jj bookmark *)"
+  - "Bash(jj git *)"
+  - "Bash(jj undo *)"
   - "Bash(gh *)"
   - "Bash(bd --version)"
   - "Bash(bd create *)"
@@ -272,14 +279,11 @@ Loop while open, non-deferred findings remain:
 
    If `VCS` is missing from the fix-worker response:
 
-   1. Detect VCS from the current repo: `test -d .jj && echo jj || echo git`
-   2. If git, derive branch from worktree path:
-      `git -C <worktree-path> branch --show-current`
-   3. If jj, recover CHANGE_ID from the worktree workspace:
-      `jj --at-operation=@ -R <worktree-path> log -r @- --no-graph -T 'change_id.short(8)'`
-      This reads the parent of the working copy in the worktree (the
-      committed fix). If the command fails, mark FAILED with
-      "Could not recover CHANGE_ID from worktree".
+   1. Detect VCS: `if test -d .jj; then echo jj; elif test -d .git; then echo git; else echo none; fi`
+      — if `none`, mark FAILED ("No VCS detected") and skip integration.
+   2. git: `git -C <worktree-path> branch --show-current`
+   3. jj: `jj --at-operation=@ -R <worktree-path> log -r @- --no-graph -T 'change_id.short(8)'`
+      — reads the committed fix (parent of working copy). If it fails, mark FAILED.
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 
 ### Phase 4b: Integrate Fix Commits
@@ -389,7 +393,12 @@ WORKTREE_BRANCH):
 
 ### Phase 4c: Review Gate
 
-Dispatch a review-gate agent to validate fixes:
+Dispatch a review-gate agent to validate fixes.
+Generate the diff before dispatching (jj repos: capture pre-rebase
+change ID in Phase 4b — the diff requires it):
+
+- git: `git diff <before-sha>..HEAD`
+- jj: `jj diff --from <pre-rebase-change-id> --to <pr-bookmark>`
 
 ```text
 subagent_type: "review-gate"
@@ -398,9 +407,6 @@ prompt: |
   FINDING_IDS: <comma-separated>
   Review the following changes against the original findings.
   <VCS diff of integrated changes>
-  Generate the diff:
-  - git: git diff <before-sha>..HEAD
-  - jj: jj diff --from <pre-rebase-change-id> --to <pr-bookmark>
   Return per-finding: PASS | FAIL: <reason>
 ```
 

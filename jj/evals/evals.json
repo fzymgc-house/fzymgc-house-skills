@@ -66,6 +66,15 @@
       ]
     },
     {
+      "id": "T8",
+      "type": "triggering",
+      "prompt": "help me resolve this git merge conflict",
+      "context": "Repo has .git/ directory but no .jj/ directory",
+      "expected_skill": null,
+      "expected_output": "Git-specific merge conflict with no .jj/ should NOT trigger jujutsu skill",
+      "assertions": [{"name": "does-not-trigger-jujutsu-for-git", "description": "Does not trigger jujutsu skill for git-only workflow", "type": "skill_not_triggered", "check": "jujutsu"}]
+    },
+    {
       "id": "B1",
       "type": "behavioral",
       "skill": "jujutsu",

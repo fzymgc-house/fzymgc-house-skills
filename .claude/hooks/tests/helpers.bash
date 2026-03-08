@@ -43,6 +43,34 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
 
+# Create a mock jj whose --help output lacks --name (simulates old jj).
+create_old_jj_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "Usage: jj workspace add <path>"
+  exit 0
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
+# Create a mock jj that always exits 1 (simulates broken jj install).
+create_always_failing_jj_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
 # Create a mock jj that responds to --help but fails on workspace add.
 # Used for testing cleanup-on-failure paths.
 create_failing_jj_mock() {

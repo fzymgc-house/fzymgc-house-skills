@@ -40,7 +40,10 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     exit 1
   fi
   # Runtime version probe: jj is user-installed and can be updated
-  # independently, so we check --name support on each invocation
+  # independently, so we check --name support on each invocation.
+  # Note: there is a theoretical TOCTOU window between the --help probe
+  # and the actual workspace add, but the practical risk of jj being
+  # replaced between two calls in the same hook invocation is negligible.
   if ! jj_help=$(jj workspace add --help 2>&1); then
     echo "ERROR: jj failed to run: ${jj_help:0:200}" >&2
     exit 1

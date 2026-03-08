@@ -84,6 +84,7 @@
       ]
     },
     "jj/skills/jujutsu": {
+      "comment": "Key uses skill-directory path (not plugin-level 'jj') for consistency with other skill packages",
       "release-type": "simple",
       "package-name": "jj",
       "extra-files": [

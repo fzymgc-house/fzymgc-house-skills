@@ -166,6 +166,20 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "cleanup_on_error preserves parent directory when it contains other entries" {
+  # Pre-populate the worktree parent with another entry so it is non-empty
+  mkdir -p "${REPO_ROOT}_worktrees/other-wt"
+  git branch "worktree/fail-test"
+  run bash -c 'echo "{\"name\": \"fail-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR"* ]]
+  # failed worktree directory must be removed
+  [ ! -d "${REPO_ROOT}_worktrees/fail-test" ]
+  # parent must be preserved because other-wt still exists
+  [ -d "${REPO_ROOT}_worktrees" ]
+  [ -d "${REPO_ROOT}_worktrees/other-wt" ]
+}
+
 @test "rejects repo directory name with spaces" {
   UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
   mkdir -p "$UNSAFE_ROOT"

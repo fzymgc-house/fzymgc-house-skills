@@ -198,6 +198,16 @@ setup_jj_worktree() {
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
+@test "reports error when rm -rf fails to remove worktree directory" {
+  # Make the worktree directory unremovable by removing write permission on parent
+  [ -d "${REPO_ROOT}_worktrees/test-wt" ]
+  chmod a-w "${REPO_ROOT}_worktrees"
+  run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  chmod a+w "${REPO_ROOT}_worktrees"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to remove worktree directory"* ]]
+}
+
 @test "detect_repo_root falls back to jj root when git rev-parse fails" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

@@ -338,10 +338,14 @@ WORKTREE_BRANCH):
    If rebase fails (conflict):
 
    1. Run `jj undo`
-   2. Verify undo succeeded: `jj log -r @ --no-graph -n 1` — confirm the
-      working copy parent matches the pre-rebase state. If not, STOP and
-      report STATUS: FAILED with "jj undo did not restore expected state".
+   2. Verify undo succeeded: `jj log -r @- --no-graph -n 1` — confirm the
+      parent of the working copy matches the pre-rebase state. If not,
+      STOP and report STATUS: FAILED with "jj undo did not restore
+      expected state".
    3. Mark FAILED, add bead comment, re-queue for next round.
+
+   **Why `@-`?** In jj, `@` is always the working-copy commit (typically
+   empty). The meaningful committed state is `@-` (parent of working copy).
 
 2. Update the bookmark:
 
@@ -351,25 +355,23 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` twice — jj records ALL operations including
-      failures, so the first undo reverts the failed bookmark set
-      and the second reverts the rebase:
+   1. Run `jj undo` once — this reverts the successful rebase from
+      step 1.
 
       ```bash
-      jj undo  # revert the failed bookmark set
+      jj undo  # revert the rebase (the only successful op to undo)
       ```
 
-      If this `jj undo` fails, STOP and report STATUS: FAILED with
-      "jj undo failed to revert bookmark set — manual recovery required".
-
-      ```bash
-      jj undo  # revert the rebase
-      ```
-
-      If this `jj undo` fails, STOP and report STATUS: FAILED with
+      If `jj undo` fails, STOP and report STATUS: FAILED with
       "jj undo failed to revert rebase — manual recovery required".
 
-   2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
+      **Why only one undo?** jj's operation log records only
+      *successful* operations. A failed `jj bookmark set` leaves no
+      op-log entry, so there is nothing to undo for the failure
+      itself. The single undo targets the successful rebase.
+
+   2. Verify: `jj log -r @- --no-graph -n 1` — confirm the parent of
+      the working copy matches the pre-rebase state.
       If verification fails, STOP and report STATUS: FAILED with
       "jj undo did not restore expected state".
    3. Mark FAILED, add bead comment, re-queue for next round.

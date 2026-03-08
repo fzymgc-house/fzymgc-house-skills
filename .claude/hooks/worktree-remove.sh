@@ -10,7 +10,12 @@ source "${SCRIPT_DIR}/worktree-helpers.sh"
 INPUT=$(cat)
 WORKTREE_PATH=$(echo "$INPUT" | jq -r '.path // empty')
 
-if [[ -z "$WORKTREE_PATH" || ! -d "$WORKTREE_PATH" ]]; then
+if [[ -z "$WORKTREE_PATH" ]]; then
+  exit 0
+fi
+
+if [[ ! -d "$WORKTREE_PATH" ]]; then
+  echo '{"warning":"worktree directory already removed: '"$(sanitize_for_output "$WORKTREE_PATH")"'"}' >&2
   exit 0
 fi
 

@@ -51,6 +51,12 @@ teardown() {
   [ -d "${REPO_ROOT}_worktrees/fix-worker-abc123" ]
 }
 
+@test "rejects names with trailing dot" {
+  run bash -c 'echo "{\"name\": \"agent-abc.\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
+}
+
 @test "rejects empty name" {
   run bash -c 'echo "{\"name\": \"\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 1 ]

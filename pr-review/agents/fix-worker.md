@@ -74,18 +74,27 @@ The orchestrator provides these in the task prompt:
 
 Return a structured result to the orchestrator:
 
+**When VCS is git:**
+
 ```text
 STATUS: FIXED | PARTIAL | FAILED
 FINDING: <bead-id>
 FILES_CHANGED: <file1>, <file2>, ...
 DESCRIPTION: <one-line summary of what was changed>
-VCS: git | jj
+VCS: git
 WORKTREE_BRANCH: <branch name>
-CHANGE_ID: <change-id>
 ```
 
-Report `VCS: git` or `VCS: jj` based on the detected VCS, plus the
-matching identifier field.
+**When VCS is jj:**
+
+```text
+STATUS: FIXED | PARTIAL | FAILED
+FINDING: <bead-id>
+FILES_CHANGED: <file1>, <file2>, ...
+DESCRIPTION: <one-line summary of what was changed>
+VCS: jj
+CHANGE_ID: <change-id>
+```
 
 **Discriminated union rules:**
 

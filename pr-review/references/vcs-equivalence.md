@@ -20,7 +20,7 @@ they STOP and report STATUS: FAILED.
 | Log | `git log --oneline` | `jj log --no-graph` |
 | Log (with patch) | `git log -p` | `jj log -p` |
 | Show commit | `git show <ref>` | `jj show <ref>` |
-| Current location | `git branch --show-current` | `jj log -r @ --no-graph -n 1` |
+| Current location | `git branch --show-current` | `jj log -r @ --no-graph -T change_id` |
 | File list | `git ls-files` | `jj file list` |
 | Stage + commit | `git add <files> && git commit -m "..."` | `jj commit -m "..."` |
 | Push | `git push` | `jj git push -b <name>` |

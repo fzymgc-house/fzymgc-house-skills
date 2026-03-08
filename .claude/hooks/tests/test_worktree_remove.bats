@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+load helpers
+
 setup() {
   export REPO_ROOT=$(mktemp -d)
   cd "$REPO_ROOT"
@@ -72,14 +74,8 @@ setup_jj_worktree() {
 
 @test "jj path: removes workspace directory" {
   setup_jj_worktree
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then exit 0; fi
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  create_mock_jj
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
@@ -104,6 +100,7 @@ MOCK
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"jj workspace forget failed"* ]]
 }
 
 @test "fails when git rev-parse cannot determine repo root" {

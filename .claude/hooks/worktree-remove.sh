@@ -20,15 +20,16 @@ if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] || "$WORKSPACE_NAME" == .* || "$WORKS
   exit 1
 fi
 
-# Detect repo root — git rev-parse works in colocated jj repos (.git/ present)
-# Non-colocated jj repos are out of scope (see CLAUDE.md: "colocated repos")
+# Detect repo root — requires .git/ directory (present in colocated jj repos).
+# Non-colocated jj repos cannot create worktrees via this hook system,
+# so they should never reach this removal path.
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "ERROR: could not determine repo root (git rev-parse failed)" >&2
   exit 1
 }
 
 # Validate path is inside the expected sibling directory
-EXPECTED_PARENT="$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees"
+EXPECTED_PARENT=$(realpath "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees" 2>/dev/null || echo "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")_worktrees")
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent
   *)
@@ -52,8 +53,8 @@ else
   fi
 fi
 
-# Always remove directory (git worktree remove already did this on success;
-# rm -rf on an already-removed path is a no-op)
+# Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
+# so this is safe even when git worktree remove already cleaned up.
 rm -rf "$WORKTREE_PATH"
 
 # Clean up empty parent directory

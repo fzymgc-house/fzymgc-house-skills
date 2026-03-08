@@ -83,7 +83,7 @@
         }
       ]
     },
-    "jj": {
+    "jj/skills/jujutsu": {
       "release-type": "simple",
       "package-name": "jj",
       "extra-files": [

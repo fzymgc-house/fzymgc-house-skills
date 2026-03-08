@@ -12,6 +12,10 @@ jobs:
       - name: Check release-please config covers all skills
         run: |
           actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
+          # release-please-config.json may have plugin-level keys (e.g., "jj")
+          # or skill-level keys (e.g., "homelab/skills/grafana"). This script
+          # handles both by expanding plugin-level keys to their skill dirs.
+          #
           # Extract all config keys, then resolve to skill directories:
           # - Keys with /skills/ are skill-level entries (use directly)
           # - Other keys (plugin-level) expand to their skill dirs,
@@ -22,7 +26,7 @@ jobs:
               echo "$key"
             elif [[ -d "$key/skills" ]]; then
               # Only expand if no skill-level keys exist under this plugin
-              if ! echo "$all_keys" | grep -q "^${key}/skills/"; then
+              if ! echo "$all_keys" | grep -qF "${key}/skills/"; then
                 find "$key/skills" -name SKILL.md -exec dirname {} \;
               fi
             fi

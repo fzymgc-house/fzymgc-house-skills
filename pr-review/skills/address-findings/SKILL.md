@@ -72,15 +72,12 @@ batch-reviewed, and closed.
 
    **Verify checkout (VCS-dependent):**
    - git: `git branch --show-current` — confirm you are on the PR branch
-   - jj: After checkout, run `jj new <pr-bookmark>` to create a working-copy
-     change on top of the PR bookmark. Verify with
-     `jj log -r @- --no-graph -n 1` (parent should be the PR bookmark).
-     If `jj new` fails (e.g., bookmark not found), report the error and stop.
-
-   **jj note:** `gh pr checkout` creates a local git branch. In colocated
-   repos, jj auto-imports it as a bookmark on the next `jj` command.
-   If the bookmark doesn't appear in `jj bookmark list`, run
-   `jj git fetch` to force import.
+   - jj: After checkout, verify the PR bookmark exists:
+     `jj bookmark list | grep <pr-branch-name>`. If not found, run
+     `jj git fetch` to import git branches as bookmarks, then check
+     again. Once confirmed, run `jj new <pr-bookmark>` to create a
+     working-copy change. Verify with `jj log -r @- --no-graph -n 1`
+     (parent should be the PR bookmark tip).
 
    If checkout fails, check the error:
    - **PR not found** (GraphQL/404 error): stop and tell the user
@@ -333,8 +330,8 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` to revert the rebase (bookmark set failure is not
-      recorded as a jj operation, so one undo reverts the rebase).
+   1. Run `jj undo` twice — first undo reverts the failed bookmark set,
+      second undo reverts the rebase.
    2. Verify: `jj log -r @ --no-graph -n 1` — confirm pre-rebase state.
    3. Mark FAILED, add bead comment, re-queue for next round.
 

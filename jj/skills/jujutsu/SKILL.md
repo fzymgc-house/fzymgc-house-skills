@@ -41,7 +41,7 @@ If `.jj/` exists:
 - Do NOT use `git commit`, `git checkout`, `git branch`, `git merge`, `git rebase`, or other
   mutating git commands
 - `gh` (GitHub CLI) is fine -- it only reads `.git/` metadata
-- Read-only git commands (`git log`, `git diff`, `git status`) are acceptable but unnecessary
+- Read-only git commands (`git log`, `git diff`, `git status`, `git rev-parse`) are safe to use
 
 ## Agent Environment Rules
 
@@ -292,6 +292,11 @@ environments.
 | Move bookmark | `jj bookmark set <name> -r <rev>` |
 | Push bookmark | `jj git push -b <name>` |
 | Fetch remotes | `jj git fetch` |
+| List files | `jj file list` |
+| Current location | `jj log -r @ --no-graph -n 1` |
+| Add workspace | `jj workspace add <path> --name <name>` |
+| List workspaces | `jj workspace list` |
+| Remove workspace | `jj workspace forget <name>` |
 
 ## See Also
 

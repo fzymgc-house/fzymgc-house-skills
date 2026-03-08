@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+load helpers
+
 setup() {
   export REPO_ROOT=$(mktemp -d)
   cd "$REPO_ROOT"
@@ -69,31 +71,34 @@ setup_jj() {
 
 @test "jj path: creates workspace with mock jj" {
   setup_jj
+  create_mock_jj
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/test-jj-wt"* ]]
+}
+
+@test "jj path: forwards --name flag to jj workspace add" {
+  setup_jj
+  # Mock that logs all args so we can verify --name was passed
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
-  # Handle --help: return output that satisfies --name version guard
-  if [[ "$3" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
-  # Verify --name flag is actually passed
-  for arg in "$@"; do
-    if [[ "$arg" == "--name" ]]; then
-      mkdir -p "$3"
-      exit 0
-    fi
-  done
-  echo "ERROR: --name flag not passed to jj workspace add" >&2
-  exit 1
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "  --name <NAME>"
+  exit 0
 fi
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  echo "$@" > "${REPO_ROOT}/jj-args.log"
+  mkdir -p "$3"
+  exit 0
+fi
+exit 1
 MOCK
   chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"named-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"_worktrees/test-jj-wt"* ]]
+  # Verify the logged args contain --name worktree-named-wt
+  [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-named-wt"* ]]
 }
 
 @test "jj path: cleans up on jj workspace add failure" {
@@ -119,6 +124,12 @@ MOCK
   [ "$status" -eq 1 ]
   [[ "$output" == *"ERROR"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/fail-test" ]
+}
+
+@test "rejects dot-prefixed names" {
+  run bash -c 'echo "{\"name\": \".hidden\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid worktree name"* ]]
 }
 
 @test "jj path: rejects old jj without --name support" {

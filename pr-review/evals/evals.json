@@ -305,6 +305,27 @@
           "check": "rm -rf"
         }
       ]
+    },
+    {
+      "id": "B-JJ4",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "verification-runner returned: STATUS: PASS, VCS: jj, CHANGE_ID: kkmpptxz. All checks green. (in a repo with .jj/ directory)",
+      "expected_output": "Should use jj commands for any post-verification VCS operations and report CHANGE_ID in summary",
+      "assertions": [
+        {
+          "name": "reports-change-id",
+          "description": "Reports CHANGE_ID in verification summary, not WORKTREE_BRANCH",
+          "type": "output_contains",
+          "check": "CHANGE_ID"
+        },
+        {
+          "name": "uses-jj-for-vcs",
+          "description": "Uses jj commands for any VCS operations after verification",
+          "type": "manual",
+          "check": "Verify agent uses jj (not git) for any VCS operations following verification"
+        }
+      ]
     }
   ]
 }

@@ -52,7 +52,7 @@ Ensure the bookmark is pushed (`jj git push -b <name>`) before creating a PR.
 Workspaces provide isolated working copies that share the same underlying repo:
 
 ```bash
-jj workspace add ../my-workspace       # Create a new workspace
+jj workspace add ../my-workspace --name my-workspace  # Create a new workspace
 jj workspace list                       # List all workspaces
 jj workspace forget <name>             # De-register workspace (does NOT delete files)
 ```

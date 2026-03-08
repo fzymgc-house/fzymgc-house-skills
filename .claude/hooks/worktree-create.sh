@@ -18,12 +18,18 @@ if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == .* || "$NAME" == *".."* ]]; then
   exit 1
 fi
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "ERROR: not inside a git repository (git rev-parse failed)" >&2
+  exit 1
+}
 REPO_NAME=$(basename "$REPO_ROOT")
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
-mkdir -p "$WORKTREE_PARENT"
+cleanup_on_error() {
+  [[ -d "$WORKTREE_PATH" ]] && rm -rf "$WORKTREE_PATH"
+  [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
+}
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
@@ -37,18 +43,19 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
     exit 1
   fi
-  if ! (cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
-    --name "worktree-${NAME}" >&2); then
-    echo "ERROR: jj workspace add failed" >&2
-    [[ -d "$WORKTREE_PATH" ]] && rm -rf "$WORKTREE_PATH"
-    [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
+  mkdir -p "$WORKTREE_PARENT"
+  if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
+    --name "worktree-${NAME}" 2>&1); then
+    echo "ERROR: jj workspace add failed: $jj_out" >&2
+    cleanup_on_error
     exit 1
   fi
 else
   # Standard git worktree
+  mkdir -p "$WORKTREE_PARENT"
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $git_err" >&2
-    [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
+    cleanup_on_error
     exit 1
   fi
 fi

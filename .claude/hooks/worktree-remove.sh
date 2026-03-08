@@ -15,10 +15,15 @@ if [[ -z "$WORKTREE_PATH" || ! -d "$WORKTREE_PATH" ]]; then
 fi
 
 # Canonicalize path to prevent traversal via ../ segments
+_ORIG_PATH="$WORKTREE_PATH"
 WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
-  echo "ERROR: realpath failed for '$WORKTREE_PATH'" >&2
+  echo "ERROR: realpath failed for '${_ORIG_PATH}'" >&2
   exit 1
 }
+if [[ -z "$WORKTREE_PATH" ]]; then
+  echo "ERROR: realpath returned empty result for '${_ORIG_PATH}'" >&2
+  exit 1
+fi
 
 # Validate basename has safe characters only (matches worktree-create.sh)
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")

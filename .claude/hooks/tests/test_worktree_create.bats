@@ -60,7 +60,7 @@ teardown() {
   NON_GIT=$(mktemp -d)
   run bash -c 'cd '"$NON_GIT"' && echo "{\"name\": \"orphan-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
-  [[ "$output" == *"not inside a git repository"* ]]
+  [[ "$output" == *"not inside a git/jj repository"* ]]
   rm -rf "$NON_GIT"
 }
 

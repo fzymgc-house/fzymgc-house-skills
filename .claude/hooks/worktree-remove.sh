@@ -12,7 +12,7 @@ fi
 
 # Canonicalize path to prevent traversal via ../ segments
 WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
-  echo "ERROR: realpath failed for '$WORKTREE_PATH' (path may have been deleted)" >&2
+  echo "ERROR: realpath failed for '$WORKTREE_PATH'" >&2
   exit 1
 }
 

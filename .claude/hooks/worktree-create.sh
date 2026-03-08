@@ -19,7 +19,7 @@ if [[ "$NAME" =~ [^a-zA-Z0-9_.-] || "$NAME" == .* || "$NAME" == *".."* ]]; then
 fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
-  echo "ERROR: not inside a git repository (git rev-parse failed)" >&2
+  echo "ERROR: not inside a git/jj repository (git rev-parse failed)" >&2
   exit 1
 }
 REPO_NAME=$(basename "$REPO_ROOT")
@@ -27,7 +27,7 @@ WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 cleanup_on_error() {
-  [[ -d "$WORKTREE_PATH" ]] && rm -rf "$WORKTREE_PATH"
+  rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
   [[ -d "$WORKTREE_PARENT" ]] && [[ -z "$(ls -A "$WORKTREE_PARENT")" ]] && rmdir "$WORKTREE_PARENT" 2>/dev/null
 }
 
@@ -39,10 +39,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
   # Runtime version probe: jj is user-installed and can be updated
   # independently, so we check --name support on each invocation
-  jj_help=$(jj workspace add --help 2>&1)
-  jj_help_rc=$?
-  if [[ $jj_help_rc -ne 0 ]]; then
-    echo "ERROR: jj failed to run (exit $jj_help_rc): $jj_help" >&2
+  if ! jj_help=$(jj workspace add --help 2>&1); then
+    echo "ERROR: jj failed to run: $jj_help" >&2
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then

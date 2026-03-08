@@ -210,7 +210,7 @@ jj workspace update-stale
 
 Key behaviors:
 
-- `jj workspace list` shows all workspaces and their working-copy paths
+- `jj workspace list` shows all workspaces with their change-id, commit-id, and description (not paths)
 - Each workspace has its own working-copy commit (`@`)
 - Changes committed in one workspace are immediately visible in others
 - Use `jj workspace update-stale` if a workspace falls behind

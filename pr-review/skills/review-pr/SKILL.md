@@ -52,7 +52,7 @@ metadata:
 
 ## VCS Detection
 
-Follow the procedure in `references/vcs-detection-preamble.md` to
+Follow the procedure in `pr-review/references/vcs-detection-preamble.md` to
 detect git vs jj and verify your location. Use `gh` CLI for GitHub
 operations regardless of VCS.
 

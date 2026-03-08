@@ -42,7 +42,7 @@ metadata:
 
 ## VCS Detection
 
-Follow the procedure in `references/vcs-detection-preamble.md` to
+Follow the procedure in `pr-review/references/vcs-detection-preamble.md` to
 detect git vs jj and verify your location. Use `gh` CLI for GitHub
 operations regardless of VCS.
 
@@ -134,14 +134,16 @@ beads and run `bd init` in the target project."
    Pass this context to sub-agents in Phase 3 so they understand
    what was already attempted.
 
-6. **Locate the worktree.** Run `git worktree list` and check whether one
-   exists for the PR's branch. Worktrees are in the sibling
-   `<repo>_worktrees/` directory. If one matches, `cd` into it and
-   verify with `git branch --show-current`. If not, ask the user
-   whether to create one.
-   In jj repos, use `jj workspace list` to find existing workspaces.
-   Output format is `<name>: <change-id> <commit-id> <description>`.
-   Verify you are in a `worktree-*` workspace (not `default`).
+6. **Locate the worktree.** Worktrees are in the sibling
+   `<repo>_worktrees/` directory.
+   - **git:** Run `git worktree list` and check whether one exists for
+     the PR's branch. If one matches, `cd` into it and verify with
+     `git branch --show-current`.
+   - **jj:** Run `jj workspace list` to find existing workspaces.
+     Output format is `<name>: <change-id> <commit-id> <description>`.
+     Verify you are in a `worktree-*` workspace (not `default`).
+   If no worktree matches, ask the user whether to create one.
+
    **MUST** use an existing worktree if one matches.
 
 ### Phase 2: Categorize, clarify, and confirm

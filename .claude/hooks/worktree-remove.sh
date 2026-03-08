@@ -3,6 +3,14 @@
 # Input: JSON on stdin with "path" field
 set -euo pipefail
 
+validate_safe_name() {
+  local name="$1" label="$2"
+  if [[ "$name" =~ [^a-zA-Z0-9_.-] || "$name" == .* || "$name" == *".."* ]]; then
+    echo "ERROR: invalid ${label} '${name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
+    return 1
+  fi
+}
+
 INPUT=$(cat)
 WORKTREE_PATH=$(echo "$INPUT" | jq -r '.path // empty')
 
@@ -18,10 +26,7 @@ WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
 
 # Validate basename has safe characters only (matches worktree-create.sh)
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
-if [[ "$WORKSPACE_NAME" =~ [^a-zA-Z0-9_.-] || "$WORKSPACE_NAME" == .* || "$WORKSPACE_NAME" == *".."* ]]; then
-  echo "ERROR: invalid worktree name '$WORKSPACE_NAME' (alphanumeric, dots, hyphens, underscores only)" >&2
-  exit 1
-fi
+validate_safe_name "$WORKSPACE_NAME" "worktree name" || exit 1
 
 # Detect repo root — requires .git/ directory (present in colocated jj repos).
 # Non-colocated jj repos cannot create worktrees via this hook system,
@@ -33,12 +38,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 
 # Validate path is inside the expected sibling directory
 REPO_NAME=$(basename "$REPO_ROOT")
-
-# Validate repo directory name (same rules as worktree NAME)
-if [[ "$REPO_NAME" =~ [^a-zA-Z0-9_.-] || "$REPO_NAME" == .* || "$REPO_NAME" == *".."* ]]; then
-  echo "ERROR: repository directory name '$REPO_NAME' contains unsafe characters" >&2
-  exit 1
-fi
+validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
 
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
@@ -73,10 +73,12 @@ fi
 
 # Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
 # so this is safe even when git worktree remove already cleaned up.
-rm -rf "$WORKTREE_PATH"
+if ! rm -rf "$WORKTREE_PATH" 2>/dev/null; then
+  echo "WARNING: failed to remove worktree directory '$WORKTREE_PATH'" >&2
+fi
 
 # Clean up empty parent directory
 PARENT=$(dirname "$WORKTREE_PATH")
 if [[ -d "$PARENT" ]] && [[ -z "$(ls -A "$PARENT")" ]]; then
-  rmdir "$PARENT" 2>/dev/null || true
+  rmdir "$PARENT" 2>/dev/null || echo "WARNING: failed to remove empty parent '$PARENT'" >&2
 fi

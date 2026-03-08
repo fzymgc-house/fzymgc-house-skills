@@ -71,6 +71,34 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
 
+# Create a mock jj that logs all workspace add args to $REPO_ROOT/jj-args.log.
+# Used for verifying --name flag forwarding and other argument tests.
+create_logging_jj_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "  --name <NAME>"
+  exit 0
+fi
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  echo "$@" > "${REPO_ROOT}/jj-args.log"
+  mkdir -p "$3"
+  exit 0
+fi
+if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
+  echo "$3" > "${REPO_ROOT}/forget-arg.log"
+  exit 0
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
 # Create a mock jj that responds to --help but fails on workspace add.
 # Used for testing cleanup-on-failure paths.
 create_failing_jj_mock() {

@@ -152,9 +152,10 @@ tests: PASS | FAIL
 FAILURES: <details or "none">
 ```
 
-The VCS discriminant fields follow the same rules as fix-worker:
-when `VCS: git`, include `WORKTREE_BRANCH` and omit `CHANGE_ID`;
-when `VCS: jj`, include `CHANGE_ID` and omit `WORKTREE_BRANCH`.
+The VCS discriminant fields follow fix-worker's rules:
+
+- When `VCS: git`: MUST include `WORKTREE_BRANCH`, MUST NOT include `CHANGE_ID`
+- When `VCS: jj`: MUST include `CHANGE_ID`, MUST NOT include `WORKTREE_BRANCH`
 
 STATUS is FAIL if **any** finding is MISALIGNED, **any** standards
 violation is found, or **any** gate fails.

@@ -25,10 +25,10 @@ WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
 validate_safe_name "$WORKSPACE_NAME" "worktree name" || exit 1
 
 # Detect repo root — requires .git/ directory (present in colocated jj repos).
-# Non-colocated jj repos cannot create worktrees via this hook system,
-# so they should never reach this removal path.
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
-  echo "ERROR: could not determine repo root (git rev-parse failed)" >&2
+# Non-colocated jj repos may reach this path if worktrees were created via
+# detect_repo_root's jj fallback; however, git rev-parse will fail here.
+REPO_ROOT=$(detect_repo_root) || {
+  echo "ERROR: could not determine repo root" >&2
   exit 1
 }
 
@@ -69,7 +69,7 @@ fi
 
 # Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
 # so this is safe even when git worktree remove already cleaned up.
-if ! rm -rf "$WORKTREE_PATH" 2>/dev/null; then
+if ! rm -rf "$WORKTREE_PATH"; then
   echo "ERROR: failed to remove worktree directory '$WORKTREE_PATH'" >&2
   exit 1
 fi

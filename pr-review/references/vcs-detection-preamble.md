@@ -5,9 +5,8 @@ repositories that may use git or jj (Jujutsu).
 
 ## Steps
 
-1. **Detect VCS:** `if test -d .jj && [ ! -f .jj ]; then echo "jj"; elif test -d .git; then echo "git"; else echo "none"; fi`
-   - The `[ ! -f .jj ]` guard prevents a regular file named `.jj`
-     from being mistaken for a jj repository directory.
+1. **Detect VCS:** `if test -d .jj; then echo "jj"; elif test -d .git; then echo "git"; else echo "none"; fi`
+   - `test -d` already ensures `.jj` is a directory (not a regular file).
    - If the result is "none", STOP and report
      STATUS: FAILED -- "No VCS detected (no .jj/ or .git/ directory)"
 2. **Verify location:**

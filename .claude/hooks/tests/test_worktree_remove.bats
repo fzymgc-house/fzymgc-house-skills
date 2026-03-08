@@ -122,20 +122,18 @@ setup_jj_worktree() {
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
+@test "jj path: cleans up empty parent directory after removal" {
+  setup_jj_worktree
+  create_mock_jj
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
 @test "jj path: calls jj workspace forget with correct name" {
   setup_jj_worktree
-  mkdir -p "${REPO_ROOT}/bin"
-  cat > "${REPO_ROOT}/bin/jj" << 'MOCK'
-#!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
-  echo "$3" > "${REPO_ROOT}/forget-arg.log"
-  exit 0
-fi
-echo "ERROR: unexpected jj invocation: $*" >&2
-exit 1
-MOCK
-  chmod +x "${REPO_ROOT}/bin/jj"
-  PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  create_logging_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-jj-wt" ]]

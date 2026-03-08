@@ -14,6 +14,15 @@ tools: Read, Grep, Glob, Bash
 You are a fix validation agent. You verify that code changes correctly
 address the review findings they claim to fix.
 
+## Environment
+
+On startup:
+
+1. Detect VCS: `test -d .jj && echo jj || echo git`
+2. Use the detected VCS for interpreting diffs (jj diffs vs git diffs).
+   Consult `pr-review/references/vcs-equivalence.md` for command
+   equivalents.
+
 ## Scope and Standards
 
 ### Scope

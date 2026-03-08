@@ -7,7 +7,7 @@
       "prompt": "review PR #42 for security issues",
       "expected_skill": "review-pr",
       "expected_output": "Should trigger review-pr with aspects: security",
-      "assertions": [{"type": "skill_triggered", "value": "review-pr"}]
+      "assertions": [{"name": "triggers-review-pr", "description": "Triggers the review-pr skill", "type": "skill_triggered", "check": "review-pr"}]
     },
     {
       "id": "T2",
@@ -15,7 +15,7 @@
       "prompt": "fix the issues from the PR review",
       "expected_skill": "address-findings",
       "expected_output": "Should trigger address-findings, not respond-to-comments",
-      "assertions": [{"type": "skill_triggered", "value": "address-findings"}]
+      "assertions": [{"name": "triggers-address-findings", "description": "Triggers the address-findings skill", "type": "skill_triggered", "check": "address-findings"}]
     },
     {
       "id": "T3",
@@ -23,7 +23,7 @@
       "prompt": "what did the reviewer say on my PR?",
       "expected_skill": "respond-to-comments",
       "expected_output": "Should trigger respond-to-comments quick lookup",
-      "assertions": [{"type": "skill_triggered", "value": "respond-to-comments"}]
+      "assertions": [{"name": "triggers-respond-to-comments", "description": "Triggers the respond-to-comments skill", "type": "skill_triggered", "check": "respond-to-comments"}]
     },
     {
       "id": "T4",
@@ -31,7 +31,7 @@
       "prompt": "address the findings from the code review",
       "expected_skill": "address-findings",
       "expected_output": "Should trigger address-findings based on 'findings' keyword",
-      "assertions": [{"type": "skill_triggered", "value": "address-findings"}]
+      "assertions": [{"name": "triggers-address-findings", "description": "Triggers the address-findings skill", "type": "skill_triggered", "check": "address-findings"}]
     },
     {
       "id": "T5",
@@ -39,7 +39,7 @@
       "prompt": "check PR #15 feedback and fix it",
       "expected_skill": "respond-to-comments",
       "expected_output": "Should trigger respond-to-comments full workflow",
-      "assertions": [{"type": "skill_triggered", "value": "respond-to-comments"}]
+      "assertions": [{"name": "triggers-respond-to-comments", "description": "Triggers the respond-to-comments skill", "type": "skill_triggered", "check": "respond-to-comments"}]
     },
     {
       "id": "T6",
@@ -47,7 +47,7 @@
       "prompt": "run a comprehensive analysis of PR 7",
       "expected_skill": "review-pr",
       "expected_output": "Should trigger review-pr despite indirect phrasing",
-      "assertions": [{"type": "skill_triggered", "value": "review-pr"}]
+      "assertions": [{"name": "triggers-review-pr", "description": "Triggers the review-pr skill", "type": "skill_triggered", "check": "review-pr"}]
     },
     {
       "id": "T7",
@@ -55,7 +55,7 @@
       "prompt": "I need to work through the review beads for PR 23",
       "expected_skill": "address-findings",
       "expected_output": "Should trigger address-findings based on 'review beads'",
-      "assertions": [{"type": "skill_triggered", "value": "address-findings"}]
+      "assertions": [{"name": "triggers-address-findings", "description": "Triggers the address-findings skill", "type": "skill_triggered", "check": "address-findings"}]
     },
     {
       "id": "T8",
@@ -63,7 +63,7 @@
       "prompt": "acknowledge the comments on PR 11",
       "expected_skill": "respond-to-comments",
       "expected_output": "Should trigger respond-to-comments for ack operation",
-      "assertions": [{"type": "skill_triggered", "value": "respond-to-comments"}]
+      "assertions": [{"name": "triggers-respond-to-comments", "description": "Triggers the respond-to-comments skill", "type": "skill_triggered", "check": "respond-to-comments"}]
     },
     {
       "id": "T9",
@@ -71,7 +71,7 @@
       "prompt": "can you look at the code quality of this pull request",
       "expected_skill": "review-pr",
       "expected_output": "Should trigger review-pr for code quality analysis",
-      "assertions": [{"type": "skill_triggered", "value": "review-pr"}]
+      "assertions": [{"name": "triggers-review-pr", "description": "Triggers the review-pr skill", "type": "skill_triggered", "check": "review-pr"}]
     },
     {
       "id": "T10",
@@ -79,7 +79,7 @@
       "prompt": "the reviewer left some changes requested, help me fix them",
       "expected_skill": "respond-to-comments",
       "expected_output": "Should trigger respond-to-comments full workflow",
-      "assertions": [{"type": "skill_triggered", "value": "respond-to-comments"}]
+      "assertions": [{"name": "triggers-respond-to-comments", "description": "Triggers the respond-to-comments skill", "type": "skill_triggered", "check": "respond-to-comments"}]
     },
     {
       "id": "B1",
@@ -352,8 +352,29 @@
           "type": "manual",
           "check": "Verify agent stops immediately without editing, writing, or modifying any files"
         }
-      ],
-      "tags": ["safety", "jj", "vcs-detection"]
+      ]
+    },
+    {
+      "id": "B-VCS2",
+      "type": "behavioral",
+      "prompt": "Fix finding fzymgc-house-skills-qsh.99 in this repo",
+      "context": "Agent is in a jj repo. jj workspace list shows 'default: /path/to/repo' — agent is in the default workspace, not a worktree workspace.",
+      "expected_output": "Agent should refuse to operate and report STATUS: FAILED",
+      "skill": "address-findings",
+      "assertions": [
+        {
+          "name": "reports-failed",
+          "description": "Reports STATUS: FAILED",
+          "type": "output_contains",
+          "check": "STATUS: FAILED"
+        },
+        {
+          "name": "mentions-default-workspace",
+          "description": "Mentions default workspace as the problem",
+          "type": "output_contains",
+          "check": "default workspace"
+        }
+      ]
     }
   ]
 }

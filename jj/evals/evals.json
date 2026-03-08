@@ -7,7 +7,7 @@
       "prompt": "I need to use jj to commit my changes",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill based on jj mention",
-      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
       "id": "T2",
@@ -15,7 +15,7 @@
       "prompt": "how do I create a bookmark in jujutsu?",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill based on jujutsu mention",
-      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
       "id": "T3",
@@ -23,7 +23,7 @@
       "prompt": "help me set up jj in this repo",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill; may also suggest /jj-init command",
-      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
       "id": "T4",
@@ -31,7 +31,7 @@
       "prompt": "what's the jj equivalent of git cherry-pick?",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill and reference rebase",
-      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "triggers-jujutsu", "description": "Triggers the jujutsu skill", "type": "skill_triggered", "check": "jujutsu"}]
     },
     {
       "id": "T5",
@@ -39,7 +39,7 @@
       "prompt": "commit this with a message",
       "expected_skill": null,
       "expected_output": "Generic commit request should NOT trigger jujutsu unless .jj/ is present",
-      "assertions": [{"name": "does-not-trigger-jujutsu", "description": "Does not trigger jujutsu skill for generic commit", "type": "skill_not_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "does-not-trigger-jujutsu", "description": "Does not trigger jujutsu skill for generic commit", "type": "skill_not_triggered", "check": "jujutsu"}]
     },
     {
       "id": "T6",
@@ -48,7 +48,22 @@
       "context": "Repo root contains .jj/ directory",
       "expected_skill": "jujutsu",
       "expected_output": "Should trigger jujutsu skill when .jj/ directory exists even without explicit jj mention",
-      "assertions": [{"name": "triggers-jujutsu-via-dotjj", "description": "Triggers jujutsu skill from .jj/ directory presence", "type": "skill_triggered", "value": "jujutsu"}]
+      "assertions": [{"name": "triggers-jujutsu-via-dotjj", "description": "Triggers jujutsu skill from .jj/ directory presence", "type": "skill_triggered", "check": "jujutsu"}]
+    },
+    {
+      "id": "T7",
+      "type": "triggering",
+      "prompt": "run /jj-init to set up jujutsu in this repo",
+      "expected_skill": null,
+      "expected_output": "/jj-init is a slash command, not a skill — should invoke directly",
+      "assertions": [
+        {
+          "name": "invokes-command",
+          "description": "Invokes the /jj-init slash command",
+          "type": "command_invoked",
+          "check": "jj-init"
+        }
+      ]
     },
     {
       "id": "B1",

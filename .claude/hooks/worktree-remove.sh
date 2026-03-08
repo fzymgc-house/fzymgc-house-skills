@@ -17,11 +17,11 @@ fi
 # Canonicalize path to prevent traversal via ../ segments
 _ORIG_PATH="$WORKTREE_PATH"
 WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
-  echo "ERROR: realpath failed for '${_ORIG_PATH}'" >&2
+  echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
   exit 1
 }
 if [[ -z "$WORKTREE_PATH" ]]; then
-  echo "ERROR: realpath returned empty result for '${_ORIG_PATH}'" >&2
+  echo "ERROR: realpath returned empty result for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
   exit 1
 fi
 

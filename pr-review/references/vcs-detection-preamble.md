@@ -11,7 +11,9 @@ repositories that may use git or jj (Jujutsu).
 2. **Verify location:**
    - jj: Run `jj workspace list`. Output shows one workspace per line:
      `<name>: <path>` with `(current)` marking the active workspace.
-     Verify the current workspace name starts with `worktree-`. If you
+     Parse the current workspace name by finding the line containing
+     `(current)` and extracting the name before the first `:` delimiter.
+     Verify the extracted name starts with `worktree-`. If you
      are in the `default` workspace, STOP and report
      STATUS: FAILED -- "Operating in default workspace (main
      equivalent). Dispatch to a worktree workspace instead."

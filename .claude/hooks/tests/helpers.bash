@@ -13,15 +13,12 @@ create_mock_jj() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
-  # --help probe for version guard
-  if [[ "$3" == "--help" ]]; then
+_mock_workspace_add() {
+  if [[ "$1" == "--help" ]]; then
     echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
     echo "  --name <NAME>"
     exit 0
   fi
-  # Find the destination path (first non-flag argument after "workspace add")
-  shift 2
   for arg in "$@"; do
     case "$arg" in
       -*) ;;
@@ -29,6 +26,9 @@ if [[ "$1" == "workspace" && "$2" == "add" ]]; then
     esac
   done
   exit 1
+}
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  shift 2; _mock_workspace_add "$@"
 fi
 if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
   exit 0
@@ -77,13 +77,12 @@ create_logging_jj_mock() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "  --name <NAME>"
-  exit 0
-fi
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
-  echo "$@" > "${REPO_ROOT}/jj-args.log"
-  shift 2
+_mock_workspace_add() {
+  if [[ "$1" == "--help" ]]; then
+    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+    echo "  --name <NAME>"
+    exit 0
+  fi
   for arg in "$@"; do
     case "$arg" in
       -*) ;;
@@ -91,6 +90,11 @@ if [[ "$1" == "workspace" && "$2" == "add" ]]; then
     esac
   done
   exit 1
+}
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  shift 2
+  echo "$*" > "${REPO_ROOT}/jj-args.log"
+  _mock_workspace_add "$@"
 fi
 if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
   shift 2

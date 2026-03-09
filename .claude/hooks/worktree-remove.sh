@@ -16,34 +16,55 @@ if [[ -z "$WORKTREE_PATH" ]]; then
 fi
 
 if [[ ! -d "$WORKTREE_PATH" ]]; then
-  # JSON-escape the path: backslash-escape any \ and " characters
-  _safe_path=$(sanitize_for_output "$WORKTREE_PATH" | sed 's/[\"]/\\&/g')
-  echo "{\"warning\":\"worktree directory already removed: ${_safe_path}\"}" >&2
+  echo "{\"warning\":\"worktree directory already removed: $(sanitize_for_output "$WORKTREE_PATH")\"}" >&2
   exit 0
 fi
 
 # Canonicalize path to prevent traversal via ../ segments
 _ORIG_PATH="$WORKTREE_PATH"
-WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
-  echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
-  exit 1
-}
+if command -v realpath &>/dev/null; then
+  WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
+    echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
+    exit 1
+  }
+else
+  # POSIX fallback: cd into the directory and capture pwd -P
+  WORKTREE_PATH=$(cd "$_ORIG_PATH" 2>/dev/null && pwd -P) || {
+    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")'" >&2
+    exit 1
+  }
+fi
 if [[ -z "$WORKTREE_PATH" ]]; then
-  echo "ERROR: realpath returned empty result for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
+  echo "ERROR: could not resolve canonical path for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
   exit 1
 fi
 
-# Validate basename has safe characters only (matches worktree-create.sh)
+# Validate basename — lenient on removal path: warn but allow non-conforming names
+# so orphaned worktrees with unusual names can still be cleaned up.
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
-validate_safe_name "$WORKSPACE_NAME" "worktree name" || exit 1
+if ! validate_safe_name "$WORKSPACE_NAME" "worktree name" 2>/dev/null; then
+  echo "WARNING: worktree name '$(sanitize_for_output "$WORKSPACE_NAME")' contains unusual characters — proceeding with removal" >&2
+fi
 
 # Detect repo root — requires git rev-parse (.git/ directory). In colocated
 # jj repos (.jj/ + .git/), this succeeds. Pure jj repos use jj root fallback
 # in detect_repo_root.
-REPO_ROOT=$(detect_repo_root) || {
-  echo "ERROR: could not determine repo root" >&2
-  exit 1
-}
+# Fallback: when hook CWD is outside any repo (e.g. orphaned worktree cleanup),
+# infer the repo root from the worktree path by stripping the last two path
+# components (workspace name and _worktrees suffix).
+if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
+  _worktrees_dir=$(dirname "$WORKTREE_PATH")
+  _inferred_root=$(dirname "$_worktrees_dir")
+  _inferred_name=$(basename "$_worktrees_dir")
+  # _worktrees dir should end in _worktrees suffix
+  if [[ "$_inferred_name" == *_worktrees ]]; then
+    REPO_ROOT="${_inferred_root}/${_inferred_name%_worktrees}"
+    echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path" >&2
+  else
+    echo "ERROR: could not determine repo root and worktree path structure is unexpected" >&2
+    exit 1
+  fi
+fi
 
 # Validate path is inside the expected sibling directory
 REPO_NAME=$(basename "$REPO_ROOT")
@@ -58,7 +79,8 @@ fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent
   *)
-    echo "WARNING: WORKTREE_PATH '$WORKTREE_PATH' is outside expected parent '$EXPECTED_PARENT'. Proceeding with removal." >&2
+    echo "ERROR: WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' is outside expected parent '$(sanitize_for_output "$EXPECTED_PARENT")' — refusing removal" >&2
+    exit 1
     ;;
 esac
 
@@ -66,8 +88,6 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
-  elif ! (cd "$REPO_ROOT" 2>/dev/null); then
-    echo "WARNING: cannot cd to repo root '$(sanitize_for_output "$REPO_ROOT")' — workspace metadata not cleaned" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
     echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $(sanitize_for_output "${jj_err:0:200}") (run 'jj workspace forget worktree-${WORKSPACE_NAME}' manually to clean up)" >&2
   fi

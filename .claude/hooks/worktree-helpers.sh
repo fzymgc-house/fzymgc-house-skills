@@ -26,8 +26,15 @@ validate_safe_name() {
 # directory does not exist.
 cleanup_empty_parent() {
   local parent="$1"
-  if [[ -d "$parent" ]] && [[ -z "$(ls -A "$parent")" ]]; then
-    rmdir "$parent" 2>/dev/null || echo "WARNING: failed to remove empty parent '$parent'" >&2
+  if [[ -d "$parent" ]]; then
+    local ls_out
+    if ! ls_out=$(ls -A "$parent" 2>/dev/null); then
+      echo "WARNING: ls failed on parent directory '$parent' — skipping rmdir" >&2
+      return 0
+    fi
+    if [[ -z "$ls_out" ]]; then
+      rmdir "$parent" 2>/dev/null || echo "WARNING: failed to remove empty parent '$parent'" >&2
+    fi
   fi
 }
 

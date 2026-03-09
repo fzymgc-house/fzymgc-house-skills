@@ -29,7 +29,6 @@ allowed-tools:
   - "Bash(jj diff *)"
   - "Bash(jj show *)"
   - "Bash(jj file list *)"
-  - "Bash(jj root *)"
   - "Bash(jj root)"
   - "Bash(gh pr view *)"
   - "Bash(gh pr diff *)"

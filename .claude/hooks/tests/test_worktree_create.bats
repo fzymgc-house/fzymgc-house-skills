@@ -253,6 +253,34 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "git path: cleanup_on_error warns when git worktree remove fails on post-add failure" {
+  # Resolve real git path before creating mock to avoid PATH confusion
+  local real_git
+  real_git="$(command -v git)"
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "${mock_bin}/git" << MOCK
+#!/bin/bash
+if [[ "\$1" == "worktree" && "\$2" == "remove" ]]; then
+  echo "fatal: mock failure" >&2
+  exit 1
+fi
+exec "${real_git}" "\$@"
+MOCK
+  chmod +x "${mock_bin}/git"
+
+  local patched
+  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${mock_bin}:$PATH" run bash -c \
+    'echo "{\"name\": \"git-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  rm -rf "$mock_bin"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"WARNING: cleanup: git worktree remove failed"* ]]
+}
+
 @test "rejects repo directory name with spaces" {
   UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
   mkdir -p "$UNSAFE_ROOT"

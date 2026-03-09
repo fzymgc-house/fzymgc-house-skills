@@ -527,6 +527,34 @@
           "check": "Verify review-gate recognizes the + prefixed lines as additions, not noise"
         }
       ]
+    },
+    {
+      "id": "B-GIT-NEG1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Dispatch a fix-worker agent to fix finding example-123.1 in file src/main.py line 10",
+      "context": "Repo has .git/ directory but no .jj/ directory (git-only repo)",
+      "expected_output": "fix-worker should detect git-only repo via VCS detection preamble and use git commands, NOT jj commands",
+      "assertions": [
+        {
+          "name": "no-jj-commit",
+          "description": "Does not use jj commit in git-only repo",
+          "type": "not_contains",
+          "check": "jj commit"
+        },
+        {
+          "name": "no-jj-describe",
+          "description": "Does not use jj describe in git-only repo",
+          "type": "not_contains",
+          "check": "jj describe"
+        },
+        {
+          "name": "uses-git-commit",
+          "description": "Uses git commit for committing in git-only repo",
+          "type": "contains",
+          "check": "git commit"
+        }
+      ]
     }
   ]
 }

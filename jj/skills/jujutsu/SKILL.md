@@ -159,11 +159,13 @@ jj restore
 jj restore --from <rev> <path>
 ```
 
-**Note:** `jj split` is interactive and not safe for agents. To split a commit:
+**Note:** `jj split` is interactive and not safe for agents. To split a commit
+(extract specific files into a new sibling):
 
-1. `jj new -r <commit>` — create a child change
-2. `jj restore --from <commit> <path1> <path2>` — move specific files into the new change
-3. `jj squash --into <commit>` — squash the moved files back, leaving the rest behind
+1. `jj new <commit>` — create a new empty change after the target
+2. `jj squash --from <commit> <path1> <path2>` — move only those files from the target into the new change
+
+The target commit retains everything except the moved files.
 
 ## Bookmarks
 

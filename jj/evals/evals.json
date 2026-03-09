@@ -280,6 +280,60 @@
       ]
     },
     {
+      "id": "JJ-B-INIT1",
+      "type": "behavioral",
+      "skill": "jj-init",
+      "prompt": "/jj-init",
+      "context": "Repo has .jj/ directory already present",
+      "expected_output": "Should detect existing .jj/ and stop with 'already initialized' message",
+      "assertions": [
+        {
+          "name": "detects-already-initialized",
+          "description": "Reports that jj is already initialized",
+          "type": "contains",
+          "check": "already"
+        }
+      ]
+    },
+    {
+      "id": "JJ-B-INIT2",
+      "type": "behavioral",
+      "skill": "jj-init",
+      "prompt": "/jj-init",
+      "context": "Repo has .git/ directory but no .jj/ directory",
+      "expected_output": "Should run jj git init --colocate, update .gitignore, verify with jj st",
+      "assertions": [
+        {
+          "name": "runs-jj-git-init-colocate",
+          "description": "Runs jj git init --colocate",
+          "type": "contains",
+          "check": "jj git init --colocate"
+        },
+        {
+          "name": "updates-gitignore",
+          "description": "Updates .gitignore for jj",
+          "type": "contains",
+          "check": ".gitignore"
+        }
+      ]
+    },
+    {
+      "id": "JJ-B-INIT3",
+      "type": "behavioral",
+      "skill": "jj-init",
+      "prompt": "/jj-init",
+      "context": "Directory has no .git/ or .jj/ present",
+      "expected_output": "Should detect no git repo and report error, suggest git init first",
+      "assertions": [
+        {
+          "name": "suggests-git-init",
+          "description": "Suggests running git init first",
+          "type": "contains",
+          "check": "git init"
+        }
+      ]
+    },
+    {
       "id": "JJ-T-NEG2",
       "type": "negative",
       "prompt": "git commit -m 'fix: update readme'",

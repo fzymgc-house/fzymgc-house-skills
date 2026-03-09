@@ -95,6 +95,12 @@ GITEOF
   [[ "$output" == *"no path field"* ]]
 }
 
+@test "exits cleanly when path key is absent from input" {
+  run bash -c 'echo "{}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"no path field"* ]]
+}
+
 @test "warns but proceeds for names with shell metacharacters" {
   evil_path="${REPO_ROOT}_worktrees/evil;rm"
   mkdir -p "$evil_path"

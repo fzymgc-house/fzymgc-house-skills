@@ -346,6 +346,28 @@
       ]
     },
     {
+      "id": "JJ-B-INIT4",
+      "type": "behavioral",
+      "skill": "jj-init",
+      "prompt": "Initialize jj in this repo",
+      "context": "jj git init --colocate exits non-zero with error: 'Error: The Git repo is already colocated'",
+      "expected_output": "Should report the error text to the user and stop without modifying .gitignore or running verification",
+      "assertions": [
+        {
+          "name": "surfaces-error-text",
+          "description": "Surfaces the jj init error text to the user",
+          "type": "contains",
+          "check": "error"
+        },
+        {
+          "name": "reports-failure",
+          "description": "Reports that init failed rather than silently continuing",
+          "type": "not_contains",
+          "check": ".gitignore"
+        }
+      ]
+    },
+    {
       "id": "JJ-T-NEG2",
       "type": "negative",
       "prompt": "git commit -m 'fix: update readme'",

@@ -12,6 +12,7 @@ allowed-tools:
   - "Bash(jj st *)"
   - "Bash(jj log *)"
   - "Bash(jj diff *)"
+  - "Bash(test *)"
   - "Bash(jj workspace *)"
   - "Bash(jj bookmark *)"
   - "Bash(jj git *)"
@@ -145,9 +146,10 @@ beads and run `bd init` in the target project."
    - **git:** Run `git worktree list` and check whether one exists for
      the PR's branch. If one matches, `cd` into it and verify with
      `git branch --show-current`.
-   - **jj:** Run `jj workspace list` to find existing workspaces.
-     Output shows workspace name and current commit summary per line.
-     Verify you are in a `worktree-*` workspace (not `default`).
+   - **jj:** Verify your working directory is under a `_worktrees/`
+     sibling directory using `case "$(pwd)" in *_worktrees/*) ...`.
+     Do NOT rely on `jj workspace list` output to identify the
+     current workspace (jj 0.39+ has no `(current)` marker).
    If no worktree matches, ask the user whether to create one.
 
    **MUST** use an existing worktree if one matches.

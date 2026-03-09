@@ -23,6 +23,7 @@ allowed-tools:
   - "Bash(git ls-files *)"
   - "Bash(git rev-parse *)"
   - "Bash(git merge-base *)"
+  - "Bash(test *)"
   - "Bash(jj *)"
   - "Bash(gh pr view *)"
   - "Bash(gh pr diff *)"

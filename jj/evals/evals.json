@@ -164,6 +164,12 @@
           "description": "Warns that split is interactive",
           "type": "manual",
           "check": "Output mentions that jj split is interactive and not agent-safe"
+        },
+        {
+          "name": "warns-interactive-auto",
+          "description": "Automated check for interactive warning",
+          "type": "contains",
+          "check": "interactive"
         }
       ]
     },
@@ -180,6 +186,12 @@
           "description": "Warns against git mutating commands in jj repos",
           "type": "manual",
           "check": "Output warns that mutating git commands should not be used in jj repos"
+        },
+        {
+          "name": "warns-no-git-mutate-auto",
+          "description": "Automated check for git mutation warning",
+          "type": "contains",
+          "check": "Do NOT"
         }
       ]
     },

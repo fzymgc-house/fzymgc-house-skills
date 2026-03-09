@@ -4,8 +4,10 @@ Use this reference when the repo has `.jj/` (colocated or pure jj repo).
 In jj repos, use jj for ALL VCS operations.
 Only `gh` CLI remains for GitHub API calls.
 
-**Note:** The detection pattern (see `vcs-detection-preamble.md`) checks for `.jj/`
-first, then `.git/`, and reports "none" if neither exists. Agents verify VCS
+**Note:** The detection pattern (see `vcs-detection-preamble.md`) uses `jj root`
+first, then `git rev-parse --git-dir`, and reports "none" if neither succeeds.
+This command-based approach works in workspaces where `.jj/` or `.git` may not
+exist as directories (e.g., jj workspaces, git worktrees). Agents verify VCS
 availability in their Environment startup check (step 2) — if verification fails,
 they STOP and report STATUS: FAILED.
 

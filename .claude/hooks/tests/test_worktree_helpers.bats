@@ -184,3 +184,55 @@ MOCK
   [ "$status" -ne 0 ]
   [[ "$output" == *"ERROR"* ]]
 }
+
+@test "detect_repo_root: jj root returning non-existent directory falls through to error" {
+  # Create a mock jj that outputs a non-existent directory path
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  echo "/tmp/nonexistent_repo_path_$$"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  local non_git_dir
+  non_git_dir=$(mktemp -d)
+  # Run from a non-git directory with mock jj returning non-existent path
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"not inside a git/jj repository"* ]]
+  rm -rf "$non_git_dir" "$mock_bin"
+}
+
+@test "detect_repo_root: git rev-parse takes priority over jj root" {
+  # Set up a git repo
+  local git_repo
+  git_repo=$(mktemp -d)
+  git -C "$git_repo" init -q
+  git -C "$git_repo" -c commit.gpgsign=false commit --allow-empty -m "init" -q
+
+  # Mock jj to return a different path
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  echo "/tmp/jj_different_root_$$"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  # git rev-parse should win since it's checked first
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$git_repo"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -eq 0 ]
+  [[ "$output" == "$git_repo" ]]
+  rm -rf "$git_repo" "$mock_bin"
+}

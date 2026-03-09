@@ -63,14 +63,9 @@ if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
     _REPO_ROOT_INFERRED=true
     echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path" >&2
   else
-    echo "WARNING: could not determine repo root — skipping path validation and VCS cleanup" >&2
-    # Proceed directly to rm-rf without path validation or VCS metadata cleanup
-    if ! rm -rf "$WORKTREE_PATH"; then
-      echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
-      exit 1
-    fi
-    cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
-    exit 0
+    echo "ERROR: could not determine repo root and path does not match expected _worktrees pattern — refusing removal for safety" >&2
+    echo "Manual cleanup required: rm -rf '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
+    exit 1
   fi
 fi
 

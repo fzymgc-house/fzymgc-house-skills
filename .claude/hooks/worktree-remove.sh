@@ -11,6 +11,7 @@ INPUT=$(cat)
 WORKTREE_PATH=$(echo "$INPUT" | jq -r '.path // empty')
 
 if [[ -z "$WORKTREE_PATH" ]]; then
+  echo '{"warning":"no path field in WorktreeRemove input — skipping removal"}' >&2
   exit 0
 fi
 
@@ -36,9 +37,9 @@ fi
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
 validate_safe_name "$WORKSPACE_NAME" "worktree name" || exit 1
 
-# Detect repo root — works with both .git/ (via git rev-parse) and .jj/
-# (via jj root fallback). Handles git repos, colocated jj repos, and
-# non-colocated jj repos.
+# Detect repo root — requires git rev-parse (.git/ directory). In colocated
+# jj repos (.jj/ + .git/), this succeeds. Pure jj repos use jj root fallback
+# in detect_repo_root.
 REPO_ROOT=$(detect_repo_root) || {
   echo "ERROR: could not determine repo root" >&2
   exit 1

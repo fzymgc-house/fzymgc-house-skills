@@ -320,3 +320,25 @@ MOCK
   [ -f "${REPO_ROOT}/forget-arg.log" ]
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-jj-wt" ]]
 }
+
+@test "POSIX fallback: removes worktree when realpath unavailable" {
+  # This test exercises the cd+pwd-P fallback paths (lines 30-36 and 81-83
+  # of worktree-remove.sh) that run when realpath is not in PATH.
+  # On ubuntu-latest (CI), realpath is always present in /usr/bin, so the test
+  # self-skips there. Run manually on a POSIX-minimal system to verify coverage.
+  command -v realpath &>/dev/null && skip "realpath is available — POSIX fallback cannot be tested on this system"
+
+  ALT_ROOT=$(mktemp -d)
+  cd "$ALT_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  mkdir -p "${ALT_ROOT}_worktrees/posix-test"
+  git worktree add "${ALT_ROOT}_worktrees/posix-test" -b worktree/posix-test HEAD -q
+
+  run bash -c 'echo "{\"path\": \"'"${ALT_ROOT}_worktrees/posix-test"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${ALT_ROOT}_worktrees/posix-test" ]
+
+  cd /
+  rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees"
+}

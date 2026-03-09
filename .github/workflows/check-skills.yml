@@ -85,3 +85,9 @@ jobs:
             jj/skills/*/SKILL.md \
             jj/commands/*.md \
             pr-review/agents/*.md
+      - name: Validate evals against schema
+        run: |
+          pip install check-jsonschema
+          check-jsonschema --schemafile pr-review/evals/evals.schema.json \
+            pr-review/evals/evals.json \
+            jj/evals/evals.json

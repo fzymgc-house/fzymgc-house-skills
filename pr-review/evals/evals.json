@@ -439,6 +439,34 @@
       ]
     },
     {
+      "id": "B7",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "/address-findings 50",
+      "context": "jj repo with open review findings. One fix-worker's rebase produces a conflict commit (jj rebase returns 0 but commit has conflict markers).",
+      "expected_output": "Should detect conflict via jj log -r <change-id> -T conflict template, run jj undo to revert, mark FAILED, and re-queue. Should NOT use @- parent comparison.",
+      "assertions": [
+        {
+          "name": "detects-conflict-via-template",
+          "description": "Uses jj log conflict template instead of @- comparison",
+          "type": "contains",
+          "check": "if(conflict"
+        },
+        {
+          "name": "runs-jj-undo-on-conflict",
+          "description": "Runs jj undo when conflict detected",
+          "type": "manual",
+          "check": "jj undo is called after conflict detection, not after hard failure"
+        },
+        {
+          "name": "no-undo-on-hard-failure",
+          "description": "Does NOT run jj undo when rebase hard-fails (non-zero exit)",
+          "type": "manual",
+          "check": "Hard failure path skips jj undo"
+        }
+      ]
+    },
+    {
       "id": "B-RG1",
       "type": "behavioral",
       "skill": "address-findings",

@@ -27,10 +27,14 @@ WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 cleanup_on_error() {
-  # Forget jj workspace metadata if this is a jj repo (prevents orphaned metadata)
+  # Deregister VCS workspace/worktree metadata before removing the directory
   if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
+    # jj repo: forget workspace metadata (prevents orphaned metadata)
     (cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>/dev/null) || \
       echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed" >&2
+  else
+    # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
+    git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
   fi
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
   cleanup_empty_parent "$WORKTREE_PARENT"
@@ -81,5 +85,5 @@ if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   fi
 fi
 
-trap - EXIT
 echo "$WORKTREE_PATH"
+trap - EXIT

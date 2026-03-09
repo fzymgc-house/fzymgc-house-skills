@@ -59,6 +59,6 @@ detect_repo_root() {
       return 0
     fi
   fi
-  echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $jj_out})" >&2
+  echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $(sanitize_for_output "$jj_out")})" >&2
   return 1
 }

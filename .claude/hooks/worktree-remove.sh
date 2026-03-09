@@ -94,9 +94,18 @@ case "$WORKTREE_PATH" in
     ;;
 esac
 
-# Skip VCS cleanup when repo root was inferred (no actual repo present)
+# When repo root was inferred, verify it actually contains a repo before VCS cleanup.
+# If neither .jj/ nor .git exists at the inferred root, skip VCS deregistration entirely.
+_skip_vcs_cleanup=false
 if [[ "$_REPO_ROOT_INFERRED" == "true" ]]; then
-  echo "WARNING: repo root was inferred — skipping VCS metadata cleanup" >&2
+  if [[ ! -d "${REPO_ROOT}/.jj" ]] && ! git -C "$REPO_ROOT" rev-parse --git-dir &>/dev/null; then
+    echo "WARNING: inferred repo root '$(sanitize_for_output "$REPO_ROOT")' has no .jj/ or .git — skipping VCS cleanup" >&2
+    _skip_vcs_cleanup=true
+  fi
+fi
+
+if [[ "$_skip_vcs_cleanup" == "true" ]]; then
+  : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then

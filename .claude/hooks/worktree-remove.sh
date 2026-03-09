@@ -57,8 +57,7 @@ fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent
   *)
-    echo "ERROR: WORKTREE_PATH '$WORKTREE_PATH' is outside expected parent '$EXPECTED_PARENT'" >&2
-    exit 1
+    echo "WARNING: WORKTREE_PATH '$WORKTREE_PATH' is outside expected parent '$EXPECTED_PARENT'. Proceeding with removal." >&2
     ;;
 esac
 

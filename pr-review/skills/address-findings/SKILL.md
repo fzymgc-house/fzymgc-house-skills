@@ -270,7 +270,7 @@ Loop while open, non-deferred findings remain:
      Implement the fix. Commit with message:
        fix(<finding-id>): <one-line description>
      Report STATUS, VCS, FILES_CHANGED, DESCRIPTION, WORKTREE_BRANCH (git) or CHANGE_ID (jj).
-    VCS must be "git" or "jj" to indicate which integration method to use.
+     VCS must be "git" or "jj" to indicate which integration method to use.
      Do NOT close or update any beads.
    ```
 
@@ -285,7 +285,7 @@ Loop while open, non-deferred findings remain:
    1. Detect VCS: `if test -d .jj; then echo jj; elif test -d .git; then echo git; else echo none; fi`
       — if `none`, mark FAILED ("No VCS detected") and skip integration.
    2. git: `git -C <worktree-path> branch --show-current`
-   3. jj: `jj --at-operation=@ -R <worktree-path> log -r @- --no-graph -T 'change_id.short(8)'`
+   3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
       — reads the committed fix (parent of working copy). If it fails, mark FAILED.
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 

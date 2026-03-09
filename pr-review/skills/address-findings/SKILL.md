@@ -298,6 +298,18 @@ Integration method depends on VCS:
 | git | `git cherry-pick` | WORKTREE_BRANCH | `git worktree remove` |
 | jj | `jj rebase` + `jj bookmark set` | CHANGE_ID | `jj workspace forget` + `rm -rf` |
 
+#### STATUS: PARTIAL handling
+
+Treat PARTIAL the same as FAILED: skip integration, add a bead comment
+noting the partial fix, and re-queue the finding for the next round.
+
+```bash
+bd comment <finding-bead-id> --body "fix-worker reported PARTIAL: <DESCRIPTION>. Re-queued for next round."
+```
+
+Do NOT attempt to cherry-pick or rebase a PARTIAL result — the commit
+may be incomplete or in an inconsistent state.
+
 #### Git repos
 
 For each FIXED result, in dependency order:

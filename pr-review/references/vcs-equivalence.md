@@ -48,7 +48,7 @@ Fix-worker agents MUST report these fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| STATUS | Always | FIXED, FAILED, or SKIPPED |
+| STATUS | Always | FIXED, PARTIAL, or FAILED |
 | VCS | Always | "git" or "jj" |
 | FILES_CHANGED | When FIXED | Comma-separated list of changed files |
 | DESCRIPTION | When FIXED | One-line summary of the fix |

@@ -381,6 +381,28 @@
           "check": "jujutsu"
         }
       ]
+    },
+    {
+      "id": "JJ-B-UNDO1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "jj bookmark set failed, should I run jj undo twice to clean up?",
+      "context": "In a jj repo, jj bookmark set was attempted but failed with an error",
+      "expected_output": "Should explain that failed jj commands leave no op-log entry, so jj undo only needs to run once (or not at all for the failed operation)",
+      "assertions": [
+        {
+          "name": "no-undo-twice",
+          "description": "Does not recommend running jj undo twice",
+          "type": "not_contains",
+          "check": "undo twice"
+        },
+        {
+          "name": "explains-op-log",
+          "description": "Explains that failed operations leave no op-log entry",
+          "type": "contains",
+          "check": "once"
+        }
+      ]
     }
   ]
 }

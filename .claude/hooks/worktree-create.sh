@@ -35,7 +35,9 @@ cleanup_on_error() {
   if [[ "$WORKSPACE_CREATED" == "true" ]]; then
     if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
       # jj repo: forget workspace metadata (prevents orphaned metadata)
-      if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
+      if [[ ! -d "$REPO_ROOT" ]]; then
+        echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — jj workspace forget skipped" >&2
+      elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
         echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: $(sanitize_for_output "${jj_err:0:200}")" >&2
       fi
     else

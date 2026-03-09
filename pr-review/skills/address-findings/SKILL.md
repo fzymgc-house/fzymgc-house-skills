@@ -282,10 +282,16 @@ Loop while open, non-deferred findings remain:
 
    If `VCS` is missing from the fix-worker response:
 
-   1. Detect VCS: `if test -d .jj; then echo jj; elif test -d .git; then echo git; else echo none; fi`
+   0. Verify worktree path exists: `test -d <worktree-path>`. If the
+      worktree has already been removed, log a warning and use
+      WORKTREE_BRANCH or CHANGE_ID from the fix-worker's output
+      directly (these are already committed values). Only fall through
+      to inference commands if the path is accessible.
+   1. Detect VCS in the main repo:
+      `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`
       — if `none`, mark FAILED ("No VCS detected") and skip integration.
    2. git: `git -C <worktree-path> branch --show-current`
-   3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
+   3. jj: `jj --repository <worktree-path> log -r @- --no-graph -T 'change_id.short(8)'`
       — reads the committed fix (parent of working copy). If it fails, mark FAILED.
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 

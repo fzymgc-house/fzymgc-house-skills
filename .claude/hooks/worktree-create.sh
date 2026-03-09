@@ -26,17 +26,23 @@ validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
 WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
+WORKSPACE_CREATED=false
+
 cleanup_on_error() {
-  # Deregister VCS workspace/worktree metadata before removing the directory
-  if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
-    # jj repo: forget workspace metadata (prevents orphaned metadata)
-    if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
-      echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: ${jj_err}" >&2
-    fi
-  else
-    # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
-    if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: ${git_err}" >&2
+  # Only deregister VCS workspace/worktree metadata if the workspace was actually created.
+  # Without this guard the trap fires on early failures (e.g. mkdir) before any VCS
+  # registration has occurred, causing spurious jj/git errors.
+  if [[ "$WORKSPACE_CREATED" == "true" ]]; then
+    if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
+      # jj repo: forget workspace metadata (prevents orphaned metadata)
+      if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
+        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: ${jj_err}" >&2
+      fi
+    else
+      # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
+      if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
+        echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: ${git_err}" >&2
+      fi
     fi
   fi
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
@@ -73,12 +79,14 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:200}")" >&2
     exit 1
   fi
+  WORKSPACE_CREATED=true
 else
   # Standard git worktree
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $(sanitize_for_output "${git_err:0:200}")" >&2
     exit 1
   fi
+  WORKSPACE_CREATED=true
 fi
 
 # Install hooks in the new workspace (lefthook works in both VCS modes)

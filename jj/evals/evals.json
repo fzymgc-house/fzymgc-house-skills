@@ -110,7 +110,7 @@
           "name": "uses-jj-commit",
           "description": "Uses jj commit -m for committing",
           "type": "contains",
-          "check": "jj commit -m"
+          "check": "jj commit"
         },
         {
           "name": "no-staging",

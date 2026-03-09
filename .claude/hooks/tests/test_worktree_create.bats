@@ -281,6 +281,52 @@ MOCK
   [[ "$output" == *"WARNING: cleanup: git worktree remove failed"* ]]
 }
 
+@test "cleanup_on_error warns when rm -rf fails to remove worktree directory" {
+  # Resolve real git path before creating mock to avoid PATH confusion.
+  # macOS resolves symlinks in tmpdir paths (e.g. /var/... → /private/var/...)
+  # so we can't match WORKTREE_PATH exactly; instead fail on any -rf invocation
+  # inside the cleanup, which is the only rm -rf the cleanup function issues.
+  local real_git
+  real_git="$(command -v git)"
+  local real_rm
+  real_rm="$(command -v rm)"
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+
+  # Mock rm: fail on -rf (the cleanup rm -rf call); delegate everything else.
+  cat > "${mock_bin}/rm" << MOCK
+#!/bin/bash
+if [[ "\$1" == "-rf" ]]; then
+  echo "rm: \$2: Operation not permitted" >&2
+  exit 1
+fi
+exec "${real_rm}" "\$@"
+MOCK
+  chmod +x "${mock_bin}/rm"
+
+  # Mock git: pass through all calls so worktree add succeeds, and succeed on
+  # worktree remove so cleanup_on_error proceeds to the rm -rf step.
+  cat > "${mock_bin}/git" << MOCK
+#!/bin/bash
+if [[ "\$1" == "worktree" && "\$2" == "remove" ]]; then
+  exit 0
+fi
+exec "${real_git}" "\$@"
+MOCK
+  chmod +x "${mock_bin}/git"
+
+  local patched
+  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${mock_bin}:$PATH" run bash -c \
+    'echo "{\"name\": \"rm-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  rm -rf "$mock_bin"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"WARNING: cleanup failed for"* ]]
+}
+
 @test "rejects repo directory name with spaces" {
   UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
   mkdir -p "$UNSAFE_ROOT"

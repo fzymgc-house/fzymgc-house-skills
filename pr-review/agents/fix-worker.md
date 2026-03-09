@@ -96,11 +96,8 @@ VCS: jj
 CHANGE_ID: <change-id>
 ```
 
-**Discriminated union rules:**
-
-- When `VCS: git` — `WORKTREE_BRANCH` MUST be present, `CHANGE_ID` MUST be omitted
-- When `VCS: jj` — `CHANGE_ID` MUST be present, `WORKTREE_BRANCH` MUST be omitted
-- Omit means do not include the line at all (not an empty value)
+See `pr-review/references/vcs-equivalence.md` for VCS-specific output field rules
+(WORKTREE_BRANCH vs CHANGE_ID).
 
 ## Constraints
 

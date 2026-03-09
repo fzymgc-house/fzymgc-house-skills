@@ -40,16 +40,21 @@ they STOP and report STATUS: FAILED.
 - **Working copy = commit:** The working directory is always a commit (`@`).
 - **Bookmarks don't auto-advance:** Must `jj bookmark set` before pushing.
 
-## Agent Output Format
+## Agent Output Fields
 
-In jj repos, agents report `CHANGE_ID` instead of `WORKTREE_BRANCH`:
+Agents report VCS-specific fields in their structured output:
+
+| VCS | Required Field | Must Omit |
+|-----|----------------|-----------|
+| git | `WORKTREE_BRANCH` | `CHANGE_ID` |
+| jj | `CHANGE_ID` | `WORKTREE_BRANCH` |
+
+"Omit" means do not include the line at all (not an empty value).
 
 ```text
 git repos: WORKTREE_BRANCH: worktree/fix-abc
-jj repos: CHANGE_ID: kkmpptxz
+jj repos:  CHANGE_ID: kkmpptxz
 ```
-
-Report whichever matches the repo's VCS.
 
 ## Operations That Stay git/gh
 

@@ -402,6 +402,68 @@
           "check": "Verify agent stops immediately without editing, writing, or modifying any files"
         }
       ]
+    },
+    {
+      "id": "B-VR1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Run verification-runner on the fix. fix-worker returned: STATUS: FIXED, VCS: jj, CHANGE_ID: abc12345, FILES_CHANGED: src/config.py. Verify the fix alignment.",
+      "context": "Repo root contains .jj/ directory. verification-runner is running in a jj workspace.",
+      "expected_output": "verification-runner should report CHANGE_ID (not WORKTREE_BRANCH) in its output, detecting and using jj VCS semantics throughout",
+      "assertions": [
+        {
+          "name": "reports-change-id",
+          "description": "Output includes CHANGE_ID when operating in jj workspace",
+          "type": "contains",
+          "check": "CHANGE_ID"
+        },
+        {
+          "name": "no-worktree-branch",
+          "description": "Does not report WORKTREE_BRANCH in jj repo context",
+          "type": "not_contains",
+          "check": "WORKTREE_BRANCH"
+        },
+        {
+          "name": "reports-vcs-jj",
+          "description": "Reports VCS: jj in structured output",
+          "type": "contains",
+          "check": "VCS: jj"
+        },
+        {
+          "name": "uses-jj-for-verification",
+          "description": "Uses jj commands for VCS state inspection, not git equivalents",
+          "type": "manual",
+          "check": "Verify verification-runner uses jj show/diff rather than git show/diff for VCS operations"
+        }
+      ]
+    },
+    {
+      "id": "B-RG1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "review-gate receives the following diff output from jj show:\nDiff (git format):\n--- a/src/config.py\n+++ b/src/config.py\n@@ -10,6 +10,8 @@\n+    MAX_RETRIES = 3\n+    TIMEOUT = 30\nVerify the fix correctly addresses finding fzymgc-house-skills-qsh.5 about missing timeout configuration.",
+      "context": "Repo root contains .jj/ directory. review-gate is evaluating a diff produced by jj show (jj diff format).",
+      "expected_output": "review-gate should correctly identify the changed file (src/config.py) and added lines from the jj-format diff without false positives or misidentified hunks",
+      "assertions": [
+        {
+          "name": "identifies-changed-file",
+          "description": "Correctly identifies src/config.py as the changed file",
+          "type": "contains",
+          "check": "src/config.py"
+        },
+        {
+          "name": "no-false-positives",
+          "description": "Does not report false failures due to jj diff format differences",
+          "type": "manual",
+          "check": "Verify review-gate does not flag jj diff headers or metadata lines as errors"
+        },
+        {
+          "name": "identifies-added-lines",
+          "description": "Correctly identifies the added MAX_RETRIES and TIMEOUT lines",
+          "type": "manual",
+          "check": "Verify review-gate recognizes the + prefixed lines as additions, not noise"
+        }
+      ]
     }
   ]
 }

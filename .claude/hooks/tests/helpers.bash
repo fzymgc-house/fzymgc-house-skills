@@ -147,7 +147,7 @@ MOCK
 # Writes the forgotten workspace name to $REPO_ROOT/forget-called.log.
 create_failing_logging_jj_mock() {
   _setup_mock_bin_dir
-  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
 if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
   echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"

@@ -75,11 +75,11 @@ validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
 
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
-# If the _worktrees parent doesn't exist, worktree is already gone — exit cleanly
+# If the _worktrees parent doesn't exist but WORKTREE_PATH exists, state is inconsistent
 if command -v realpath &>/dev/null; then
-  EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || exit 0
+  EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state" >&2; exit 1; }
 else
-  EXPECTED_PARENT=$(cd "$EXPECTED_PARENT" 2>/dev/null && pwd -P) || exit 0
+  EXPECTED_PARENT=$(cd "$EXPECTED_PARENT" 2>/dev/null && pwd -P) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state" >&2; exit 1; }
 fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent

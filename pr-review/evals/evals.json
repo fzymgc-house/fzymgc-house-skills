@@ -467,6 +467,40 @@
       ]
     },
     {
+      "id": "B8",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "/address-findings 50",
+      "context": "fix-worker response omits VCS field. Worktree path still exists. Repo is a jj colocated repo.",
+      "expected_output": "Should check worktree path exists, detect VCS via jj root, infer CHANGE_ID via jj --repository, log a warning about missing VCS field, and continue with integration.",
+      "assertions": [
+        {
+          "name": "checks-worktree-exists",
+          "description": "Verifies worktree path exists before inference",
+          "type": "manual",
+          "check": "Output includes test -d or path existence check before running inference commands"
+        },
+        {
+          "name": "detects-vcs-via-jj-root",
+          "description": "Uses jj root for VCS detection instead of test -d",
+          "type": "contains",
+          "check": "jj root"
+        },
+        {
+          "name": "infers-change-id",
+          "description": "Runs jj --repository to infer CHANGE_ID",
+          "type": "contains",
+          "check": "jj --repository"
+        },
+        {
+          "name": "logs-warning",
+          "description": "Logs warning about missing VCS field",
+          "type": "manual",
+          "check": "Warning logged about fix-worker omitting VCS field"
+        }
+      ]
+    },
+    {
       "id": "B-RG1",
       "type": "behavioral",
       "skill": "address-findings",

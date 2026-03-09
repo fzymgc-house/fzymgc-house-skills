@@ -36,7 +36,7 @@
     },
     {
       "id": "JJ-T5",
-      "type": "triggering",
+      "type": "negative",
       "prompt": "commit this with a message",
       "context": "No .jj/ directory exists in the repository root",
       "expected_skill": null,
@@ -69,7 +69,7 @@
     },
     {
       "id": "JJ-T8",
-      "type": "triggering",
+      "type": "negative",
       "prompt": "help me resolve this git merge conflict",
       "context": "Repo has .git/ directory but no .jj/ directory",
       "expected_skill": null,

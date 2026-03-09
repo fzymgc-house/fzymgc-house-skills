@@ -129,14 +129,22 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
-@test "jj path: cleanup_on_error calls jj workspace forget on workspace add failure" {
+@test "jj path: cleanup_on_error calls jj workspace forget on post-add failure" {
   setup_jj
-  create_failing_logging_jj_mock
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"forget-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
-  [ "$status" -eq 1 ]
-  # The forget-called.log must exist and contain the workspace name
-  [ -f "${REPO_ROOT}/forget-called.log" ]
-  [[ "$(cat "${REPO_ROOT}/forget-called.log")" == *"worktree-forget-wt"* ]]
+  create_logging_jj_mock
+  # Patch worktree-create.sh: replace "trap - EXIT" with "false" to simulate
+  # a failure after workspace add succeeds (WORKSPACE_CREATED=true).
+  # Under set -e, "false" exits non-zero, firing the EXIT trap.
+  local patched
+  patched=$(mktemp)
+  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"forget-wt\"}" | bash '"$patched"
+  rm -f "$patched"
+  [ "$status" -ne 0 ]
+  # cleanup_on_error should have called jj workspace forget with the workspace name
+  [ -f "${REPO_ROOT}/forget-arg.log" ]
+  [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-forget-wt" ]]
 }
 
 @test "jj path: fails gracefully when mkdir -p fails" {

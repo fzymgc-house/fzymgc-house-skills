@@ -169,3 +169,29 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
+
+# Create a mock jj that fails on workspace add but logs workspace forget calls.
+# Used to verify that cleanup_on_error invokes jj workspace forget.
+# Writes the forgotten workspace name to $REPO_ROOT/forget-called.log.
+create_failing_logging_jj_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+  echo "  --name <NAME>"
+  exit 0
+fi
+if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
+  shift 2
+  echo "$*" > "${REPO_ROOT}/forget-called.log"
+  exit 0
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}

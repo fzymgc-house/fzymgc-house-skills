@@ -146,6 +146,16 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "jj path: cleanup_on_error calls jj workspace forget on workspace add failure" {
+  setup_jj
+  create_failing_logging_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"forget-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  # The forget-called.log must exist and contain the workspace name
+  [ -f "${REPO_ROOT}/forget-called.log" ]
+  [[ "$(cat "${REPO_ROOT}/forget-called.log")" == *"worktree-forget-wt"* ]]
+}
+
 @test "jj path: fails gracefully when mkdir -p fails" {
   setup_jj
   create_mock_jj

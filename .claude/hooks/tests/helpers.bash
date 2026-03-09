@@ -149,19 +149,19 @@ create_failing_logging_jj_mock() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
+if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
   echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
   echo "  --name <NAME>"
   exit 0
 fi
-if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
   shift 2
-  echo "$*" > "${REPO_ROOT}/forget-called.log"
+  echo "\$*" > "${REPO_ROOT}/forget-called.log"
   exit 0
 fi
-if [[ "$1" == "root" ]]; then
+if [[ "\$1" == "root" ]]; then
   git rev-parse --show-toplevel 2>/dev/null
-  exit $?
+  exit \$?
 fi
 exit 1
 MOCK

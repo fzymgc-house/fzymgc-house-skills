@@ -213,6 +213,8 @@ MOCK
   # Set up a git repo
   local git_repo
   git_repo=$(mktemp -d)
+  # Canonicalize to handle macOS /var -> /private/var symlink
+  git_repo=$(cd "$git_repo" && pwd -P)
   git -C "$git_repo" init -q
   git -C "$git_repo" -c commit.gpgsign=false commit --allow-empty -m "init" -q
 

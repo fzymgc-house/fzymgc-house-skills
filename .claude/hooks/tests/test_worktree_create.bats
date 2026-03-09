@@ -135,8 +135,10 @@ setup_jj() {
   # Patch worktree-create.sh: replace "trap - EXIT" with "false" to simulate
   # a failure after workspace add succeeds (WORKSPACE_CREATED=true).
   # Under set -e, "false" exits non-zero, firing the EXIT trap.
+  # Copy into the same directory so BASH_SOURCE[0]-based source resolution
+  # still finds worktree-helpers.sh.
   local patched
-  patched=$(mktemp)
+  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"forget-wt\"}" | bash '"$patched"
@@ -190,8 +192,10 @@ setup_jj() {
 @test "git path: cleanup_on_error removes worktree on post-add failure" {
   # Patch worktree-create.sh: replace "trap - EXIT" with "false" to simulate
   # a failure after worktree add succeeds (WORKSPACE_CREATED=true).
+  # Copy into the same directory so BASH_SOURCE[0]-based source resolution
+  # still finds worktree-helpers.sh.
   local patched
-  patched=$(mktemp)
+  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
     'echo "{\"name\": \"git-cleanup-wt\"}" | bash '"$patched"' 2>&1'

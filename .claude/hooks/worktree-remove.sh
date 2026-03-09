@@ -55,10 +55,10 @@ fi
 # infer the repo root from the worktree path by stripping the last two path
 # components (workspace name and _worktrees suffix).
 _REPO_ROOT_INFERRED=false
-_root_err_file=$(mktemp)
+_root_err_file=$(mktemp) || { echo 'ERROR: mktemp failed — cannot create temp file for error capture' >&2; exit 1; }
+trap 'rm -f "${_root_err_file:-}"' EXIT
 if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
   _root_stderr=$(cat "$_root_err_file" 2>/dev/null)
-  rm -f "$_root_err_file"
   _worktrees_dir=$(dirname "$WORKTREE_PATH")
   _inferred_root=$(dirname "$_worktrees_dir")
   _inferred_name=$(basename "$_worktrees_dir")
@@ -72,8 +72,6 @@ if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
     echo "Manual cleanup required: rm -rf '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
     exit 1
   fi
-else
-  rm -f "$_root_err_file"
 fi
 
 # Validate path is inside the expected sibling directory

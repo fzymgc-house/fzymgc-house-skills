@@ -87,7 +87,7 @@ teardown() {
   create_pure_jj_mock
   REPO_ROOT="$ORIG_REPO_ROOT"
   PATH="${NON_GIT}/bin:$PATH" JJ_REPO_ROOT="${NON_GIT}" run bash -c \
-    'cd '"$NON_GIT"' && echo "{\"name\": \"jj-root-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+    'cd '"$NON_GIT"' && echo "{\"name\": \"jj-root-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/jj-root-test"* ]]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
@@ -110,7 +110,7 @@ setup_jj() {
 @test "jj path: creates workspace with mock jj" {
   setup_jj
   create_mock_jj
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/test-jj-wt"* ]]
   [ -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
@@ -119,7 +119,7 @@ setup_jj() {
 @test "jj path: forwards --name flag to jj workspace add" {
   setup_jj
   create_logging_jj_mock
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"named-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"named-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 0 ]
   # Verify the logged args contain --name worktree-named-wt
   [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-named-wt"* ]]

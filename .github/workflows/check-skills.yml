@@ -83,4 +83,5 @@ jobs:
           rumdl check homelab/skills/*/SKILL.md \
             pr-review/skills/*/SKILL.md \
             jj/skills/*/SKILL.md \
+            jj/commands/*.md \
             pr-review/agents/*.md

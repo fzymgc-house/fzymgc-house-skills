@@ -19,7 +19,7 @@ validate_safe_name() {
     local safe_name safe_label
     safe_name=$(sanitize_for_output "$name")
     safe_label=$(sanitize_for_output "$label")
-    echo "ERROR: invalid ${safe_label} '${safe_name}' (alphanumeric, dots, hyphens, underscores only; no leading dot)" >&2
+    echo "ERROR: invalid ${safe_label} '${safe_name}' (alphanumeric, dots, hyphens, underscores only; no leading dot, trailing dot, or double-dot)" >&2
     return 1
   fi
 }

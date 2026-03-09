@@ -52,6 +52,7 @@ fi
 # Fallback: when hook CWD is outside any repo (e.g. orphaned worktree cleanup),
 # infer the repo root from the worktree path by stripping the last two path
 # components (workspace name and _worktrees suffix).
+_REPO_ROOT_INFERRED=false
 if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
   _worktrees_dir=$(dirname "$WORKTREE_PATH")
   _inferred_root=$(dirname "$_worktrees_dir")
@@ -59,6 +60,7 @@ if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
   # _worktrees dir should end in _worktrees suffix
   if [[ "$_inferred_name" == *_worktrees ]]; then
     REPO_ROOT="${_inferred_root}/${_inferred_name%_worktrees}"
+    _REPO_ROOT_INFERRED=true
     echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path" >&2
   else
     echo "WARNING: could not determine repo root — skipping path validation and VCS cleanup" >&2
@@ -92,7 +94,10 @@ case "$WORKTREE_PATH" in
     ;;
 esac
 
-if [[ -d "${REPO_ROOT}/.jj" ]]; then
+# Skip VCS cleanup when repo root was inferred (no actual repo present)
+if [[ "$_REPO_ROOT_INFERRED" == "true" ]]; then
+  echo "WARNING: repo root was inferred — skipping VCS metadata cleanup" >&2
+elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2

@@ -221,6 +221,24 @@ setup_jj_worktree() {
   [[ "$output" == *"failed to remove worktree directory"* ]]
 }
 
+@test "fails when jj root returns empty in pure-jj repo" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
+  # Mock jj that is installed but returns empty for 'root'
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then echo ""; exit 0; fi
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  PATH="${NON_GIT}/bin:/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"could not determine repo root"* ]]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 @test "detect_repo_root falls back to jj root when git rev-parse fails" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

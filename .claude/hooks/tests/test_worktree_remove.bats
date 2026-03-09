@@ -372,3 +372,33 @@ MOCK
   cd /
   rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees" "$clean_bin"
 }
+
+@test "POSIX fallback: errors when _worktrees parent dir does not exist" {
+  # Combine the POSIX fallback path (no realpath) with the missing EXPECTED_PARENT
+  # condition, so that the cd+pwd -P branch on line 87 of worktree-remove.sh is
+  # exercised and produces the "inconsistent state" error.
+  local clean_bin
+  clean_bin=$(mktemp -d)
+  local cmd cmd_path
+  for cmd in bash git rm rmdir ls dirname basename cat mkdir chmod jq; do
+    cmd_path=$(command -v "$cmd" 2>/dev/null) || continue
+    ln -sf "$cmd_path" "$clean_bin/$cmd"
+  done
+  # Verify realpath is NOT in clean_bin
+  [[ ! -x "$clean_bin/realpath" ]]
+
+  ALT_ROOT=$(mktemp -d)
+  cd "$ALT_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  # Place the worktree dir under a differently-named parent — NOT ${REPO_NAME}_worktrees
+  mkdir -p "${ALT_ROOT}_other/some-worktree"
+
+  PATH="$clean_bin" run bash -c \
+    'echo "{\"path\": \"'"${ALT_ROOT}_other/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"inconsistent state"* ]]
+
+  cd /
+  rm -rf "$ALT_ROOT" "${ALT_ROOT}_other" "$clean_bin"
+}

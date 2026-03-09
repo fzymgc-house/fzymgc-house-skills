@@ -455,14 +455,20 @@
         {
           "name": "runs-jj-undo-on-conflict",
           "description": "Runs jj undo when conflict detected",
-          "type": "manual",
-          "check": "jj undo is called after conflict detection, not after hard failure"
+          "type": "contains",
+          "check": "jj undo"
         },
         {
           "name": "no-undo-on-hard-failure",
           "description": "Does NOT run jj undo when rebase hard-fails (non-zero exit)",
           "type": "manual",
           "check": "Hard failure path skips jj undo"
+        },
+        {
+          "name": "no-git-cherry-pick-fallback",
+          "description": "Does not fall back to git cherry-pick in jj repos",
+          "type": "not_contains",
+          "check": "git cherry-pick"
         }
       ]
     },

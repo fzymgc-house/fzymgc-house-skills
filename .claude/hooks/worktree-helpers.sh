@@ -35,7 +35,7 @@ cleanup_empty_parent() {
       return 0
     fi
     if [[ -z "$ls_out" ]]; then
-      rmdir "$parent" 2>/dev/null || echo "WARNING: failed to remove empty parent '$parent'" >&2
+      _rmdir_err=$(rmdir "$parent" 2>&1) || echo "WARNING: failed to remove empty parent '$(sanitize_for_output "$parent")': $(sanitize_for_output "${_rmdir_err:0:200}")" >&2
     fi
   fi
 }

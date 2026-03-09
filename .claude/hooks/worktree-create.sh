@@ -48,8 +48,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
     exit 1
   fi
-  # Runtime version probe: jj is user-installed and can be updated
-  # independently, so we check --name support on each invocation.
+  # Runtime capability probe: jj is user-managed and may not be in PATH
+  # or may predate --name support. Check before each workspace creation.
   # Note: there is a theoretical TOCTOU window between the --help probe
   # and the actual workspace add, but the practical risk of jj being
   # replaced between two calls in the same hook invocation is negligible.

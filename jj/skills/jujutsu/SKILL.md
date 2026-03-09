@@ -220,8 +220,9 @@ jj workspace add ../my-workspace --name my-workspace
 # List workspaces
 jj workspace list
 
-# Forget a workspace (de-register, does NOT delete files)
+# Forget a workspace (de-register, does NOT delete files — callers must rm -rf the directory after)
 jj workspace forget <name>
+rm -rf <path>
 
 # Fix a stale workspace after concurrent edits
 jj workspace update-stale
@@ -323,7 +324,7 @@ environments.
 | Current location | `jj log -r @ --no-graph -T 'change_id.short(8)'` |
 | Add workspace | `jj workspace add <path> --name <name>` |
 | List workspaces | `jj workspace list` |
-| Remove workspace | `jj workspace forget <name>` |
+| Remove workspace | `jj workspace forget <name>` + `rm -rf <path>` |
 
 ## See Also
 

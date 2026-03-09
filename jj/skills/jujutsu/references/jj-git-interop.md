@@ -57,6 +57,9 @@ Ensure the bookmark is pushed (`jj git push -b <name>`) before creating a PR.
 Workspaces replace git worktrees in the jj workflow. See the [Workspaces section in
 SKILL.md](../SKILL.md#workspaces) for full command reference and key behaviors.
 
+Key removal note: `jj workspace forget` de-registers a workspace but does NOT delete
+files — callers must `rm -rf` the workspace directory after forget.
+
 ## What NOT To Do
 
 **Avoid mutating git commands** in colocated repos:

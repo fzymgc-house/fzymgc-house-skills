@@ -102,7 +102,7 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-    echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $(sanitize_for_output "${jj_err:0:200}") (run 'jj workspace forget worktree-${WORKSPACE_NAME}' manually to clean up)" >&2
+    echo "WARNING: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:200}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing

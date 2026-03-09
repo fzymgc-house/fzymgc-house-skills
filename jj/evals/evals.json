@@ -1,4 +1,5 @@
 {
+  "$schema": "../../pr-review/evals/evals.schema.json",
   "skill_name": "jujutsu",
   "evals": [
     {

@@ -30,7 +30,7 @@ if command -v realpath &>/dev/null; then
   WORKTREE_PATH="$_rp_err"
 else
   # POSIX fallback: cd into the directory and capture pwd -P
-  _cd_err=$(cd "$_ORIG_PATH" 2>&1 && pwd -P) || {
+  _cd_err=$({ cd "$_ORIG_PATH" && pwd -P; } 2>&1) || {
     echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_err:0:200}")" >&2
     exit 1
   }
@@ -87,7 +87,7 @@ if command -v realpath &>/dev/null; then
   _ep_err=$(realpath "$EXPECTED_PARENT" 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
   EXPECTED_PARENT="$_ep_err"
 else
-  _ep_err=$(cd "$EXPECTED_PARENT" 2>&1 && pwd -P) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
+  _ep_err=$({ cd "$EXPECTED_PARENT" && pwd -P; } 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
   EXPECTED_PARENT="$_ep_err"
 fi
 case "$WORKTREE_PATH" in

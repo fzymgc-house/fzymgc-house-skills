@@ -38,17 +38,17 @@ cleanup_on_error() {
     elif [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
       # jj repo: forget workspace metadata (prevents orphaned metadata)
       if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
-        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: $(sanitize_for_output "${jj_err:0:200}")" >&2
+        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
       fi
     else
       # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
       if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-        echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: $(sanitize_for_output "${git_err:0:200}")" >&2
+        echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: $(sanitize_for_output "${git_err:0:500}")" >&2
       fi
     fi
   fi
   if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
-    echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:200}")" >&2
+    echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   fi
   cleanup_empty_parent "$WORKTREE_PARENT"
 }
@@ -71,7 +71,7 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # and the actual workspace add, but the practical risk of jj being
   # replaced between two calls in the same hook invocation is negligible.
   if ! jj_help=$(jj workspace add --help 2>&1); then
-    echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:200}")" >&2
+    echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:500}")" >&2
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then
@@ -80,14 +80,14 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
-    echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:200}")" >&2
+    echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:500}")" >&2
     exit 1
   fi
   WORKSPACE_CREATED=true
 else
   # Standard git worktree
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
-    echo "ERROR: git worktree add failed: $(sanitize_for_output "${git_err:0:200}")" >&2
+    echo "ERROR: git worktree add failed: $(sanitize_for_output "${git_err:0:500}")" >&2
     exit 1
   fi
   WORKSPACE_CREATED=true
@@ -98,7 +98,7 @@ trap - EXIT
 # Install hooks in the new workspace (lefthook works in both VCS modes)
 if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   if ! lh_err=$(cd "$WORKTREE_PATH" && lefthook install 2>&1); then
-    echo "WARNING: lefthook install failed in worktree: $(sanitize_for_output "${lh_err:0:200}")" >&2
+    echo "WARNING: lefthook install failed in worktree: $(sanitize_for_output "${lh_err:0:500}")" >&2
   fi
 fi
 

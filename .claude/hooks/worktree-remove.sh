@@ -24,14 +24,14 @@ fi
 _ORIG_PATH="$WORKTREE_PATH"
 if command -v realpath &>/dev/null; then
   _rp_err=$(realpath "$WORKTREE_PATH" 2>&1) || {
-    echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_rp_err:0:200}")" >&2
+    echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_rp_err:0:500}")" >&2
     exit 1
   }
   WORKTREE_PATH="$_rp_err"
 else
   # POSIX fallback: cd into the directory and capture pwd -P
   _cd_err=$({ cd "$_ORIG_PATH" && pwd -P; } 2>&1) || {
-    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_err:0:200}")" >&2
+    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_err:0:500}")" >&2
     exit 1
   }
   WORKTREE_PATH="$_cd_err"
@@ -66,7 +66,7 @@ if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
   if [[ "$_inferred_name" == *_worktrees ]]; then
     REPO_ROOT="${_inferred_root}/${_inferred_name%_worktrees}"
     _REPO_ROOT_INFERRED=true
-    echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path (detect_repo_root: $(sanitize_for_output "${_root_stderr:0:200}"))" >&2
+    echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path (detect_repo_root: $(sanitize_for_output "${_root_stderr:0:500}"))" >&2
   else
     echo "ERROR: could not determine repo root and path does not match expected _worktrees pattern — refusing removal for safety" >&2
     echo "Manual cleanup required: rm -rf '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
@@ -82,10 +82,10 @@ EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
 # If the _worktrees parent doesn't exist but WORKTREE_PATH exists, state is inconsistent
 if command -v realpath &>/dev/null; then
-  _ep_err=$(realpath "$EXPECTED_PARENT" 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
+  _ep_err=$(realpath "$EXPECTED_PARENT" 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:500}")" >&2; exit 1; }
   EXPECTED_PARENT="$_ep_err"
 else
-  _ep_err=$({ cd "$EXPECTED_PARENT" && pwd -P; } 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
+  _ep_err=$({ cd "$EXPECTED_PARENT" && pwd -P; } 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:500}")" >&2; exit 1; }
   EXPECTED_PARENT="$_ep_err"
 fi
 case "$WORKTREE_PATH" in
@@ -113,14 +113,14 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-    echo "WARNING: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:200}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
+    echo "WARNING: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-    echo "WARNING: git worktree remove failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${git_err:0:200}")" >&2
+    echo "WARNING: git worktree remove failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${git_err:0:500}")" >&2
     if ! prune_err=$(git worktree prune 2>&1); then
-      echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:200}") — stale metadata may remain in .git/worktrees/" >&2
+      echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain in .git/worktrees/" >&2
     fi
   fi
 fi
@@ -128,7 +128,7 @@ fi
 # Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
 # so this is safe even when git worktree remove already cleaned up.
 if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
-  echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:200}")" >&2
+  echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   exit 1
 fi
 

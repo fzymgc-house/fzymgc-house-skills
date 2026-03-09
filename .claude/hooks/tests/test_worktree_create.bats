@@ -187,6 +187,22 @@ setup_jj() {
   [ -d "${REPO_ROOT}_worktrees/other-wt" ]
 }
 
+@test "git path: cleanup_on_error removes worktree on post-add failure" {
+  # Patch worktree-create.sh: replace "trap - EXIT" with "false" to simulate
+  # a failure after worktree add succeeds (WORKSPACE_CREATED=true).
+  local patched
+  patched=$(mktemp)
+  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  run bash -c \
+    'echo "{\"name\": \"git-cleanup-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  [ "$status" -ne 0 ]
+  # cleanup_on_error should have removed the worktree directory
+  [ ! -d "${REPO_ROOT}_worktrees/git-cleanup-wt" ]
+  # Parent dir should also be cleaned up if empty
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
 @test "rejects repo directory name with spaces" {
   UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
   mkdir -p "$UNSAFE_ROOT"

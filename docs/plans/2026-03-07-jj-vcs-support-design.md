@@ -56,6 +56,12 @@ User-invoked slash command:
 Add `jj` package to `release-please-config.json` and
 `.release-please-manifest.json`.
 
+**Implementation note (dr0.16):** Task 9 specified the package key as `"jj"` but the
+actual implementation uses `"jj/skills/jujutsu"` to match the existing pattern
+(`"homelab/skills/grafana"`, `"pr-review/skills/review-pr"`). Release-please uses the
+key as the directory path, so the full skill path is required for correct version file
+discovery.
+
 ## 2. pr-review Adaptation
 
 ### VCS Detection Preamble
@@ -189,6 +195,12 @@ fi
 
 Zero git commands needed in jj repos, even for agent isolation.
 
+**Implementation note (dr0.19):** The design showed lefthook install only in the git
+branch of `worktree-create.sh`. The implementation runs `lefthook install` for both VCS
+modes because colocated jj repos always have a `.git/` directory — lefthook operates on
+`.git/hooks/` and works correctly in colocated repos. Skipping it in jj mode would leave
+hooks uninstalled in the new workspace.
+
 ## 4. Reference Files
 
 Three reference files (a third was extracted during implementation for DRY reasons):
@@ -204,6 +216,12 @@ Three reference files (a third was extracted during implementation for DRY reaso
 - Changing the `homelab` plugin (no VCS dependency)
 - Replacing the `jjagent` plugin (complementary, different purpose)
 - Non-colocated jj repos (only colocated `.jj/` + `.git/` supported)
+
+  **Implementation note (dr0.13):** The implementation expanded this scope as a safety
+  net. `worktree-helpers.sh` adds a jj root fallback (`jj root 2>/dev/null`) so that
+  `detect_repo_root` works even in non-colocated repos where `.git/` is absent. This
+  does not add full non-colocated support — it only ensures the helper doesn't fail on
+  such repos. All VCS operations still assume colocated layout.
 - Standalone git/jj command reference docs (SKILL.md covers jj; Claude knows git)
 
 ## Testing

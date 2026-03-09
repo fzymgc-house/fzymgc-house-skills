@@ -11,7 +11,7 @@ jobs:
   drift-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Check release-please config covers all skills
         run: |
           actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
@@ -53,7 +53,7 @@ jobs:
   bats:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Install bats
         run: |
           wget -q https://github.com/bats-core/bats-core/archive/refs/tags/v1.11.0.tar.gz
@@ -67,7 +67,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Install rumdl
         run: |
           RUMDL_VERSION="v0.1.43"
@@ -88,7 +88,7 @@ jobs:
             pr-review/agents/*.md
       - name: Validate evals against schema
         run: |
-          pip install check-jsonschema
+          pip install 'check-jsonschema>=0.37,<0.38'
           check-jsonschema --schemafile pr-review/evals/evals.schema.json \
             pr-review/evals/evals.json \
             jj/evals/evals.json

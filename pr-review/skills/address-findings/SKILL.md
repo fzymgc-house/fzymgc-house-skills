@@ -341,38 +341,26 @@ Same-file findings serialized in Phase 2 prevent most conflicts.
 For each FIXED result (fix worker reports CHANGE_ID instead of
 WORKTREE_BRANCH):
 
-1. Before rebasing, capture the current state:
-
-   ```bash
-   pre_rebase_parent=$(jj log -r @- --no-graph -T 'change_id' -n 1)
-   ```
-
-2. Rebase the fix onto the PR bookmark:
+1. Rebase the fix onto the PR bookmark:
 
    ```bash
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
-   If rebase fails:
+   If rebase returns non-zero (hard failure — invalid revision, etc.):
+   - Do NOT run `jj undo` — nothing was committed
+   - Mark FAILED, add bead comment, re-queue for next round.
 
-   1. Check whether the rebase committed (conflict) or hard-failed:
+2. Check for conflicts in the rebased commit:
 
-      ```bash
-      post_rebase_parent=$(jj log -r @- --no-graph -T 'change_id' -n 1)
-      ```
+   ```bash
+   has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")')
+   ```
 
-   2. If `post_rebase_parent != pre_rebase_parent` (rebase committed with conflicts):
-      - Run `jj undo` to revert the conflicted commit
-      - Verify undo: confirm parent matches `pre_rebase_parent`
-
-   3. If `post_rebase_parent == pre_rebase_parent` (hard failure — nothing committed):
-      - Do NOT run `jj undo` — there is nothing to undo, and it would
-        revert the most recent prior successful operation
-
-   4. Mark FAILED, add bead comment, re-queue for next round.
-
-   **Why `@-`?** In jj, `@` is always the working-copy commit (typically
-   empty). The meaningful committed state is `@-` (parent of working copy).
+   If `has_conflict == "true"`:
+   - Run `jj undo` to revert the conflicted rebase
+   - Verify undo succeeded
+   - Mark FAILED, add bead comment, re-queue for next round.
 
 3. Update the bookmark:
 

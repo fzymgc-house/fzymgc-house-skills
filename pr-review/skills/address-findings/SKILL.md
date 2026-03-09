@@ -341,16 +341,16 @@ Same-file findings serialized in Phase 2 prevent most conflicts.
 For each FIXED result (fix worker reports CHANGE_ID instead of
 WORKTREE_BRANCH):
 
-1. Rebase the fix onto the PR bookmark:
-
-   ```bash
-   jj rebase -r <change-id> -d <pr-bookmark>
-   ```
-
-   Before rebasing, capture the current state:
+1. Before rebasing, capture the current state:
 
    ```bash
    pre_rebase_parent=$(jj log -r @- --no-graph -T 'change_id' -n 1)
+   ```
+
+2. Rebase the fix onto the PR bookmark:
+
+   ```bash
+   jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
    If rebase fails:
@@ -374,7 +374,7 @@ WORKTREE_BRANCH):
    **Why `@-`?** In jj, `@` is always the working-copy commit (typically
    empty). The meaningful committed state is `@-` (parent of working copy).
 
-2. Update the bookmark:
+3. Update the bookmark:
 
    ```bash
    jj bookmark set <pr-bookmark> -r <change-id>
@@ -383,7 +383,7 @@ WORKTREE_BRANCH):
    If bookmark set fails:
 
    1. Run `jj undo` once — this reverts the successful rebase from
-      step 1.
+      step 2.
 
       ```bash
       jj undo  # revert the rebase (the only successful op to undo)
@@ -403,7 +403,7 @@ WORKTREE_BRANCH):
       "jj undo did not restore expected state".
    3. Mark FAILED, add bead comment, re-queue for next round.
 
-3. Forget the workspace and remove the directory:
+4. Forget the workspace and remove the directory:
 
    ```bash
    jj workspace forget worktree-<name>

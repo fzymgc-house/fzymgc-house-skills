@@ -214,6 +214,7 @@ setup_jj_worktree() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"WARNING"* ]]
   [[ "$output" == *"inferred repo root"* ]]
+  [[ "$output" == *"skipping VCS cleanup"* ]]
   [ ! -d "${NON_GIT}_worktrees/orphan-wt" ]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }

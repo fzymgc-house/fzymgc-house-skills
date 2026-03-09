@@ -129,8 +129,8 @@ fi
 
 # Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
 # so this is safe even when git worktree remove already cleaned up.
-if ! rm -rf "$WORKTREE_PATH"; then
-  echo "ERROR: failed to remove worktree directory '$WORKTREE_PATH'" >&2
+if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
+  echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:200}")" >&2
   exit 1
 fi
 

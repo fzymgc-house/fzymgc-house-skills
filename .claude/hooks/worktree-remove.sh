@@ -23,16 +23,18 @@ fi
 # Canonicalize path to prevent traversal via ../ segments
 _ORIG_PATH="$WORKTREE_PATH"
 if command -v realpath &>/dev/null; then
-  WORKTREE_PATH=$(realpath "$WORKTREE_PATH" 2>/dev/null) || {
-    echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
+  _rp_err=$(realpath "$WORKTREE_PATH" 2>&1) || {
+    echo "ERROR: realpath failed for '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_rp_err:0:200}")" >&2
     exit 1
   }
+  WORKTREE_PATH="$_rp_err"
 else
   # POSIX fallback: cd into the directory and capture pwd -P
-  WORKTREE_PATH=$(cd "$_ORIG_PATH" 2>/dev/null && pwd -P) || {
-    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")'" >&2
+  _cd_err=$(cd "$_ORIG_PATH" 2>&1 && pwd -P) || {
+    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_err:0:200}")" >&2
     exit 1
   }
+  WORKTREE_PATH="$_cd_err"
 fi
 if [[ -z "$WORKTREE_PATH" ]]; then
   echo "ERROR: could not resolve canonical path for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
@@ -82,9 +84,11 @@ EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
 # If the _worktrees parent doesn't exist but WORKTREE_PATH exists, state is inconsistent
 if command -v realpath &>/dev/null; then
-  EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state" >&2; exit 1; }
+  _ep_err=$(realpath "$EXPECTED_PARENT" 2>&1) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
+  EXPECTED_PARENT="$_ep_err"
 else
-  EXPECTED_PARENT=$(cd "$EXPECTED_PARENT" 2>/dev/null && pwd -P) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state" >&2; exit 1; }
+  _ep_err=$(cd "$EXPECTED_PARENT" 2>&1 && pwd -P) || { echo "ERROR: _worktrees parent directory '$(sanitize_for_output "$EXPECTED_PARENT")' does not exist but WORKTREE_PATH '$(sanitize_for_output "$WORKTREE_PATH")' does — inconsistent state: $(sanitize_for_output "${_ep_err:0:200}")" >&2; exit 1; }
+  EXPECTED_PARENT="$_ep_err"
 fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent

@@ -368,6 +368,8 @@ WORKTREE_BRANCH):
    - If `jj undo` fails, STOP and report STATUS: FAILED with
      "jj undo failed to revert conflicted rebase — manual recovery required".
      Do NOT re-queue; escalate to user.
+   - Verify undo succeeded: `jj log -r @- --no-graph -n 1` — the
+     parent commit should be the pre-rebase state.
    - Mark FAILED (conflict), add bead comment, re-queue for next round.
 
 3. Update the bookmark:

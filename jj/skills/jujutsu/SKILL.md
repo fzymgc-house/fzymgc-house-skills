@@ -21,6 +21,7 @@ allowed-tools:
   - "Bash(jj rebase *)"
   - "Bash(jj absorb *)"
   - "Bash(jj file *)"
+  - "Bash(jj undo *)"
   - "Bash(test *)"
 metadata:
   author: fzymgc-house

@@ -5,7 +5,14 @@ repositories that may use git or jj (Jujutsu).
 
 ## Steps
 
-1. **Detect VCS:** `if jj root 2>/dev/null >&2; then echo "jj"; elif git rev-parse --git-dir 2>/dev/null >&2; then echo "git"; else echo "none"; fi`
+1. **Detect VCS:**
+
+   ```bash
+   if jj root 2>/dev/null >&2; then echo "jj"
+   elif git rev-parse --git-dir 2>/dev/null >&2; then echo "git"
+   else echo "none"; fi
+   ```
+
    - `jj root` succeeds in any jj workspace (including workspaces where `.jj/` is absent from the working directory).
    - `git rev-parse --git-dir` succeeds in git worktrees where `.git` is a file rather than a directory.
    - If the result is "none", STOP and report

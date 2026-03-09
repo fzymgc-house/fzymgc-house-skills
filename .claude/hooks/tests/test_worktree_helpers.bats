@@ -29,12 +29,12 @@ teardown() {
   [ "$result" = "hello" ]
 }
 
-@test "sanitize_for_output: strips newlines" {
-  # Newline is 0x0A, within C0 range — must be stripped.
+@test "sanitize_for_output: preserves newlines" {
+  # Newlines (0x0A) are preserved for multi-line error readability.
   input=$(printf 'line1\nline2')
   result=$(sanitize_for_output "$input")
-  [[ "$result" != *$'\n'* ]]
-  [ "$result" = "line1line2" ]
+  [[ "$result" == *$'\n'* ]]
+  [ "$result" = "$(printf 'line1\nline2')" ]
 }
 
 @test "sanitize_for_output: strips ESC byte from ANSI escape sequences" {

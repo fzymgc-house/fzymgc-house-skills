@@ -62,6 +62,11 @@ teardown() {
   [ "$status" -eq 1 ]
 }
 
+@test "rejects missing name key in JSON input" {
+  run bash -c 'echo "{}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+}
+
 @test "fails when not inside a git repo (git rev-parse failure)" {
   NON_GIT=$(mktemp -d)
   run bash -c 'cd '"$NON_GIT"' && echo "{\"name\": \"orphan-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'

@@ -1,6 +1,6 @@
 # VCS Command Equivalence: git and jj
 
-Use this reference when the repo has `.jj/` (colocated jj repo).
+Use this reference when the repo has `.jj/` (colocated or pure jj repo).
 In jj repos, use jj for ALL VCS operations.
 Only `gh` CLI remains for GitHub API calls.
 

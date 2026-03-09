@@ -254,7 +254,7 @@
           "name": "references-vcs-detection",
           "description": "References the VCS detection preamble command",
           "type": "contains",
-          "check": "test -d .jj"
+          "check": "jj root"
         }
       ]
     },

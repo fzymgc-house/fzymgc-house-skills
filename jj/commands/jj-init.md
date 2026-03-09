@@ -44,11 +44,15 @@ allowed-tools:
    If not present, append `.jj/` to `.gitignore`:
 
    ```bash
-   grep -qxF '.jj/' .gitignore 2>/dev/null || echo '.jj/' >> .gitignore
+   grep -qxF '.jj/' .gitignore 2>/dev/null || {
+     if ! append_err=$(echo '.jj/' >> .gitignore 2>&1); then
+       echo "Could not update .gitignore: $append_err"
+     fi
+   }
    ```
 
-   If the append fails (non-zero exit code), inform the user: "Could not update `.gitignore`
-   automatically. Please add `.jj/` to `.gitignore` manually to prevent jj internals from
+   If the append fails, capture and surface the error as: "Could not update `.gitignore`:
+   \<error text\>. Please add `.jj/` to `.gitignore` manually to prevent jj internals from
    being tracked by git."
 
 5. **Verify** — Run `jj st` and `jj log --no-graph -n 3` to confirm the repo is working.

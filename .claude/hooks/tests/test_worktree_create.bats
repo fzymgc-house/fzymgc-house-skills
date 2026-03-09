@@ -355,6 +355,31 @@ MOCK
 
 # --- jj lifecycle tests ---
 
+@test "git path: cleanup_on_error skips git worktree remove when WORKSPACE_CREATED is false" {
+  # Fail git worktree add (branch already exists) so WORKSPACE_CREATED stays false.
+  # Wrap git to log any 'worktree remove' calls; the guard must prevent them.
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/git" << MOCK
+#!/bin/bash
+if [[ "\$1" == "worktree" && "\$2" == "remove" ]]; then
+  echo "worktree-remove-called" >> "${REPO_ROOT}/git-calls.log"
+fi
+exec $(which git) "\$@"
+MOCK
+  chmod +x "${REPO_ROOT}/bin/git"
+  # Create the branch so 'git worktree add -b worktree/guard-test' fails (branch exists)
+  git branch "worktree/guard-test"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c \
+    'cd '"$REPO_ROOT"' && echo "{\"name\": \"guard-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  # Directory must be cleaned up
+  [ ! -d "${REPO_ROOT}_worktrees/guard-test" ]
+  # git worktree remove must NOT have been called (WORKSPACE_CREATED was false)
+  if [[ -f "${REPO_ROOT}/git-calls.log" ]]; then
+    [[ "$(cat "${REPO_ROOT}/git-calls.log")" != *"worktree-remove-called"* ]]
+  fi
+}
+
 @test "jj path: create-then-remove lifecycle uses consistent workspace names" {
   setup_jj
   create_logging_jj_mock

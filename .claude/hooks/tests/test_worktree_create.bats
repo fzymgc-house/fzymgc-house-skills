@@ -324,3 +324,15 @@ MOCK
   [ "$status" -eq 1 ]
   [[ "$output" == *"failed to create worktree parent directory"* ]]
 }
+
+# --- colocated jj+git repo tests ---
+
+@test "colocated jj+git: creates workspace via jj path when both .jj and .git present" {
+  setup_jj
+  create_mock_jj
+  # Both .jj/ and .git/ exist — script should take jj path
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"colo-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/colo-wt"* ]]
+  [ -d "${REPO_ROOT}_worktrees/colo-wt" ]
+}

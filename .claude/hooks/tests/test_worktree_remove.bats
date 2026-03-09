@@ -274,3 +274,17 @@ MOCK
   [ ! -d "${NON_GIT}_worktrees/jj-fallback-wt" ]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
+
+# --- colocated jj+git repo tests ---
+
+@test "colocated jj+git: removes workspace via jj path when both .jj and .git present" {
+  setup_jj_worktree
+  create_logging_jj_mock
+  # Both .jj/ and .git/ exist — script should take jj path and call jj workspace forget
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+  # Verify jj workspace forget was called (not git worktree remove)
+  [ -f "${REPO_ROOT}/forget-arg.log" ]
+  [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-jj-wt" ]]
+}

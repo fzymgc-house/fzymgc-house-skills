@@ -54,13 +54,13 @@ metadata:
 
 ## Detection
 
-Before any VCS operation, check for `.jj/` in the repo root:
+Before any VCS operation, check for a jj repository:
 
 ```bash
-test -d .jj && echo "jj repo detected"
+if jj root >/dev/null 2>&1; then echo "jj repo detected"; fi
 ```
 
-If `.jj/` exists:
+If jj is detected:
 
 - Use `jj` for ALL version control operations
 - Do NOT use `git commit`, `git checkout`, `git branch`, `git merge`, `git rebase`, or other

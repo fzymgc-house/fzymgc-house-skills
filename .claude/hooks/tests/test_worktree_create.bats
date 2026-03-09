@@ -129,6 +129,15 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "jj path: does NOT call jj workspace forget when workspace add fails (WORKSPACE_CREATED guard)" {
+  setup_jj
+  create_failing_logging_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"no-forget-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 1 ]
+  [ ! -d "${REPO_ROOT}_worktrees/no-forget-wt" ]
+  [ ! -f "${REPO_ROOT}/forget-called.log" ]
+}
+
 @test "jj path: cleanup_on_error calls jj workspace forget on post-add failure" {
   setup_jj
   create_logging_jj_mock

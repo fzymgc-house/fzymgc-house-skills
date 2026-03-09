@@ -148,6 +148,19 @@ teardown() {
   [[ "$output" == *"WARNING"* ]]
 }
 
+@test "cleanup_empty_parent warns when rmdir fails (permission error)" {
+  local parent="$BATS_TEST_TMPDIR/rmdir-test-parent"
+  local child="$parent/empty-child"
+  mkdir -p "$child"
+  # Remove write permission so rmdir fails
+  chmod a-w "$parent"
+  run cleanup_empty_parent "$child"
+  chmod u+w "$parent"  # restore for cleanup
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"failed to remove empty parent"* ]]
+}
+
 # --- detect_repo_root tests ---
 
 @test "detect_repo_root: falls through to error when jj root returns a file path (non-directory)" {

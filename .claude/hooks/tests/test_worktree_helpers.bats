@@ -21,14 +21,12 @@ teardown() {
   [ "$result" = "hello world" ]
 }
 
-@test "sanitize_for_output: strips null bytes" {
-  # Write input with embedded null to a file, then feed via process substitution
-  # (bash $() strips trailing nulls, so we capture to file to verify removal).
-  printf 'he\x00llo' > "${REPO_ROOT}/in.bin"
-  sanitize_for_output "$(cat "${REPO_ROOT}/in.bin")" > "${REPO_ROOT}/out.bin"
-  result=$(cat "${REPO_ROOT}/out.bin")
+@test "sanitize_for_output: strips C0 control characters" {
+  # Null bytes (\x00) cannot survive bash command substitution or argument
+  # passing, so they are untestable here. Test other C0 control chars instead.
+  input=$(printf 'he\x01ll\x1Fo')
+  result=$(sanitize_for_output "$input")
   [ "$result" = "hello" ]
-  ! grep -Pq '\x00' "${REPO_ROOT}/out.bin"
 }
 
 @test "sanitize_for_output: strips newlines" {
@@ -135,6 +133,7 @@ teardown() {
   local unreadable_dir="${REPO_ROOT}/unreadable-parent"
   mkdir -p "$unreadable_dir"
   chmod a-rx "$unreadable_dir"
+  # bats-core 1.5+ captures both stdout and stderr in $output by default
   run cleanup_empty_parent "$unreadable_dir"
   chmod a+rx "$unreadable_dir"
   [ "$status" -eq 0 ]

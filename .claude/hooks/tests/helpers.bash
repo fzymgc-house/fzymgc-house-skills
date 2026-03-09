@@ -37,6 +37,9 @@ ${_MOCK_WORKSPACE_ADD_BODY}
 if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   shift 2; _mock_workspace_add "\$@"
 fi
+# workspace forget: production scripts always pass "worktree-${NAME}".
+# The worktree-* pattern ensures the mock rejects unexpected workspace names
+# with a clear error rather than falling through silently.
 if [[ "\$1" == "workspace" && "\$2" == "forget" && "\$3" == worktree-* ]]; then
   exit 0
 fi
@@ -97,6 +100,8 @@ if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   echo "\$*" > "\${REPO_ROOT}/jj-args.log"
   _mock_workspace_add "\$@"
 fi
+# workspace forget: production scripts always pass "worktree-${NAME}".
+# Non-worktree-* arguments are rejected (exit 1) to catch unexpected invocations.
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
   shift 2
   for arg in "\$@"; do

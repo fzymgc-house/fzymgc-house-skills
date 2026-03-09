@@ -336,3 +336,23 @@ MOCK
   [[ "$output" == *"_worktrees/colo-wt"* ]]
   [ -d "${REPO_ROOT}_worktrees/colo-wt" ]
 }
+
+# --- jj lifecycle tests ---
+
+@test "jj path: create-then-remove lifecycle uses consistent workspace names" {
+  setup_jj
+  create_logging_jj_mock
+  # Create
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"lifecycle-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ -d "${REPO_ROOT}_worktrees/lifecycle-wt" ]
+  # Verify --name worktree-lifecycle-wt was passed to jj workspace add
+  [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-lifecycle-wt"* ]]
+  # Remove
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/lifecycle-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/lifecycle-wt" ]
+  # Verify jj workspace forget was called with the same workspace name
+  [ -f "${REPO_ROOT}/forget-arg.log" ]
+  [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-lifecycle-wt" ]]
+}

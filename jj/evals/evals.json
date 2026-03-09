@@ -175,6 +175,22 @@
       ]
     },
     {
+      "id": "JJ-B-NEG1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "run git log to see recent commits in this jj repo",
+      "context": "Repo root contains both .jj/ and .git/ directories (colocated repo)",
+      "expected_output": "Should NOT warn against read-only git commands like git log in a colocated jj repo. May suggest jj log as alternative but should not block git log.",
+      "assertions": [
+        {
+          "name": "no-warning-for-git-log",
+          "description": "Does not warn against or block read-only git commands in colocated repo",
+          "type": "manual",
+          "check": "Verify no warning about using git log in jj repo; may suggest jj log as alternative but does not refuse"
+        }
+      ]
+    },
+    {
       "id": "JJ-B6",
       "type": "behavioral",
       "skill": "jujutsu",

@@ -54,6 +54,14 @@ teardown() {
   [ "$result" = "hello" ]
 }
 
+@test "sanitize_for_output: preserves tab and carriage-return" {
+  # Tab (0x09) and CR (0x0D) are excluded from the C0 strip range and must survive.
+  input=$(printf 'col1\tcol2\r\n')
+  result=$(sanitize_for_output "$input")
+  [[ "$result" == *$'\t'* ]]
+  [[ "$result" == *$'\r'* ]]
+}
+
 @test "sanitize_for_output: passes through alphanumeric and punctuation" {
   result=$(sanitize_for_output "abc-123_XYZ.test/path:value")
   [ "$result" = "abc-123_XYZ.test/path:value" ]

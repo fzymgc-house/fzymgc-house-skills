@@ -53,7 +53,10 @@ fi
 # infer the repo root from the worktree path by stripping the last two path
 # components (workspace name and _worktrees suffix).
 _REPO_ROOT_INFERRED=false
-if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
+_root_err_file=$(mktemp)
+if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
+  _root_stderr=$(cat "$_root_err_file" 2>/dev/null)
+  rm -f "$_root_err_file"
   _worktrees_dir=$(dirname "$WORKTREE_PATH")
   _inferred_root=$(dirname "$_worktrees_dir")
   _inferred_name=$(basename "$_worktrees_dir")
@@ -61,12 +64,14 @@ if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
   if [[ "$_inferred_name" == *_worktrees ]]; then
     REPO_ROOT="${_inferred_root}/${_inferred_name%_worktrees}"
     _REPO_ROOT_INFERRED=true
-    echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path" >&2
+    echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path (detect_repo_root: $(sanitize_for_output "${_root_stderr:0:200}"))" >&2
   else
     echo "ERROR: could not determine repo root and path does not match expected _worktrees pattern — refusing removal for safety" >&2
     echo "Manual cleanup required: rm -rf '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
     exit 1
   fi
+else
+  rm -f "$_root_err_file"
 fi
 
 # Validate path is inside the expected sibling directory

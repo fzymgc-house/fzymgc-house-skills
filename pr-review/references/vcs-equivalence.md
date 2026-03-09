@@ -42,14 +42,23 @@ they STOP and report STATUS: FAILED.
 
 ## Agent Output Fields
 
-Agents report VCS-specific fields in their structured output:
+### Fix-Worker Output Contract
 
-| VCS | Required Field | Must Omit |
-|-----|----------------|-----------|
-| git | `WORKTREE_BRANCH` | `CHANGE_ID` |
-| jj | `CHANGE_ID` | `WORKTREE_BRANCH` |
+Fix-worker agents MUST report these fields:
 
-"Omit" means do not include the line at all (not an empty value).
+| Field | Required | Description |
+|-------|----------|-------------|
+| STATUS | Always | FIXED, FAILED, or SKIPPED |
+| VCS | Always | "git" or "jj" |
+| FILES_CHANGED | When FIXED | Comma-separated list of changed files |
+| DESCRIPTION | When FIXED | One-line summary of the fix |
+| WORKTREE_BRANCH | When VCS=git | Branch name (e.g., worktree/agent-xxx) |
+| CHANGE_ID | When VCS=jj | jj change ID (e.g., abc12345) |
+
+**Discriminated union rule:** When VCS=git, include WORKTREE_BRANCH and
+omit CHANGE_ID. When VCS=jj, include CHANGE_ID and omit
+WORKTREE_BRANCH. "Omit" means do not include the line at all (not an
+empty value).
 
 ```text
 git repos: WORKTREE_BRANCH: worktree/fix-abc

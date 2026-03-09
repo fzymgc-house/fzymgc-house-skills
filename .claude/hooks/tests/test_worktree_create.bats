@@ -273,6 +273,22 @@ MOCK
   [ "$status" -eq 0 ]
 }
 
+@test "jj path: runs lefthook install after jj workspace add" {
+  setup_jj
+  create_mock_jj
+  touch "${REPO_ROOT}/lefthook.yml"
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/lefthook" << 'MOCK'
+#!/bin/bash
+touch ./lefthook-marker
+MOCK
+  chmod +x "${REPO_ROOT}/bin/lefthook"
+  PATH="${MOCK_JJ_BIN_DIR}:${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"name\": \"jj-hook-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/jj-hook-test"* ]]
+  [ -f "${REPO_ROOT}_worktrees/jj-hook-test/lefthook-marker" ]
+}
+
 @test "fails gracefully when mkdir -p fails" {
   # Create a nested temp dir so we can chmod the parent
   SANDBOX=$(mktemp -d)

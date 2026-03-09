@@ -365,8 +365,10 @@ WORKTREE_BRANCH):
 
    If `has_conflict == "true"`:
    - Run `jj undo` to revert the conflicted rebase
-   - Verify undo succeeded
-   - Mark FAILED, add bead comment, re-queue for next round.
+   - If `jj undo` fails, STOP and report STATUS: FAILED with
+     "jj undo failed to revert conflicted rebase — manual recovery required".
+     Do NOT re-queue; escalate to user.
+   - Mark FAILED (conflict), add bead comment, re-queue for next round.
 
 3. Update the bookmark:
 

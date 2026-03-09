@@ -139,3 +139,29 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"WARNING"* ]]
 }
+
+# --- detect_repo_root tests ---
+
+@test "detect_repo_root: falls through to error when jj root returns a file path (non-directory)" {
+  local non_git_dir="${REPO_ROOT}/no-git"
+  mkdir -p "${non_git_dir}/bin"
+  # Create a mock jj whose 'root' command returns a regular file path, not a directory.
+  local fake_file="${non_git_dir}/not-a-dir"
+  touch "$fake_file"
+  cat > "${non_git_dir}/bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${fake_file}"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${non_git_dir}/bin/jj"
+  # Run detect_repo_root from a directory that has no .git ancestor so that
+  # git rev-parse fails, forcing the jj fallback path. Use env -i to avoid
+  # inheriting git environment variables that could interfere.
+  run env -i HOME="$HOME" PATH="${non_git_dir}/bin:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"ERROR"* ]]
+}

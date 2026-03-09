@@ -238,3 +238,32 @@ MOCK
   [[ "$output" == "$git_repo" ]]
   rm -rf "$git_repo" "$mock_bin"
 }
+
+@test "detect_repo_root: sanitize_for_output strips control chars from jj error output" {
+  # Create a mock jj that writes control characters to stdout and exits 1
+  # (detect_repo_root captures stdout+stderr via 2>&1)
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  printf 'path\x01with\x1B[31mcontrols\x1B[0m'
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  local non_git_dir
+  non_git_dir=$(mktemp -d)
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  # jj output was included in the error message
+  [[ "$output" == *"jj:"* ]]
+  # no raw C0 control characters
+  [[ "$output" != *$'\x01'* ]]
+  # no ESC bytes
+  [[ "$output" != *$'\x1B'* ]]
+  rm -rf "$non_git_dir" "$mock_bin"
+}

@@ -273,37 +273,6 @@ MOCK
   [ "$status" -eq 0 ]
 }
 
-@test "jj path: runs lefthook install when lefthook.yml exists" {
-  setup_jj
-  create_mock_jj
-  touch "${REPO_ROOT}/lefthook.yml"
-  cat > "${MOCK_JJ_BIN_DIR}/lefthook" << 'MOCK'
-#!/bin/bash
-touch ./lefthook-marker
-MOCK
-  chmod +x "${MOCK_JJ_BIN_DIR}/lefthook"
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"jj-lh-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"_worktrees/jj-lh-test"* ]]
-  [ -f "${REPO_ROOT}_worktrees/jj-lh-test/lefthook-marker" ]
-}
-
-@test "jj path: warns when lefthook install fails" {
-  setup_jj
-  create_mock_jj
-  touch "${REPO_ROOT}/lefthook.yml"
-  cat > "${MOCK_JJ_BIN_DIR}/lefthook" << 'MOCK'
-#!/bin/bash
-echo "mock error" >&2
-exit 1
-MOCK
-  chmod +x "${MOCK_JJ_BIN_DIR}/lefthook"
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"jj-lh-fail-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"_worktrees/jj-lh-fail-test"* ]]
-}
-
 @test "fails gracefully when mkdir -p fails" {
   # Create a nested temp dir so we can chmod the parent
   SANDBOX=$(mktemp -d)

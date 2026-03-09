@@ -22,12 +22,12 @@ teardown() {
 }
 
 @test "sanitize_for_output: strips null bytes" {
-  # Bash $() strips trailing nulls, so write to a file to verify absence.
-  printf 'he\x00llo' | LC_ALL=C tr -d '\000-\037\177\200-\237' > "${REPO_ROOT}/out.bin"
-  # File must contain exactly "hello" (5 bytes, no null)
+  # Write input with embedded null to a file, then feed via process substitution
+  # (bash $() strips trailing nulls, so we capture to file to verify removal).
+  printf 'he\x00llo' > "${REPO_ROOT}/in.bin"
+  sanitize_for_output "$(cat "${REPO_ROOT}/in.bin")" > "${REPO_ROOT}/out.bin"
   result=$(cat "${REPO_ROOT}/out.bin")
   [ "$result" = "hello" ]
-  # Confirm no null byte remains in the file
   ! grep -Pq '\x00' "${REPO_ROOT}/out.bin"
 }
 
@@ -59,4 +59,84 @@ teardown() {
 @test "sanitize_for_output: passes through alphanumeric and punctuation" {
   result=$(sanitize_for_output "abc-123_XYZ.test/path:value")
   [ "$result" = "abc-123_XYZ.test/path:value" ]
+}
+
+# --- validate_safe_name tests ---
+
+@test "validate_safe_name: accepts valid alphanumeric-hyphen name" {
+  run validate_safe_name "agent-abc123" "worktree name"
+  [ "$status" -eq 0 ]
+}
+
+@test "validate_safe_name: rejects empty name" {
+  run validate_safe_name "" "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"must not be empty"* ]]
+}
+
+@test "validate_safe_name: rejects leading-dot name" {
+  run validate_safe_name ".hidden" "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects trailing-dot name" {
+  run validate_safe_name "agent." "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects dotdot component" {
+  run validate_safe_name "a..b" "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects name with space" {
+  run validate_safe_name "has space" "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects name with shell metacharacter" {
+  run validate_safe_name "evil;rm" "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: accepts name with dots and underscores" {
+  run validate_safe_name "fix.worker_v2" "worktree name"
+  [ "$status" -eq 0 ]
+}
+
+# --- cleanup_empty_parent tests ---
+
+@test "cleanup_empty_parent: removes empty directory" {
+  local empty_dir="${REPO_ROOT}/empty-parent"
+  mkdir -p "$empty_dir"
+  cleanup_empty_parent "$empty_dir"
+  [ ! -d "$empty_dir" ]
+}
+
+@test "cleanup_empty_parent: leaves non-empty directory" {
+  local nonempty_dir="${REPO_ROOT}/nonempty-parent"
+  mkdir -p "${nonempty_dir}/child"
+  cleanup_empty_parent "$nonempty_dir"
+  [ -d "$nonempty_dir" ]
+  [ -d "${nonempty_dir}/child" ]
+}
+
+@test "cleanup_empty_parent: no-ops when directory does not exist" {
+  run cleanup_empty_parent "${REPO_ROOT}/nonexistent-parent"
+  [ "$status" -eq 0 ]
+}
+
+@test "cleanup_empty_parent: warns when ls fails (permission error)" {
+  local unreadable_dir="${REPO_ROOT}/unreadable-parent"
+  mkdir -p "$unreadable_dir"
+  chmod a-rx "$unreadable_dir"
+  run cleanup_empty_parent "$unreadable_dir"
+  chmod a+rx "$unreadable_dir"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
 }

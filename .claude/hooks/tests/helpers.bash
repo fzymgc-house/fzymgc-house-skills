@@ -6,6 +6,24 @@ _setup_mock_bin_dir() {
   mkdir -p "$MOCK_JJ_BIN_DIR"
 }
 
+# Shared _mock_workspace_add implementation used by both _write_mock_jj and
+# create_logging_jj_mock. Interpolated into heredocs as ${_MOCK_WORKSPACE_ADD_BODY}.
+_MOCK_WORKSPACE_ADD_BODY='
+_mock_workspace_add() {
+  if [[ "$1" == "--help" ]]; then
+    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+    echo "  --name <NAME>"
+    exit 0
+  fi
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      *) mkdir -p "$arg" && exit 0 ;;
+    esac
+  done
+  exit 1
+}'
+
 # Write a mock jj binary to MOCK_JJ_BIN_DIR.
 # $1: shell snippet that implements the 'root' command response.
 #     Examples:
@@ -15,20 +33,7 @@ _write_mock_jj() {
   local root_cmd="$1"
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
-_mock_workspace_add() {
-  if [[ "\$1" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
-  for arg in "\$@"; do
-    case "\$arg" in
-      -*) ;;
-      *) mkdir -p "\$arg"; exit 0 ;;
-    esac
-  done
-  exit 1
-}
+${_MOCK_WORKSPACE_ADD_BODY}
 if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   shift 2; _mock_workspace_add "\$@"
 fi
@@ -84,40 +89,27 @@ MOCK
 # Used for verifying --name flag forwarding and other argument tests.
 create_logging_jj_mock() {
   _setup_mock_bin_dir
-  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
-_mock_workspace_add() {
-  if [[ "$1" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
-  for arg in "$@"; do
-    case "$arg" in
-      -*) ;;
-      *) mkdir -p "$arg"; exit 0 ;;
-    esac
-  done
-  exit 1
-}
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+${_MOCK_WORKSPACE_ADD_BODY}
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   shift 2
-  echo "$*" > "${REPO_ROOT}/jj-args.log"
-  _mock_workspace_add "$@"
+  echo "\$*" > "\${REPO_ROOT}/jj-args.log"
+  _mock_workspace_add "\$@"
 fi
-if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
   shift 2
-  for arg in "$@"; do
-    case "$arg" in
+  for arg in "\$@"; do
+    case "\$arg" in
       -*) ;;
-      worktree-*) echo "$arg" > "${REPO_ROOT}/forget-arg.log"; exit 0 ;;
+      worktree-*) echo "\$arg" > "\${REPO_ROOT}/forget-arg.log"; exit 0 ;;
     esac
   done
   exit 1
 fi
-if [[ "$1" == "root" ]]; then
+if [[ "\$1" == "root" ]]; then
   git rev-parse --show-toplevel 2>/dev/null
-  exit $?
+  exit \$?
 fi
 exit 1
 MOCK

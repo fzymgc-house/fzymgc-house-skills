@@ -34,6 +34,7 @@ cleanup_on_error() {
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
   cleanup_empty_parent "$WORKTREE_PARENT"
 }
+trap cleanup_on_error EXIT
 
 mkdir -p "$WORKTREE_PARENT" || {
   echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
@@ -44,7 +45,6 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed
   if ! command -v jj &>/dev/null; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
-    cleanup_on_error
     exit 1
   fi
   # Runtime version probe: jj is user-installed and can be updated
@@ -54,31 +54,26 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # replaced between two calls in the same hook invocation is negligible.
   if ! jj_help=$(jj workspace add --help 2>&1); then
     echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:200}")" >&2
-    cleanup_on_error
     exit 1
   fi
   if ! echo "$jj_help" | grep -q -- '--name'; then
     echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
-    cleanup_on_error
     exit 1
   fi
   # WORKTREE_PARENT exists — cleanup_on_error handles it
   if ! (cd "$REPO_ROOT" 2>/dev/null); then
     echo "ERROR: cannot cd to repo root '$(sanitize_for_output "$REPO_ROOT")'" >&2
-    cleanup_on_error
     exit 1
   fi
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:200}")" >&2
-    cleanup_on_error
     exit 1
   fi
 else
   # Standard git worktree
   if ! git_err=$(git worktree add "$WORKTREE_PATH" -b "worktree/${NAME}" HEAD 2>&1); then
     echo "ERROR: git worktree add failed: $(sanitize_for_output "${git_err:0:200}")" >&2
-    cleanup_on_error
     exit 1
   fi
 fi
@@ -90,4 +85,5 @@ if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   fi
 fi
 
+trap - EXIT
 echo "$WORKTREE_PATH"

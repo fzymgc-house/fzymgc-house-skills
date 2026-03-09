@@ -42,7 +42,7 @@ fi
 # Validate basename — lenient on removal path: warn but allow non-conforming names
 # so orphaned worktrees with unusual names can still be cleaned up.
 WORKSPACE_NAME=$(basename "$WORKTREE_PATH")
-if ! validate_safe_name "$WORKSPACE_NAME" "worktree name" 2>/dev/null; then
+if ! validate_safe_name "$WORKSPACE_NAME" "worktree name"; then
   echo "WARNING: worktree name '$(sanitize_for_output "$WORKSPACE_NAME")' contains unusual characters — proceeding with removal" >&2
 fi
 

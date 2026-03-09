@@ -347,14 +347,29 @@ WORKTREE_BRANCH):
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
-   If rebase fails (conflict):
+   Before rebasing, capture the current state:
 
-   1. Run `jj undo`
-   2. Verify undo succeeded: `jj log -r @- --no-graph -n 1` — confirm the
-      parent of the working copy matches the pre-rebase state. If not,
-      STOP and report STATUS: FAILED with "jj undo did not restore
-      expected state".
-   3. Mark FAILED, add bead comment, re-queue for next round.
+   ```bash
+   pre_rebase_parent=$(jj log -r @- --no-graph -T 'change_id' -n 1)
+   ```
+
+   If rebase fails:
+
+   1. Check whether the rebase committed (conflict) or hard-failed:
+
+      ```bash
+      post_rebase_parent=$(jj log -r @- --no-graph -T 'change_id' -n 1)
+      ```
+
+   2. If `post_rebase_parent != pre_rebase_parent` (rebase committed with conflicts):
+      - Run `jj undo` to revert the conflicted commit
+      - Verify undo: confirm parent matches `pre_rebase_parent`
+
+   3. If `post_rebase_parent == pre_rebase_parent` (hard failure — nothing committed):
+      - Do NOT run `jj undo` — there is nothing to undo, and it would
+        revert the most recent prior successful operation
+
+   4. Mark FAILED, add bead comment, re-queue for next round.
 
    **Why `@-`?** In jj, `@` is always the working-copy commit (typically
    empty). The meaningful committed state is `@-` (parent of working copy).

@@ -163,6 +163,38 @@ setup_jj() {
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-forget-wt" ]]
 }
 
+@test "jj path: cleanup_on_error warns when jj workspace forget fails on post-add failure" {
+  setup_jj
+  # Mock jj: workspace add succeeds, workspace forget FAILS with error message
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+${_MOCK_WORKSPACE_ADD_BODY}
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  shift 2; _mock_workspace_add "\$@"
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: No workspace named 'worktree-forget-fail-wt'" >&2
+  exit 1
+fi
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+
+  local patched
+  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"forget-fail-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
+}
+
 @test "jj path: fails gracefully when mkdir -p fails" {
   setup_jj
   create_mock_jj

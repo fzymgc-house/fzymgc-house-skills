@@ -19,6 +19,8 @@ allowed-tools:
   - "Bash(jj describe *)"
   - "Bash(jj abandon *)"
   - "Bash(jj rebase *)"
+  - "Bash(jj absorb *)"
+  - "Bash(jj file *)"
   - "Bash(test *)"
 metadata:
   author: fzymgc-house
@@ -55,7 +57,7 @@ If `.jj/` exists:
 - Do NOT use `git commit`, `git checkout`, `git branch`, `git merge`, `git rebase`, or other
   mutating git commands
 - `gh` (GitHub CLI) is fine -- it only reads `.git/` metadata
-- Read-only git commands (`git log`, `git diff`, `git status`, `git rev-parse`) are safe to use
+- Read-only git commands (`git log`, `git diff`, `git status`, `git rev-parse`, `git remote -v`) are safe to use
 
 ## Agent Environment Rules
 
@@ -118,11 +120,11 @@ jj describe -m "fix(scope): correct the bug"
 ### View History and Changes
 
 ```bash
-# View commit log (default: current branch ancestry)
+# View commit log (default: mutable revisions with context)
 jj log
 
 # View log with all revisions
-jj log -r 'all()'
+jj log -r '::'  # all() also works but :: is canonical
 
 # Show diff of current working copy
 jj diff
@@ -173,7 +175,7 @@ jj restore --from <rev> <path>
 ```
 
 **Note:** `jj split` is interactive and not safe for agents. To split a commit
-(extract specific files into a new sibling):
+(extract specific files into a new child):
 
 1. `jj new <commit>` — create a new empty change after the target
 2. `jj squash --from <commit> <path1> <path2>` — move only those files from the target into the new change
@@ -285,10 +287,12 @@ jj log  # Conflicted commits show a conflict icon
 
 ### Resolving Conflicts
 
-1. Open the conflicted file and resolve the conflict markers:
-   - `<<<<<<<` / `>>>>>>>` — conflict boundaries (start/end of conflict block)
-   - `%%%%%%%` — diff-style changes from one side (shows what changed)
-   - `+++++++` — snapshot of the other side (shows the full content)
+1. Open the conflicted file and resolve the conflict markers (jj 0.39 format):
+   - `<<<<<<< Conflict N of M` — conflict block start (includes commit references)
+   - `+++++++ Contents of side #1` — snapshot of the first side (full content)
+   - `%%%%%%% Changes from base to side #2` — diff from base to second side
+   - `\\\\\\\` — separator between the diff header and the 'to' snapshot section
+   - `>>>>>>> Conflict N of M ends` — conflict block end
 2. Edit the file to the desired final content, removing all marker lines
 3. Save the file
 4. Run `jj st` to verify the conflict is resolved

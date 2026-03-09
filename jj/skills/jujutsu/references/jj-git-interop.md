@@ -72,6 +72,6 @@ files — callers must `rm -rf` the workspace directory after forget.
 | `git checkout <branch>` | `jj edit <bookmark>` (edit tip) or `jj new <bookmark>` (new child) |
 | `git branch -d` | `jj bookmark delete <name>` |
 
-**Read-only git commands are fine**: `git log`, `git diff`, `git status`, `git remote -v`.
+**Read-only git commands are fine**: `git log`, `git diff`, `git status`, `git rev-parse`, `git remote -v`.
 
 If a mutating git command causes sync issues, use `jj undo` to revert to the previous jj state.

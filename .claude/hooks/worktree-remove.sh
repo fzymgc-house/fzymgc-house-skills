@@ -15,7 +15,9 @@ if [[ -z "$WORKTREE_PATH" ]]; then
 fi
 
 if [[ ! -d "$WORKTREE_PATH" ]]; then
-  echo '{"warning":"worktree directory already removed: '"$(sanitize_for_output "$WORKTREE_PATH")"'"}' >&2
+  # JSON-escape the path: backslash-escape any \ and " characters
+  _safe_path=$(sanitize_for_output "$WORKTREE_PATH" | sed 's/[\"]/\\&/g')
+  echo "{\"warning\":\"worktree directory already removed: ${_safe_path}\"}" >&2
   exit 0
 fi
 
@@ -64,6 +66,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
+  elif ! (cd "$REPO_ROOT" 2>/dev/null); then
+    echo "WARNING: cannot cd to repo root '$(sanitize_for_output "$REPO_ROOT")' — workspace metadata not cleaned" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
     echo "WARNING: jj workspace forget failed for worktree-${WORKSPACE_NAME}: $(sanitize_for_output "${jj_err:0:200}") (run 'jj workspace forget worktree-${WORKSPACE_NAME}' manually to clean up)" >&2
   fi
@@ -72,7 +76,8 @@ else
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $(sanitize_for_output "${git_err:0:200}")" >&2
     if ! prune_err=$(git worktree prune 2>&1); then
-      echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:200}")" >&2
+      echo "ERROR: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:200}") — stale metadata may remain in .git/worktrees/" >&2
+      exit 1
     fi
   fi
 fi

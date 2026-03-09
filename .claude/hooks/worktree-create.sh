@@ -27,6 +27,10 @@ WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 cleanup_on_error() {
+  # Forget jj workspace metadata if this is a jj repo (prevents orphaned metadata)
+  if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
+    (cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>/dev/null) || true
+  fi
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
   cleanup_empty_parent "$WORKTREE_PARENT"
 }
@@ -59,6 +63,11 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     exit 1
   fi
   # WORKTREE_PARENT exists — cleanup_on_error handles it
+  if ! (cd "$REPO_ROOT" 2>/dev/null); then
+    echo "ERROR: cannot cd to repo root '$(sanitize_for_output "$REPO_ROOT")'" >&2
+    cleanup_on_error
+    exit 1
+  fi
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:200}")" >&2

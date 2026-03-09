@@ -336,6 +336,46 @@
       ]
     },
     {
+      "id": "B-FW1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Dispatch a fix-worker agent to fix finding fzymgc-house-skills-qsh.1 in file src/main.py line 42",
+      "context": "Repo root contains .jj/ directory. Agent is running in a worktree workspace under *_worktrees/.",
+      "expected_output": "fix-worker should detect jj via vcs-detection-preamble, use jj commit (not git commit), and report VCS: jj with CHANGE_ID (not WORKTREE_BRANCH)",
+      "assertions": [
+        {
+          "name": "detects-jj-repo",
+          "description": "fix-worker detects .jj/ and identifies as jj repo",
+          "type": "contains",
+          "check": "jj"
+        },
+        {
+          "name": "uses-jj-commit",
+          "description": "Uses jj commit or jj describe for committing changes, not git commit",
+          "type": "manual",
+          "check": "Verify fix-worker uses jj commit/describe, NOT git commit"
+        },
+        {
+          "name": "reports-vcs-jj",
+          "description": "Reports VCS: jj in output",
+          "type": "contains",
+          "check": "VCS: jj"
+        },
+        {
+          "name": "reports-change-id",
+          "description": "Reports CHANGE_ID instead of WORKTREE_BRANCH",
+          "type": "contains",
+          "check": "CHANGE_ID"
+        },
+        {
+          "name": "no-git-commit",
+          "description": "Does not use git commit in jj repo",
+          "type": "not_contains",
+          "check": "git commit"
+        }
+      ]
+    },
+    {
       "id": "B-VCS1",
       "type": "behavioral",
       "skill": "address-findings",

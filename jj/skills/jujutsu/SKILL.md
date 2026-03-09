@@ -146,7 +146,7 @@ third-party `git-absorb` tool, but built into jj).
 ### Abandon, Undo, and Restore
 
 ```bash
-# Remove a commit (changes are rebased into descendants)
+# Remove a commit (descendants rebased onto its parent; changes are discarded)
 jj abandon <rev>
 
 # Undo the last jj operation

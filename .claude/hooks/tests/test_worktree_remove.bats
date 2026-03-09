@@ -42,7 +42,7 @@ teardown() {
   [[ "$output" == *"WARNING"* ]]
 }
 
-@test "git path: emits second warning when git worktree prune also fails" {
+@test "git path: exits non-zero when both git worktree remove and prune fail" {
   # Remove the real worktree so we have a plain directory
   git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
   mkdir -p "${REPO_ROOT}_worktrees/test-wt"
@@ -62,10 +62,10 @@ esac
 GITEOF
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
+  [ "$status" -eq 1 ]
   [[ "$output" == *"git worktree remove failed"* ]]
   [[ "$output" == *"git worktree prune also failed"* ]]
+  [[ "$output" == *"stale metadata"* ]]
 }
 
 @test "cleans up empty parent directory after removal" {
@@ -123,6 +123,9 @@ setup_jj_worktree() {
 }
 
 @test "jj path: cleans up empty parent directory after removal" {
+  # Remove the git worktree from setup() so only test-jj-wt remains
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  rm -rf "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
   setup_jj_worktree
   create_mock_jj
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'

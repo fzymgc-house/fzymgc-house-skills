@@ -89,6 +89,8 @@ else
   WORKSPACE_CREATED=true
 fi
 
+trap - EXIT
+
 # Install hooks in the new workspace (lefthook works in both VCS modes)
 if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   if ! lh_err=$(cd "$WORKTREE_PATH" && lefthook install 2>&1); then
@@ -97,4 +99,3 @@ if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
 fi
 
 echo "$WORKTREE_PATH"
-trap - EXIT

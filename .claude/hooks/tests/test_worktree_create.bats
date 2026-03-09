@@ -152,7 +152,7 @@ setup_jj() {
   # Copy into the same directory so BASH_SOURCE[0]-based source resolution
   # still finds worktree-helpers.sh.
   local patched
-  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"forget-wt\"}" | bash '"$patched"
@@ -186,7 +186,7 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 
   local patched
-  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"forget-fail-wt\"}" | bash '"$patched"' 2>&1'
@@ -241,7 +241,7 @@ MOCK
   # Copy into the same directory so BASH_SOURCE[0]-based source resolution
   # still finds worktree-helpers.sh.
   local patched
-  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
     'echo "{\"name\": \"git-cleanup-wt\"}" | bash '"$patched"' 2>&1'
@@ -271,7 +271,7 @@ MOCK
   chmod +x "${mock_bin}/git"
 
   local patched
-  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
     'echo "{\"name\": \"git-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'
@@ -317,7 +317,7 @@ MOCK
   chmod +x "${mock_bin}/git"
 
   local patched
-  patched="$BATS_TEST_DIRNAME/../worktree-create-test-patched.sh"
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
     'echo "{\"name\": \"rm-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'

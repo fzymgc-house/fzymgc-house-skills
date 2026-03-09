@@ -218,6 +218,18 @@ setup_jj_worktree() {
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
+@test "inferred root with .jj/ but jj not installed: warns and still removes directory" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
+  PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"jj not installed"* ]]
+  [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 @test "skips VCS cleanup when parent dir has no _worktrees suffix" {
   NON_GIT=$(mktemp -d)
   # Parent dir name does NOT end in _worktrees

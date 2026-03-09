@@ -9,6 +9,7 @@ argument-hint: "[pr-number]"
 allowed-tools:
   - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-comments/scripts/pr_comments *)"
   - "Bash(git *)"
+  - "Bash(jj st)"
   - "Bash(jj st *)"
   - "Bash(jj log *)"
   - "Bash(jj diff *)"

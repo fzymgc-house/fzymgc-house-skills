@@ -14,6 +14,7 @@ allowed-tools:
   - Glob
   - "Bash(test *)"
   - "Bash(git *)"
+  - "Bash(jj st)"
   - "Bash(jj st *)"
   - "Bash(jj log *)"
   - "Bash(jj diff *)"
@@ -22,6 +23,7 @@ allowed-tools:
   - "Bash(jj rebase *)"
   - "Bash(jj bookmark *)"
   - "Bash(jj git *)"
+  - "Bash(jj undo)"
   - "Bash(jj undo *)"
   - "Bash(jj describe *)"
   - "Bash(jj new *)"

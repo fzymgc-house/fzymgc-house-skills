@@ -13,6 +13,7 @@ allowed-tools:
   - "Bash(jj log *)"
   - "Bash(jj diff *)"
   - "Bash(test *)"
+  - "Bash(jj root)"
   - "Bash(jj workspace *)"
   - "Bash(jj bookmark *)"
   - "Bash(jj git *)"

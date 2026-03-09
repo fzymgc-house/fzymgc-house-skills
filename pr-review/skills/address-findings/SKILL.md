@@ -17,6 +17,7 @@ allowed-tools:
   - "Bash(jj st *)"
   - "Bash(jj log *)"
   - "Bash(jj diff *)"
+  - "Bash(jj root)"
   - "Bash(jj workspace *)"
   - "Bash(jj rebase *)"
   - "Bash(jj bookmark *)"

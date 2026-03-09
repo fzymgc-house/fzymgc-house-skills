@@ -51,12 +51,13 @@ detect_repo_root() {
   fi
   # git rev-parse failed — try jj root for non-colocated repos
   if command -v jj &>/dev/null; then
-    root=$(jj root 2>/dev/null)
-    if [[ -n "$root" && -d "$root" ]]; then
-      printf '%s\n' "$root"
+    local jj_out jj_rc=0
+    jj_out=$(jj root 2>&1) || jj_rc=$?
+    if [[ $jj_rc -eq 0 && -n "$jj_out" && -d "$jj_out" ]]; then
+      printf '%s\n' "$jj_out"
       return 0
     fi
   fi
-  echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed)" >&2
+  echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $jj_out})" >&2
   return 1
 }

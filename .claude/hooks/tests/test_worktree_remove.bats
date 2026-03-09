@@ -188,7 +188,7 @@ setup_jj_worktree() {
   rm -rf "$(dirname "$UNSAFE_ROOT")" "${UNSAFE_ROOT}_worktrees"
 }
 
-@test "exits cleanly when _worktrees parent dir does not exist" {
+@test "errors when _worktrees parent dir does not exist" {
   # Set up a repo whose _worktrees sibling doesn't exist, but the worktree
   # path is inside a differently-named parent that DOES exist.
   # This triggers the realpath failure on EXPECTED_PARENT.
@@ -199,9 +199,10 @@ setup_jj_worktree() {
   # Create a worktree dir under a different name (not ${REPO_NAME}_worktrees)
   mkdir -p "${ALT_ROOT}_other/some-worktree"
   # The script computes EXPECTED_PARENT as ${REPO_PARENT}/${REPO_NAME}_worktrees
-  # which doesn't exist — realpath should fail gracefully
-  run bash -c 'echo "{\"path\": \"'"${ALT_ROOT}_other/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
-  [ "$status" -eq 0 ]
+  # which doesn't exist — realpath should fail with exit 1 (inconsistent state)
+  run bash -c 'echo "{\"path\": \"'"${ALT_ROOT}_other/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"inconsistent state"* ]]
   cd /
   rm -rf "$ALT_ROOT" "${ALT_ROOT}_other"
 }

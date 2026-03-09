@@ -8,8 +8,8 @@ repositories that may use git or jj (Jujutsu).
 1. **Detect VCS:**
 
    ```bash
-   if jj root 2>/dev/null >&2; then echo "jj"
-   elif git rev-parse --git-dir 2>/dev/null >&2; then echo "git"
+   if jj root >/dev/null 2>&1; then echo "jj"
+   elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"
    else echo "none"; fi
    ```
 

@@ -7,5 +7,6 @@
   "pr-review/skills/review-pr": "2.0.1",
   "pr-review/skills/address-findings": "2.0.3",
   "pr-review/skills/respond-to-comments": "2.0.1",
+  "jj": "0.1.0",
   "jj/skills/jujutsu": "0.1.0"
 }

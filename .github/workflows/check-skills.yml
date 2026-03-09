@@ -23,20 +23,28 @@ jobs:
           # - Keys with /skills/ are skill-level entries (use directly)
           # - Other keys (plugin-level) expand to their skill dirs
           all_keys=$(jq -r '.packages | keys[] | select(. != ".")' release-please-config.json)
-          # Validate keys in the main shell (not a subshell) so exit 1
-          # actually aborts the step.
+          # Validate keys and expand plugin-level keys to skill dirs in a single
+          # pass. The while loop runs in the main shell (here-string, no pipe)
+          # so exit 1 actually aborts the step; output goes to a temp file that
+          # is sorted afterwards.
+          configured_tmp=$(mktemp)
           while read -r key; do
             if [[ "$key" =~ [^a-zA-Z0-9_./-] ]]; then
               echo "::error::Unsafe character in release-please key: $key"
+              rm -f "$configured_tmp"
               exit 1
             fi
-          done <<< "$all_keys"
-          configured=$(echo "$all_keys" | while read -r key; do
+            if [[ "$key" == *".."* ]]; then
+              echo "::error::key '$key' contains '..' path traversal"
+              rm -f "$configured_tmp"
+              exit 1
+            fi
             case "$key" in
               */skills/*) echo "$key" ;;
               *) find "$key/skills" -name SKILL.md -exec dirname {} \; 2>/dev/null ;;
             esac
-          done | sort -u)
+          done <<< "$all_keys" >> "$configured_tmp"
+          configured=$(sort -u "$configured_tmp"); rm -f "$configured_tmp"
           if ! diff <(echo "$actual") <(echo "$configured"); then
             echo "::error::Skill directories and release-please-config.json are out of sync"
             exit 1
@@ -48,8 +56,10 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Install bats
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq bats
+          wget -q https://github.com/bats-core/bats-core/archive/refs/tags/v1.11.0.tar.gz
+          tar xzf v1.11.0.tar.gz
+          sudo bats-core-1.11.0/install.sh /usr/local
+          rm -rf v1.11.0.tar.gz bats-core-1.11.0
       - name: Run hook tests
         run: bats .claude/hooks/tests/
 

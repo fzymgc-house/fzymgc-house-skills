@@ -344,15 +344,18 @@ MOCK
   rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees"
 }
 
-@test "POSIX fallback: removes worktree when realpath mock fails" {
-  # Mock realpath to fail, forcing the cd+pwd -P fallback path
-  local mock_bin
-  mock_bin=$(mktemp -d)
-  cat > "$mock_bin/realpath" << 'MOCKRP'
-#!/bin/bash
-exit 1
-MOCKRP
-  chmod +x "$mock_bin/realpath"
+@test "POSIX fallback: removes worktree when realpath absent from PATH" {
+  # Build a curated PATH that excludes realpath to exercise the POSIX
+  # fallback (cd + pwd -P) on systems where realpath is normally available.
+  local clean_bin
+  clean_bin=$(mktemp -d)
+  local cmd cmd_path
+  for cmd in bash git rm rmdir ls dirname basename cat mkdir chmod jq; do
+    cmd_path=$(command -v "$cmd" 2>/dev/null) || continue
+    ln -sf "$cmd_path" "$clean_bin/$cmd"
+  done
+  # Verify realpath is NOT in clean_bin
+  [[ ! -x "$clean_bin/realpath" ]]
 
   ALT_ROOT=$(mktemp -d)
   cd "$ALT_ROOT"
@@ -361,11 +364,11 @@ MOCKRP
   mkdir -p "${ALT_ROOT}_worktrees/posix-mock-test"
   git worktree add "${ALT_ROOT}_worktrees/posix-mock-test" -b worktree/posix-mock-test HEAD -q
 
-  PATH="${mock_bin}:$PATH" run bash -c \
+  PATH="$clean_bin" run bash -c \
     'echo "{\"path\": \"'"${ALT_ROOT}_worktrees/posix-mock-test"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${ALT_ROOT}_worktrees/posix-mock-test" ]
 
   cd /
-  rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees" "$mock_bin"
+  rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees" "$clean_bin"
 }

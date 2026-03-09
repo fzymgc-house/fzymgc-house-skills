@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   drift-check:
     runs-on: ubuntu-latest
@@ -11,7 +14,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Check release-please config covers all skills
         run: |
-          actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort)
+          actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
           # release-please-config.json may have plugin-level keys (e.g., "jj")
           # or skill-level keys (e.g., "homelab/skills/grafana"). This script
           # handles both by expanding plugin-level keys to their skill dirs.

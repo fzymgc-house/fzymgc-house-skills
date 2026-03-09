@@ -66,7 +66,7 @@ SKILL.md](../SKILL.md#workspaces) for full command reference and key behaviors.
 | `git commit` | `jj commit` or `jj describe` + `jj new` |
 | `git merge` | `jj new branch1 branch2` (creates merge commit) |
 | `git rebase` | `jj rebase -s <source> -d <dest>` |
-| `git checkout <branch>` | `jj new <bookmark>` |
+| `git checkout <branch>` | `jj edit <bookmark>` (edit tip) or `jj new <bookmark>` (new child) |
 | `git branch -d` | `jj bookmark delete <name>` |
 
 **Read-only git commands are fine**: `git log`, `git diff`, `git status`, `git remote -v`.

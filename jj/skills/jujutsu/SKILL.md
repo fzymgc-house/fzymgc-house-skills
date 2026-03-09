@@ -159,8 +159,11 @@ jj restore
 jj restore --from <rev> <path>
 ```
 
-**Note:** `jj split` is interactive and not safe for agents. To split a commit manually,
-create a new change, move specific files, then squash the rest.
+**Note:** `jj split` is interactive and not safe for agents. To split a commit:
+
+1. `jj new -r <commit>` — create a child change
+2. `jj restore --from <commit> <path1> <path2>` — move specific files into the new change
+3. `jj squash --into <commit>` — squash the moved files back, leaving the rest behind
 
 ## Bookmarks
 
@@ -266,7 +269,7 @@ jj log  # Conflicted commits show a conflict icon
 
 ### Resolving Conflicts
 
-1. Open the conflicted file and remove conflict markers (`<<<<<<<`, `>>>>>>>`)
+1. Open the conflicted file and remove conflict markers (`<<<<<<<`, `>>>>>>>`, `%%%%%%%`, `+++++++`)
 2. Save the file
 3. Run `jj st` to verify the conflict is resolved
 

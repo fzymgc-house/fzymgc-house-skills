@@ -2,9 +2,11 @@
 # Shared helpers for worktree-create.sh and worktree-remove.sh
 
 sanitize_for_output() {
-  # Strip C0 control chars (0x00-0x1F), DEL (0x7F), and C1 control chars (0x80-0x9F)
+  # Strip C0 control chars (0x00-0x1F) except \t (009), \n (012), \r (015),
+  # plus DEL (0x7F) and C1 control chars (0x80-0x9F).
+  # Preserving \t, \n, \r allows multi-line error messages to remain readable.
   local input="$1"
-  printf '%s' "$input" | LC_ALL=C tr -d '\000-\037\177\200-\237'
+  printf '%s' "$input" | LC_ALL=C tr -d '\000-\010\013\014\016-\037\177\200-\237'
 }
 
 validate_safe_name() {

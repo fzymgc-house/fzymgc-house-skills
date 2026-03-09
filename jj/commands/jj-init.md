@@ -35,7 +35,9 @@ allowed-tools:
    The `--colocate` flag ensures jj shares the working copy with git.
    Always use `--colocate` when initializing in an existing git repo.
 
-   **If the command fails**, report the error to the user and stop.
+   **If the command fails**, report the full error output (stdout and stderr)
+   to the user and stop. Include jj's error text so the user can diagnose the
+   failure (e.g., unsupported flags, filesystem issues, already-initialized state).
    Do NOT proceed to modify `.gitignore` or run verification steps.
 
 4. **Add .jj/ to .gitignore** — Check whether `.gitignore` exists and already contains `.jj/`.
@@ -52,3 +54,6 @@ allowed-tools:
 5. **Verify** — Run `jj st` and `jj log --no-graph -n 3` to confirm the repo is working.
    Report success: "Colocated jj repo initialized. Both `jj` and `git` commands work in this
    directory."
+
+   If `jj st` or `jj log` fails, report the error output and advise the user
+   to check `jj log` manually — the init may have partially succeeded.

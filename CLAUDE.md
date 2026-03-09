@@ -181,7 +181,9 @@ inside the `<repo>_worktrees/` sibling directory.
 **VCS-specific behavior:**
 
 - **git**: fix-worker reports `WORKTREE_BRANCH`; orchestrator uses cherry-pick to integrate
-- **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase` to integrate, then `jj bookmark set` to advance the bookmark and `jj workspace forget` to clean up (no cherry-pick)
+- **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase`
+  to integrate, then `jj bookmark set` to advance the bookmark and
+  `jj workspace forget` to clean up (no cherry-pick)
 
 ### jj Operation Log Semantics
 

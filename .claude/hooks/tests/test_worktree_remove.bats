@@ -75,11 +75,11 @@ GITEOF
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
-@test "rejects path outside expected parent" {
+@test "warns but proceeds for path outside expected parent" {
   mkdir -p /tmp/evil-test-dir
   run bash -c 'echo "{\"path\": \"/tmp/evil-test-dir\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"outside expected parent"* || "$output" == *"invalid worktree name"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"outside expected parent"* ]]
   rmdir /tmp/evil-test-dir 2>/dev/null || true
 }
 

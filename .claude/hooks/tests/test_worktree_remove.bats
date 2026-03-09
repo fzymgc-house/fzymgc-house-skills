@@ -75,11 +75,11 @@ GITEOF
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
-@test "warns but proceeds for path outside expected parent" {
+@test "rejects path outside expected parent with exit 1" {
   mkdir -p /tmp/evil-test-dir
   run bash -c 'echo "{\"path\": \"/tmp/evil-test-dir\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"outside expected parent"* ]]
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"outside expected parent"* ]]
   rmdir /tmp/evil-test-dir 2>/dev/null || true
 }
 
@@ -94,13 +94,14 @@ GITEOF
   [[ "$output" == *"no path field"* ]]
 }
 
-@test "rejects names with shell metacharacters" {
+@test "warns but proceeds for names with shell metacharacters" {
   evil_path="${REPO_ROOT}_worktrees/evil;rm"
   mkdir -p "$evil_path"
   run bash -c 'echo "{\"path\": \"'"$evil_path"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"invalid worktree name"* ]]
-  rmdir "$evil_path" 2>/dev/null || true
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"unusual characters"* ]]
+  [ ! -d "$evil_path" ]
 }
 
 @test "rejects symlinked path resolving outside expected parent" {
@@ -198,12 +199,14 @@ setup_jj_worktree() {
   rm -rf "$ALT_ROOT" "${ALT_ROOT}_other"
 }
 
-@test "fails when git rev-parse cannot determine repo root" {
+@test "infers repo root from worktree path when outside git repo" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}_worktrees/orphan-wt"
   run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"could not determine repo root"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"inferred repo root"* ]]
+  [ ! -d "${NON_GIT}_worktrees/orphan-wt" ]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
@@ -227,7 +230,7 @@ setup_jj_worktree() {
   [[ "$output" == *"failed to remove worktree directory"* ]]
 }
 
-@test "fails when jj root returns empty in pure-jj repo" {
+@test "infers repo root when jj root returns empty in pure-jj repo" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"
   mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
@@ -236,12 +239,15 @@ setup_jj_worktree() {
   cat > "${NON_GIT}/bin/jj" << 'MOCK'
 #!/bin/bash
 if [[ "$1" == "root" ]]; then echo ""; exit 0; fi
+if [[ "$1" == "workspace" && "$2" == "forget" ]]; then exit 0; fi
 exit 1
 MOCK
   chmod +x "${NON_GIT}/bin/jj"
   PATH="${NON_GIT}/bin:/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"could not determine repo root"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"inferred repo root"* ]]
+  [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 

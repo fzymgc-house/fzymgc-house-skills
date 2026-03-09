@@ -109,8 +109,7 @@ else
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$WORKTREE_PATH': $(sanitize_for_output "${git_err:0:200}")" >&2
     if ! prune_err=$(git worktree prune 2>&1); then
-      echo "ERROR: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:200}") — stale metadata may remain in .git/worktrees/" >&2
-      exit 1
+      echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:200}") — stale metadata may remain in .git/worktrees/" >&2
     fi
   fi
 fi

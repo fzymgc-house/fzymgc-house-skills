@@ -61,8 +61,14 @@ if ! REPO_ROOT=$(detect_repo_root 2>/dev/null); then
     REPO_ROOT="${_inferred_root}/${_inferred_name%_worktrees}"
     echo "WARNING: detect_repo_root failed — inferred repo root as '$(sanitize_for_output "$REPO_ROOT")' from worktree path" >&2
   else
-    echo "ERROR: could not determine repo root and worktree path structure is unexpected" >&2
-    exit 1
+    echo "WARNING: could not determine repo root — skipping path validation and VCS cleanup" >&2
+    # Proceed directly to rm-rf without path validation or VCS metadata cleanup
+    if ! rm -rf "$WORKTREE_PATH"; then
+      echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")'" >&2
+      exit 1
+    fi
+    cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
+    exit 0
   fi
 fi
 
@@ -73,8 +79,10 @@ validate_safe_name "$REPO_NAME" "repository directory name" || exit 1
 EXPECTED_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 # Canonicalize to match WORKTREE_PATH (also canonicalized via realpath)
 # If the _worktrees parent doesn't exist, worktree is already gone — exit cleanly
-if ! EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null); then
-  exit 0
+if command -v realpath &>/dev/null; then
+  EXPECTED_PARENT=$(realpath "$EXPECTED_PARENT" 2>/dev/null) || exit 0
+else
+  EXPECTED_PARENT=$(cd "$EXPECTED_PARENT" 2>/dev/null && pwd -P) || exit 0
 fi
 case "$WORKTREE_PATH" in
   "$EXPECTED_PARENT"/*)  ;;  # safe — inside expected parent

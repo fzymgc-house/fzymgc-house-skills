@@ -230,15 +230,16 @@ setup_jj_worktree() {
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
-@test "skips VCS cleanup when parent dir has no _worktrees suffix" {
+@test "errors when parent dir has no _worktrees suffix" {
   NON_GIT=$(mktemp -d)
-  # Parent dir name does NOT end in _worktrees
+  # Parent dir name does NOT end in _worktrees — fail-safe refuses removal
   mkdir -p "${NON_GIT}/random-dir/some-worktree"
   run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}/random-dir/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"could not determine repo root"* ]]
-  [ ! -d "${NON_GIT}/random-dir/some-worktree" ]
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR"* ]]
+  [[ "$output" == *"refusing removal for safety"* ]]
+  # Directory must still exist (fail-safe did not remove it)
+  [ -d "${NON_GIT}/random-dir/some-worktree" ]
   rm -rf "$NON_GIT"
 }
 

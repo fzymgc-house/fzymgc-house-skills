@@ -77,6 +77,15 @@
       "assertions": [{"name": "does-not-trigger-jujutsu-for-git", "description": "Does not trigger jujutsu skill for git-only workflow", "type": "skill_not_triggered", "check": "jujutsu"}]
     },
     {
+      "id": "JJ-T9",
+      "type": "triggering",
+      "prompt": "check my repo status",
+      "context": "Repo root contains both .jj/ and .git/ directories (colocated jj+git repo)",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should trigger jujutsu skill in colocated repo where both .jj/ and .git/ exist",
+      "assertions": [{"name": "triggers-jujutsu-colocated", "description": "Triggers jujutsu skill in colocated jj+git repo", "type": "skill_triggered", "check": "jujutsu"}]
+    },
+    {
       "id": "JJ-B1",
       "type": "behavioral",
       "skill": "jujutsu",

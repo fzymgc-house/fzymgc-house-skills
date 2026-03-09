@@ -165,3 +165,14 @@ MOCK
   [ "$status" -ne 0 ]
   [[ "$output" == *"ERROR"* ]]
 }
+
+@test "detect_repo_root: errors when git fails and jj is not in PATH" {
+  local non_git_dir="${REPO_ROOT}/no-git-no-jj"
+  mkdir -p "${non_git_dir}"
+  # Run detect_repo_root with a PATH that excludes jj entirely
+  # and from a directory with no .git ancestor
+  run env -i HOME="$HOME" PATH="/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"ERROR"* ]]
+}

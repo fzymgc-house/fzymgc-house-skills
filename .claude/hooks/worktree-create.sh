@@ -45,7 +45,9 @@ cleanup_on_error() {
       fi
     fi
   fi
-  rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
+  if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
+    echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:200}")" >&2
+  fi
   cleanup_empty_parent "$WORKTREE_PARENT"
 }
 trap cleanup_on_error EXIT

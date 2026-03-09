@@ -284,9 +284,13 @@ jj log  # Conflicted commits show a conflict icon
 
 ### Resolving Conflicts
 
-1. Open the conflicted file and remove conflict markers (`<<<<<<<`, `>>>>>>>`, `%%%%%%%`, `+++++++`)
-2. Save the file
-3. Run `jj st` to verify the conflict is resolved
+1. Open the conflicted file and resolve the conflict markers:
+   - `<<<<<<<` / `>>>>>>>` — conflict boundaries (start/end of conflict block)
+   - `%%%%%%%` — diff-style changes from one side (shows what changed)
+   - `+++++++` — snapshot of the other side (shows the full content)
+2. Edit the file to the desired final content, removing all marker lines
+3. Save the file
+4. Run `jj st` to verify the conflict is resolved
 
 Do NOT use `jj resolve` -- it launches an interactive merge tool that hangs in agent
 environments.

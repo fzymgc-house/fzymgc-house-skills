@@ -235,6 +235,37 @@
           "check": "Verify agent reports no VCS or asks user to initialize"
         }
       ]
+    },
+    {
+      "id": "JJ-B10",
+      "type": "behavioral",
+      "prompt": "I need to push my current changes but I haven't set a bookmark. How do I push in jj?",
+      "expected_skill": "jujutsu",
+      "expected_output": "Should recommend jj git push --change or creating a bookmark first",
+      "context": "Repo root contains .jj/ directory. User has uncommitted changes with no bookmark set.",
+      "assertions": [
+        {
+          "name": "suggests-push-change",
+          "description": "Suggests jj git push --change or bookmark creation",
+          "type": "contains",
+          "check": "push"
+        }
+      ]
+    },
+    {
+      "id": "JJ-T-NEG2",
+      "type": "negative",
+      "prompt": "git commit -m 'fix: update readme'",
+      "expected_skill": null,
+      "expected_output": "Should NOT trigger jujutsu skill for explicit git commands in a git-only repo",
+      "assertions": [
+        {
+          "name": "no-jujutsu-trigger",
+          "description": "Does not trigger jujutsu skill for explicit git commands",
+          "type": "skill_not_triggered",
+          "check": "jujutsu"
+        }
+      ]
     }
   ]
 }

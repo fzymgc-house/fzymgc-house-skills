@@ -30,12 +30,13 @@ cleanup_on_error() {
   # Deregister VCS workspace/worktree metadata before removing the directory
   if [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
     # jj repo: forget workspace metadata (prevents orphaned metadata)
-    (cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>/dev/null) || \
-      echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed" >&2
+    if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
+      echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: ${jj_err}" >&2
+    fi
   else
     # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
     if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed" >&2
+      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: ${git_err}" >&2
     fi
   fi
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2

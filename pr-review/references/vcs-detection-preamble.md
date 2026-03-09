@@ -9,7 +9,8 @@ repositories that may use git or jj (Jujutsu).
    - `test -d` already ensures `.jj` is a directory (not a regular file).
    - If the result is "none", STOP and report
      STATUS: FAILED -- "No VCS detected (no .jj/ or .git/ directory)"
-2. **Verify location:**
+2. **Verify location** *(worktree-isolated agents only — orchestrator
+   skills running from the main repo root should skip this step):*
    - jj: Check whether the current directory is under a `_worktrees`
      sibling directory using a path pattern match:
 

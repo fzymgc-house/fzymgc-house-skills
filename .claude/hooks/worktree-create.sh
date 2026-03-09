@@ -34,7 +34,9 @@ cleanup_on_error() {
       echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed" >&2
   else
     # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
-    git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
+    if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
+      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed" >&2
+    fi
   fi
   rm -rf "$WORKTREE_PATH" 2>/dev/null || echo "WARNING: cleanup failed for '$WORKTREE_PATH'" >&2
   cleanup_empty_parent "$WORKTREE_PARENT"

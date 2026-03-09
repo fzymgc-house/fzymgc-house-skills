@@ -6,41 +6,50 @@ _setup_mock_bin_dir() {
   mkdir -p "$MOCK_JJ_BIN_DIR"
 }
 
+# Write a mock jj binary to MOCK_JJ_BIN_DIR.
+# $1: shell snippet that implements the 'root' command response.
+#     Examples:
+#       'git rev-parse --show-toplevel 2>/dev/null; exit $?'   (colocated repo)
+#       'echo "$JJ_REPO_ROOT"; exit 0'                         (pure jj repo)
+_write_mock_jj() {
+  local root_cmd="$1"
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+_mock_workspace_add() {
+  if [[ "\$1" == "--help" ]]; then
+    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+    echo "  --name <NAME>"
+    exit 0
+  fi
+  for arg in "\$@"; do
+    case "\$arg" in
+      -*) ;;
+      *) mkdir -p "\$arg"; exit 0 ;;
+    esac
+  done
+  exit 1
+}
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  shift 2; _mock_workspace_add "\$@"
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" && "\$3" == worktree-* ]]; then
+  exit 0
+fi
+if [[ "\$1" == "root" ]]; then
+  ${root_cmd}
+fi
+echo "ERROR: unexpected jj invocation: \$*" >&2
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
 # Create a mock jj binary that handles common workspace operations.
 # Uses REPO_ROOT (must be set before calling).
 # Sets MOCK_JJ_BIN_DIR for PATH prepending.
 create_mock_jj() {
   _setup_mock_bin_dir
-  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
-#!/bin/bash
-_mock_workspace_add() {
-  if [[ "$1" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
-  for arg in "$@"; do
-    case "$arg" in
-      -*) ;;
-      *) mkdir -p "$arg"; exit 0 ;;
-    esac
-  done
-  exit 1
-}
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
-  shift 2; _mock_workspace_add "$@"
-fi
-if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
-  exit 0
-fi
-if [[ "$1" == "root" ]]; then
-  git rev-parse --show-toplevel 2>/dev/null
-  exit $?
-fi
-echo "ERROR: unexpected jj invocation: $*" >&2
-exit 1
-MOCK
-  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  _write_mock_jj 'git rev-parse --show-toplevel 2>/dev/null; exit $?'
 }
 
 # Create a mock jj whose --help output lacks --name (simulates old jj).
@@ -122,36 +131,7 @@ MOCK
 # and before running the test binary.
 create_pure_jj_mock() {
   _setup_mock_bin_dir
-  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
-#!/bin/bash
-_mock_workspace_add() {
-  if [[ "$1" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
-  for arg in "$@"; do
-    case "$arg" in
-      -*) ;;
-      *) mkdir -p "$arg"; exit 0 ;;
-    esac
-  done
-  exit 1
-}
-if [[ "$1" == "workspace" && "$2" == "add" ]]; then
-  shift 2; _mock_workspace_add "$@"
-fi
-if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
-  exit 0
-fi
-if [[ "$1" == "root" ]]; then
-  echo "$JJ_REPO_ROOT"
-  exit 0
-fi
-echo "ERROR: unexpected jj invocation: $*" >&2
-exit 1
-MOCK
-  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  _write_mock_jj 'echo "$JJ_REPO_ROOT"; exit 0'
 }
 
 # Create a mock jj that responds to --help but fails on workspace add.

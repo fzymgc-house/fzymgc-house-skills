@@ -75,31 +75,14 @@ teardown() {
 @test "detect_repo_root falls back to jj root when git rev-parse fails" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"
-  # Mock jj that responds to 'root' with the directory path
-  mkdir -p "${NON_GIT}/bin"
-  cat > "${NON_GIT}/bin/jj" << MOCK
-#!/bin/bash
-if [[ "\$1" == "root" ]]; then
-  echo "${NON_GIT}"
-  exit 0
-fi
-if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
-  echo "  --name <NAME>"
-  exit 0
-fi
-if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
-  shift 2
-  for arg in "\$@"; do
-    case "\$arg" in
-      -*) ;;
-      *) mkdir -p "\$arg"; exit 0 ;;
-    esac
-  done
-fi
-exit 1
-MOCK
-  chmod +x "${NON_GIT}/bin/jj"
-  PATH="${NON_GIT}/bin:$PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"name\": \"jj-root-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  # Use create_pure_jj_mock via temporary REPO_ROOT override so the bin dir
+  # lands inside NON_GIT (which has no .git/ to back git rev-parse).
+  ORIG_REPO_ROOT="$REPO_ROOT"
+  REPO_ROOT="$NON_GIT"
+  create_pure_jj_mock
+  REPO_ROOT="$ORIG_REPO_ROOT"
+  PATH="${NON_GIT}/bin:$PATH" JJ_REPO_ROOT="${NON_GIT}" run bash -c \
+    'cd '"$NON_GIT"' && echo "{\"name\": \"jj-root-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 0 ]
   [[ "$output" == *"_worktrees/jj-root-test"* ]]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
@@ -305,6 +288,22 @@ MOCK
   [ -f "${REPO_ROOT}_worktrees/jj-lh-test/lefthook-marker" ]
 }
 
+@test "jj path: warns when lefthook install fails" {
+  setup_jj
+  create_mock_jj
+  touch "${REPO_ROOT}/lefthook.yml"
+  cat > "${MOCK_JJ_BIN_DIR}/lefthook" << 'MOCK'
+#!/bin/bash
+echo "mock error" >&2
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/lefthook"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"jj-lh-fail-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"_worktrees/jj-lh-fail-test"* ]]
+}
+
 @test "fails gracefully when mkdir -p fails" {
   # Create a nested temp dir so we can chmod the parent
   SANDBOX=$(mktemp -d)
@@ -319,4 +318,40 @@ MOCK
   chmod a+w "${SANDBOX}/repos"
   rm -rf "$SANDBOX"
   [ "$status" -eq 1 ]
+}
+
+@test "git path: mkdir -p failure exits 1 with descriptive error message" {
+  SANDBOX=$(mktemp -d)
+  NESTED="${SANDBOX}/repos/myrepo"
+  mkdir -p "$NESTED"
+  cd "$NESTED"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  chmod a-w "${SANDBOX}/repos"
+  run bash -c 'echo "{\"name\": \"mkdir-msg-git\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  chmod a+w "${SANDBOX}/repos"
+  rm -rf "$SANDBOX"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to create worktree parent directory"* ]]
+}
+
+@test "jj path: mkdir -p failure exits 1 with descriptive error message" {
+  SANDBOX=$(mktemp -d)
+  NESTED="${SANDBOX}/repos/myrepo"
+  mkdir -p "$NESTED"
+  mkdir -p "${NESTED}/.jj"
+  ORIG_REPO_ROOT="$REPO_ROOT"
+  REPO_ROOT="$NESTED"
+  create_mock_jj
+  local JJ_BIN_DIR="$MOCK_JJ_BIN_DIR"
+  REPO_ROOT="$ORIG_REPO_ROOT"
+  cd "$NESTED"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  chmod a-w "${SANDBOX}/repos"
+  PATH="${JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"mkdir-msg-jj\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  chmod a+w "${SANDBOX}/repos"
+  rm -rf "$SANDBOX"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to create worktree parent directory"* ]]
 }

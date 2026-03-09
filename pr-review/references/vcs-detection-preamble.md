@@ -32,6 +32,21 @@ repositories that may use git or jj (Jujutsu).
 Use the detected VCS for all operations in this session. Consult
 `pr-review/references/vcs-equivalence.md` for command equivalents.
 
+## Orchestrator Contract
+
+When a worktree-isolated agent reports `STATUS: FAILED` with a VCS
+detection failure message:
+
+1. **Do NOT retry** — VCS detection failure is deterministic. The
+   worktree was created without proper VCS initialization.
+2. **Log the failure** — include the agent name and worktree path.
+3. **Clean up the worktree** — the worktree is unusable without VCS.
+4. **Re-queue the finding** — mark FAILED with the VCS error detail.
+
+Orchestrator skills (address-findings, review-pr) should check for
+`STATUS: FAILED` in agent responses before attempting to parse VCS-specific
+fields (WORKTREE_BRANCH, CHANGE_ID).
+
 ## Path Rules
 
 - Use ONLY relative paths for all file operations

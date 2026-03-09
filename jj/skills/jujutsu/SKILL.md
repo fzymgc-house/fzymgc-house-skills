@@ -5,7 +5,20 @@ description: >-
   operation when `.jj/` exists in the repo root. Use when the user
   mentions jj, jujutsu, or when a colocated jj repo is detected.
 allowed-tools:
-  - "Bash(jj *)"
+  - "Bash(jj log *)"
+  - "Bash(jj diff *)"
+  - "Bash(jj st *)"
+  - "Bash(jj show *)"
+  - "Bash(jj bookmark *)"
+  - "Bash(jj workspace *)"
+  - "Bash(jj git *)"
+  - "Bash(jj new *)"
+  - "Bash(jj commit *)"
+  - "Bash(jj squash *)"
+  - "Bash(jj restore *)"
+  - "Bash(jj describe *)"
+  - "Bash(jj abandon *)"
+  - "Bash(jj rebase *)"
   - "Bash(test *)"
 metadata:
   author: fzymgc-house

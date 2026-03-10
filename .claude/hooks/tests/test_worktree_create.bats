@@ -802,6 +802,51 @@ MOCK
   [[ "$output" == *"WARNING: cleanup: REPO_ROOT"*"missing — VCS workspace cleanup skipped"* ]]
 }
 
+@test "CLEANUP_FAILED promotes exit code from 0 to 1 when rm -rf fails after successful workspace add" {
+  # Verify the exit-code promotion at lines 79-81 of worktree-create.sh:
+  #   if [[ "$CLEANUP_FAILED" == "true" ]] && [[ $_exit_code -eq 0 ]]; then
+  #     _exit_code=1
+  #   fi
+  # Scenario: workspace add succeeds (so _exit_code=0 when EXIT trap fires),
+  # but rm -rf in cleanup_on_error fails (setting CLEANUP_FAILED=true).
+  # The exit code must be promoted from 0 to 1.
+  setup_jj
+  create_mock_jj
+
+  # Resolve real rm before creating mock bin
+  local real_rm
+  real_rm="$(command -v rm)"
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+
+  # Mock rm: fail on -rf (cleanup's rm -rf call); delegate everything else.
+  cat > "${mock_bin}/rm" << MOCK
+#!/bin/bash
+if [[ "\$1" == "-rf" ]]; then
+  echo "rm: \$2: Operation not permitted" >&2
+  exit 1
+fi
+exec "${real_rm}" "\$@"
+MOCK
+  chmod +x "${mock_bin}/rm"
+
+  # Patch the script: replace "trap - EXIT" with "exit 0" so the EXIT trap
+  # fires with _exit_code=0 (workspace add succeeded), then rm -rf fails
+  # (CLEANUP_FAILED=true), triggering the promotion to exit code 1.
+  local patched
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
+  trap 'rm -f "$patched"' RETURN
+  sed 's/^trap - EXIT$/exit 0/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${MOCK_JJ_BIN_DIR}:${mock_bin}:$PATH" run bash -c \
+    'echo "{\"name\": \"promote-exit-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  rm -rf "$mock_bin"
+  # Exit code must be 1 (promoted from 0 due to CLEANUP_FAILED=true)
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"WARNING: cleanup failed for"* ]]
+}
+
 @test "jj path: create-then-remove lifecycle uses consistent workspace names" {
   setup_jj
   create_logging_jj_mock

@@ -32,7 +32,7 @@ cleanup_empty_parent() {
     local ls_out
     local _rmdir_err
     if ! ls_out=$(ls -A "$parent" 2>/dev/null); then
-      echo "WARNING: ls failed on parent directory '$parent' — skipping rmdir" >&2
+      echo "WARNING: ls failed on parent directory '$(sanitize_for_output "$parent")' — skipping rmdir" >&2
       return 0
     fi
     if [[ -z "$ls_out" ]]; then

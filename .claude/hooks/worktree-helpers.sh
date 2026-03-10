@@ -51,6 +51,7 @@ detect_repo_root() {
     return 0
   fi
   local jj_attempted=false
+  local mktemp_failed=false
   # git rev-parse failed — try jj root for non-colocated repos
   if command -v jj &>/dev/null; then
     jj_attempted=true
@@ -59,6 +60,7 @@ detect_repo_root() {
     _jj_err_file=$(mktemp) || {
       echo "WARNING: mktemp failed — cannot capture jj stderr; skipping jj root check" >&2
       jj_attempted=false
+      mktemp_failed=true
     }
     if [[ "$jj_attempted" == "true" ]]; then
       jj_out=$(jj root 2>"$_jj_err_file") || jj_rc=$?
@@ -78,6 +80,8 @@ detect_repo_root() {
     else
       echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj root returned '$(sanitize_for_output "$jj_out")' but directory does not exist)" >&2
     fi
+  elif [[ "$mktemp_failed" == "true" ]]; then
+    echo "ERROR: not inside a git/jj repository (git rev-parse failed; mktemp failed so jj root check was skipped)" >&2
   else
     echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj not in PATH)" >&2
   fi

@@ -340,6 +340,8 @@ MOCK
   # Function should emit WARNING about mktemp failure
   [[ "$output" == *"WARNING"* ]]
   [[ "$output" == *"mktemp failed"* ]]
+  # Error must not falsely claim jj is not in PATH (it is — mktemp failed, not PATH)
+  [[ "$output" != *"jj not in PATH"* ]]
   # Function exits non-zero (jj root was skipped; git also unavailable here)
   [ "$status" -ne 0 ]
 }

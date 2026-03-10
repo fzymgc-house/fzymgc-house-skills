@@ -407,6 +407,12 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 
 5. Forget the workspace and remove the directory:
 
+   Derive `<name>` from the Task isolation metadata `worktreePath`:
+   `basename <worktreePath>`. The jj workspace name is `worktree-<name>`.
+   For example, if worktreePath is `../repo_worktrees/agent-abc12345`,
+   then `<name>` is `agent-abc12345` and the workspace name is
+   `worktree-agent-abc12345`.
+
    ```bash
    jj workspace forget worktree-<name>
    rm -rf ../<repo>_worktrees/<worktree-name>

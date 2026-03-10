@@ -313,3 +313,58 @@ MOCK
   [ "$status" -eq 0 ]
   [ "$output" = "none" ]
 }
+
+@test "VCS detection preamble: outputs jj when jj root succeeds" {
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  echo "/some/repo"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+  local test_dir
+  test_dir=$(mktemp -d)
+  run bash -c 'export PATH='"$mock_bin"':/usr/sbin:/sbin; cd '"$test_dir"' && if jj root >/dev/null 2>&1; then echo "jj"; elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"; else echo "none"; fi'
+  rm -rf "$mock_bin" "$test_dir"
+  [ "$status" -eq 0 ]
+  [ "$output" = "jj" ]
+}
+
+@test "VCS detection preamble: outputs git when jj absent and git rev-parse succeeds" {
+  local git_repo
+  git_repo=$(mktemp -d)
+  git -C "$git_repo" init -q
+  git -C "$git_repo" -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  # Use a PATH without jj so only git is available
+  run bash -c 'export PATH=/usr/bin:/bin; cd '"$git_repo"' && if jj root >/dev/null 2>&1; then echo "jj"; elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"; else echo "none"; fi'
+  rm -rf "$git_repo"
+  [ "$status" -eq 0 ]
+  [ "$output" = "git" ]
+}
+
+@test "VCS detection preamble: outputs jj when both jj and git would succeed (jj takes precedence)" {
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  echo "/some/colocated-repo"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+  # Create a real git repo to ensure git rev-parse also succeeds
+  local git_repo
+  git_repo=$(mktemp -d)
+  git -C "$git_repo" init -q
+  git -C "$git_repo" -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  run bash -c 'export PATH='"$mock_bin"':/usr/bin:/bin; cd '"$git_repo"' && if jj root >/dev/null 2>&1; then echo "jj"; elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"; else echo "none"; fi'
+  rm -rf "$mock_bin" "$git_repo"
+  [ "$status" -eq 0 ]
+  [ "$output" = "jj" ]
+}

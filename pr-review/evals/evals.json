@@ -359,6 +359,28 @@
       ]
     },
     {
+      "id": "B-JJ-ATMINUS1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "After running jj undo to revert a conflicted rebase, verify the bookmark tip was restored correctly.",
+      "context": "Repo has .jj/ directory. jj undo was just run. Agent needs to verify the bookmark state.",
+      "expected_output": "Should use @- (parent) to check committed state, not @ (empty working copy)",
+      "assertions": [
+        {
+          "name": "uses-at-minus",
+          "description": "Uses @- to reference committed state",
+          "type": "contains",
+          "check": "@-"
+        },
+        {
+          "name": "no-bare-at-for-verify",
+          "description": "Does not use bare @ for verification of committed state",
+          "type": "not_contains",
+          "check": "jj log -r @\n"
+        }
+      ]
+    },
+    {
       "id": "B-FW1",
       "type": "behavioral",
       "skill": "address-findings",

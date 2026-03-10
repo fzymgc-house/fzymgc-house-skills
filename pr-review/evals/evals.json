@@ -735,6 +735,28 @@
           "check": "git commit"
         }
       ]
+    },
+    {
+      "id": "B-VCS-GIT1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Fix finding fzymgc-house-skills-abc.1 in this file",
+      "context": "Agent is in a git repo (no .jj/). Current branch is 'main', not 'worktree/*'.",
+      "expected_output": "Agent reports STATUS: FAILED because it is not on a worktree/* branch",
+      "assertions": [
+        {
+          "name": "reports-failed-status",
+          "description": "Reports STATUS: FAILED when not on a worktree/* branch",
+          "type": "contains",
+          "check": "STATUS: FAILED"
+        },
+        {
+          "name": "no-file-edits",
+          "description": "Does not use Edit tool when branch check fails",
+          "type": "not_contains",
+          "check": "Edit"
+        }
+      ]
     }
   ]
 }

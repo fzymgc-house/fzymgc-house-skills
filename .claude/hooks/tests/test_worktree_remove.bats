@@ -238,6 +238,19 @@ MOCK
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
+@test "inferred root with .git/ but corrupt git: warns VCS may be corrupt" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.git"  # empty .git/ makes git rev-parse fail
+  mkdir -p "${NON_GIT}_worktrees/corrupt-git-wt"
+  run bash -c 'cd /tmp && echo "{\"path\": \"'"${NON_GIT}_worktrees/corrupt-git-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"has .git/ but git rev-parse failed"* ]]
+  [[ "$output" == *"VCS state may be corrupt"* ]]
+  [[ "$output" == *"skipping VCS cleanup"* ]]
+  [ ! -d "${NON_GIT}_worktrees/corrupt-git-wt" ]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 @test "inferred root with .jj/ but jj not installed: warns and still removes directory" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

@@ -252,6 +252,30 @@ MOCK
   rm -rf "$git_repo" "$mock_bin"
 }
 
+@test "detect_repo_root: succeeds via jj root when git rev-parse fails" {
+  local jj_repo
+  jj_repo=$(mktemp -d)
+  # Canonicalize to handle macOS /var -> /private/var symlink
+  jj_repo=$(cd "$jj_repo" && pwd -P)
+  mkdir -p "${jj_repo}/.jj"
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "${mock_bin}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${jj_repo}"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${mock_bin}/jj"
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$jj_repo"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -eq 0 ]
+  [[ "$output" == "$jj_repo" ]]
+  rm -rf "$jj_repo" "$mock_bin"
+}
+
 @test "detect_repo_root: sanitize_for_output strips control chars from jj error output" {
   # Create a mock jj that writes control characters to stdout and exits 1
   # (detect_repo_root captures stdout+stderr via 2>&1)

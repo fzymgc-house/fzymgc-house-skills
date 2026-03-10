@@ -55,7 +55,7 @@ detect_repo_root() {
   if command -v jj &>/dev/null; then
     jj_attempted=true
     local jj_out jj_rc=0
-    jj_out=$(jj root 2>/dev/null) || jj_rc=$?
+    jj_out=$(jj root 2>&1) || jj_rc=$?
     if [[ $jj_rc -eq 0 && -n "$jj_out" && -d "$jj_out" ]]; then
       printf '%s\n' "$jj_out"
       return 0

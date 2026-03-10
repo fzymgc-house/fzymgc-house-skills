@@ -59,7 +59,7 @@ Run `bd onboard` for the full workflow guide, or see `.beads/README.md`.
 
    ```bash
    # Detect VCS
-   test -d .jj && VCS=jj || VCS=git
+   if jj root >/dev/null 2>&1; then VCS=jj; elif git rev-parse --git-dir >/dev/null 2>&1; then VCS=git; else VCS=none; fi
 
    # Pull, sync, push
    if [[ "$VCS" == "jj" ]]; then

@@ -33,6 +33,7 @@ cleanup_on_error() {
   local CLEANUP_FAILED=false
   if [[ ! -d "$REPO_ROOT" ]]; then
     echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — VCS workspace cleanup skipped" >&2
+    echo "WARNING: cleanup: proceeding with directory removal despite missing REPO_ROOT" >&2
   elif [[ -d "${REPO_ROOT}/.jj" ]]; then
     # jj repo: check jj availability before attempting workspace forget
     if command -v jj &>/dev/null; then

@@ -58,6 +58,11 @@ fi
 # components (workspace name and _worktrees suffix).
 _REPO_ROOT_INFERRED=false
 _root_err_file=$(mktemp) || { echo 'ERROR: mktemp failed — cannot create temp file for error capture' >&2; exit 1; }
+# _ws_list_err is intentionally initialized empty here rather than via mktemp:
+#   1. It is only needed for jj repos (the mktemp happens inside the jj branch below).
+#   2. The EXIT trap guard `[[ -n "${_ws_list_err:-}" ]]` safely skips cleanup when
+#      _ws_list_err was never set (git-only path or skip_vcs_cleanup path).
+#   3. This avoids allocating a temp file that is never used on the git-only path.
 _ws_list_err=""
 trap '[[ -n "${_root_err_file:-}" ]] && rm -f "$_root_err_file"; [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"' EXIT
 if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
@@ -117,6 +122,9 @@ if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
+  # `|| true` is intentional: mktemp failure is non-fatal for the remove operation.
+  # The `[[ -z "$_ws_list_err" ]]` guard below detects this case and emits a WARNING
+  # with a manual recovery command, then proceeds to directory removal.
   _ws_list_err=$(mktemp 2>/dev/null) || true
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2

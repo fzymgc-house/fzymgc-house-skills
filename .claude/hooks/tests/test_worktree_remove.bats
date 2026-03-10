@@ -445,7 +445,12 @@ if [[ "\$1" == "root" ]]; then
   echo "${NON_GIT}"
   exit 0
 fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "worktree-jj-fallback-wt: (no current operation)"
+  exit 0
+fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "\$3" > "${NON_GIT}/forget-arg.log"
   exit 0
 fi
 exit 1
@@ -454,6 +459,8 @@ MOCK
   PATH="${NON_GIT}/bin:$PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/jj-fallback-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${NON_GIT}_worktrees/jj-fallback-wt" ]
+  [ -f "${NON_GIT}/forget-arg.log" ]
+  [[ "$(cat "${NON_GIT}/forget-arg.log")" == "worktree-jj-fallback-wt" ]]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 

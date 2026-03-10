@@ -140,7 +140,7 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   else
     rm -f "$_ws_list_err"
     if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-      echo "ERROR: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
+      echo "ERROR: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}"); workspace directory will still be removed (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
       jj_forget_failed=true
     fi
   fi
@@ -154,8 +154,9 @@ else
   fi
 fi
 
-# Always attempt directory removal. rm -rf exits 0 if path doesn't exist,
-# so this is safe even when git worktree remove already cleaned up.
+# Always attempt directory removal, even when jj workspace forget failed above.
+# This avoids compounding problems: a leaked workspace entry is recoverable
+# via `jj workspace forget`, but an orphaned directory is harder to diagnose.
 if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
   echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   exit 1

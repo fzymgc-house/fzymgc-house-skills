@@ -601,6 +601,18 @@ MOCK
   rm -rf "$(dirname "$UNSAFE_ROOT")"
 }
 
+@test "git path: cleanup_on_error removes pre-existing worktree directory on collision" {
+  # Pre-create the worktree path with a sentinel file so git worktree add fails.
+  # cleanup_on_error must rm -rf the stale directory even though WORKSPACE_CREATED is false.
+  mkdir -p "${REPO_ROOT}_worktrees/git-collision-wt"
+  echo "stale" > "${REPO_ROOT}_worktrees/git-collision-wt/sentinel"
+  run bash -c 'cd '"$REPO_ROOT"' && echo "{\"name\": \"git-collision-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  # git worktree add fails when target directory already exists
+  [ "$status" -ne 0 ]
+  # cleanup_on_error must remove the pre-existing directory
+  [ ! -d "${REPO_ROOT}_worktrees/git-collision-wt" ]
+}
+
 @test "colocated jj+git: fails gracefully when worktree path already exists" {
   setup_jj
   # Create a custom mock jj that fails when the target directory already exists
@@ -638,6 +650,8 @@ MOCK
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"preexist-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   # Script should fail (jj workspace add fails on non-empty target)
   [ "$status" -ne 0 ]
+  # cleanup_on_error must remove the pre-existing stale directory
+  [ ! -d "${REPO_ROOT}_worktrees/preexist-wt" ]
 }
 
 # --- jj lifecycle tests ---

@@ -73,6 +73,7 @@ cleanup_on_error() {
   fi
   if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
+    CLEANUP_FAILED=true
   fi
   cleanup_empty_parent "$WORKTREE_PARENT"
   if [[ "$CLEANUP_FAILED" == "true" ]] && [[ $_exit_code -eq 0 ]]; then

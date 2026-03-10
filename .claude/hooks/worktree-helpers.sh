@@ -54,8 +54,14 @@ detect_repo_root() {
   # git rev-parse failed — try jj root for non-colocated repos
   if command -v jj &>/dev/null; then
     jj_attempted=true
-    local jj_out jj_rc=0
-    jj_out=$(jj root 2>&1) || jj_rc=$?
+    local jj_out jj_err jj_rc=0
+    local _jj_err_file
+    _jj_err_file=$(mktemp) || { jj_rc=1; }
+    if [[ $jj_rc -eq 0 ]]; then
+      jj_out=$(jj root 2>"$_jj_err_file") || jj_rc=$?
+      jj_err=$(cat "$_jj_err_file")
+      rm -f "$_jj_err_file"
+    fi
     if [[ $jj_rc -eq 0 && -n "$jj_out" && -d "$jj_out" ]]; then
       printf '%s\n' "$jj_out"
       return 0
@@ -63,7 +69,7 @@ detect_repo_root() {
   fi
   if [[ "$jj_attempted" == "true" ]]; then
     if [[ $jj_rc -ne 0 ]]; then
-      echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $(sanitize_for_output "$jj_out")})" >&2
+      echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_err:+; jj: $(sanitize_for_output "$jj_err")})" >&2
     elif [[ -z "$jj_out" ]]; then
       echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj root returned empty output)" >&2
     else

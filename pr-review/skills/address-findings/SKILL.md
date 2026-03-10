@@ -86,8 +86,8 @@ batch-reviewed, and closed.
    **Verify checkout (VCS-dependent):**
    - git: `git branch --show-current` — confirm you are on the PR branch
    - jj: Verify the PR bookmark exists: `jj bookmark list | grep <pr-branch-name>`.
-     If not found, run `jj git fetch`, then `jj new <pr-bookmark>`.
-     Verify with `jj log -r @- --no-graph -n 1`.
+     If not found, run `jj git fetch`, then `jj edit <pr-bookmark>`.
+     Verify with `jj log -r @ --no-graph -n 1`.
 
    If checkout fails:
    - **PR not found**: stop — "PR #N not found. Verify the number and try again."

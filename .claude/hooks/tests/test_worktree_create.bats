@@ -442,7 +442,7 @@ MOCK
   [ -f "${REPO_ROOT}_worktrees/jj-hook-test/lefthook-marker" ]
 }
 
-@test "fails gracefully when mkdir -p fails" {
+@test "git path: fails gracefully when mkdir -p fails" {
   # Create a nested temp dir so we can chmod the parent
   SANDBOX=$(mktemp -d)
   NESTED="${SANDBOX}/repos/myrepo"
@@ -456,6 +456,7 @@ MOCK
   chmod a+w "${SANDBOX}/repos"
   rm -rf "$SANDBOX"
   [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to create worktree parent directory"* ]]
 }
 
 @test "git path: mkdir -p failure exits 1 with descriptive error message" {

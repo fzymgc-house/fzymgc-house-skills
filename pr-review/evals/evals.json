@@ -427,6 +427,50 @@
       ]
     },
     {
+      "id": "B-VCS2",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Fix finding fzymgc-house-skills-abc.42 in this repo",
+      "context": "Agent is in a pure-jj repo (has .jj/ directory but NO .git/ directory). The VCS detection preamble should detect jj as the VCS.",
+      "expected_output": "Agent reports VCS: jj and proceeds with jj commands for VCS operations, not git commands",
+      "assertions": [
+        {
+          "name": "detects-jj-vcs",
+          "description": "Reports jj as the detected VCS in a pure-jj repo",
+          "type": "contains",
+          "check": "VCS: jj"
+        },
+        {
+          "name": "no-git-commands",
+          "description": "Does not use git commands for VCS operations in a jj-only repo",
+          "type": "not_contains",
+          "check": "git commit"
+        }
+      ]
+    },
+    {
+      "id": "B-VCS3",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "The fix-worker returned STATUS: FAILED for finding fzymgc-house-skills-xyz.99. The agent reported VCS: jj. How should I handle this failure?",
+      "context": "A fix-worker agent in a jj repo returned STATUS: FAILED. The failed operation left no state to clean up. jj's op log only records successful operations.",
+      "expected_output": "Does not suggest running jj undo to clean up after the failed fix-worker, since the failed operation left no op-log entry to undo",
+      "assertions": [
+        {
+          "name": "no-jj-undo-for-failure",
+          "description": "Does not recommend jj undo to clean up a failed operation",
+          "type": "not_contains",
+          "check": "jj undo"
+        },
+        {
+          "name": "acknowledges-no-cleanup",
+          "description": "Recognizes that a failed operation needs no VCS cleanup",
+          "type": "contains_any",
+          "check": ["no cleanup", "no state", "nothing to undo", "re-queue", "retry"]
+        }
+      ]
+    },
+    {
       "id": "B-VR1",
       "type": "behavioral",
       "skill": "address-findings",

@@ -134,13 +134,65 @@ setup_jj() {
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
-@test "jj path: does NOT call jj workspace forget when workspace add fails (WORKSPACE_CREATED guard)" {
+@test "jj path: cleans up mkdir-created directory and warns when workspace add creates dir then fails" {
+  setup_jj
+  # Mock jj: --help succeeds with --name support, workspace add creates the
+  # directory (simulating partial jj execution) then exits non-zero,
+  # workspace forget fails (workspace was never registered), root delegates
+  # to git rev-parse.
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
+  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
+  echo "  --name <NAME>"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  # Simulate partial jj execution: directory created but workspace not registered
+  shift 2
+  for arg in "\$@"; do
+    case "\$arg" in
+      -*) ;;
+      *) mkdir -p "\$arg"; break ;;
+    esac
+  done
+  echo "Error: workspace add failed after creating directory" >&2
+  exit 1
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: No workspace named '\$3'" >&2
+  exit 1
+fi
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"partial-add-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  # Worktree directory created by jj must be cleaned up
+  [ ! -d "${REPO_ROOT}_worktrees/partial-add-wt" ]
+  # Parent _worktrees directory must be cleaned up (empty after rm)
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+  # WARNING about workspace forget failure must appear (workspace was never registered)
+  [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
+}
+
+@test "jj path: cleanup_on_error always attempts jj workspace forget even when workspace add fails" {
+  # After 04l.29, cleanup_on_error always calls jj workspace forget in jj repos,
+  # regardless of WORKSPACE_CREATED. This covers the case where jj workspace add
+  # partially registered the workspace before failing.
   setup_jj
   create_failing_logging_jj_mock
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"no-forget-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
   [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/no-forget-wt" ]
-  [ ! -f "${REPO_ROOT}/forget-called.log" ]
+  # forget MUST be called — cleanup_on_error always attempts it in jj repos
+  [ -f "${REPO_ROOT}/forget-called.log" ]
 }
 
 @test "jj path: cleanup_on_error calls jj workspace forget on post-add failure" {

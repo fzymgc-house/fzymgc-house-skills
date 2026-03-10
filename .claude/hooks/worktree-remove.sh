@@ -147,4 +147,5 @@ if $jj_forget_failed; then exit 1; fi
 # Clean up empty parent directory
 cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
 
+rm -f "$_root_err_file"
 trap - EXIT

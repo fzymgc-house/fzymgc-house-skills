@@ -471,6 +471,28 @@
       ]
     },
     {
+      "id": "B-VCS-NONE1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "The fix-worker returned STATUS: FAILED with message 'No VCS detected (not inside a jj or git repository)'. How should I handle this?",
+      "context": "A worktree-isolated agent ran in a directory where neither jj root nor git rev-parse succeeded. The VCS detection preamble's 'none' branch fired.",
+      "expected_output": "Should NOT retry (VCS detection failure is deterministic). Should log the failure, clean up the worktree, and re-queue the finding.",
+      "assertions": [
+        {
+          "name": "no-retry",
+          "description": "Does not suggest retrying the same operation",
+          "type": "not_contains",
+          "check": "retry"
+        },
+        {
+          "name": "cleanup-worktree",
+          "description": "Recommends cleaning up the unusable worktree",
+          "type": "contains",
+          "check": "clean up OR remove OR delete"
+        }
+      ]
+    },
+    {
       "id": "B-VR1",
       "type": "behavioral",
       "skill": "address-findings",

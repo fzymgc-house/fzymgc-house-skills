@@ -465,8 +465,8 @@
         {
           "name": "acknowledges-no-cleanup",
           "description": "Recognizes that a failed operation needs no VCS cleanup",
-          "type": "contains_any",
-          "check": ["no cleanup", "no state", "nothing to undo", "re-queue", "retry"]
+          "type": "manual",
+          "check": "Response should acknowledge that a failed jj operation leaves no op-log entry and needs no VCS cleanup (e.g., mentions re-queue, retry, or that there is nothing to undo)"
         }
       ]
     },

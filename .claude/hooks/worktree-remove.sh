@@ -36,6 +36,8 @@ else
   }
   WORKTREE_PATH="$_cd_out"
 fi
+# Defensive: unreachable if realpath/cd succeeded above, but guards against
+# future refactoring that might skip the exit-on-failure branches.
 if [[ -z "$WORKTREE_PATH" ]]; then
   echo "ERROR: could not resolve canonical path for '$(sanitize_for_output "$_ORIG_PATH")'" >&2
   exit 1

@@ -137,18 +137,12 @@ setup_jj() {
 
 @test "jj path: cleans up mkdir-created directory and warns when workspace add creates dir then fails" {
   setup_jj
-  # Mock jj: --help succeeds with --name support, workspace add creates the
-  # directory (simulating partial jj execution) then exits non-zero,
-  # workspace forget fails (workspace was never registered), root delegates
-  # to git rev-parse.
+  # Mock jj: workspace add creates the directory (simulating partial jj
+  # execution) then exits non-zero, workspace forget fails (workspace was
+  # never registered), root delegates to git rev-parse.
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
-if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
-  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-  echo "  --name <NAME>"
-  exit 0
-fi
 if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   # Simulate partial jj execution: directory created but workspace not registered
   shift 2
@@ -413,12 +407,12 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
-@test "jj path: exits with error when jj workspace add --help fails" {
+@test "jj path: exits with error when jj workspace add fails" {
   setup_jj
   create_always_failing_jj_mock
-  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"help-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"add-fail\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
-  [[ "$output" == *"jj failed to run"* ]]
+  [[ "$output" == *"jj workspace add failed"* ]]
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 

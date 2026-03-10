@@ -10,11 +10,6 @@ _setup_mock_bin_dir() {
 # create_logging_jj_mock. Interpolated into heredocs as ${_MOCK_WORKSPACE_ADD_BODY}.
 _MOCK_WORKSPACE_ADD_BODY='
 _mock_workspace_add() {
-  if [[ "$1" == "--help" ]]; then
-    echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-    echo "  --name <NAME>"
-    exit 0
-  fi
   for arg in "$@"; do
     case "$arg" in
       -*) ;;
@@ -87,14 +82,19 @@ create_mock_jj() {
   _write_mock_jj 'git rev-parse --show-toplevel 2>/dev/null; exit $?'
 }
 
-# Create a mock jj whose --help output lacks --name (simulates old jj).
+# Create a mock jj that fails with "unexpected argument --name" (simulates old jj).
 create_old_jj_mock() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "Usage: jj workspace add <path>"
-  exit 0
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  # Detect --name flag: old jj doesn't support it
+  for arg in "$@"; do
+    if [[ "$arg" == "--name" ]]; then
+      echo "error: unexpected argument '--name' found" >&2
+      exit 1
+    fi
+  done
 fi
 if [[ "$1" == "root" ]]; then
   git rev-parse --show-toplevel 2>/dev/null
@@ -187,16 +187,15 @@ create_pure_jj_mock() {
   _write_mock_jj 'echo "$JJ_REPO_ROOT"; exit 0'
 }
 
-# Create a mock jj that responds to --help but fails on workspace add.
+# Create a mock jj that fails on workspace add.
 # Used for testing cleanup-on-failure paths.
 create_failing_jj_mock() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
 #!/bin/bash
-if [[ "$1" == "workspace" && "$2" == "add" && "$3" == "--help" ]]; then
-  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-  echo "  --name <NAME>"
-  exit 0
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  echo "error: workspace add failed" >&2
+  exit 1
 fi
 exit 1
 MOCK
@@ -210,10 +209,9 @@ create_failing_logging_jj_mock() {
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
-if [[ "\$1" == "workspace" && "\$2" == "add" && "\$3" == "--help" ]]; then
-  echo "Usage: jj workspace add [OPTIONS] <DESTINATION>"
-  echo "  --name <NAME>"
-  exit 0
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  echo "error: workspace add failed" >&2
+  exit 1
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
   shift 2

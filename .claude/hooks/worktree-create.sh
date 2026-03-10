@@ -76,22 +76,13 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
     echo "ERROR: .jj/ directory found but jj is not installed" >&2
     exit 1
   fi
-  # Runtime capability probe: jj is user-managed and may not be in PATH
-  # or may predate --name support. Check before each workspace creation.
-  # Note: there is a theoretical TOCTOU window between the --help probe
-  # and the actual workspace add, but the practical risk of jj being
-  # replaced between two calls in the same hook invocation is negligible.
-  if ! jj_help=$(jj workspace add --help 2>&1); then
-    echo "ERROR: jj failed to run: $(sanitize_for_output "${jj_help:0:500}")" >&2
-    exit 1
-  fi
-  if ! echo "$jj_help" | grep -q -- '--name'; then
-    echo "ERROR: jj version too old — 'jj workspace add --name' not supported" >&2
-    exit 1
-  fi
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
-    echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:500}")" >&2
+    if echo "$jj_out" | grep -qi 'unexpected argument.*--name\|unrecognized.*--name\|unknown.*--name'; then
+      echo "ERROR: jj version too old — 'jj workspace add --name' not supported. Update jj." >&2
+    else
+      echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:500}")" >&2
+    fi
     exit 1
   fi
   WORKSPACE_CREATED=true

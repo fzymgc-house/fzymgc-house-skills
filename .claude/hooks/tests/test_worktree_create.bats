@@ -244,6 +244,51 @@ MOCK
   [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
 }
 
+@test "jj path: cleanup_on_error warns jj-not-in-PATH after successful workspace add" {
+  # Exercises the branch at cleanup_on_error line 36: command -v jj returns false
+  # inside cleanup for a .jj/ repo after a successful workspace add
+  # (WORKSPACE_CREATED=true).  The scenario: jj is present when workspace add
+  # runs (so it succeeds), then disappears from PATH before the post-add step
+  # triggers the EXIT trap.
+  #
+  # Strategy: use a custom mock jj that succeeds on workspace add, then patch
+  # the script so that "trap - EXIT" is replaced with a PATH-clearing step
+  # followed by false.  This fires cleanup_on_error with WORKSPACE_CREATED=true
+  # and jj absent from PATH, exercising the else branch at line 44.
+  setup_jj
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+${_MOCK_WORKSPACE_ADD_BODY}
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  shift 2; _mock_workspace_add "\$@"
+fi
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+
+  local patched
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  trap 'rm -f "$patched"' RETURN
+  # Replace "trap - EXIT" with PATH-clearing then false so the EXIT trap fires
+  # with jj no longer in PATH.  The mock jj dir is removed from PATH here so
+  # cleanup_on_error sees command -v jj fail.
+  sed 's|^trap - EXIT$|PATH="/usr/bin:/bin"; false|' \
+    "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"jj-gone-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  [ "$status" -ne 0 ]
+  # Workspace directory created by mock jj must be cleaned up
+  [ ! -d "${REPO_ROOT}_worktrees/jj-gone-wt" ]
+  # WARNING about jj not installed must appear
+  [[ "$output" == *"WARNING: cleanup: .jj/ found but jj not installed"* ]]
+}
+
 @test "jj path: fails gracefully when mkdir -p fails" {
   setup_jj
   create_mock_jj

@@ -109,6 +109,52 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 }
 
+# Create a mock jj that fails with "unrecognized option --name" (simulates old jj).
+create_old_jj_unrecognized_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  # Detect --name flag: old jj doesn't support it
+  for arg in "$@"; do
+    if [[ "$arg" == "--name" ]]; then
+      echo "error: unrecognized option '--name'" >&2
+      exit 1
+    fi
+  done
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
+# Create a mock jj that fails with "unknown argument --name" (simulates old jj).
+create_old_jj_unknown_mock() {
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  # Detect --name flag: old jj doesn't support it
+  for arg in "$@"; do
+    if [[ "$arg" == "--name" ]]; then
+      echo "error: unknown argument '--name'" >&2
+      exit 1
+    fi
+  done
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+}
+
 # Create a mock jj that always exits 1 (simulates broken jj install).
 create_always_failing_jj_mock() {
   _setup_mock_bin_dir

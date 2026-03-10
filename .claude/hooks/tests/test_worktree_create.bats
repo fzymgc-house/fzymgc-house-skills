@@ -455,6 +455,24 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "jj path: rejects old jj with 'unrecognized' error pattern" {
+  setup_jj
+  create_old_jj_unrecognized_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--name"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
+@test "jj path: rejects old jj with 'unknown' error pattern" {
+  setup_jj
+  create_old_jj_unknown_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--name"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
 @test "jj path: exits with error when jj workspace add fails" {
   setup_jj
   create_always_failing_jj_mock

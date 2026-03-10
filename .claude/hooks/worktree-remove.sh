@@ -59,7 +59,7 @@ fi
 _REPO_ROOT_INFERRED=false
 _root_err_file=$(mktemp) || { echo 'ERROR: mktemp failed — cannot create temp file for error capture' >&2; exit 1; }
 _ws_list_err=""
-trap 'rm -f "${_root_err_file:-}" "${_ws_list_err:-}"' EXIT
+trap '[[ -n "${_root_err_file:-}" ]] && rm -f "$_root_err_file"; [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"' EXIT
 if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
   _root_stderr=$(cat "$_root_err_file" 2>/dev/null)
   _worktrees_dir=$(dirname "$WORKTREE_PATH")

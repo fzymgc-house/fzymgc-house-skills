@@ -69,4 +69,6 @@ GITIGNORE_FRAGMENT='grep -qxF '"'"'.jj/'"'"' .gitignore 2>/dev/null || {
   chmod u+w .gitignore
   [ "$status" -eq 0 ]
   [[ "$output" == *"Could not update .gitignore"* ]]
+  # Verify .jj/ was not appended despite the error
+  ! grep -qF '.jj/' .gitignore
 }

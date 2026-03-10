@@ -56,3 +56,12 @@ GITIGNORE_FRAGMENT='grep -qxF '"'"'.jj/'"'"' .gitignore 2>/dev/null || {
   grep -qxF '.jj' .gitignore
   grep -qxF '.jj/' .gitignore
 }
+
+@test "gitignore: read-only .gitignore surfaces error" {
+  echo '# existing' > .gitignore
+  chmod a-w .gitignore
+  run bash -c "$GITIGNORE_FRAGMENT"
+  chmod u+w .gitignore
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Could not update .gitignore"* ]]
+}

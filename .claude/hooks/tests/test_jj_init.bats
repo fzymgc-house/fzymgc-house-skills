@@ -4,6 +4,11 @@
 
 load helpers
 
+# Scope: These tests cover the GITIGNORE_FRAGMENT (step 4 of jj-init.md).
+# Steps 1-3 (prerequisite checks, already-initialized guard, jj git init)
+# are markdown-defined agent instructions, not extractable shell fragments.
+# They are covered by behavioral evals JJ-B-INIT1 through JJ-B-INIT4.
+
 setup() {
   TEST_DIR=$(mktemp -d)
   cd "$TEST_DIR"

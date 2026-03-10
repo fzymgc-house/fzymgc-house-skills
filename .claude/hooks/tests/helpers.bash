@@ -54,14 +54,14 @@ fi
 # workspace list: dynamically list workspaces from _worktrees sibling directory
 # so the workspace-exists check in worktree-remove.sh passes.
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "default: abc123 (no description set)"
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
   _repo=\$(pwd)
   _base=\$(basename "\$_repo")
   _parent=\$(dirname "\$_repo")
   _wt_dir="\${_parent}/\${_base}_worktrees"
   if [[ -d "\$_wt_dir" ]]; then
     for _d in "\$_wt_dir"/*/; do
-      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): xyz789 (no description set)"
+      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): ssttuuvv xyz78901 (empty) (no description set)"
     done
   fi
   exit 0
@@ -153,14 +153,14 @@ if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
 fi
 # workspace list: dynamically list workspaces from _worktrees sibling directory
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "default: abc123 (no description set)"
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
   _repo=\$(pwd)
   _base=\$(basename "\$_repo")
   _parent=\$(dirname "\$_repo")
   _wt_dir="\${_parent}/\${_base}_worktrees"
   if [[ -d "\$_wt_dir" ]]; then
     for _d in "\$_wt_dir"/*/; do
-      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): xyz789 (no description set)"
+      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): ssttuuvv xyz78901 (empty) (no description set)"
     done
   fi
   exit 0

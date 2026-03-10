@@ -175,8 +175,8 @@ if [[ "\$1" == "root" ]]; then
   exit \$?
 fi
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "default: abc123"
-  echo "worktree-test-jj-wt: xyz789"
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-test-jj-wt: kkmpptqz def45678 (empty) (no description set)"
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
@@ -263,8 +263,8 @@ if [[ "\$1" == "root" ]]; then
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "default: abc123 (no description set)"
-  echo "worktree-orphan-jj-wt: xyz789 (no description set)"
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-orphan-jj-wt: kkmpptqz def45678 (empty) (no description set)"
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
@@ -305,7 +305,7 @@ if [[ "\$1" == "root" ]]; then
   exit 1
 fi
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "worktree-inferred-jj-wt: some-change-id"
+  echo "worktree-inferred-jj-wt: kkmpptqz def45678 (empty) (no description set)"
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
@@ -398,8 +398,8 @@ if [[ "\$1" == "root" ]]; then
   exit \$?
 fi
 if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
-  echo "default: abc123 (no description set)"
-  echo "worktree-other-wt: xyz789 (no description set)"
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-other-wt: ssttuuvv xyz78901 (empty) (no description set)"
   exit 0
 fi
 exit 1

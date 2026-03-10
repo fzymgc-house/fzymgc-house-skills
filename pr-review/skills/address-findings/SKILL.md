@@ -277,11 +277,16 @@ Loop while open, non-deferred findings remain:
       to inference if the path is accessible.
    1. Detect VCS in the main repo:
       `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`
-      — if `none`, mark FAILED and skip integration. Clean up the worktree
-      directory: `rm -rf <worktree-path>` (VCS deregistration is not possible
-      without a working VCS, but the directory must still be removed).
-      If the main repo contains `.jj/`, warn the user: orphaned jj workspace
-      metadata may remain — run `jj workspace forget <name>` when jj is available.
+      — if `none`, mark FAILED and skip integration.
+      Clean up the worktree directory: `rm -rf <worktree-path>`.
+      Add a bead comment with the failure details:
+
+      ```bash
+      bd comments add <work-bead-id> "STATUS: FAILED — VCS detection returned 'none'. \
+        Worktree directory removed. $(test -d .jj && echo 'WARNING: .jj/ exists — orphaned \
+        jj workspace metadata may remain. Run: jj workspace forget <name>')"
+      ```
+
    2. git: `git -C <worktree-path> branch --show-current`
       — if the command fails or returns empty (e.g., detached HEAD), mark FAILED.
    3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`

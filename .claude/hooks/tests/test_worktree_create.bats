@@ -582,6 +582,24 @@ MOCK
   [[ "$output" == *"WARNING: cleanup: REPO_ROOT"*"missing — VCS workspace cleanup skipped"* ]]
 }
 
+@test "jj path: cleanup_on_error warns and skips VCS cleanup when REPO_ROOT is missing" {
+  # Same patch strategy as the git variant: replace "trap - EXIT" with a two-line
+  # snippet that deletes REPO_ROOT first, then exits non-zero to fire the EXIT trap.
+  # With setup_jj active, .jj/ exists inside REPO_ROOT, but because the REPO_ROOT
+  # missing check is first in cleanup_on_error, the same WARNING fires.
+  setup_jj
+  create_logging_jj_mock
+  local patched
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  trap 'rm -f "$patched"' RETURN
+  sed 's|^trap - EXIT$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"missing-root-jj-wt\"}" | bash '"$patched"' 2>&1'
+  rm -f "$patched"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"WARNING: cleanup: REPO_ROOT"*"missing — VCS workspace cleanup skipped"* ]]
+}
+
 @test "jj path: create-then-remove lifecycle uses consistent workspace names" {
   setup_jj
   create_logging_jj_mock

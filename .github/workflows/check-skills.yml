@@ -30,12 +30,12 @@ jobs:
           configured_tmp=$(mktemp)
           while read -r key; do
             if [[ "$key" =~ [^a-zA-Z0-9_./-] ]]; then
-              echo "::error::Unsafe character in release-please key: $key"
+              echo "::error::Unsafe character in release-please key: $key" >&2
               rm -f "$configured_tmp"
               exit 1
             fi
             if [[ "$key" == *".."* ]]; then
-              echo "::error::key '$key' contains '..' path traversal"
+              echo "::error::key '$key' contains '..' path traversal" >&2
               rm -f "$configured_tmp"
               exit 1
             fi

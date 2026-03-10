@@ -26,7 +26,7 @@ allowed-tools:
   - "Bash(jj undo)"
   - "Bash(jj undo *)"
   - "Bash(jj describe *)"
-  - "Bash(jj new *)"
+  - "Bash(jj edit *)"
   - "Bash(jj commit *)"
   - "Bash(gh *)"
   - "Bash(bd --version)"

@@ -62,7 +62,13 @@ detect_repo_root() {
     fi
   fi
   if [[ "$jj_attempted" == "true" ]]; then
-    echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $(sanitize_for_output "$jj_out")})" >&2
+    if [[ $jj_rc -ne 0 ]]; then
+      echo "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed${jj_out:+; jj: $(sanitize_for_output "$jj_out")})" >&2
+    elif [[ -z "$jj_out" ]]; then
+      echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj root returned empty output)" >&2
+    else
+      echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj root returned '$(sanitize_for_output "$jj_out")' but directory does not exist)" >&2
+    fi
   else
     echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj not in PATH)" >&2
   fi

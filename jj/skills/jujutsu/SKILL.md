@@ -31,7 +31,6 @@ allowed-tools:
   - "Bash(jj undo)"
   - "Bash(jj undo *)"
   - "Bash(jj root)"
-  - "Bash(test *)"
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version

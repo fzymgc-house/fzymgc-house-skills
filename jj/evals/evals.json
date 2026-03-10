@@ -399,6 +399,18 @@
       ]
     },
     {
+      "id": "JJ-B-INIT5",
+      "type": "behavioral",
+      "skill": "jj-init",
+      "prompt": "/jj-init",
+      "context": "jj binary is not installed (command -v jj returns non-zero)",
+      "expected_output": "Should detect missing jj, tell user to install it with URL, and stop without running any further steps",
+      "assertions": [
+        {"name": "surfaces-install-url", "description": "References jj install docs or suggests installation", "type": "contains", "check": "install"},
+        {"name": "stops-early", "description": "Does not proceed to git rev-parse or jj git init", "type": "not_contains", "check": "jj git init"}
+      ]
+    },
+    {
       "id": "JJ-B-UNDO1",
       "type": "behavioral",
       "skill": "jujutsu",

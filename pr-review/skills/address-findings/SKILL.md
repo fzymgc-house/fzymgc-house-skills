@@ -304,13 +304,8 @@ For each FIXED result, in dependency order:
 
 1. Identify the fix commit: `git log --oneline <worktree-branch> -1`
 2. Cherry-pick onto the PR branch: `git cherry-pick <commit-sha>`
-3. If conflict: abort (`git cherry-pick --abort`), clean up the worktree:
-
-   ```bash
-   git worktree remove ../<repo>_worktrees/<worktree-name>
-   ```
-
-   Then mark FAILED, add bead comment, re-queue for next round.
+3. If conflict: abort (`git cherry-pick --abort`), mark FAILED, add bead
+   comment, re-queue for next round.
 4. Clean up: `git worktree remove ../<repo>_worktrees/<worktree-name>`
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
@@ -337,14 +332,7 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
    If `true`: run `jj undo` to revert. If `jj undo` fails, STOP and report
    STATUS: FAILED — "jj undo failed to revert conflicted rebase — manual
    recovery required". Do NOT re-queue; escalate to user.
-   Verify: `jj log -r @- --no-graph -n 1`. Then clean up the workspace:
-
-   ```bash
-   jj workspace forget worktree-<name>
-   rm -rf ../<repo>_worktrees/<worktree-name>
-   ```
-
-   Mark FAILED, re-queue.
+   Verify: `jj log -r @- --no-graph -n 1`. Mark FAILED, re-queue.
 
 3. Update the bookmark:
 
@@ -364,14 +352,7 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 
    2. Verify: `jj log -r @- --no-graph -n 1` — parent should match
       pre-rebase state. If not, STOP: "jj undo did not restore expected state".
-   3. Clean up the workspace:
-
-      ```bash
-      jj workspace forget worktree-<name>
-      rm -rf ../<repo>_worktrees/<worktree-name>
-      ```
-
-   4. Mark FAILED, add bead comment, re-queue for next round.
+   3. Mark FAILED, add bead comment, re-queue for next round.
 
 4. Forget the workspace and remove the directory:
 

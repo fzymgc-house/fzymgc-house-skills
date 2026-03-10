@@ -100,8 +100,11 @@ esac
 # If neither .jj/ nor .git exists at the inferred root, skip VCS deregistration entirely.
 _skip_vcs_cleanup=false
 if [[ "$_REPO_ROOT_INFERRED" == "true" ]]; then
-  if [[ ! -d "${REPO_ROOT}/.jj" ]] && ! git -C "$REPO_ROOT" rev-parse --git-dir &>/dev/null; then
-    echo "WARNING: inferred repo root '$(sanitize_for_output "$REPO_ROOT")' has no .jj/ or .git — skipping VCS cleanup" >&2
+  if [[ ! -d "${REPO_ROOT}/.jj" ]] && [[ ! -d "${REPO_ROOT}/.git" ]]; then
+    echo "WARNING: inferred repo root '$(sanitize_for_output "$REPO_ROOT")' has no .jj/ or .git/ — skipping VCS cleanup" >&2
+    _skip_vcs_cleanup=true
+  elif [[ ! -d "${REPO_ROOT}/.jj" ]] && ! git -C "$REPO_ROOT" rev-parse --git-dir &>/dev/null; then
+    echo "WARNING: inferred repo root '$(sanitize_for_output "$REPO_ROOT")' has .git/ but git rev-parse failed — VCS state may be corrupt; skipping VCS cleanup" >&2
     _skip_vcs_cleanup=true
   fi
 fi

@@ -75,9 +75,8 @@ batch-reviewed, and closed.
 2. **Verify `bd`**: run `bd --version`. If it fails, stop and tell the
    user: "beads CLI (`bd`) is required but not found."
 
-3. **Check out the PR branch.** Worktree-isolated agents inherit
-   their base from the orchestrator's current HEAD. If you are on
-   `main`, every worktree will be based on `main` and agents will
+3. **Check out the PR branch.** Worktree-isolated agents inherit their base
+   from the orchestrator's current HEAD — if you are on `main`, agents will
    not see PR-specific code.
 
    ```bash
@@ -86,18 +85,14 @@ batch-reviewed, and closed.
 
    **Verify checkout (VCS-dependent):**
    - git: `git branch --show-current` — confirm you are on the PR branch
-   - jj: After checkout, verify the PR bookmark exists:
-     `jj bookmark list | grep <pr-branch-name>`. If not found, run
-     `jj git fetch` to import git branches as bookmarks, then check
-     again. Once confirmed, run `jj new <pr-bookmark>` to create a
-     working-copy change. Verify with `jj log -r @- --no-graph -n 1`
-     (parent should be the PR bookmark tip).
+   - jj: Verify the PR bookmark exists: `jj bookmark list | grep <pr-branch-name>`.
+     If not found, run `jj git fetch`, then `jj new <pr-bookmark>`.
+     Verify with `jj log -r @- --no-graph -n 1`.
 
-   If checkout fails, check the error:
-   - **PR not found** (GraphQL/404 error): stop and tell the user
-     "PR #N not found. Verify the number and try again."
+   If checkout fails:
+   - **PR not found**: stop — "PR #N not found. Verify the number and try again."
    - **Dirty working tree**: commit or stash, then retry.
-   - **Other error**: report the error and stop.
+   - **Other error**: report and stop.
 
    **Do NOT proceed on `main`.**
 
@@ -107,8 +102,7 @@ batch-reviewed, and closed.
    bd list --label "pr-review,pr:<number>" --status open --json
    ```
 
-   If no epic exists, stop: "No review findings for PR #N. Run
-   `/review-pr <number>` first."
+   If no epic exists, stop: "No review findings for PR #N. Run `/review-pr <number>` first."
 
 5. **Load all open findings:**
 
@@ -118,24 +112,19 @@ batch-reviewed, and closed.
 
    If none, report "All findings already addressed" and stop.
 
-6. No manual worktree discovery needed -- fix-worker agents create
-   their own worktrees via `isolation: worktree`.
+6. No manual worktree discovery needed — fix-worker agents create their own
+   worktrees via `isolation: worktree`.
 
 7. **Validate findings against PR branch HEAD.** For each finding, verify the
-   referenced file and line range still exist and the code matches
-   the review snapshot. Discard stale findings:
+   referenced file and line range still exist and the code matches the review
+   snapshot. Check current HEAD:
 
    ```bash
-   # Check file exists and content matches the finding's context
-   # git repos:
-   git log --oneline -1  # note current HEAD
-   # jj repos:
-   jj log -r @- --no-graph -n 1  # note current HEAD (parent of working copy)
+   git log --oneline -1   # git repos
+   jj log -r @- --no-graph -n 1  # jj repos
    ```
 
-   For each finding, read the referenced file location. If the code
-   has changed since the review (e.g., the finding references code
-   that no longer exists or has been refactored), close it as stale:
+   If code has changed since the review, close as stale:
 
    ```bash
    bd update <finding-id> --status closed
@@ -149,16 +138,15 @@ batch-reviewed, and closed.
 
 Review all open findings and identify dependency relationships:
 
-**File overlap** -- Two findings touching the same file MUST be
-serialized. Set a dependency so the higher-priority finding is
-addressed first. This is critical for merge safety.
+**File overlap** — Two findings touching the same file MUST be serialized.
+Set a dependency so the higher-priority finding is addressed first. This is
+critical for merge safety.
 
-**Conceptual overlap** -- A design finding and a bug finding about the
-same component. Resolve the design finding first (it may change the fix
-approach).
+**Conceptual overlap** — A design finding and a bug finding about the same
+component. Resolve the design finding first (it may change the fix approach).
 
-**Severity ordering** -- Critical findings block lower-severity findings
-in the same file or area.
+**Severity ordering** — Critical findings block lower-severity findings in
+the same file or area.
 
 Encode relationships:
 
@@ -167,15 +155,15 @@ bd dep add <lower-priority> --depends-on <higher-priority>
 ```
 
 The fix loop's "query ready findings" naturally respects the dependency
-graph -- a finding cannot be picked up while its dependencies are open.
+graph — a finding cannot be picked up while its dependencies are open.
 
 ## Phase 3: Triage
 
 For each open finding, evaluate:
 
-1. **Complexity** -- Straightforward fix or requires judgment?
-2. **Scope** -- Mechanical tweak or design/contract shift?
-3. **Deviation** -- Follows existing patterns or introduces new ones?
+1. **Complexity** — Straightforward fix or requires judgment?
+2. **Scope** — Mechanical tweak or design/contract shift?
+3. **Deviation** — Follows existing patterns or introduces new ones?
 
 **Auto-fixable** (no user input needed):
 
@@ -183,18 +171,15 @@ For each open finding, evaluate:
 - Mechanical changes (formatting, naming, lint)
 - Low deviation from existing code and patterns
 
-**Needs human judgment** -- present via `AskUserQuestion`:
+**Needs human judgment** — present via `AskUserQuestion`:
 
 - Fix requires a design or architectural choice
 - Fix changes a spec, plan, or public contract
 - Multiple valid approaches with meaningful trade-offs
 
-For needs-human findings, use `AskUserQuestion` with:
-
-- Concrete fix approach options
-- A recommendation marked "(Recommended)" when clear
-- A "Defer" option
-- `AskUserQuestion` provides "Other" automatically
+For needs-human findings, use `AskUserQuestion` with concrete fix options,
+a "(Recommended)" label when clear, a "Defer" option, and "Other" is
+provided automatically.
 
 **Model assignment:**
 
@@ -225,18 +210,15 @@ For needs-human findings, use `AskUserQuestion` with:
 **Before entering the loop**, verify branch and working tree state:
 
 ```bash
-# git repos:
-git branch --show-current   # MUST be the PR branch, NOT main
-git status --porcelain      # MUST be clean
-
-# jj repos:
-jj log -r @- --no-graph -n 1   # MUST show PR bookmark (parent of working copy)
-jj st                          # MUST be clean
+git branch --show-current   # MUST be the PR branch, NOT main (git)
+git status --porcelain      # MUST be clean (git)
+jj log -r @- --no-graph -n 1   # MUST show PR bookmark parent (jj)
+jj st                          # MUST be clean (jj)
 ```
 
-If on `main`, stop — you skipped step 3. If there are uncommitted
-changes, commit them first. A clean working tree on the correct PR
-branch is required before dispatching worktree-isolated agents.
+If on `main`, stop — you skipped step 3. If there are uncommitted changes,
+commit them first. A clean working tree on the correct PR branch is required
+before dispatching worktree-isolated agents.
 
 Loop while open, non-deferred findings remain:
 
@@ -285,14 +267,12 @@ Loop while open, non-deferred findings remain:
 
    If `VCS` is missing from the fix-worker response:
 
-   0. Verify worktree path exists: `test -d <worktree-path>`. If the
-      worktree has already been removed, log a warning and use
-      WORKTREE_BRANCH or CHANGE_ID from the fix-worker's output
-      directly (these are already committed values). Only fall through
-      to inference commands if the path is accessible.
+   0. Verify worktree path exists: `test -d <worktree-path>`. If already
+      removed, use WORKTREE_BRANCH or CHANGE_ID directly. Only fall through
+      to inference if the path is accessible.
    1. Detect VCS in the main repo:
       `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`
-      — if `none`, mark FAILED ("No VCS detected") and skip integration.
+      — if `none`, mark FAILED and skip integration.
    2. git: `git -C <worktree-path> branch --show-current`
    3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
       — reads the committed fix (parent of working copy). If it fails, mark FAILED.
@@ -316,39 +296,23 @@ noting the partial fix, and re-queue the finding for the next round.
 bd comments add <finding-bead-id> "fix-worker reported PARTIAL: <DESCRIPTION>. Re-queued for next round."
 ```
 
-Do NOT attempt to cherry-pick or rebase a PARTIAL result — the commit
-may be incomplete or in an inconsistent state.
+Do NOT attempt to cherry-pick or rebase a PARTIAL result.
 
 #### Git repos
 
 For each FIXED result, in dependency order:
 
-1. Identify the fix commit on the worktree branch:
-
-   ```bash
-   git log --oneline <worktree-branch> -1
-   ```
-
-2. Cherry-pick onto the PR branch:
-
-   ```bash
-   git cherry-pick <commit-sha>
-   ```
-
-3. If cherry-pick conflict: abort (`git cherry-pick --abort`), mark
-   FAILED, add bead comment, re-queue for next round.
-4. Clean up worktree (sibling directory):
-
-   ```bash
-   git worktree remove ../<repo>_worktrees/<worktree-name>
-   ```
+1. Identify the fix commit: `git log --oneline <worktree-branch> -1`
+2. Cherry-pick onto the PR branch: `git cherry-pick <commit-sha>`
+3. If conflict: abort (`git cherry-pick --abort`), mark FAILED, add bead
+   comment, re-queue for next round.
+4. Clean up: `git worktree remove ../<repo>_worktrees/<worktree-name>`
 
 Same-file findings serialized in Phase 2 prevent most conflicts.
 
 #### Jj repos
 
-For each FIXED result (fix worker reports CHANGE_ID instead of
-WORKTREE_BRANCH):
+For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 
 1. Rebase the fix onto the PR bookmark:
 
@@ -356,24 +320,19 @@ WORKTREE_BRANCH):
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
-   If rebase returns non-zero (hard failure — invalid revision, etc.):
-   - Do NOT run `jj undo` — nothing was committed
-   - Mark FAILED, add bead comment, re-queue for next round.
+   If rebase returns non-zero: do NOT run `jj undo` — nothing was committed.
+   Mark FAILED, add bead comment, re-queue for next round.
 
-2. Check for conflicts in the rebased commit:
+2. Check for conflicts:
 
    ```bash
    has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")')
    ```
 
-   If `has_conflict == "true"`:
-   - Run `jj undo` to revert the conflicted rebase
-   - If `jj undo` fails, STOP and report STATUS: FAILED with
-     "jj undo failed to revert conflicted rebase — manual recovery required".
-     Do NOT re-queue; escalate to user.
-   - Verify undo succeeded: `jj log -r @- --no-graph -n 1` — the
-     parent commit should be the pre-rebase state.
-   - Mark FAILED (conflict), add bead comment, re-queue for next round.
+   If `true`: run `jj undo` to revert. If `jj undo` fails, STOP and report
+   STATUS: FAILED — "jj undo failed to revert conflicted rebase — manual
+   recovery required". Do NOT re-queue; escalate to user.
+   Verify: `jj log -r @- --no-graph -n 1`. Mark FAILED, re-queue.
 
 3. Update the bookmark:
 
@@ -383,25 +342,16 @@ WORKTREE_BRANCH):
 
    If bookmark set fails:
 
-   1. Run `jj undo` once — this reverts the successful rebase from
-      step 2.
+   1. Run `jj undo` once — reverts the successful rebase from step 2.
+      If `jj undo` fails, STOP: "jj undo failed to revert rebase — manual
+      recovery required".
 
-      ```bash
-      jj undo  # revert the rebase (the only successful op to undo)
-      ```
+      **Why only one undo?** jj's op log records only *successful* operations.
+      A failed `jj bookmark set` leaves no op-log entry, so there is nothing
+      to undo for the failure. The single undo targets the successful rebase.
 
-      If `jj undo` fails, STOP and report STATUS: FAILED with
-      "jj undo failed to revert rebase — manual recovery required".
-
-      **Why only one undo?** jj's operation log records only
-      *successful* operations. A failed `jj bookmark set` leaves no
-      op-log entry, so there is nothing to undo for the failure
-      itself. The single undo targets the successful rebase.
-
-   2. Verify: `jj log -r @- --no-graph -n 1` — confirm the parent of
-      the working copy matches the pre-rebase state.
-      If verification fails, STOP and report STATUS: FAILED with
-      "jj undo did not restore expected state".
+   2. Verify: `jj log -r @- --no-graph -n 1` — parent should match
+      pre-rebase state. If not, STOP: "jj undo did not restore expected state".
    3. Mark FAILED, add bead comment, re-queue for next round.
 
 4. Forget the workspace and remove the directory:
@@ -411,30 +361,20 @@ WORKTREE_BRANCH):
    rm -rf ../<repo>_worktrees/<worktree-name>
    ```
 
-   If `jj workspace forget` fails (e.g., workspace already forgotten
-   or jj not installed), log a warning but proceed with directory
-   cleanup. The directory removal is the critical step.
-
-   Note: the `WorktreeRemove` hook (`.claude/hooks/worktree-remove.sh`)
-   performs the same `jj workspace forget` + `rm -rf` sequence. The
-   explicit instructions here are for orchestrators running outside
-   the hook system (e.g., direct Task dispatch without worktree hooks).
+   If `jj workspace forget` fails, log a warning but proceed with `rm -rf`.
 
 #### Post-batch verification
 
-**Post-batch: Verify clean state.** After all commits in a
-   batch are integrated, verify the working tree is clean before
-   the next loop iteration:
+After all commits in a batch are integrated, verify clean state before the
+next loop iteration:
 
-   ```bash
-   git status --porcelain   # git repos
-   jj st                    # jj repos
-   ```
+```bash
+git status --porcelain   # git repos
+jj st                    # jj repos
+```
 
-   This prevents worktree-isolated agents in the next round from
-   corrupting the working tree via stale branch references. Never
-   dispatch new fix-worker agents with uncommitted changes in the
-   main working tree.
+Never dispatch new fix-worker agents with uncommitted changes in the main
+working tree.
 
 ### Phase 4c: Review Gate
 
@@ -493,9 +433,8 @@ prompt: |
 ```
 
 **Parse verification-runner output:** The verification-runner uses the same
-VCS field protocol as fix-worker (see Phase 4 step 5). These identifiers
-are informational — the verification-runner runs in an isolated worktree and
-does not produce commits to integrate — the primary result field is `STATUS`.
+VCS field protocol as fix-worker (see Phase 4 step 5). These identifiers are
+informational — the primary result field is `STATUS`.
 
 - **Any MISALIGNED finding**: treat as review-gate FAIL, re-queue
 - **Gate FAIL**: report failure details to user. Do NOT proceed to Phase 6.
@@ -505,9 +444,8 @@ does not produce commits to integrate — the primary result field is `STATUS`.
 
 1. **Commit** changes:
    - git repos: Use the `commit-commands:commit` skill.
-   - jj repos: All fixes are already committed (fix-workers commit individually,
-     orchestrator integrates via `jj rebase`). Skip unless the working copy has
-     uncommitted manual edits, in which case run
+   - jj repos: All fixes are already committed. Skip unless the working copy
+     has uncommitted manual edits — then run
      `jj commit -m "fix: address review findings for PR #<number>"`.
 2. **Push** to the PR branch: `git push` (or `jj git push -b <pr-bookmark>` in jj repos)
 3. **Post summary comment** on the PR:

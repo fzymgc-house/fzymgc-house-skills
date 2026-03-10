@@ -267,6 +267,11 @@ Loop while open, non-deferred findings remain:
 
    If `VCS` is missing from the fix-worker response:
 
+   The Task framework returns `worktreePath` in isolation metadata
+   when `isolation: worktree` is used. Use this as `<worktree-path>`
+   in the steps below. If unavailable, reconstruct from the worktree
+   naming convention: `<repo>_worktrees/<worktree-name>`.
+
    0. Verify worktree path exists: `test -d <worktree-path>`. If already
       removed, use WORKTREE_BRANCH or CHANGE_ID directly. Only fall through
       to inference if the path is accessible.

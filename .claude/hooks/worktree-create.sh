@@ -54,7 +54,9 @@ cleanup_on_error() {
     fi
   else
     # Partial git worktree add may leave stale metadata in .git/worktrees/
-    git worktree prune 2>/dev/null || true
+    if ! prune_err=$(git worktree prune 2>&1); then
+      echo "WARNING: cleanup: git worktree prune failed for partial create: $(sanitize_for_output "${prune_err:0:500}") — stale worktree metadata may remain" >&2
+    fi
   fi
   if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2

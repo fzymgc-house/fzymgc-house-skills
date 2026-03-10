@@ -116,9 +116,12 @@ if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
+  _ws_list_err=$(mktemp 2>/dev/null) || true
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2
-  elif _ws_list_err=$(mktemp) && ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then
+  elif [[ -z "$_ws_list_err" ]]; then
+    echo "WARNING: mktemp failed — skipping jj workspace list check for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
+  elif [[ -n "$_ws_list_err" ]] && ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then
     _ws_err_msg=$(cat "$_ws_list_err" 2>/dev/null)
     rm -f "$_ws_list_err"
     echo "WARNING: jj workspace list failed: $(sanitize_for_output "${_ws_err_msg:-(no details)}") — skipping workspace forget for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2

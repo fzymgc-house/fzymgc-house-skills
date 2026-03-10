@@ -418,6 +418,30 @@ MOCK
   rm -rf "$NON_GIT"
 }
 
+@test "errors when parent dir has no _worktrees suffix in jj repo" {
+  # Same as the git variant, but with a jj mock present that fails on 'jj root'.
+  # This exercises the combined path: jj installed → jj root fails →
+  # detect_repo_root fails → parent suffix check fails → safety refusal.
+  NON_GIT=$(mktemp -d)
+  # Create jj mock that fails on 'root'
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << 'MOCK'
+#!/bin/bash
+echo "Error: There is no jj repo in ." >&2
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  # Parent dir name does NOT end in _worktrees — fail-safe refuses removal
+  mkdir -p "${NON_GIT}/random-dir/some-worktree"
+  PATH="${NON_GIT}/bin:$PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}/random-dir/some-worktree"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR"* ]]
+  [[ "$output" == *"refusing removal for safety"* ]]
+  # Directory must still exist (fail-safe did not remove it)
+  [ -d "${NON_GIT}/random-dir/some-worktree" ]
+  rm -rf "$NON_GIT"
+}
+
 @test "reports error when rm -rf fails to remove worktree directory" {
   # Make the worktree directory unremovable by removing write permission on parent
   [ -d "${REPO_ROOT}_worktrees/test-wt" ]

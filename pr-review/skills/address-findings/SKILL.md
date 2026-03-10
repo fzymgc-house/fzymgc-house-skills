@@ -328,16 +328,22 @@ Same-file findings serialized in Phase 2 prevent most conflicts.
 
 For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 
-1. Rebase the fix onto the PR bookmark:
+1. Capture pre-rebase state:
+
+   ```bash
+   _pre_rebase_tip=$(jj log -r <pr-bookmark> --no-graph -T 'change_id.short(8)')
+   ```
+
+2. Rebase the fix onto the PR bookmark:
 
    ```bash
    jj rebase -r <change-id> -d <pr-bookmark>
    ```
 
    If rebase returns non-zero: do NOT run `jj undo` — nothing was committed.
-   Clean up workspace (step 4), mark FAILED, add bead comment, re-queue.
+   Clean up workspace (step 5), mark FAILED, add bead comment, re-queue.
 
-2. Check for conflicts:
+3. Check for conflicts:
 
    ```bash
    has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")' | tr -d '\n')
@@ -346,10 +352,16 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
    If `true`: run `jj undo` to revert. If `jj undo` fails, STOP and report
    STATUS: FAILED — "jj undo failed to revert conflicted rebase — manual
    recovery required". Do NOT re-queue; escalate to user.
-   Verify: `jj log -r @- --no-graph -n 1`. Clean up workspace (step 4).
-   Mark FAILED, re-queue.
+   Verify:
 
-3. Update the bookmark:
+   ```bash
+   _post_undo_tip=$(jj log -r <pr-bookmark> --no-graph -T 'change_id.short(8)')
+   ```
+
+   If `_post_undo_tip != _pre_rebase_tip`, STOP: "jj undo did not restore
+   expected state". Clean up workspace (step 5). Mark FAILED, re-queue.
+
+4. Update the bookmark:
 
    ```bash
    jj bookmark set <pr-bookmark> -r <change-id>
@@ -365,11 +377,18 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
       A failed `jj bookmark set` leaves no op-log entry, so there is nothing
       to undo for the failure. The single undo targets the successful rebase.
 
-   2. Verify: `jj log -r @- --no-graph -n 1` — parent should match
-      pre-rebase state. If not, STOP: "jj undo did not restore expected state".
-   3. Clean up workspace (step 4). Mark FAILED, add bead comment, re-queue.
+   2. Verify:
 
-4. Forget the workspace and remove the directory:
+      ```bash
+      _post_undo_tip=$(jj log -r <pr-bookmark> --no-graph -T 'change_id.short(8)')
+      ```
+
+      If `_post_undo_tip != _pre_rebase_tip`, STOP: "jj undo did not restore
+      expected state".
+
+   3. Clean up workspace (step 5). Mark FAILED, add bead comment, re-queue.
+
+5. Forget the workspace and remove the directory:
 
    ```bash
    jj workspace forget worktree-<name>

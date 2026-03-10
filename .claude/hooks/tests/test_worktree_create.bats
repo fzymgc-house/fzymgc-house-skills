@@ -613,6 +613,53 @@ MOCK
   fi
 }
 
+@test "git path: cleanup_on_error calls git worktree prune on partial add (WORKSPACE_CREATED=false)" {
+  # Mock git: make 'worktree add' fail so WORKSPACE_CREATED stays false,
+  # log 'worktree prune' calls, and pass everything else to the real git.
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/git" << MOCK
+#!/bin/bash
+if [[ "\$1" == "worktree" && "\$2" == "add" ]]; then
+  echo "mock: worktree add failed" >&2
+  exit 1
+fi
+if [[ "\$1" == "worktree" && "\$2" == "prune" ]]; then
+  echo "worktree-prune-called" >> "${REPO_ROOT}/git-calls.log"
+fi
+exec $(which git) "\$@"
+MOCK
+  chmod +x "${REPO_ROOT}/bin/git"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c \
+    'cd '"$REPO_ROOT"' && echo "{\"name\": \"prune-partial-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  # git worktree prune must have been called for the partial add cleanup path
+  [ -f "${REPO_ROOT}/git-calls.log" ]
+  [[ "$(cat "${REPO_ROOT}/git-calls.log")" == *"worktree-prune-called"* ]]
+}
+
+@test "git path: cleanup_on_error warns when git worktree prune fails on partial add" {
+  # Mock git: make both 'worktree add' and 'worktree prune' fail to exercise
+  # the warning branch at lines 64-65 of worktree-create.sh.
+  mkdir -p "${REPO_ROOT}/bin"
+  cat > "${REPO_ROOT}/bin/git" << MOCK
+#!/bin/bash
+if [[ "\$1" == "worktree" && "\$2" == "add" ]]; then
+  echo "mock: worktree add failed" >&2
+  exit 1
+fi
+if [[ "\$1" == "worktree" && "\$2" == "prune" ]]; then
+  echo "mock: prune failed" >&2
+  exit 1
+fi
+exec $(which git) "\$@"
+MOCK
+  chmod +x "${REPO_ROOT}/bin/git"
+  PATH="${REPO_ROOT}/bin:$PATH" run bash -c \
+    'cd '"$REPO_ROOT"' && echo "{\"name\": \"prune-fail-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"WARNING: cleanup: git worktree prune failed for partial create"* ]]
+}
+
 @test "cleanup_on_error warns and skips VCS cleanup when REPO_ROOT is missing" {
   # Patch worktree-create.sh: remove REPO_ROOT then trigger failure so cleanup
   # fires with a missing REPO_ROOT directory, exercising lines 32-33.

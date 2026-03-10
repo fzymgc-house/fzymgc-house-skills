@@ -19,9 +19,10 @@ allowed-tools:
 
 ## Steps
 
-1. **Check prerequisites** — Run `git rev-parse --show-toplevel` to confirm this is a git
-   repository. If not, tell the user to run `git init` first or use `jj git init` for a standalone
-   (non-colocated) repo.
+1. **Check prerequisites** — First, run `command -v jj` to confirm jj is installed. If not found,
+   tell the user to install jj (<https://jj-vcs.github.io/jj/latest/install-and-setup/>) and stop.
+   Then run `git rev-parse --show-toplevel` to confirm this is a git repository. If not, tell the
+   user to run `git init` first or use `jj git init` for a standalone (non-colocated) repo.
 
 2. **Check if already initialized** — Run `test -d .jj`. If the directory exists, tell the user
    "This repo already has jj initialized." and stop.

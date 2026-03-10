@@ -273,8 +273,15 @@ Loop while open, non-deferred findings remain:
    naming convention: `<repo>_worktrees/<worktree-name>`.
 
    0. Verify worktree path exists: `test -d <worktree-path>`. If already
-      removed, use WORKTREE_BRANCH or CHANGE_ID directly. Only fall through
-      to inference if the path is accessible.
+      removed:
+      - If WORKTREE_BRANCH or CHANGE_ID is present, use it directly.
+      - If both WORKTREE_BRANCH and CHANGE_ID are absent, mark FAILED
+        immediately — the fix-worker result is unrecoverable. Clean up the
+        worktree directory if it still exists (`rm -rf <worktree-path>`).
+        Add a bead comment: "fix-worker returned no VCS, WORKTREE_BRANCH,
+        or CHANGE_ID — result is unrecoverable". Re-queue the finding.
+      Only fall through to inference if the path is accessible.
+
    1. Detect VCS in the main repo:
       `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`
       — if `none`, mark FAILED and skip integration.

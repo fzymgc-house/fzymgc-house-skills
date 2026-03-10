@@ -16,6 +16,7 @@ allowed-tools:
   - "Bash(jj git *)"
   - "Bash(jj new)"
   - "Bash(jj new *)"
+  - "Bash(jj edit *)"
   - "Bash(jj commit *)"
   - "Bash(jj squash)"
   - "Bash(jj squash *)"

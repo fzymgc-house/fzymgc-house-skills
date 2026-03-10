@@ -2,7 +2,6 @@
 
 ## [1.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/terraform-v0.2.0...terraform-v1.0.0) (2026-02-28)
 
-
 ### ⚠ BREAKING CHANGES
 
 * restructure into two-plugin marketplace with true agents ([#18](https://github.com/fzymgc-house/fzymgc-house-skills/issues/18))
@@ -12,7 +11,6 @@
 * restructure into two-plugin marketplace with true agents ([#18](https://github.com/fzymgc-house/fzymgc-house-skills/issues/18)) ([979ea3f](https://github.com/fzymgc-house/fzymgc-house-skills/commit/979ea3fbd0c47191e32b219d8ab4152187a4e81c))
 
 ## [0.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/terraform-v0.1.0...terraform-v0.2.0) (2026-02-16)
-
 
 ### Features
 
@@ -28,7 +26,6 @@
 * **terraform:** add workspace-status workflow ([cca18e2](https://github.com/fzymgc-house/fzymgc-house-skills/commit/cca18e2f81876010d0d7ee57b1bc0ac4ef5b44df))
 * **terraform:** implement MCP stdio client and session manager ([5630397](https://github.com/fzymgc-house/fzymgc-house-skills/commit/5630397a7c8eb01caf46bee7dc44b497f495fe29))
 * **terraform:** scaffold terraform skill directory structure ([3ff19c3](https://github.com/fzymgc-house/fzymgc-house-skills/commit/3ff19c3a7f12d2a366eda0c7c1007a90112a7921))
-
 
 ### Bug Fixes
 

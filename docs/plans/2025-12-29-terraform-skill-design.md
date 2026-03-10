@@ -24,7 +24,7 @@ Create a skill that wraps the HashiCorp Terraform MCP server to provide streamli
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  Claude Context                                             │
 │  ┌─────────────────┐                                        │
@@ -80,6 +80,7 @@ terraform_mcp.py watch-run --workspace <name>  # watches latest run
 ```
 
 **Behavior:**
+
 - MUST poll `get_run_details` at configurable interval (default: 5s)
 - MUST display current status, plan summary, resource counts
 - SHOULD stream plan/apply logs as they become available
@@ -87,7 +88,8 @@ terraform_mcp.py watch-run --workspace <name>  # watches latest run
 - MUST return exit code 0 for success, 1 for failure
 
 **Output:**
-```
+
+```text
 Run: run-abc123 | Workspace: my-workspace
 Status: planning → planned → applying → applied ✓
 Plan: +3 ~1 -0 | Apply: 4/4 resources
@@ -107,6 +109,7 @@ terraform_mcp.py run-outputs --workspace <name>  # latest successful run
 ```
 
 **Behavior:**
+
 - MUST retrieve outputs from the specified run or latest successful run
 - SHOULD format sensitive outputs as `(sensitive)` unless `--show-sensitive` flag provided
 
@@ -121,6 +124,7 @@ terraform_mcp.py workspace-status --filter "prod-*"  # glob filter
 ```
 
 **Output includes:**
+
 - Workspace name, ID
 - Last run status and timestamp
 - Terraform version
@@ -136,6 +140,7 @@ terraform_mcp.py list-runs <workspace> [--limit N] [--status STATUS]
 ```
 
 **Options:**
+
 - `--limit N` - Number of runs (default: 10)
 - `--status STATUS` - Filter by status (pending, planning, planned, applying, applied, errored, etc.)
 
@@ -163,6 +168,7 @@ terraform_mcp.py provider-docs aws --list-resources          # list all resource
 ```
 
 **Behavior:**
+
 - MUST use `search_providers` to find provider doc IDs
 - MUST use `get_provider_details` to fetch documentation
 - SHOULD return formatted markdown with arguments, attributes, examples
@@ -195,7 +201,7 @@ def get_or_create_session() -> subprocess.Popen:
         pid = int(pid_file.read_text())
         if process_alive(pid):
             return reconnect(pid)
-    
+
     # Spawn new
     proc = subprocess.Popen(
         ["docker", "run", "-i", "--rm",
@@ -218,7 +224,7 @@ class MCPStdioClient:
     def __init__(self, proc: subprocess.Popen):
         self.proc = proc
         self.request_id = 0
-    
+
     def call(self, tool: str, args: dict) -> dict:
         self.request_id += 1
         request = {
@@ -244,12 +250,12 @@ class HCPTerraformClient:
             base_url=address,
             headers={"Authorization": f"Bearer {token}"}
         )
-    
+
     def get_plan_logs(self, plan_id: str) -> str:
         """Stream plan logs from HCP Terraform API."""
         resp = self.client.get(f"/api/v2/plans/{plan_id}/logs")
         return resp.text
-    
+
     def get_apply_logs(self, apply_id: str) -> str:
         """Stream apply logs from HCP Terraform API."""
         resp = self.client.get(f"/api/v2/applies/{apply_id}/logs")
@@ -276,7 +282,7 @@ class HCPTerraformClient:
 
 ## File Structure
 
-```
+```text
 fzymgc-house/skills/terraform/
 ├── SKILL.md                    # Skill definition & usage docs
 ├── scripts/
@@ -318,11 +324,13 @@ All operations MUST use: `${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terrafo
 ## Configuration
 
 The following environment variables MUST be set:
+
 - `TFE_TOKEN` - HCP Terraform API token
 - `TFE_ORG` - Default organization name
 
 The following environment variable MAY be set:
-- `TFE_ADDRESS` - TFC/TFE URL (default: https://app.terraform.io)
+
+- `TFE_ADDRESS` - TFC/TFE URL (default: <https://app.terraform.io>)
 
 ## Workflows
 
@@ -345,7 +353,7 @@ The following environment variable MAY be set:
 
 1. Does `get_run_details` include full plan/apply logs, or just metadata?
    - **Mitigation**: Implement direct HCP API fallback
-   
+
 2. Should we support watching multiple runs simultaneously?
    - **Decision**: No, keep simple. User can run multiple terminals.
 

@@ -15,6 +15,7 @@
 ### Task 1.1: Add PyYAML dependency
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py:1-6`
 
 **Step 1: Update inline script dependencies**
@@ -46,6 +47,7 @@ git commit -m "build(grafana): add pyyaml dependency for yaml output"
 ### Task 1.2: Add --format flag
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Add format argument to argparse**
@@ -89,6 +91,7 @@ def format_output(data: dict[str, Any], fmt: str) -> str:
 Replace all `print(json.dumps(result, indent=2))` calls with `print(format_output(result, args.format))`.
 
 There are 4 locations:
+
 - Line ~214 (list_tools)
 - Line ~219 (describe)
 - Line ~228 (invalid JSON error)
@@ -114,6 +117,7 @@ git commit -m "feat(grafana): add --format flag for yaml/json/compact output"
 ### Task 1.3: Add --brief flag
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Add brief argument to argparse**
@@ -197,6 +201,7 @@ git commit -m "feat(grafana): add --brief flag for reduced output fields"
 ### Task 1.4: Flatten wrapper structure and errors to stderr
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Create unwrap function**
@@ -294,6 +299,7 @@ git commit -m "feat(grafana): flatten output structure, errors to stderr"
 ### Task 2.1: Add workflow infrastructure
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Add workflow subparser**
@@ -393,6 +399,7 @@ git commit -m "feat(grafana): add subparser infrastructure for workflows"
 ### Task 2.2: Implement investigate-logs workflow
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Add workflow function**
@@ -519,6 +526,7 @@ git commit -m "feat(grafana): add investigate-logs compound workflow"
 ### Task 2.3: Implement remaining workflows
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/scripts/grafana_mcp.py`
 
 **Step 1: Add investigate-metrics workflow**
@@ -742,6 +750,7 @@ git commit -m "feat(grafana): add investigate-metrics, quick-status, find-dashbo
 ### Task 3.1: Add schemas to prometheus.md
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/references/prometheus.md`
 
 **Step 1: Add Tool Reference section**
@@ -753,6 +762,7 @@ Append to end of file:
 ## Tool Reference
 
 ### query_prometheus
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | From list_datasources |
@@ -763,6 +773,7 @@ Append to end of file:
 | stepSeconds | | int | Required for range queries |
 
 ### list_prometheus_metric_names
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -771,6 +782,7 @@ Append to end of file:
 | page | | int | Pagination |
 
 ### list_prometheus_label_names
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -779,6 +791,7 @@ Append to end of file:
 | endRfc3339 | | string | Time range end |
 
 ### list_prometheus_label_values
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -798,6 +811,7 @@ git commit -m "docs(grafana): add tool schemas to prometheus.md"
 ### Task 3.2: Add schemas to loki.md
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/references/loki.md`
 
 **Step 1: Add Tool Reference section**
@@ -809,6 +823,7 @@ Append to end of file:
 ## Tool Reference
 
 ### query_loki_logs
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | From list_datasources |
@@ -819,6 +834,7 @@ Append to end of file:
 | endRfc3339 | | string | End time |
 
 ### query_loki_stats
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -827,6 +843,7 @@ Append to end of file:
 | endRfc3339 | | string | Default: now |
 
 ### list_loki_label_names
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -834,6 +851,7 @@ Append to end of file:
 | endRfc3339 | | string | |
 
 ### list_loki_label_values
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | datasourceUid | ✅ | string | |
@@ -852,6 +870,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 ### Task 3.3: Add schemas to remaining reference files
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/references/dashboards.md`
 - Modify: `grafana/skills/grafana/references/alerting.md`
 - Modify: `grafana/skills/grafana/references/incidents.md`
@@ -864,22 +883,26 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 ## Tool Reference
 
 ### search_dashboards
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | query | | string | Search term |
 
 ### get_dashboard_summary
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | uid | ✅ | string | Dashboard UID |
 
 ### get_dashboard_property
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | uid | ✅ | string | Dashboard UID |
 | jsonPath | ✅ | string | e.g., "$.panels[*].title" |
 
 ### update_dashboard
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | uid | | string | For patching existing |
@@ -896,6 +919,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 ## Tool Reference
 
 ### list_alert_rules
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | limit | | int | Default 100 |
@@ -903,11 +927,13 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 | label_selectors | | array | Filter by labels |
 
 ### get_alert_rule_by_uid
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | uid | ✅ | string | Alert rule UID |
 
 ### create_alert_rule
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | title | ✅ | string | Rule name |
@@ -928,6 +954,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 ## Tool Reference
 
 ### list_incidents
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | status | | string | "active" or "resolved" |
@@ -935,6 +962,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 | drill | | bool | Include drill incidents |
 
 ### create_incident
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | title | ✅ | string | Incident title |
@@ -945,6 +973,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 | labels | | array | Labels |
 
 ### find_error_pattern_logs
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | name | ✅ | string | Investigation name |
@@ -953,6 +982,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 | end | | datetime | ISO 8601 |
 
 ### find_slow_requests
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | name | ✅ | string | Investigation name |
@@ -966,6 +996,7 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 ## Tool Reference
 
 ### list_oncall_schedules
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | teamId | | string | Filter by team |
@@ -973,11 +1004,13 @@ git commit -m "docs(grafana): add tool schemas to loki.md"
 | page | | int | Pagination |
 
 ### get_current_oncall_users
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | scheduleId | ✅ | string | Schedule ID |
 
 ### list_alert_groups
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | state | | string | new, acknowledged, resolved, silenced |
@@ -1001,6 +1034,7 @@ git commit -m "docs(grafana): add tool schemas to all reference files"
 ### Task 4.1: Update SKILL.md with new features
 
 **Files:**
+
 - Modify: `grafana/skills/grafana/SKILL.md`
 
 **Step 1: Update Commands section**
@@ -1024,6 +1058,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics 
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"..."}'
 ```
+```
 
 ### Output Options
 
@@ -1033,7 +1068,9 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"qu
 --format compact # Minimal output
 --brief          # Essential fields only
 ```
-```
+
+
+```text
 
 **Step 2: Add Workflows section after Quick Reference**
 
@@ -1049,23 +1086,31 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-logs '{"
 ```
 
 ### investigate-metrics
+
 Check metric health:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py investigate-metrics '{"job":"api","metric":"http_requests_total"}'
 ```
 
 ### quick-status
+
 System health overview:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py quick-status '{}'
 ```
 
 ### find-dashboard
+
 Search and summarize:
+
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"api latency"}'
 ```
-```
+
+
+```text
 
 **Step 3: Commit**
 
@@ -1081,6 +1126,7 @@ git commit -m "docs(grafana): update SKILL.md with workflows and output options"
 ### Task 5.1: Bump versions to 0.2.0
 
 **Files:**
+
 - Modify: `.claude-plugin/marketplace.json`
 - Modify: `grafana/plugin.json`
 

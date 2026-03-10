@@ -43,8 +43,13 @@ repositories that may use git or jj (Jujutsu).
      a `worktree/*` branch, NOT `main`
 3. If anything looks wrong, STOP and report STATUS: FAILED
 
-Use the detected VCS for all operations in this session. Consult
-`pr-review/references/vcs-equivalence.md` for command equivalents.
+Use the detected VCS for all operations in this session. When jj is
+detected, MUST use jj commands for ALL VCS operations — commits,
+workspaces, rebases, status, etc. Never use mutating git commands
+(`git commit`, `git worktree add`, `git checkout`) in jj repos.
+Read-only git commands and `gh` CLI are safe.
+
+Consult `pr-review/references/vcs-equivalence.md` for command equivalents.
 
 ## Orchestrator Contract
 

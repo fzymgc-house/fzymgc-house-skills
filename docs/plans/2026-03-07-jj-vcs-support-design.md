@@ -101,6 +101,14 @@ GitHub operations (`gh` CLI) are VCS-independent — use them regardless.
 | Remove workspace | `git worktree remove <path>` | `jj workspace forget <name>` + rm |
 | Workspace identity | `git branch --show-current` | `jj workspace root` |
 
+### Architectural Rule: jj Commands When jj Is Available
+
+When jj is available (`jj root` succeeds), MUST use jj commands for
+ALL VCS operations — including workspace creation, commits, rebases,
+and status checks. This applies to colocated repos (both `.jj/` and
+`.git/`) and pure jj repos alike. Never use mutating git commands
+in jj repos; read-only git commands and `gh` CLI are safe.
+
 ### Orchestrator↔Fix-Worker Changes (address-findings)
 
 The cherry-pick workflow changes fundamentally in jj repos because

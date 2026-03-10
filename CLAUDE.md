@@ -177,12 +177,22 @@ WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
 this automatically. Do NOT manually create worktrees — always use the
 hook system.
 
+**VCS rule:** When jj is available (`jj root` succeeds), MUST use jj
+commands for ALL VCS operations — commits, workspaces, rebases, status,
+log, etc. This applies to colocated repos (both `.jj/` and `.git/`)
+as well as pure jj repos. Never use mutating git commands (`git commit`,
+`git worktree add`, `git checkout`, etc.) when jj is present.
+Read-only git commands (`git log`, `git diff`, `git rev-parse`) and
+`gh` CLI are safe in colocated repos.
+
 **VCS-specific behavior:**
 
-- **git**: fix-worker reports `WORKTREE_BRANCH`; orchestrator uses cherry-pick to integrate
-- **jj**: fix-worker reports `CHANGE_ID`; orchestrator uses `jj rebase`
-  to integrate, then `jj bookmark set` to advance the bookmark and
-  `jj workspace forget` to clean up (no cherry-pick)
+- **jj repos (including colocated)**: `jj workspace add` for worktrees,
+  `jj rebase` + `jj bookmark set` for integration, `jj workspace forget`
+  for cleanup. fix-worker reports `CHANGE_ID`.
+- **git-only repos** (no `.jj/`): `git worktree add` for worktrees,
+  `git cherry-pick` for integration, `git worktree remove` for cleanup.
+  fix-worker reports `WORKTREE_BRANCH`.
 
 ### jj Operation Log Semantics
 

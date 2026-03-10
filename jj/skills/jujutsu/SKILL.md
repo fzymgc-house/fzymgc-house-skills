@@ -221,8 +221,9 @@ jj git push -b my-feature
 
 ## Workspaces
 
-Workspaces provide isolated working copies sharing the same repo storage. They replace
-git worktrees.
+Workspaces provide isolated working copies sharing the same repo storage. When jj
+is available, MUST use `jj workspace add` — never `git worktree add`. This applies
+to both colocated and pure jj repos.
 
 ```bash
 # Create a workspace

@@ -1,8 +1,12 @@
 # VCS Command Equivalence: git and jj
 
 Use this reference when the repo has `.jj/` (colocated or pure jj repo).
-In jj repos, use jj for ALL VCS operations.
-Only `gh` CLI remains for GitHub API calls.
+
+**Rule:** When jj is available (`jj root` succeeds), MUST use jj commands
+for ALL VCS operations — including workspace creation, commits, rebases,
+and status checks. Never use mutating git commands (`git commit`,
+`git worktree add`, `git checkout`, etc.) in jj repos. Read-only git
+commands and `gh` CLI are safe.
 
 **Note:** The detection pattern (see `vcs-detection-preamble.md`) uses `jj root`
 first, then `git rev-parse --git-dir`, and reports "none" if neither succeeds.

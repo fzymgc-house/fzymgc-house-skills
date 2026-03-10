@@ -2,13 +2,11 @@
 
 ## [2.0.3](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v2.0.2...address-findings-v2.0.3) (2026-03-07)
 
-
 ### Bug Fixes
 
 * **address-findings:** replace git merge with cherry-pick ([#29](https://github.com/fzymgc-house/fzymgc-house-skills/issues/29)) ([c44219b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c44219bb1135181ae4eca427fa1bef8a4ae2069b))
 
 ## [2.0.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v2.0.1...address-findings-v2.0.2) (2026-03-07)
-
 
 ### Bug Fixes
 
@@ -16,13 +14,11 @@
 
 ## [2.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v2.0.0...address-findings-v2.0.1) (2026-03-04)
 
-
 ### Bug Fixes
 
 * **address-findings:** checkout PR branch before dispatching worktree agents ([#22](https://github.com/fzymgc-house/fzymgc-house-skills/issues/22)) ([5c582e2](https://github.com/fzymgc-house/fzymgc-house-skills/commit/5c582e2d07d762e9163f234643e233c65a96a89b))
 
 ## [2.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/address-findings-v1.0.0...address-findings-v2.0.0) (2026-02-28)
-
 
 ### ⚠ BREAKING CHANGES
 
@@ -31,7 +27,6 @@
 ### Features
 
 * restructure into two-plugin marketplace with true agents ([#18](https://github.com/fzymgc-house/fzymgc-house-skills/issues/18)) ([979ea3f](https://github.com/fzymgc-house/fzymgc-house-skills/commit/979ea3fbd0c47191e32b219d8ab4152187a4e81c))
-
 
 ### Bug Fixes
 

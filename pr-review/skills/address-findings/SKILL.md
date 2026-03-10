@@ -375,7 +375,8 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
    ```
 
    If `_post_undo_tip != _pre_rebase_tip`, STOP: "jj undo did not restore
-   expected state". Clean up workspace (step 5). Mark FAILED, re-queue.
+   expected state". Clean up workspace (step 5). Mark FAILED. Do NOT
+   re-queue; escalate to user.
 
 4. Update the bookmark:
 

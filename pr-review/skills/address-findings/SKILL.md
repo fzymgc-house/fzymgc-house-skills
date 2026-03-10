@@ -381,11 +381,12 @@ working tree.
 ### Phase 4c: Review Gate
 
 Dispatch a review-gate agent to validate fixes.
-Generate the diff before dispatching (jj repos: capture pre-rebase
-change ID in Phase 4b — the diff requires it):
+Generate the diff before dispatching. For jj repos, capture the
+pre-batch bookmark tip before Phase 4b with
+`jj log -r <pr-bookmark> --no-graph -T 'change_id.short(8)'`:
 
 - git: `git diff <before-sha>..HEAD`
-- jj: `jj diff --from <pre-rebase-change-id> --to <pr-bookmark>`
+- jj: `jj diff --from <pre-batch-bookmark-tip> --to <pr-bookmark>`
 
 ```text
 subagent_type: "review-gate"

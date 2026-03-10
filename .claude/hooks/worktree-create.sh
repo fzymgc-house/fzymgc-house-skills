@@ -29,22 +29,20 @@ WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 WORKSPACE_CREATED=false
 
 cleanup_on_error() {
-  # Only deregister VCS workspace/worktree metadata if the workspace was actually created.
-  # Without this guard the trap fires on early failures (e.g. mkdir) before any VCS
-  # registration has occurred, causing spurious jj/git errors.
-  if [[ "$WORKSPACE_CREATED" == "true" ]]; then
-    if [[ ! -d "$REPO_ROOT" ]]; then
-      echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — VCS workspace cleanup skipped" >&2
-    elif [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
-      # jj repo: forget workspace metadata (prevents orphaned metadata)
-      if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
-        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
-      fi
-    else
-      # git repo: remove worktree registration from .git/worktrees/ (prevents stale metadata)
-      if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-        echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: $(sanitize_for_output "${git_err:0:500}")" >&2
-      fi
+  if [[ ! -d "$REPO_ROOT" ]]; then
+    echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — VCS workspace cleanup skipped" >&2
+  elif [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
+    # jj repo: always attempt workspace forget — safe even if workspace wasn't fully
+    # registered (jj workspace add may partially complete before failing).
+    # Suppress errors since forget is best-effort here.
+    if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
+      echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
+    fi
+  elif [[ "$WORKSPACE_CREATED" == "true" ]]; then
+    # git repo: only remove worktree registration if it was actually created
+    # (git worktree remove requires a registered worktree)
+    if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
+      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: $(sanitize_for_output "${git_err:0:500}")" >&2
     fi
   fi
   if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then

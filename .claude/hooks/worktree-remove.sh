@@ -134,14 +134,16 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
     _ws_err_msg=$(cat "$_ws_list_err" 2>/dev/null)
     rm -f "$_ws_list_err"
     echo "WARNING: jj workspace list failed: $(sanitize_for_output "${_ws_err_msg:-(no details)}") — skipping workspace forget for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
-  elif ! echo "$_jj_ws_list" | grep -qF "worktree-${WORKSPACE_NAME}:"; then
-    rm -f "$_ws_list_err"
-    echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list — skipping forget" >&2
   else
     rm -f "$_ws_list_err"
     if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-      echo "ERROR: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}"); workspace directory will still be removed (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
-      jj_forget_failed=true
+      # Accept 'no workspace named' as success (idempotent forget)
+      if echo "$jj_err" | grep -qiE 'no workspace|unknown workspace|not found'; then
+        echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' was not registered — skipping" >&2
+      else
+        echo "ERROR: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}"); workspace directory will still be removed (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
+        jj_forget_failed=true
+      fi
     fi
   fi
 else

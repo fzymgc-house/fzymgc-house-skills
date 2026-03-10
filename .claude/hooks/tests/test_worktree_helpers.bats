@@ -305,6 +305,84 @@ MOCK
   rm -rf "$non_git_dir" "$mock_bin"
 }
 
+@test "detect_repo_root: emits WARNING when mktemp fails and jj is in PATH" {
+  # Scenario: non-git directory, jj is available, but mktemp fails.
+  # The function should emit the WARNING and handle gracefully (no crash/unbound var).
+  # It cannot succeed without stderr capture for jj, so returns non-zero.
+  local non_git_dir
+  non_git_dir=$(mktemp -d)
+  non_git_dir=$(cd "$non_git_dir" && pwd -P)
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+
+  # mktemp mock: always fails
+  cat > "$mock_bin/mktemp" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "$mock_bin/mktemp"
+
+  # jj mock: would succeed if called, but mktemp failure skips the call
+  cat > "$mock_bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${non_git_dir}"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  rm -rf "$non_git_dir" "$mock_bin"
+  # Function should emit WARNING about mktemp failure
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"mktemp failed"* ]]
+  # Function exits non-zero (jj root was skipped; git also unavailable here)
+  [ "$status" -ne 0 ]
+}
+
+@test "detect_repo_root: succeeds via git even when jj mktemp would fail" {
+  # Scenario: git repo + jj in PATH + mktemp fails.
+  # git rev-parse succeeds BEFORE mktemp is called, so WARNING is never emitted.
+  local git_repo
+  git_repo=$(mktemp -d)
+  git_repo=$(cd "$git_repo" && pwd -P)
+  git -C "$git_repo" init -q
+  git -C "$git_repo" -c commit.gpgsign=false commit --allow-empty -m "init" -q
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+
+  # mktemp mock: always fails (but never reached since git succeeds first)
+  cat > "$mock_bin/mktemp" << 'MOCK'
+#!/bin/bash
+exit 1
+MOCK
+  chmod +x "$mock_bin/mktemp"
+
+  # jj mock: present in PATH to show git takes priority
+  cat > "$mock_bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${git_repo}"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$git_repo"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  rm -rf "$git_repo" "$mock_bin"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "$git_repo" ]]
+  # No WARNING — mktemp was never reached because git succeeded first
+  [[ "$output" != *"WARNING"* ]]
+}
+
 @test "VCS detection preamble: outputs none when neither jj nor git is available" {
   local empty_dir
   empty_dir=$(mktemp -d)

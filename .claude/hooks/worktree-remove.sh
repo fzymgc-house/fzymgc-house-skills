@@ -30,11 +30,11 @@ if command -v realpath &>/dev/null; then
   WORKTREE_PATH="$_rp_out"
 else
   # POSIX fallback: cd into the directory and capture pwd -P
-  _cd_err=$({ cd "$_ORIG_PATH" && pwd -P; } 2>&1) || {
-    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_err:0:500}")" >&2
+  _cd_out=$({ cd "$_ORIG_PATH" && pwd -P; } 2>&1) || {
+    echo "ERROR: could not canonicalize path '$(sanitize_for_output "$_ORIG_PATH")': $(sanitize_for_output "${_cd_out:0:500}")" >&2
     exit 1
   }
-  WORKTREE_PATH="$_cd_err"
+  WORKTREE_PATH="$_cd_out"
 fi
 if [[ -z "$WORKTREE_PATH" ]]; then
   echo "ERROR: could not resolve canonical path for '$(sanitize_for_output "$_ORIG_PATH")'" >&2

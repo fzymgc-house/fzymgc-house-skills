@@ -114,7 +114,7 @@ if [[ "$_skip_vcs_cleanup" == "true" ]]; then
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory
   if ! command -v jj &>/dev/null; then
-    echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned" >&2
+    echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2
   elif ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>&1); then
     echo "WARNING: jj workspace list failed — skipping workspace forget for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
   elif ! echo "$_jj_ws_list" | grep -qF "worktree-${WORKSPACE_NAME}:"; then

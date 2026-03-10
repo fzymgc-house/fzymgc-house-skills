@@ -46,8 +46,21 @@ repositories that may use git or jj (Jujutsu).
 
      Do NOT rely on `jj workspace list` output to identify the current
      workspace; jj 0.39+ does not emit a `(current)` marker.
-   - git: Run `pwd` and `git branch --show-current` -- verify you are on
-     a `worktree/*` branch, NOT `main`
+   - git:
+
+     ```bash
+     _branch=$(git branch --show-current 2>/dev/null) || {
+       echo "STATUS: FAILED -- git branch check failed"; exit 1
+     }
+     case "$_branch" in
+       worktree/*) ;; # Good — operating on a worktree branch
+       *)
+         echo "STATUS: FAILED -- On branch '$_branch', expected worktree/*"
+         exit 1
+         ;;
+     esac
+     ```
+
 3. If anything looks wrong, STOP and report STATUS: FAILED
 
 Use the detected VCS for all operations in this session. When jj is

@@ -199,7 +199,7 @@ MOCK
   # Copy into the same directory so BASH_SOURCE[0]-based source resolution
   # still finds worktree-helpers.sh.
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
@@ -234,7 +234,7 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
@@ -274,7 +274,7 @@ MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
 
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   # Replace "trap - EXIT" with PATH-clearing then false so the EXIT trap fires
   # with jj no longer in PATH.  The mock jj dir is removed from PATH here so
@@ -337,7 +337,7 @@ MOCK
   # Copy into the same directory so BASH_SOURCE[0]-based source resolution
   # still finds worktree-helpers.sh.
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
@@ -368,7 +368,7 @@ MOCK
   chmod +x "${mock_bin}/git"
 
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
@@ -415,7 +415,7 @@ MOCK
   chmod +x "${mock_bin}/git"
 
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
@@ -734,7 +734,7 @@ MOCK
   # We replace "trap - EXIT" with a two-line snippet that deletes REPO_ROOT
   # first, then exits non-zero to fire the EXIT trap.
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's|^trap - EXIT$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
@@ -752,7 +752,7 @@ MOCK
   setup_jj
   create_logging_jj_mock
   local patched
-  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-test-XXXXXX.sh")
+  patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
   sed 's|^trap - EXIT$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \

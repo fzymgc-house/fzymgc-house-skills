@@ -454,6 +454,44 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
+@test "jj path: colon anchor prevents prefix name false positive match" {
+  # Verifies that grep -qF "worktree-${WORKSPACE_NAME}:" on line 120 of
+  # worktree-remove.sh correctly distinguishes workspace names that are
+  # prefixes of each other. Without the trailing colon, searching for
+  # "worktree-test-short" would also match "worktree-test-short-extended".
+  mkdir -p "${REPO_ROOT}/.jj"
+  mkdir -p "${REPO_ROOT}_worktrees/test-short"
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-test-short: abc12345 def67890 (empty) (no description set)"
+  echo "worktree-test-short-extended: def45678 ghi90123 (empty) (no description set)"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" && "\$3" == "worktree-test-short" ]]; then
+  echo "\$3" > "${REPO_ROOT}/forget-arg.log"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "ERROR: unexpected forget target: \$3" > "${REPO_ROOT}/forget-arg.log"
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-short"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-short" ]
+  [ -f "${REPO_ROOT}/forget-arg.log" ]
+  [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-short" ]]
+}
+
 @test "infers repo root when jj root returns empty in pure-jj repo" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

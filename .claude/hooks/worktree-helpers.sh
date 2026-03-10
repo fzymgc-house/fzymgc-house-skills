@@ -56,8 +56,11 @@ detect_repo_root() {
     jj_attempted=true
     local jj_out jj_err jj_rc=0
     local _jj_err_file
-    _jj_err_file=$(mktemp) || { jj_rc=1; }
-    if [[ $jj_rc -eq 0 ]]; then
+    _jj_err_file=$(mktemp) || {
+      echo "WARNING: mktemp failed — cannot capture jj stderr; skipping jj root check" >&2
+      jj_attempted=false
+    }
+    if [[ "$jj_attempted" == "true" ]]; then
       jj_out=$(jj root 2>"$_jj_err_file") || jj_rc=$?
       jj_err=$(cat "$_jj_err_file")
       rm -f "$_jj_err_file"

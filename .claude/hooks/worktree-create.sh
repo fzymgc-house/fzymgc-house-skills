@@ -31,12 +31,17 @@ WORKSPACE_CREATED=false
 cleanup_on_error() {
   if [[ ! -d "$REPO_ROOT" ]]; then
     echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — VCS workspace cleanup skipped" >&2
-  elif [[ -d "${REPO_ROOT}/.jj" ]] && command -v jj &>/dev/null; then
-    # jj repo: always attempt workspace forget — safe even if workspace wasn't fully
-    # registered (jj workspace add may partially complete before failing).
-    # Suppress errors since forget is best-effort here.
-    if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
-      echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
+  elif [[ -d "${REPO_ROOT}/.jj" ]]; then
+    # jj repo: check jj availability before attempting workspace forget
+    if command -v jj &>/dev/null; then
+      # Always attempt workspace forget — safe even if workspace wasn't fully
+      # registered (jj workspace add may partially complete before failing).
+      # Suppress errors since forget is best-effort here.
+      if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
+        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
+      fi
+    else
+      echo "WARNING: cleanup: .jj/ found but jj not installed — workspace metadata not cleaned; run 'jj workspace forget worktree-${NAME}' manually" >&2
     fi
   elif [[ "$WORKSPACE_CREATED" == "true" ]]; then
     # git repo: only remove worktree registration if it was actually created

@@ -345,6 +345,35 @@ MOCK
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
+@test "inferred root with .jj/ and jj installed: warns when workspace list fails" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  mkdir -p "${NON_GIT}_worktrees/orphan-wt"
+  # Mock jj: 'root' exits 1 so detect_repo_root fails and triggers path inference;
+  # 'workspace list' also exits 1, triggering the workspace-list-failed warning.
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  exit 1
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "Error: workspace list failed" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  # Run from /tmp so detect_repo_root fails (no git/jj repo in cwd)
+  PATH="${NON_GIT}/bin:/usr/bin:/bin" run bash -c 'cd /tmp && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"inferred repo root"* ]]
+  [[ "$output" == *"jj workspace list failed"* ]]
+  [ ! -d "${NON_GIT}_worktrees/orphan-wt" ]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 @test "errors when parent dir has no _worktrees suffix" {
   NON_GIT=$(mktemp -d)
   # Parent dir name does NOT end in _worktrees — fail-safe refuses removal

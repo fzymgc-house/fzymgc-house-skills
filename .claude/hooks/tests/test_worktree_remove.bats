@@ -574,6 +574,59 @@ MOCK
   rm -rf "$ALT_ROOT" "${ALT_ROOT}_worktrees" "$clean_bin"
 }
 
+@test "POSIX fallback: jj workspace removal when realpath absent from PATH" {
+  # Build a curated PATH that excludes realpath so the POSIX fallback (cd + pwd -P)
+  # is exercised even on systems where realpath is normally present.
+  # Also excludes git (not needed for pure-jj repos) so the jj path is taken.
+  local clean_bin
+  clean_bin=$(mktemp -d)
+  local cmd cmd_path
+  for cmd in bash rm rmdir ls dirname basename cat mkdir chmod jq tr mktemp grep; do
+    cmd_path=$(command -v "$cmd" 2>/dev/null) || continue
+    ln -sf "$cmd_path" "$clean_bin/$cmd"
+  done
+  # Verify realpath is NOT in clean_bin
+  [[ ! -x "$clean_bin/realpath" ]]
+  # Verify realpath cannot be found from the curated PATH
+  run env PATH="$clean_bin" bash -c 'command -v realpath'
+  [ "$status" -ne 0 ]
+
+  # Set up a pure-jj repo (no .git/) with a worktree directory
+  local JJ_ROOT
+  JJ_ROOT=$(mktemp -d)
+  mkdir -p "${JJ_ROOT}/.jj"
+  mkdir -p "${JJ_ROOT}_worktrees/posix-jj-test"
+
+  # Build jj mock inside clean_bin that handles root/workspace list/forget
+  cat > "${clean_bin}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${JJ_ROOT}"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-posix-jj-test: ssttuuvv xyz78901 (empty) (no description set)"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "\$3" > "${JJ_ROOT}/forget-arg.log"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${clean_bin}/jj"
+
+  PATH="$clean_bin" run bash -c \
+    'cd '"$JJ_ROOT"' && echo "{\"path\": \"'"${JJ_ROOT}_worktrees/posix-jj-test"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${JJ_ROOT}_worktrees/posix-jj-test" ]
+  [ -f "${JJ_ROOT}/forget-arg.log" ]
+  [[ "$(cat "${JJ_ROOT}/forget-arg.log")" == "worktree-posix-jj-test" ]]
+
+  rm -rf "$JJ_ROOT" "${JJ_ROOT}_worktrees" "$clean_bin"
+}
+
 @test "POSIX fallback: errors when _worktrees parent dir does not exist" {
   # Combine the POSIX fallback path (no realpath) with the missing EXPECTED_PARENT
   # condition, so that the cd+pwd -P branch on line 87 of worktree-remove.sh is

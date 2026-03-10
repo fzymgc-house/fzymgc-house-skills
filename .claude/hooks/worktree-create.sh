@@ -47,7 +47,10 @@ cleanup_on_error() {
     # git repo: only remove worktree registration if it was actually created
     # (git worktree remove requires a registered worktree)
     if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
-      echo "WARNING: cleanup: git worktree remove failed — run 'git worktree prune' manually if needed: $(sanitize_for_output "${git_err:0:500}")" >&2
+      echo "WARNING: cleanup: git worktree remove failed: $(sanitize_for_output "${git_err:0:500}")" >&2
+      if ! prune_err=$(git worktree prune 2>&1); then
+        echo "WARNING: cleanup: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain" >&2
+      fi
     fi
   fi
   if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then

@@ -459,21 +459,6 @@ MOCK
   [[ "$output" == *"failed to create worktree parent directory"* ]]
 }
 
-@test "git path: mkdir -p failure exits 1 with descriptive error message" {
-  SANDBOX=$(mktemp -d)
-  NESTED="${SANDBOX}/repos/myrepo"
-  mkdir -p "$NESTED"
-  cd "$NESTED"
-  git init -q
-  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
-  chmod a-w "${SANDBOX}/repos"
-  run bash -c 'echo "{\"name\": \"mkdir-msg-git\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
-  chmod a+w "${SANDBOX}/repos"
-  rm -rf "$SANDBOX"
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"failed to create worktree parent directory"* ]]
-}
-
 @test "jj path: mkdir -p failure exits 1 with descriptive error message" {
   SANDBOX=$(mktemp -d)
   NESTED="${SANDBOX}/repos/myrepo"

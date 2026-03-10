@@ -189,7 +189,7 @@ MOCK
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
-  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"jj workspace forget failed"* ]]
 }
 

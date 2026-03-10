@@ -120,7 +120,7 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   elif ! echo "$_jj_ws_list" | grep -qF "worktree-${WORKSPACE_NAME}:"; then
     echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list — skipping forget" >&2
   elif ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
-    echo "WARNING: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
+    echo "ERROR: jj workspace forget failed for worktree-$(sanitize_for_output "$WORKSPACE_NAME"): $(sanitize_for_output "${jj_err:0:500}") (run 'jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME")' manually to clean up)" >&2
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing

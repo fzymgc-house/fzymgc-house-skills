@@ -29,6 +29,8 @@ WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 WORKSPACE_CREATED=false
 
 cleanup_on_error() {
+  local _exit_code=$?
+  local CLEANUP_FAILED=false
   if [[ ! -d "$REPO_ROOT" ]]; then
     echo "WARNING: cleanup: REPO_ROOT '$(sanitize_for_output "$REPO_ROOT")' missing — VCS workspace cleanup skipped" >&2
   elif [[ -d "${REPO_ROOT}/.jj" ]]; then
@@ -67,6 +69,10 @@ cleanup_on_error() {
     echo "WARNING: cleanup failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   fi
   cleanup_empty_parent "$WORKTREE_PARENT"
+  if [[ "$CLEANUP_FAILED" == "true" ]] && [[ $_exit_code -eq 0 ]]; then
+    _exit_code=1
+  fi
+  exit $_exit_code
 }
 trap cleanup_on_error EXIT
 

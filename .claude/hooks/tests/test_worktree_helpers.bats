@@ -304,3 +304,12 @@ MOCK
   [[ "$output" != *$'\x1B'* ]]
   rm -rf "$non_git_dir" "$mock_bin"
 }
+
+@test "VCS detection preamble: outputs none when neither jj nor git is available" {
+  local empty_dir
+  empty_dir=$(mktemp -d)
+  run bash -c 'export PATH=/usr/sbin:/sbin; cd '"$empty_dir"' && if jj root >/dev/null 2>&1; then echo "jj"; elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"; else echo "none"; fi'
+  rm -rf "$empty_dir"
+  [ "$status" -eq 0 ]
+  [ "$output" = "none" ]
+}

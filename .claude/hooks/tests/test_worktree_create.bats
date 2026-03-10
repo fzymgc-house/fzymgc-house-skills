@@ -306,6 +306,7 @@ MOCK
   chmod a+w "${SANDBOX}/repos"
   rm -rf "$SANDBOX"
   [ "$status" -eq 1 ]
+  [[ "$output" == *"failed to create worktree parent directory"* ]]
 }
 
 @test "git path: cleans up empty parent on worktree add failure" {

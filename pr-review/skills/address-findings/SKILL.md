@@ -349,10 +349,10 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 3. Check for conflicts:
 
    ```bash
-   has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")' | tr -d '\n')
+   if jj log -r <change-id> --no-graph -T 'if(conflict, "CONFLICT", "OK")' 2>/dev/null | grep -q 'CONFLICT'; then
    ```
 
-   If `true`: run `jj undo` to revert. If `jj undo` fails, STOP and report
+   If conflict detected: run `jj undo` to revert. If `jj undo` fails, STOP and report
    STATUS: FAILED — "jj undo failed to revert conflicted rebase — manual
    recovery required". Do NOT re-queue; escalate to user.
    Verify:

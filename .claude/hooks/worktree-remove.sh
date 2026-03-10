@@ -148,10 +148,9 @@ if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
   echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   exit 1
 fi
-if $jj_forget_failed; then exit 1; fi
-
 # Clean up empty parent directory
 cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
 
 rm -f "$_root_err_file"
+if $jj_forget_failed; then exit 1; fi
 trap - EXIT

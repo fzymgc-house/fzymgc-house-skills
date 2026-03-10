@@ -133,6 +133,23 @@ teardown() {
   [[ "$output" == *"invalid"* ]]
 }
 
+@test "validate_safe_name: sanitizes control characters in label when name is invalid" {
+  run validate_safe_name "bad name" $'wt\x07label'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+  # Raw BEL character must not appear in output
+  [[ ! "$output" =~ $'\x07' ]]
+}
+
+@test "validate_safe_name: sanitizes control characters in both name and label output" {
+  run validate_safe_name $'bad\x01name' $'wt\x02label'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+  # Neither raw SOH nor raw STX should appear in output
+  [[ ! "$output" =~ $'\x01' ]]
+  [[ ! "$output" =~ $'\x02' ]]
+}
+
 # --- cleanup_empty_parent tests ---
 
 @test "cleanup_empty_parent: removes empty directory" {

@@ -337,6 +337,28 @@
       ]
     },
     {
+      "id": "B-JJ-WC1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "After committing a fix in a jj workspace, verify the committed state by checking the change description.",
+      "context": "Agent is in a jj workspace after running jj commit. Need to verify what was committed.",
+      "expected_output": "Agent should use @- (parent of working copy) to inspect the committed state, not @ (empty working copy)",
+      "assertions": [
+        {
+          "name": "uses-at-minus",
+          "description": "Uses @- revision for verification after commit",
+          "type": "contains",
+          "check": "@-"
+        },
+        {
+          "name": "does-not-use-bare-at",
+          "description": "Does not use bare @ for committed state verification",
+          "type": "manual",
+          "check": "Verify agent uses @- (parent) not @ (working copy) when inspecting committed changes"
+        }
+      ]
+    },
+    {
       "id": "B-FW1",
       "type": "behavioral",
       "skill": "address-findings",

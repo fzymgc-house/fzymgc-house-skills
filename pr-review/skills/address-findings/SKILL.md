@@ -289,9 +289,11 @@ Loop while open, non-deferred findings remain:
       Add a bead comment with the failure details:
 
       ```bash
-      bd comments add <work-bead-id> "STATUS: FAILED — VCS detection returned 'none'. \
-        Worktree directory removed. $(test -d .jj && echo 'WARNING: .jj/ exists — orphaned \
-        jj workspace metadata may remain. Run: jj workspace forget <name>')"
+      _fail_msg="STATUS: FAILED — VCS detection returned 'none'. Worktree directory removed."
+      if test -d .jj; then
+        _fail_msg="$_fail_msg WARNING: .jj/ exists — orphaned jj workspace metadata may remain. Run: jj workspace forget <name>"
+      fi
+      bd comments add <work-bead-id> "$_fail_msg"
       ```
 
    2. git: `git -C <worktree-path> branch --show-current`

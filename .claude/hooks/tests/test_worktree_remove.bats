@@ -365,6 +365,53 @@ MOCK
   [[ "$output" == *"failed to remove worktree directory"* ]]
 }
 
+@test "jj path: warns and skips forget when jj workspace list fails" {
+  setup_jj_worktree
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "Error: workspace list failed" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"jj workspace list failed"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+}
+
+@test "jj path: warns and skips forget when workspace not in list" {
+  setup_jj_worktree
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: abc123 (no description set)"
+  echo "worktree-other-wt: xyz789 (no description set)"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"not found in jj workspace list"* ]]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+}
+
 @test "infers repo root when jj root returns empty in pure-jj repo" {
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"

@@ -38,10 +38,16 @@ repositories that may use git or jj (Jujutsu).
      so the path pattern `*_worktrees/*` reliably identifies non-default workspaces.
 
      > **Known limitation:** The `*_worktrees/*` path check relies on the
-     > naming convention established by the WorktreeCreate hook. It may
-     > false-positive if the repo is inside a directory whose name contains
-     > `_worktrees`, or false-negative if the hook naming changes. This is
-     > an accepted trade-off since `jj workspace list` does not mark the
+     > naming convention established by the WorktreeCreate hook. A
+     > **false-positive** (agent incorrectly thinks it's in a worktree)
+     > occurs if the repo path contains a `_worktrees` component — relatively
+     > safe, the agent just reports FAILED unnecessarily. A **false-negative**
+     > (agent incorrectly thinks it's in the default workspace when it's
+     > actually in a worktree) occurs if the hook naming convention changes —
+     > more dangerous, since the worktree check is skipped entirely. Note:
+     > CLAUDE.md constrains repo *directory names* to not end in
+     > `_worktrees`, but intermediate path components are unconstrained. This
+     > is an accepted trade-off since `jj workspace list` does not mark the
      > current workspace (jj 0.39+).
 
      Do NOT rely on `jj workspace list` output to identify the current

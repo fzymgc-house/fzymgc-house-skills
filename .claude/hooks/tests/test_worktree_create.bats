@@ -586,6 +586,21 @@ MOCK
   [ -d "${REPO_ROOT}_worktrees/colo-wt" ]
 }
 
+@test "colocated jj+git: rejects repo directory name with spaces" {
+  UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
+  mkdir -p "$UNSAFE_ROOT"
+  cd "$UNSAFE_ROOT"
+  git init -q
+  git -c commit.gpgsign=false commit --allow-empty -m "init" -q
+  mkdir -p .jj
+  create_mock_jj
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"test-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid repository directory name"* ]]
+  cd /
+  rm -rf "$(dirname "$UNSAFE_ROOT")"
+}
+
 # --- jj lifecycle tests ---
 
 @test "git path: cleanup_on_error skips git worktree remove when WORKSPACE_CREATED is false" {

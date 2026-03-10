@@ -177,6 +177,12 @@ WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
 this automatically. Do NOT manually create worktrees — always use the
 hook system.
 
+**Naming constraint:** The repo directory name MUST NOT end in
+`_worktrees`. This suffix is used by the worktree-remove hook to infer
+the repo root from orphaned worktree paths, and a repo named
+`foo_worktrees` would create an ambiguous `foo_worktrees_worktrees/`
+parent directory.
+
 **VCS rule:** When jj is available (`jj root` succeeds), MUST use jj
 commands for ALL VCS operations — commits, workspaces, rebases, status,
 log, etc. This applies to colocated repos (both `.jj/` and `.git/`)

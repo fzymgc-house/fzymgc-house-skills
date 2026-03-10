@@ -29,8 +29,22 @@ _mock_workspace_add() {
 #     Examples:
 #       'git rev-parse --show-toplevel 2>/dev/null; exit $?'   (colocated repo)
 #       'echo "$JJ_REPO_ROOT"; exit 0'                         (pure jj repo)
+# $2: (optional) exact workspace name to accept for 'workspace forget'.
+#     When provided, only that exact name succeeds; any other name exits 1.
+#     When omitted, any worktree-* name succeeds (backward-compatible).
 _write_mock_jj() {
   local root_cmd="$1"
+  local expected_forget="${2:-}"
+  local forget_check
+  if [[ -n "$expected_forget" ]]; then
+    forget_check="if [[ \"\$1\" == \"workspace\" && \"\$2\" == \"forget\" && \"\$3\" == \"${expected_forget}\" ]]; then
+  exit 0
+fi"
+  else
+    forget_check='if [[ "$1" == "workspace" && "$2" == "forget" && "$3" == worktree-* ]]; then
+  exit 0
+fi'
+  fi
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
 ${_MOCK_WORKSPACE_ADD_BODY}
@@ -40,9 +54,7 @@ fi
 # workspace forget: production scripts always pass "worktree-${NAME}".
 # The worktree-* pattern ensures the mock rejects unexpected workspace names
 # with a clear error rather than falling through silently.
-if [[ "\$1" == "workspace" && "\$2" == "forget" && "\$3" == worktree-* ]]; then
-  exit 0
-fi
+${forget_check}
 if [[ "\$1" == "root" ]]; then
   ${root_cmd}
 fi
@@ -90,7 +102,31 @@ MOCK
 
 # Create a mock jj that logs all workspace add args to $REPO_ROOT/jj-args.log.
 # Used for verifying --name flag forwarding and other argument tests.
+# $1: (optional) exact workspace name to accept for 'workspace forget'.
+#     When provided, only that exact name succeeds and is logged to forget-arg.log.
+#     When omitted, any worktree-* name succeeds (backward-compatible).
 create_logging_jj_mock() {
+  local expected_forget="${1:-}"
+  local forget_check
+  if [[ -n "$expected_forget" ]]; then
+    forget_check="if [[ \"\$1\" == \"workspace\" && \"\$2\" == \"forget\" && \"\$3\" == \"${expected_forget}\" ]]; then
+  echo \"${expected_forget}\" > \"\${REPO_ROOT}/forget-arg.log\"; exit 0
+fi
+if [[ \"\$1\" == \"workspace\" && \"\$2\" == \"forget\" ]]; then
+  exit 1
+fi"
+  else
+    forget_check='if [[ "$1" == "workspace" && "$2" == "forget" ]]; then
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      worktree-*) echo "$arg" > "${REPO_ROOT}/forget-arg.log"; exit 0 ;;
+    esac
+  done
+  exit 1
+fi'
+  fi
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
@@ -102,16 +138,7 @@ if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
 fi
 # workspace forget: production scripts always pass "worktree-${NAME}".
 # Non-worktree-* arguments are rejected (exit 1) to catch unexpected invocations.
-if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
-  shift 2
-  for arg in "\$@"; do
-    case "\$arg" in
-      -*) ;;
-      worktree-*) echo "\$arg" > "\${REPO_ROOT}/forget-arg.log"; exit 0 ;;
-    esac
-  done
-  exit 1
-fi
+${forget_check}
 if [[ "\$1" == "root" ]]; then
   git rev-parse --show-toplevel 2>/dev/null
   exit \$?

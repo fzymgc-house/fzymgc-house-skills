@@ -601,6 +601,45 @@ MOCK
   rm -rf "$(dirname "$UNSAFE_ROOT")"
 }
 
+@test "colocated jj+git: fails gracefully when worktree path already exists" {
+  setup_jj
+  # Create a custom mock jj that fails when the target directory already exists
+  MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"
+  mkdir -p "$MOCK_JJ_BIN_DIR"
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+      -*) ;;
+      *)
+        if [[ -d "$arg" ]]; then
+          echo "error: Destination path already exists" >&2
+          exit 1
+        fi
+        mkdir -p "$arg" && exit 0
+        ;;
+    esac
+  done
+  exit 1
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+echo "ERROR: unexpected jj invocation: $*" >&2
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  # Pre-create the worktree path with content so jj workspace add fails
+  mkdir -p "${REPO_ROOT}_worktrees/preexist-wt"
+  echo "stale" > "${REPO_ROOT}_worktrees/preexist-wt/stale-file"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"preexist-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  # Script should fail (jj workspace add fails on non-empty target)
+  [ "$status" -ne 0 ]
+}
+
 # --- jj lifecycle tests ---
 
 @test "git path: cleanup_on_error skips git worktree remove when WORKSPACE_CREATED is false" {

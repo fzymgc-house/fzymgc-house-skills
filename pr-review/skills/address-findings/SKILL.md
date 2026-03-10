@@ -340,7 +340,7 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 2. Check for conflicts:
 
    ```bash
-   has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")')
+   has_conflict=$(jj log -r <change-id> --no-graph -T 'if(conflict, "true", "false")' | tr -d '\n')
    ```
 
    If `true`: run `jj undo` to revert. If `jj undo` fails, STOP and report

@@ -272,7 +272,9 @@ Loop while open, non-deferred findings remain:
       to inference if the path is accessible.
    1. Detect VCS in the main repo:
       `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`
-      — if `none`, mark FAILED and skip integration.
+      — if `none`, mark FAILED and skip integration. Clean up the worktree
+      directory: `rm -rf <worktree-path>` (VCS deregistration is not possible
+      without a working VCS, but the directory must still be removed).
    2. git: `git -C <worktree-path> branch --show-current`
    3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
       — reads the committed fix (parent of working copy). If it fails, mark FAILED.
@@ -297,6 +299,12 @@ bd comments add <finding-bead-id> "fix-worker reported PARTIAL: <DESCRIPTION>. R
 ```
 
 Do NOT attempt to cherry-pick or rebase a PARTIAL result.
+
+**Cleanup:** Even though integration is skipped, the fix-worker's worktree
+must be cleaned up to prevent resource leaks:
+
+- git: `git worktree remove ../<repo>_worktrees/<worktree-name>`
+- jj: `jj workspace forget worktree-<name> && rm -rf ../<repo>_worktrees/<worktree-name>`
 
 #### Git repos
 

@@ -505,6 +505,9 @@ MOCK
   done
   # Verify realpath is NOT in clean_bin
   [[ ! -x "$clean_bin/realpath" ]]
+  # Verify realpath cannot be found from the curated PATH
+  run env PATH="$clean_bin" bash -c 'command -v realpath'
+  [ "$status" -ne 0 ]
 
   ALT_ROOT=$(mktemp -d)
   cd "$ALT_ROOT"
@@ -535,6 +538,9 @@ MOCK
   done
   # Verify realpath is NOT in clean_bin
   [[ ! -x "$clean_bin/realpath" ]]
+  # Verify realpath cannot be found from the curated PATH
+  run env PATH="$clean_bin" bash -c 'command -v realpath'
+  [ "$status" -ne 0 ]
 
   ALT_ROOT=$(mktemp -d)
   cd "$ALT_ROOT"

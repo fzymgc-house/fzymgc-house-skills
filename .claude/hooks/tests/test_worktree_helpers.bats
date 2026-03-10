@@ -115,6 +115,24 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "validate_safe_name: rejects name with embedded newline" {
+  run validate_safe_name $'test\nname' "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects name with embedded tab" {
+  run validate_safe_name $'test\tname' "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
+@test "validate_safe_name: rejects name with C0 control character" {
+  run validate_safe_name $'test\x01name' "worktree name"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"invalid"* ]]
+}
+
 # --- cleanup_empty_parent tests ---
 
 @test "cleanup_empty_parent: removes empty directory" {

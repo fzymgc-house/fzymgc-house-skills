@@ -400,7 +400,7 @@
           "name": "explains-op-log",
           "description": "Explains that failed operations leave no op-log entry",
           "type": "contains",
-          "check": "once"
+          "check": "op log"
         }
       ]
     }

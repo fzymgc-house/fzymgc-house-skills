@@ -41,7 +41,12 @@ cleanup_on_error() {
         echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
       fi
     else
-      echo "WARNING: cleanup: .jj/ found but jj not installed — workspace metadata not cleaned; run 'jj workspace forget worktree-${NAME}' manually" >&2
+      if [[ "$WORKSPACE_CREATED" == "true" ]]; then
+        echo "ERROR: cleanup: .jj/ found but jj not installed — workspace 'worktree-${NAME}' was created and cannot be cleaned up; run 'jj workspace forget worktree-${NAME}' manually" >&2
+        CLEANUP_FAILED=true
+      else
+        echo "WARNING: cleanup: .jj/ found but jj not installed — workspace metadata not cleaned; run 'jj workspace forget worktree-${NAME}' manually" >&2
+      fi
     fi
   elif [[ "$WORKSPACE_CREATED" == "true" ]]; then
     # git repo: only remove worktree registration if it was actually created

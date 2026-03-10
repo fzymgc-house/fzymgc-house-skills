@@ -244,12 +244,14 @@ MOCK
   [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
 }
 
-@test "jj path: cleanup_on_error warns jj-not-in-PATH after successful workspace add" {
+@test "jj path: cleanup_on_error errors jj-not-in-PATH after successful workspace add" {
   # Exercises the branch at cleanup_on_error line 36: command -v jj returns false
   # inside cleanup for a .jj/ repo after a successful workspace add
   # (WORKSPACE_CREATED=true).  The scenario: jj is present when workspace add
   # runs (so it succeeds), then disappears from PATH before the post-add step
   # triggers the EXIT trap.
+  # When WORKSPACE_CREATED=true, the orphaned workspace is a data integrity
+  # issue, so the message is escalated to ERROR and CLEANUP_FAILED is set.
   #
   # Strategy: use a custom mock jj that succeeds on workspace add, then patch
   # the script so that "trap - EXIT" is replaced with a PATH-clearing step
@@ -285,8 +287,8 @@ MOCK
   [ "$status" -ne 0 ]
   # Workspace directory created by mock jj must be cleaned up
   [ ! -d "${REPO_ROOT}_worktrees/jj-gone-wt" ]
-  # WARNING about jj not installed must appear
-  [[ "$output" == *"WARNING: cleanup: .jj/ found but jj not installed"* ]]
+  # ERROR about jj not installed must appear (WORKSPACE_CREATED=true makes this a data integrity issue)
+  [[ "$output" == *"ERROR: cleanup: .jj/ found but jj not installed"* ]]
 }
 
 @test "jj path: fails gracefully when mkdir -p fails" {

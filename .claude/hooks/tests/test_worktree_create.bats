@@ -51,6 +51,27 @@ teardown() {
   [ -d "${REPO_ROOT}_worktrees/fix-worker-abc123" ]
 }
 
+@test "git path: succeeds when CWD is a subdirectory of repo root" {
+  mkdir -p "${REPO_ROOT}/src/subdir"
+  run bash -c 'cd '"${REPO_ROOT}/src/subdir"' && echo "{\"name\": \"sub-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ -d "${REPO_ROOT}_worktrees/sub-wt" ]
+  # Clean up
+  git -C "$REPO_ROOT" worktree remove "${REPO_ROOT}_worktrees/sub-wt" --force 2>/dev/null || true
+  rm -rf "${REPO_ROOT}_worktrees/sub-wt"
+}
+
+@test "jj path: succeeds when CWD is a subdirectory of repo root" {
+  setup_jj
+  create_mock_jj
+  mkdir -p "${REPO_ROOT}/src/subdir"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'cd '"${REPO_ROOT}/src/subdir"' && echo "{\"name\": \"sub-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"_worktrees/sub-jj-wt"* ]]
+  # Clean up
+  rm -rf "${REPO_ROOT}_worktrees/sub-jj-wt"
+}
+
 @test "rejects names with trailing dot" {
   run bash -c 'echo "{\"name\": \"agent-abc.\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]

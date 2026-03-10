@@ -102,8 +102,8 @@
         {
           "name": "does-not-use-git-status",
           "description": "Does not fall back to git status",
-          "type": "manual",
-          "check": "Verify no git status command was run"
+          "type": "not_contains",
+          "check": "git status"
         }
       ]
     },
@@ -124,8 +124,8 @@
         {
           "name": "no-staging",
           "description": "Does not use git add or jj track for regular files",
-          "type": "manual",
-          "check": "Verify no staging step before commit"
+          "type": "not_contains",
+          "check": "git add"
         }
       ]
     },

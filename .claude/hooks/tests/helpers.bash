@@ -51,6 +51,21 @@ ${_MOCK_WORKSPACE_ADD_BODY}
 if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   shift 2; _mock_workspace_add "\$@"
 fi
+# workspace list: dynamically list workspaces from _worktrees sibling directory
+# so the workspace-exists check in worktree-remove.sh passes.
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: abc123 (no description set)"
+  _repo=\$(pwd)
+  _base=\$(basename "\$_repo")
+  _parent=\$(dirname "\$_repo")
+  _wt_dir="\${_parent}/\${_base}_worktrees"
+  if [[ -d "\$_wt_dir" ]]; then
+    for _d in "\$_wt_dir"/*/; do
+      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): xyz789 (no description set)"
+    done
+  fi
+  exit 0
+fi
 # workspace forget: production scripts always pass "worktree-${NAME}".
 # The worktree-* pattern ensures the mock rejects unexpected workspace names
 # with a clear error rather than falling through silently.
@@ -135,6 +150,20 @@ if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
   shift 2
   echo "\$*" > "\${REPO_ROOT}/jj-args.log"
   _mock_workspace_add "\$@"
+fi
+# workspace list: dynamically list workspaces from _worktrees sibling directory
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: abc123 (no description set)"
+  _repo=\$(pwd)
+  _base=\$(basename "\$_repo")
+  _parent=\$(dirname "\$_repo")
+  _wt_dir="\${_parent}/\${_base}_worktrees"
+  if [[ -d "\$_wt_dir" ]]; then
+    for _d in "\$_wt_dir"/*/; do
+      [[ -d "\$_d" ]] && echo "worktree-\$(basename "\$_d"): xyz789 (no description set)"
+    done
+  fi
+  exit 0
 fi
 # workspace forget: production scripts always pass "worktree-${NAME}".
 # Non-worktree-* arguments are rejected (exit 1) to catch unexpected invocations.

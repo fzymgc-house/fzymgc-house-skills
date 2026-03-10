@@ -166,7 +166,26 @@ setup_jj_worktree() {
 
 @test "jj path: handles workspace forget failure" {
   setup_jj_worktree
-  create_always_failing_jj_mock
+  # Mock jj: root and workspace list succeed, but workspace forget fails
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: abc123"
+  echo "worktree-test-jj-wt: xyz789"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: workspace forget failed for some reason" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
@@ -241,6 +260,11 @@ setup_jj_worktree() {
 #!/bin/bash
 if [[ "\$1" == "root" ]]; then
   echo "${NON_GIT}"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: abc123 (no description set)"
+  echo "worktree-orphan-jj-wt: xyz789 (no description set)"
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then

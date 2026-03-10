@@ -59,5 +59,10 @@ allowed-tools:
    Report success: "Colocated jj repo initialized. Both `jj` and `git` commands work in this
    directory."
 
+   If step 4's `.gitignore` append failed, append this note to the success message:
+
+   > NOTE: `.jj/` was not added to `.gitignore` (see error above). Add it manually to prevent
+   > jj internals from being tracked by git.
+
    If `jj st` or `jj log` fails, report the error output and advise the user
    to check `jj log` manually — the init may have partially succeeded.

@@ -19,27 +19,23 @@ repositories that may use git or jj (Jujutsu).
      STATUS: FAILED -- "No VCS detected (not inside a jj or git repository)"
 2. **Verify location** *(worktree-isolated agents only — orchestrator
    skills running from the main repo root should skip this step):*
-   - jj: Compare the workspace root against the repo root to determine
-     if this is an isolated workspace:
+   - jj: Check whether the working directory is under a worktree workspace
+     (sibling `_worktrees/` directory) rather than the default workspace:
 
      ```bash
-     _ws_root=$(jj workspace root 2>/dev/null) || true
-     _repo_root=$(jj root 2>/dev/null) || true
-     if [[ "$_ws_root" == "$_repo_root" ]]; then
-       # STOP — this is the default workspace (equivalent to main)
-       echo "STATUS: FAILED -- Operating in default workspace. Dispatch to a worktree workspace instead."
-       exit 1
-     fi
+     _cwd=$(pwd -P 2>/dev/null) || _cwd=$(pwd)
+     case "$_cwd" in
+       *_worktrees/*)
+         ;; # Good — operating in a worktree workspace
+       *)
+         echo "STATUS: FAILED -- Operating in default workspace (pwd does not match *_worktrees/*). Dispatch to a worktree workspace instead."
+         exit 1
+         ;;
+     esac
      ```
 
-     `jj workspace root` returns the working-copy path of the current
-     workspace. In a worktree workspace it will differ from `jj root`
-     (the shared repo root); in the default workspace they are equal.
-
-     If `jj workspace root` is unavailable (older jj versions), fall back
-     to a path pattern match on `pwd` (e.g., `*_worktrees/*`), but note
-     that this approach can produce false positives if the repo path itself
-     contains `_worktrees/`.
+     Worktree workspaces are created in a sibling `<repo>_worktrees/` directory,
+     so the path pattern `*_worktrees/*` reliably identifies non-default workspaces.
 
      Do NOT rely on `jj workspace list` output to identify the current
      workspace; jj 0.39+ does not emit a `(current)` marker.

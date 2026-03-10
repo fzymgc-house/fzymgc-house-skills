@@ -244,8 +244,7 @@ Key behaviors:
 - `jj workspace list` shows all workspaces (format: `<name>: <change-id-prefix> <commit-id-prefix> <description>`,
   e.g. `default: rwoumssn 094ee48c (empty) (no description set)`); there is no
   `(current)` marker — identify the current workspace from the working directory
-  path (sibling worktrees use `<repo>_worktrees/<workspace-name>/`) or via
-  `jj workspace root`
+  path (sibling worktrees use `<repo>_worktrees/<workspace-name>/`)
 - Each workspace has its own working-copy commit (`@`)
 - Changes committed in one workspace are immediately visible in others
 - Use `jj workspace update-stale` if a workspace falls behind

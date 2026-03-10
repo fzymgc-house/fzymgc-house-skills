@@ -379,6 +379,12 @@
           "check": "Verify fix-worker uses jj commit/describe, NOT git commit"
         },
         {
+          "name": "uses-jj-commit-auto",
+          "description": "Response contains jj commit or jj describe",
+          "type": "contains",
+          "check": "jj commit"
+        },
+        {
           "name": "reports-vcs-jj",
           "description": "Reports VCS: jj in output",
           "type": "contains",
@@ -423,6 +429,12 @@
           "description": "Does not proceed with any file operations or code changes",
           "type": "manual",
           "check": "Verify agent stops immediately without editing, writing, or modifying any files"
+        },
+        {
+          "name": "no-edit-tool",
+          "description": "Does not use Edit tool in default workspace",
+          "type": "not_contains",
+          "check": "Edit"
         }
       ]
     },
@@ -467,6 +479,12 @@
           "description": "Recognizes that a failed operation needs no VCS cleanup",
           "type": "manual",
           "check": "Response should acknowledge that a failed jj operation leaves no op-log entry and needs no VCS cleanup (e.g., mentions re-queue, retry, or that there is nothing to undo)"
+        },
+        {
+          "name": "mentions-no-op-log",
+          "description": "Mentions that failed operation has no op-log entry",
+          "type": "contains",
+          "check": "no op"
         }
       ]
     },
@@ -615,10 +633,22 @@
           "check": "Verify review-gate does not flag jj diff headers or metadata lines as errors"
         },
         {
+          "name": "no-false-positive-auto",
+          "description": "Does not report FAIL status",
+          "type": "not_contains",
+          "check": "FAIL"
+        },
+        {
           "name": "identifies-added-lines",
           "description": "Correctly identifies the added MAX_RETRIES and TIMEOUT lines",
           "type": "manual",
           "check": "Verify review-gate recognizes the + prefixed lines as additions, not noise"
+        },
+        {
+          "name": "identifies-max-retries",
+          "description": "Identifies MAX_RETRIES as an added line",
+          "type": "contains",
+          "check": "MAX_RETRIES"
         }
       ]
     },

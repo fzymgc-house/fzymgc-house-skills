@@ -37,6 +37,13 @@ repositories that may use git or jj (Jujutsu).
      Worktree workspaces are created in a sibling `<repo>_worktrees/` directory,
      so the path pattern `*_worktrees/*` reliably identifies non-default workspaces.
 
+     > **Known limitation:** The `*_worktrees/*` path check relies on the
+     > naming convention established by the WorktreeCreate hook. It may
+     > false-positive if the repo is inside a directory whose name contains
+     > `_worktrees`, or false-negative if the hook naming changes. This is
+     > an accepted trade-off since `jj workspace list` does not mark the
+     > current workspace (jj 0.39+).
+
      Do NOT rely on `jj workspace list` output to identify the current
      workspace; jj 0.39+ does not emit a `(current)` marker.
    - git: Run `pwd` and `git branch --show-current` -- verify you are on

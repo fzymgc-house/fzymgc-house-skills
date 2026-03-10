@@ -722,6 +722,23 @@ MOCK
   rm -rf "$JJ_ROOT" "${JJ_ROOT}_worktrees" "$clean_bin"
 }
 
+@test "exits with error when mktemp fails at startup" {
+  # Create a mock mktemp that always fails so the _root_err_file creation at
+  # line 60 of worktree-remove.sh fails immediately, before the trap is set.
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "${mock_bin}/mktemp" << 'MOCK'
+#!/bin/bash
+echo "mktemp: cannot create temp file" >&2
+exit 1
+MOCK
+  chmod +x "${mock_bin}/mktemp"
+  PATH="${mock_bin}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"mktemp failed"* ]]
+  rm -rf "$mock_bin"
+}
+
 @test "POSIX fallback: errors when _worktrees parent dir does not exist" {
   # Combine the POSIX fallback path (no realpath) with the missing EXPECTED_PARENT
   # condition, so that the cd+pwd -P branch on line 87 of worktree-remove.sh is

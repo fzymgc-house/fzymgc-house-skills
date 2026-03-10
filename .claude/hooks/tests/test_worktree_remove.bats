@@ -739,6 +739,70 @@ MOCK
   rm -rf "$mock_bin"
 }
 
+@test "WARNING when secondary mktemp fails for jj workspace list" {
+  # Build a curated PATH with a counter-based mktemp mock:
+  # first call succeeds (for _root_err_file at line 60), second call fails
+  # (for _ws_list_err at line 128 inside the jj branch).
+  local clean_bin
+  clean_bin=$(mktemp -d)
+  local cmd cmd_path
+  for cmd in bash rm rmdir ls dirname basename cat mkdir chmod jq tr grep; do
+    cmd_path=$(command -v "$cmd" 2>/dev/null) || continue
+    ln -sf "$cmd_path" "$clean_bin/$cmd"
+  done
+
+  # Counter-based mktemp mock: call 1 succeeds, call 2+ fails
+  local counter_file
+  counter_file=$(mktemp)
+  echo "0" > "$counter_file"
+  local real_mktemp
+  real_mktemp=$(command -v mktemp)
+  cat > "${clean_bin}/mktemp" << MOCK
+#!/bin/bash
+count=\$(cat "$counter_file")
+count=\$((count + 1))
+echo "\$count" > "$counter_file"
+if [ "\$count" -eq 1 ]; then
+  # First call succeeds — create a real temp file
+  $real_mktemp "\$@"
+else
+  # Second call fails — triggers the _ws_list_err empty-string path
+  echo "mktemp: cannot create temp file" >&2
+  exit 1
+fi
+MOCK
+  chmod +x "${clean_bin}/mktemp"
+
+  # Set up jj repo with worktree directory
+  local JJ_ROOT
+  JJ_ROOT=$(mktemp -d)
+  mkdir -p "${JJ_ROOT}/.jj"
+  mkdir -p "${JJ_ROOT}_worktrees/mktemp-fail-test"
+
+  # jj mock: handles root only (workspace list is never reached when mktemp fails)
+  cat > "${clean_bin}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  echo "${JJ_ROOT}"
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "${clean_bin}/jj"
+
+  PATH="$clean_bin" run bash -c \
+    'cd '"$JJ_ROOT"' && echo "{\"path\": \"'"${JJ_ROOT}_worktrees/mktemp-fail-test"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+
+  # Should succeed (directory removed) but emit WARNING about mktemp failure
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mktemp failed"* ]]
+  [[ "$output" == *"skipping jj workspace list check"* ]]
+  # Directory should have been removed despite the mktemp failure
+  [ ! -d "${JJ_ROOT}_worktrees/mktemp-fail-test" ]
+
+  rm -rf "$JJ_ROOT" "${JJ_ROOT}_worktrees" "$clean_bin" "$counter_file"
+}
+
 @test "POSIX fallback: errors when _worktrees parent dir does not exist" {
   # Combine the POSIX fallback path (no realpath) with the missing EXPECTED_PARENT
   # condition, so that the cd+pwd -P branch on line 87 of worktree-remove.sh is

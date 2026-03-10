@@ -280,7 +280,10 @@ Loop while open, non-deferred findings remain:
       — if `none`, mark FAILED and skip integration. Clean up the worktree
       directory: `rm -rf <worktree-path>` (VCS deregistration is not possible
       without a working VCS, but the directory must still be removed).
+      If the main repo contains `.jj/`, warn the user: orphaned jj workspace
+      metadata may remain — run `jj workspace forget <name>` when jj is available.
    2. git: `git -C <worktree-path> branch --show-current`
+      — if the command fails or returns empty (e.g., detached HEAD), mark FAILED.
    3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
       — reads the committed fix (parent of working copy). If it fails, mark FAILED.
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"

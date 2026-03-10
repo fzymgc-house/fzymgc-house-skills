@@ -77,6 +77,10 @@ MOCK
 # Create a mock jj binary that handles common workspace operations.
 # Uses REPO_ROOT (must be set before calling).
 # Sets MOCK_JJ_BIN_DIR for PATH prepending.
+#
+# NOTE: This mock delegates 'jj root' to 'git rev-parse --show-toplevel',
+# making all tests using this mock implicitly colocated-repo tests.
+# For pure-jj isolation tests (no .git/), use create_pure_jj_mock instead.
 create_mock_jj() {
   _setup_mock_bin_dir
   _write_mock_jj 'git rev-parse --show-toplevel 2>/dev/null; exit $?'

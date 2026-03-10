@@ -277,14 +277,14 @@ MOCK
 }
 
 @test "detect_repo_root: sanitize_for_output strips control chars from jj error output" {
-  # Create a mock jj that writes control characters to stdout and exits 1
-  # (detect_repo_root captures stdout+stderr via 2>&1)
+  # Create a mock jj that writes control characters to stderr and exits 1
+  # (detect_repo_root captures stderr via temp file into jj_err)
   local mock_bin
   mock_bin=$(mktemp -d)
   cat > "$mock_bin/jj" << 'MOCK'
 #!/bin/bash
 if [[ "$1" == "root" ]]; then
-  printf 'path\x01with\x1B[31mcontrols\x1B[0m'
+  printf 'path\x01with\x1B[31mcontrols\x1B[0m' >&2
   exit 1
 fi
 exit 1

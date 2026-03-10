@@ -267,6 +267,47 @@ MOCK
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }
 
+@test "inferred root with .jj/ and jj installed: workspace forget called when detect_repo_root fails" {
+  NON_GIT=$(mktemp -d)
+  mkdir -p "${NON_GIT}/.jj"
+  mkdir -p "${NON_GIT}_worktrees/inferred-jj-wt"
+  # Mock jj: 'root' exits 1 so detect_repo_root fails and triggers path inference;
+  # 'workspace list' returns a line containing the workspace name;
+  # 'workspace forget' logs the workspace name and exits 0.
+  mkdir -p "${NON_GIT}/bin"
+  cat > "${NON_GIT}/bin/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  exit 1
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "worktree-inferred-jj-wt: some-change-id"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  shift 2
+  for arg in "\$@"; do
+    case "\$arg" in
+      -*) ;;
+      worktree-*) echo "\$arg" > "${NON_GIT}/forget-arg.log"; exit 0 ;;
+    esac
+  done
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${NON_GIT}/bin/jj"
+  # Run from /tmp so detect_repo_root fails (no git/jj repo in cwd)
+  PATH="${NON_GIT}/bin:/usr/bin:/bin" run bash -c 'cd /tmp && echo "{\"path\": \"'"${NON_GIT}_worktrees/inferred-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"WARNING"* ]]
+  [[ "$output" == *"inferred repo root"* ]]
+  [ ! -d "${NON_GIT}_worktrees/inferred-jj-wt" ]
+  [ -f "${NON_GIT}/forget-arg.log" ]
+  [[ "$(cat "${NON_GIT}/forget-arg.log")" == "worktree-inferred-jj-wt" ]]
+  rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
+}
+
 @test "errors when parent dir has no _worktrees suffix" {
   NON_GIT=$(mktemp -d)
   # Parent dir name does NOT end in _worktrees — fail-safe refuses removal

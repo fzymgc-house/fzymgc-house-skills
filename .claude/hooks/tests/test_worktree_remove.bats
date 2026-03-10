@@ -193,6 +193,37 @@ MOCK
   [[ "$output" == *"jj workspace forget failed"* ]]
 }
 
+@test "jj path: cleans up empty parent directory even when workspace forget fails" {
+  # Remove the git worktree from setup() so only test-jj-wt remains
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  rm -rf "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  setup_jj_worktree
+  # Mock jj: root and workspace list succeed, but workspace forget fails
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-test-jj-wt: kkmpptqz def45678 (empty) (no description set)"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: workspace forget failed for some reason" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
+  [ ! -d "${REPO_ROOT}_worktrees" ]
+}
+
 @test "rejects repo directory name with spaces" {
   UNSAFE_ROOT=$(mktemp -d)/repo\ with\ spaces
   mkdir -p "$UNSAFE_ROOT"

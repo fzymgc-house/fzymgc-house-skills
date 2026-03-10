@@ -228,6 +228,22 @@
       ]
     },
     {
+      "id": "JJ-B-WS1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "create a worktree for feature work named 'my-feature'",
+      "context": "Repo root contains .jj/ directory. Worktree hooks are configured.",
+      "expected_output": "Should use worktree-{NAME} prefix format for workspace names (e.g., worktree-my-feature)",
+      "assertions": [
+        {
+          "name": "uses-worktree-prefix",
+          "description": "Workspace name uses worktree- prefix convention",
+          "type": "contains",
+          "check": "worktree-"
+        }
+      ]
+    },
+    {
       "id": "JJ-B7",
       "type": "behavioral",
       "skill": "jujutsu",

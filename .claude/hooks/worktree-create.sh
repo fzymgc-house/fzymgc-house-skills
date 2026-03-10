@@ -41,7 +41,12 @@ cleanup_on_error() {
       # registered (jj workspace add may partially complete before failing).
       # Suppress errors since forget is best-effort here.
       if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${NAME}" 2>&1); then
-        echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
+        if [[ "$WORKSPACE_CREATED" == "true" ]]; then
+          echo "ERROR: cleanup: jj workspace forget worktree-${NAME} failed — workspace metadata may be leaked: $(sanitize_for_output "${jj_err:0:500}")" >&2
+          CLEANUP_FAILED=true
+        else
+          echo "WARNING: cleanup: jj workspace forget worktree-${NAME} failed (may not have been registered) — run manually if needed: $(sanitize_for_output "${jj_err:0:500}")" >&2
+        fi
       fi
     else
       if [[ "$WORKSPACE_CREATED" == "true" ]]; then

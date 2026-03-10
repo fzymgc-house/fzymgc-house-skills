@@ -36,3 +36,30 @@
     return 1
   fi
 }
+
+@test "all pr-review skills reference VCS detection preamble" {
+  local repo_root
+  repo_root="$(cd "$BATS_TEST_DIRNAME/../../.." && pwd)"
+
+  local skills_dir="$repo_root/pr-review/skills"
+  [ -d "$skills_dir" ] || {
+    echo "skills dir not found: $skills_dir" >&2
+    return 1
+  }
+
+  local missing=()
+  local skill_file
+  while IFS= read -r skill_file; do
+    if ! grep -q "vcs-detection-preamble" "$skill_file"; then
+      missing+=("$skill_file")
+    fi
+  done < <(find "$skills_dir" -name "SKILL.md" | sort)
+
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "The following pr-review skills are missing the VCS detection preamble reference (grep: 'vcs-detection-preamble'):" >&2
+    for f in "${missing[@]}"; do
+      echo "  $f" >&2
+    done
+    return 1
+  fi
+}

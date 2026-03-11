@@ -121,3 +121,20 @@ MOCK
   [[ "$output" == *"Verification failed"* ]]
   [[ "$output" == *"Check jj log manually"* ]]
 }
+
+@test "verification: reports error when jj log fails but jj st succeeds" {
+  MOCK_BIN="$TEST_DIR/mock_bin"
+  mkdir -p "$MOCK_BIN"
+  cat > "$MOCK_BIN/jj" << 'MOCK'
+#!/bin/bash
+if [ "$1" = "log" ]; then
+  echo "error: log command failed" >&2
+  exit 1
+fi
+exit 0
+MOCK
+  chmod +x "$MOCK_BIN/jj"
+  run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"error: log command failed"* ]]
+}

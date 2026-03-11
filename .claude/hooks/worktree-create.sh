@@ -113,13 +113,13 @@ else
   WORKSPACE_CREATED=true
 fi
 
-trap - EXIT
-
 # Install hooks in the new workspace (lefthook works in both VCS modes)
 if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   if ! lh_err=$(cd "$WORKTREE_PATH" && lefthook install 2>&1); then
     echo "WARNING: lefthook install failed in worktree: $(sanitize_for_output "${lh_err:0:500}")" >&2
   fi
 fi
+
+trap - EXIT
 
 echo "$WORKTREE_PATH"

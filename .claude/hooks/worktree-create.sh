@@ -76,6 +76,9 @@ cleanup_on_error() {
     CLEANUP_FAILED=true
   fi
   cleanup_empty_parent "$WORKTREE_PARENT"
+  # Exit code promotion: only override when original operation succeeded (_exit_code==0).
+  # When the original operation failed, preserve its exit code — cleanup failures are
+  # always surfaced via WARNING/ERROR on stderr regardless of exit code.
   if [[ "$CLEANUP_FAILED" == "true" ]] && [[ $_exit_code -eq 0 ]]; then
     _exit_code=1
   fi

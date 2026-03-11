@@ -161,12 +161,10 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing
+  git_remove_failed=false
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${git_err:0:500}")" >&2
-    if ! prune_err=$(git worktree prune 2>&1); then
-      echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain in .git/worktrees/" >&2
-      git_prune_failed=true
-    fi
+    git_remove_failed=true
   fi
 fi
 
@@ -176,6 +174,14 @@ fi
 if ! rm_err=$(rm -rf "$WORKTREE_PATH" 2>&1); then
   echo "ERROR: failed to remove worktree directory '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${rm_err:0:500}")" >&2
   exit 1
+fi
+# If git worktree remove failed, prune now that the directory is gone so git
+# can clean up the orphaned .git/worktrees/ metadata entry.
+if ${git_remove_failed:-false}; then
+  if ! prune_err=$(git worktree prune 2>&1); then
+    echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain in .git/worktrees/" >&2
+    git_prune_failed=true
+  fi
 fi
 # Clean up empty parent directory
 cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"

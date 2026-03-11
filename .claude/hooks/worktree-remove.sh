@@ -160,7 +160,6 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
 else
   # Standard git worktree cleanup — log errors instead of suppressing
-  git_remove_failed=false
   if ! git_err=$(git worktree remove --force "$WORKTREE_PATH" 2>&1); then
     echo "WARNING: git worktree remove failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${git_err:0:500}")" >&2
     git_remove_failed=true

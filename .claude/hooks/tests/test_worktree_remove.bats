@@ -610,10 +610,11 @@ MOCK
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-short" ]]
 }
 
-@test "jj workspace list without colon format skips forget with warning" {
-  # Documents the format dependency: grep -qF "worktree-NAME:" requires
+@test "jj workspace list without colon format still attempts forget" {
+  # Documents the format variation: grep -qF "worktree-NAME:" requires
   # a trailing colon in jj workspace list output. If jj changes its output
-  # format to omit the colon, the workspace is not found and forget is skipped.
+  # format to omit the colon, the workspace is not found in list output but
+  # forget is still attempted (with an INFO log message).
   setup_jj_worktree
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
@@ -627,14 +628,17 @@ if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
   echo "worktree-test-jj-wt ssttuuvv xyz78901 (empty) (no description set)"
   exit 0
 fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  exit 0
+fi
 exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"not found in jj workspace list"* ]]
-  [[ "$output" == *"skipping forget"* ]]
+  [[ "$output" == *"INFO"* ]]
+  [[ "$output" == *"not found in jj workspace list output"* ]]
+  [[ "$output" == *"attempting forget anyway"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 

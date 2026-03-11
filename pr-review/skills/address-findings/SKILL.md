@@ -26,7 +26,7 @@ allowed-tools:
   - "Bash(jj undo)"
   - "Bash(jj undo *)"
   - "Bash(jj describe *)"
-  - "Bash(jj new *)"
+  - "Bash(jj edit *)"
   - "Bash(jj commit *)"
   - "Bash(gh *)"
   - "Bash(bd --version)"
@@ -86,8 +86,8 @@ batch-reviewed, and closed.
    **Verify checkout (VCS-dependent):**
    - git: `git branch --show-current` — confirm you are on the PR branch
    - jj: Run `jj git fetch` — if it fails, stop and report the error.
-     Then run `jj new <pr-bookmark>` — if it fails, stop and report the error.
-     Verify with `jj log -r @- --no-graph -n 1`.
+     Then run `jj edit <pr-bookmark>` — if it fails, stop and report the error.
+     Verify with `jj log -r @ --no-graph -n 1`.
 
    If checkout fails:
    - **PR not found**: stop — "PR #N not found. Verify the number and try again."

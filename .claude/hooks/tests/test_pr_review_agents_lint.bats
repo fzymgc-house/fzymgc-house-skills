@@ -27,9 +27,15 @@
   while IFS= read -r agent_file; do
     # review-gate is read-only and receives a pre-built diff; no VCS commands needed
     [[ "$(basename "$agent_file")" == "review-gate.md" ]] && continue
-    # Check presence of the preamble path in an actionable "Follow ... procedure" context
-    if ! grep -qE 'Follow.*(procedure|startup procedure)' "$agent_file" || \
-       ! grep -qE '`pr-review/references/vcs-detection-preamble\.md`' "$agent_file"; then
+    # Proximity check: "Follow ... procedure" and the preamble path must appear
+    # within 10 lines of each other (prevents false-pass from unrelated matches).
+    if ! awk '
+      /Follow.*(procedure|startup procedure)/ { follow_line = NR }
+      /`pr-review\/references\/vcs-detection-preamble\.md`/ {
+        if (follow_line && NR - follow_line <= 10) { found = 1; exit }
+      }
+      END { exit !found }
+    ' "$agent_file"; then
       missing+=("$agent_file")
     fi
   done < <(find "$agents_dir" -maxdepth 1 -name "*.md" | sort)
@@ -56,9 +62,15 @@
   local missing=()
   local skill_file
   while IFS= read -r skill_file; do
-    # Check presence of the preamble path in an actionable "Follow ... procedure" context
-    if ! grep -qE 'Follow.*(procedure|startup procedure)' "$skill_file" || \
-       ! grep -qE '`pr-review/references/vcs-detection-preamble\.md`' "$skill_file"; then
+    # Proximity check: "Follow ... procedure" and the preamble path must appear
+    # within 10 lines of each other (prevents false-pass from unrelated matches).
+    if ! awk '
+      /Follow.*(procedure|startup procedure)/ { follow_line = NR }
+      /`pr-review\/references\/vcs-detection-preamble\.md`/ {
+        if (follow_line && NR - follow_line <= 10) { found = 1; exit }
+      }
+      END { exit !found }
+    ' "$skill_file"; then
       missing+=("$skill_file")
     fi
   done < <(find "$skills_dir" -name "SKILL.md" | sort)

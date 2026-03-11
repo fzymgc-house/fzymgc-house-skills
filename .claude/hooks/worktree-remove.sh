@@ -123,6 +123,7 @@ fi
 
 jj_forget_failed=false
 git_prune_failed=false
+git_remove_failed=false
 if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then

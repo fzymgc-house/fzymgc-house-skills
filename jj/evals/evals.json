@@ -54,7 +54,7 @@
     },
     {
       "id": "JJ-T7",
-      "type": "triggering",
+      "type": "negative",
       "prompt": "run /jj-init to set up jujutsu in this repo",
       "expected_skill": null,
       "expected_output": "/jj-init is a slash command, not a skill — should invoke directly",

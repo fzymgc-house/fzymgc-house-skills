@@ -299,6 +299,18 @@
           "description": "Reports no VCS detected when neither .jj/ nor .git/ exists",
           "type": "manual",
           "check": "Verify agent reports no VCS or asks user to initialize"
+        },
+        {
+          "name": "no-jj-commands",
+          "description": "Does not run jj commands when no VCS is present",
+          "type": "not_contains",
+          "check": "jj st"
+        },
+        {
+          "name": "mentions-no-vcs",
+          "description": "Mentions that no VCS was detected",
+          "type": "contains",
+          "check": "no"
         }
       ]
     },

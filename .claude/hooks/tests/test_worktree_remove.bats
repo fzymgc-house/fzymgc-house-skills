@@ -728,14 +728,20 @@ MOCK
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-jj-wt" ]]
 }
 
+# bats test_tags=posix-fallback,may-skip
 @test "POSIX fallback: removes worktree when realpath unavailable" {
-  # Manual-only test: exercises cd+pwd-P fallback paths (lines 30-36 and 81-83
-  # of worktree-remove.sh) on systems where realpath is genuinely absent.
-  # CI coverage note: this test ALWAYS self-skips on ubuntu-latest (realpath
-  # in /usr/bin). The POSIX fallback code path IS covered in CI by the companion
-  # test "POSIX fallback: removes worktree when realpath absent from PATH" below,
-  # which uses a curated PATH excluding realpath.
-  command -v realpath &>/dev/null && skip "realpath is available — POSIX fallback cannot be tested on this system"
+  # Exercises cd+pwd-P fallback paths (lines 30-36 and 81-83 of worktree-remove.sh)
+  # on systems where realpath is genuinely absent from the environment.
+  #
+  # Skip behaviour: this test self-skips when realpath is present (ubuntu-latest,
+  # macOS). That is expected — un-skipping on a new platform is GOOD: it means
+  # we get real coverage there and the test body uses only POSIX-standard tools
+  # so it should pass on any platform without realpath.
+  #
+  # CI coverage: the POSIX fallback code path IS exercised in CI by the companion
+  # test "POSIX fallback: removes worktree when realpath absent from PATH", which
+  # uses a curated PATH that excludes realpath and therefore never skips.
+  command -v realpath &>/dev/null && skip "realpath is available — POSIX fallback cannot be tested on this system (see companion test)"
 
   ALT_ROOT=$(mktemp -d)
   cd "$ALT_ROOT"

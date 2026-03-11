@@ -310,7 +310,7 @@
           "name": "mentions-no-vcs",
           "description": "Mentions that no VCS was detected",
           "type": "contains",
-          "check": "no"
+          "check": "no VCS"
         }
       ]
     },

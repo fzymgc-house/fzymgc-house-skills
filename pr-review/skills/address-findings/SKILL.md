@@ -82,11 +82,13 @@ batch-reviewed, and closed.
    **Detect VCS first, then check out:**
 
    ```bash
-   if test -d .jj; then
+   USE_VCS=$(if jj root >/dev/null 2>&1; then echo jj; elif git rev-parse --git-dir >/dev/null 2>&1; then echo git; else echo none; fi)
+   if [[ "$USE_VCS" == "jj" ]]; then
      # jj repo (including colocated jj+git): never use git checkout
-     jj git fetch
-     BOOKMARK=$(gh pr view <number> --json headRefName --jq .headRefName)
-     jj edit $BOOKMARK
+     jj git fetch || { echo "ERROR: jj git fetch failed"; exit 1; }
+     BOOKMARK=$(gh pr view <number> --json headRefName --jq .headRefName) || { echo "ERROR: gh pr view failed"; exit 1; }
+     [[ -n "$BOOKMARK" ]] || { echo "ERROR: headRefName was empty"; exit 1; }
+     jj edit "$BOOKMARK" || { echo "ERROR: jj edit failed"; exit 1; }
      # Verify: @ is the target commit after jj edit
      jj log -r @ --no-graph -n 1
    else
@@ -97,8 +99,11 @@ batch-reviewed, and closed.
    ```
 
    If checkout fails:
-   - **PR not found**: stop — "PR #N not found. Verify the number and try again."
+   - **PR not found** (GraphQL/404 error): stop — "PR #N not found. Verify the number and try again."
    - **Dirty working tree**: commit or stash, then retry.
+   - **jj git fetch failed**: network or auth error — report and stop.
+   - **Empty bookmark**: `gh pr view` returned empty headRefName — report and stop.
+   - **jj edit failed**: bookmark not found or revision error — report and stop.
    - **Other error**: report and stop.
 
    **Do NOT proceed on `main`.**

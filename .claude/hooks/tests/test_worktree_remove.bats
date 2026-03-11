@@ -54,10 +54,10 @@ teardown() {
   cat > "${REPO_ROOT}/bin/git" <<GITEOF
 #!/bin/bash
 case "\$1:\$2" in
-  rev-parse:*) exec ${real_git} "\$@" ;;
+  rev-parse:*) exec "${real_git}" "\$@" ;;
   worktree:remove) echo "mock remove failure" >&2; exit 1 ;;
   worktree:prune) echo "mock prune failure" >&2; exit 1 ;;
-  *) exec ${real_git} "\$@" ;;
+  *) exec "${real_git}" "\$@" ;;
 esac
 GITEOF
   chmod +x "${REPO_ROOT}/bin/git"
@@ -164,7 +164,7 @@ setup_jj_only_worktree() {
 }
 
 # This test also covers the final exit code path (worktree-remove.sh end):
-# jj_forget_failed=true from jj-not-installed → exit 0 (metadata-only failure)
+# jj_forget_failed=true from jj-not-installed → exit 1 (leaked workspace metadata)
 @test "jj path: warns and exits 1 when jj not installed (directory still removed)" {
   setup_jj_worktree
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'

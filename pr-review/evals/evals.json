@@ -528,7 +528,7 @@
           "name": "cleanup-worktree",
           "description": "Recommends cleaning up the unusable worktree",
           "type": "contains",
-          "check": "clean up OR remove OR delete"
+          "check": "rm -rf"
         }
       ]
     },
@@ -544,13 +544,13 @@
           "name": "surfaces-error-to-user",
           "description": "Reports the WorktreeCreate hook failure to the user rather than stalling silently",
           "type": "contains",
-          "check": "already exists OR worktree path OR collision"
+          "check": "already exists"
         },
         {
           "name": "suggests-cleanup",
           "description": "Suggests removing or cleaning up the stale worktree path",
           "type": "contains",
-          "check": "clean up OR remove OR delete OR rm -rf"
+          "check": "rm -rf"
         },
         {
           "name": "no-silent-stall",

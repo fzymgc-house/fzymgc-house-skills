@@ -128,6 +128,15 @@ setup_jj_worktree() {
   mkdir -p "${REPO_ROOT}_worktrees/test-jj-wt"
 }
 
+# Removes the git worktree created by setup() before adding jj state,
+# so tests that assert [ ! -d ${REPO_ROOT}_worktrees ] after removing only
+# the jj worktree are not confused by the lingering test-wt directory.
+setup_jj_only_worktree() {
+  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  rm -rf "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
+  setup_jj_worktree
+}
+
 @test "jj path: removes workspace directory" {
   setup_jj_worktree
   create_mock_jj
@@ -137,10 +146,7 @@ setup_jj_worktree() {
 }
 
 @test "jj path: cleans up empty parent directory after removal" {
-  # Remove the git worktree from setup() so only test-jj-wt remains
-  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
-  rm -rf "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
-  setup_jj_worktree
+  setup_jj_only_worktree
   create_mock_jj
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh'
   [ "$status" -eq 0 ]
@@ -222,10 +228,7 @@ MOCK
 }
 
 @test "jj path: cleans up empty parent directory even when workspace forget fails" {
-  # Remove the git worktree from setup() so only test-jj-wt remains
-  git -C "$REPO_ROOT" worktree remove --force "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
-  rm -rf "${REPO_ROOT}_worktrees/test-wt" 2>/dev/null || true
-  setup_jj_worktree
+  setup_jj_only_worktree
   # Mock jj: root and workspace list succeed, but workspace forget fails
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK

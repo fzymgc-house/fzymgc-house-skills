@@ -443,6 +443,28 @@
           "check": "op log"
         }
       ]
+    },
+    {
+      "id": "JJ-B-CLEANUP1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "the worktree creation just failed with an ERROR about leaked workspace metadata",
+      "context": "worktree-create.sh returned non-zero with stderr containing: ERROR: cleanup: jj workspace forget worktree-my-feature failed — workspace metadata may be leaked",
+      "expected_output": "Should surface the error and instruct the user to run 'jj workspace forget worktree-my-feature' manually to recover",
+      "assertions": [
+        {
+          "name": "tells-user-forget-command",
+          "description": "Agent tells user to run jj workspace forget",
+          "type": "contains",
+          "check": "jj workspace forget"
+        },
+        {
+          "name": "indicates-manual-recovery",
+          "description": "Agent indicates that manual recovery is needed",
+          "type": "contains",
+          "check": "manual"
+        }
+      ]
     }
   ]
 }

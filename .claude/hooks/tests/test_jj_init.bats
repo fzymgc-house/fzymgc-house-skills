@@ -73,3 +73,51 @@ GITIGNORE_FRAGMENT='grep -qxF '"'"'.jj/'"'"' .gitignore 2>/dev/null || {
   run grep -qF '.jj/' .gitignore
   [ "$status" -ne 0 ]
 }
+
+# The verification fragment from jj-init.md step 5:
+#   Run jj st and jj log --no-graph -n 3; report error and advise user if either fails.
+VERIFICATION_FRAGMENT='
+jj_rc=0; jj_err=""
+if ! jj_err=$(jj st 2>&1); then
+  jj_rc=1
+fi
+if ! log_err=$(jj log --no-graph -n 3 2>&1); then
+  jj_err="${jj_err:+$jj_err; }${log_err}"
+  jj_rc=1
+fi
+if [ "$jj_rc" -ne 0 ]; then
+  echo "Verification failed: ${jj_err}. Check jj log manually — init may have partially succeeded."
+fi
+exit $jj_rc
+'
+
+@test "verification: succeeds when jj st and jj log work" {
+  MOCK_BIN="$TEST_DIR/mock_bin"
+  mkdir -p "$MOCK_BIN"
+  cat > "$MOCK_BIN/jj" << 'MOCK'
+#!/bin/bash
+exit 0
+MOCK
+  chmod +x "$MOCK_BIN/jj"
+  run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "verification: reports error when jj st fails" {
+  MOCK_BIN="$TEST_DIR/mock_bin"
+  mkdir -p "$MOCK_BIN"
+  cat > "$MOCK_BIN/jj" << 'MOCK'
+#!/bin/bash
+if [ "$1" = "st" ]; then
+  echo "error: not in a jj repo" >&2
+  exit 1
+fi
+exit 0
+MOCK
+  chmod +x "$MOCK_BIN/jj"
+  run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Verification failed"* ]]
+  [[ "$output" == *"Check jj log manually"* ]]
+}

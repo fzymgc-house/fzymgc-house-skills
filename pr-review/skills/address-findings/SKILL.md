@@ -79,15 +79,22 @@ batch-reviewed, and closed.
    from the orchestrator's current HEAD — if you are on `main`, agents will
    not see PR-specific code.
 
-   ```bash
-   gh pr checkout <number>
-   ```
+   **Detect VCS first, then check out:**
 
-   **Verify checkout (VCS-dependent):**
-   - git: `git branch --show-current` — confirm you are on the PR branch
-   - jj: Run `jj git fetch` — if it fails, stop and report the error.
-     Then run `jj edit <pr-bookmark>` — if it fails, stop and report the error.
-     Verify with `jj log -r @- --no-graph -n 1`.
+   ```bash
+   if test -d .jj; then
+     # jj repo (including colocated jj+git): never use git checkout
+     jj git fetch
+     BOOKMARK=$(gh pr view <number> --json headRefName --jq .headRefName)
+     jj edit $BOOKMARK
+     # Verify: @ is the target commit after jj edit
+     jj log -r @ --no-graph -n 1
+   else
+     # git-only repo
+     gh pr checkout <number>
+     git branch --show-current
+   fi
+   ```
 
    If checkout fails:
    - **PR not found**: stop — "PR #N not found. Verify the number and try again."

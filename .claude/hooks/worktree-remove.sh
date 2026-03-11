@@ -135,10 +135,10 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
     _attempt_forget=true
   elif ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then
     _ws_err_msg=$(cat "$_ws_list_err" 2>/dev/null)
-    rm -f "$_ws_list_err"
+    rm -f "$_ws_list_err"; _ws_list_err=''
     echo "WARNING: jj workspace list failed: $(sanitize_for_output "${_ws_err_msg:-(no details)}") — attempting workspace forget anyway for worktree-$(sanitize_for_output "$WORKSPACE_NAME")" >&2
   else
-    rm -f "$_ws_list_err"
+    rm -f "$_ws_list_err"; _ws_list_err=''
     if ! grep -qF "worktree-${WORKSPACE_NAME}:" <<< "$_jj_ws_list"; then
       echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list — skipping forget" >&2
       _attempt_forget=false

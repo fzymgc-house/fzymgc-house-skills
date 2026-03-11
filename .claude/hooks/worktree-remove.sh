@@ -188,4 +188,8 @@ cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
 rm -f "$_root_err_file"
 [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"
 trap - EXIT
+# Exit 0 even if VCS metadata cleanup (jj workspace forget / git worktree prune) failed.
+# The primary goal of this hook is directory removal, which already succeeded above.
+# A leaked jj workspace entry or stale git ref is recoverable manually and does not
+# constitute a hook failure from the caller's perspective. (Intentional per mxm.1.)
 if $jj_forget_failed || $git_prune_failed; then exit 0; fi

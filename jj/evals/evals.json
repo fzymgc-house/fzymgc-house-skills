@@ -208,6 +208,12 @@
           "description": "Does not warn against or block read-only git commands in colocated repo",
           "type": "manual",
           "check": "Verify no warning about using git log in jj repo; may suggest jj log as alternative but does not refuse"
+        },
+        {
+          "name": "no-warning-emitted-auto",
+          "description": "Automated check that no WARNING is emitted for read-only git log",
+          "type": "not_contains",
+          "check": "WARNING"
         }
       ]
     },
@@ -224,6 +230,12 @@
           "description": "Handles workspace name collision gracefully",
           "type": "manual",
           "check": "Verify the agent detects or handles workspace name collision"
+        },
+        {
+          "name": "reports-collision-auto",
+          "description": "Automated check that response mentions collision or already exists",
+          "type": "contains",
+          "check": "already exists"
         }
       ]
     },

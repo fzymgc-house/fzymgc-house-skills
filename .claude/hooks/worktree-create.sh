@@ -99,7 +99,8 @@ if [[ -d "${REPO_ROOT}/.jj" ]]; then
   fi
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
-    if echo "$jj_out" | grep -qiE 'unexpected argument.*--name|unrecognized.*--name|unknown.*--name'; then
+    if echo "$jj_out" | grep -qiF -- '--name' && \
+       echo "$jj_out" | grep -qiE 'unexpected|unrecognized|unknown'; then
       echo "ERROR: jj version too old — 'jj workspace add --name' not supported. Update jj." >&2
     else
       echo "ERROR: jj workspace add failed: $(sanitize_for_output "${jj_out:0:500}")" >&2

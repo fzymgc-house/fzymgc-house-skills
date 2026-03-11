@@ -122,9 +122,9 @@ if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace cleanup — forget workspace metadata before removing directory.
-  # Strategy: use `jj workspace list` as a pre-check when possible. If the
-  # workspace isn't in the list, skip forget. If the list itself fails, attempt
-  # forget anyway (it handles "no workspace named" idempotently).
+  # Strategy: always attempt `jj workspace forget`. Use `jj workspace list`
+  # as an informational check only — if the workspace isn't listed, log a
+  # note but still attempt forget (it handles "no workspace named" idempotently).
   _ws_list_err=$(mktemp 2>/dev/null) || true
   _attempt_forget=true
   if ! command -v jj &>/dev/null; then
@@ -140,8 +140,7 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   else
     rm -f "$_ws_list_err"; _ws_list_err=''
     if ! grep -qF "worktree-${WORKSPACE_NAME}:" <<< "$_jj_ws_list"; then
-      echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list — skipping forget" >&2
-      _attempt_forget=false
+      echo "INFO: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list output — attempting forget anyway" >&2
     fi
   fi
   if [[ "$_attempt_forget" == true ]]; then

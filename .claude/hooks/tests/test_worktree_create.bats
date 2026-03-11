@@ -224,6 +224,36 @@ MOCK
   [ -f "${REPO_ROOT}/forget-called.log" ]
 }
 
+@test "jj path: cleanup_on_error warns when jj workspace forget fails with WORKSPACE_CREATED=false" {
+  # Exercises the WARNING (not ERROR) branch at worktree-create.sh line 48:
+  # when jj workspace add fails (WORKSPACE_CREATED stays false) AND
+  # jj workspace forget also fails, emit WARNING (not ERROR/CLEANUP_FAILED).
+  setup_jj
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "workspace" && "\$2" == "add" ]]; then
+  echo "error: workspace add failed" >&2
+  exit 1
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: No workspace named 'worktree-warn-forget-wt'" >&2
+  exit 1
+fi
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
+    'echo "{\"name\": \"warn-forget-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  # WARNING must appear (WORKSPACE_CREATED=false → not a data integrity error)
+  [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
+}
+
 @test "jj path: cleanup_on_error calls jj workspace forget on post-add failure" {
   setup_jj
   create_logging_jj_mock

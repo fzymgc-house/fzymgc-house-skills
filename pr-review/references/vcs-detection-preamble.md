@@ -32,30 +32,31 @@ repositories that may use git or jj (Jujutsu).
 
      ```bash
      _cwd=$(pwd -P 2>/dev/null) || _cwd=$(pwd)
-     case "$_cwd" in
-       *_worktrees/*)
-         ;; # Good — operating in a worktree workspace
-       *)
-         echo "STATUS: FAILED -- Operating in default workspace (pwd does not match *_worktrees/*). Dispatch to a worktree workspace instead."
-         exit 1
-         ;;
+     _parent_dir=$(basename "$(dirname "$_cwd")")
+     _in_worktree=false
+     case "$_parent_dir" in
+       *_worktrees) _in_worktree=true ;;
      esac
+     if [[ "$_in_worktree" != "true" ]]; then
+       echo "STATUS: FAILED -- Operating in default workspace (direct parent '$_parent_dir' does not end in _worktrees). Dispatch to a worktree workspace instead."
+       exit 1
+     fi
      ```
 
-     Worktree workspaces are created in a sibling `<repo>_worktrees/` directory,
-     so the path pattern `*_worktrees/*` reliably identifies non-default workspaces.
+     Worktree workspaces are created in a sibling `<repo>_worktrees/` directory.
+     The check verifies that the **direct parent directory** ends with `_worktrees`,
+     so a repo at `/home/user/code_worktrees/myrepo` (parent: `myrepo`) does not
+     trigger a false positive.
 
-     > **Known limitation:** The `*_worktrees/*` path check relies on the
+     > **Known limitation:** The `*_worktrees` parent-directory check relies on the
      > naming convention established by the WorktreeCreate hook. A
      > **false-positive** (agent incorrectly thinks it's in a worktree)
-     > occurs if the repo path contains a `_worktrees` component — relatively
-     > safe, the agent just reports FAILED unnecessarily. A **false-negative**
-     > (agent incorrectly thinks it's in the default workspace when it's
-     > actually in a worktree) occurs if the hook naming convention changes —
-     > more dangerous, since the worktree check is skipped entirely. Note:
-     > CLAUDE.md constrains repo *directory names* to not end in
-     > `_worktrees`, but intermediate path components are unconstrained. This
-     > is an accepted trade-off since `jj workspace list` does not mark the
+     > occurs only if the agent's direct parent directory happens to end with
+     > `_worktrees` for unrelated reasons — uncommon in practice. A
+     > **false-negative** (agent incorrectly thinks it's in the default workspace
+     > when it's actually in a worktree) occurs if the hook naming convention
+     > changes — more dangerous, since the worktree check is skipped entirely.
+     > This is an accepted trade-off since `jj workspace list` does not mark the
      > current workspace (jj 0.39+).
 
      Do NOT rely on `jj workspace list` output to identify the current

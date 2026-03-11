@@ -52,10 +52,11 @@ detect_repo_root() {
   fi
   local jj_attempted=false
   local mktemp_failed=false
+  local jj_out jj_err="(not run)" jj_rc=1
   # git rev-parse failed — try jj root for non-colocated repos
   if command -v jj &>/dev/null; then
     jj_attempted=true
-    local jj_out jj_err jj_rc=0
+    jj_rc=0
     local _jj_err_file
     _jj_err_file=$(mktemp) || {
       echo "WARNING: mktemp failed — cannot capture jj stderr; skipping jj root check" >&2

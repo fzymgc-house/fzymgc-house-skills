@@ -263,6 +263,27 @@ MOCK
   rm -rf "$non_git_dir" "$mock_bin"
 }
 
+@test "detect_repo_root: falls through to error when jj root returns empty string" {
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  exit 0
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  local non_git_dir
+  non_git_dir=$(mktemp -d)
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"jj root returned empty output"* ]]
+  rm -rf "$non_git_dir" "$mock_bin"
+}
+
 @test "detect_repo_root: git rev-parse takes priority over jj root" {
   # Set up a git repo
   local git_repo

@@ -85,17 +85,18 @@ cleanup_on_error() {
   exit $_exit_code
 }
 trap cleanup_on_error EXIT
+if [[ -d "${REPO_ROOT}/.jj" ]] && ! command -v jj &>/dev/null; then
+  echo "ERROR: .jj/ directory found but jj is not installed" >&2
+  exit 1
+fi
+
 mkdir -p "$WORKTREE_PARENT" || {
   echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
   exit 1
 }
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace — verify jj is installed
-  if ! command -v jj &>/dev/null; then
-    echo "ERROR: .jj/ directory found but jj is not installed" >&2
-    exit 1
-  fi
+  # jj workspace — jj availability already verified above
   if ! jj_out=$(cd "$REPO_ROOT" && jj workspace add "$WORKTREE_PATH" \
     --name "worktree-${NAME}" 2>&1); then
     if echo "$jj_out" | grep -qiF -- '--name' && \

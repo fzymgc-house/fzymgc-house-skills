@@ -58,6 +58,9 @@ repositories that may use git or jj (Jujutsu).
      _branch=$(git branch --show-current 2>/dev/null) || {
        echo "STATUS: FAILED -- git branch check failed"; exit 1
      }
+     [[ -z "$_branch" ]] && {
+       echo "STATUS: FAILED -- detached HEAD in git worktree — expected branch worktree/*"; exit 1
+     }
      case "$_branch" in
        worktree/*) ;; # Good — operating on a worktree branch
        *)

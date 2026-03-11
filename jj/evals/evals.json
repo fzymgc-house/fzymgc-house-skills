@@ -404,6 +404,12 @@
           "description": "Does not execute the step 4 gitignore modification shell command",
           "type": "not_contains",
           "check": "grep -qxF"
+        },
+        {
+          "name": "no-verification-run",
+          "description": "Does not proceed to the verification step after init failure",
+          "type": "not_contains",
+          "check": "jj st"
         }
       ]
     },

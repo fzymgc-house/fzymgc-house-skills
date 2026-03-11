@@ -147,6 +147,19 @@ setup_jj() {
   [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-named-wt"* ]]
 }
 
+@test "jj path: workspace name with hyphens and underscores is preserved in --name arg" {
+  # Verify names containing valid but potentially shell-significant characters
+  # (consecutive hyphens, underscores) survive the jj invocation intact.
+  # validate_safe_name allows [a-zA-Z0-9_.-] so "fix_worker--v2" is valid.
+  setup_jj
+  create_logging_jj_mock
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"fix_worker--v2\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh'
+  [ "$status" -eq 0 ]
+  [ -d "${REPO_ROOT}_worktrees/fix_worker--v2" ]
+  # The workspace name passed to jj must be exactly "worktree-fix_worker--v2"
+  [[ "$(cat "${REPO_ROOT}/jj-args.log")" == *"--name worktree-fix_worker--v2"* ]]
+}
+
 @test "jj path: cleans up worktree and parent on workspace add failure" {
   setup_jj
   create_failing_jj_mock

@@ -342,6 +342,12 @@
           "description": "Updates .gitignore for jj",
           "type": "contains",
           "check": ".gitignore"
+        },
+        {
+          "name": "runs-verification",
+          "description": "Runs jj st to verify initialization succeeded",
+          "type": "contains",
+          "check": "jj st"
         }
       ]
     },

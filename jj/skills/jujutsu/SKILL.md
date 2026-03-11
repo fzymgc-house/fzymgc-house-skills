@@ -2,8 +2,9 @@
 name: jujutsu
 description: >-
   Jujutsu (jj) VCS workflow guidance. MUST activate on ANY VCS
-  operation when `.jj/` exists in the repo root. Use when the user
-  mentions jj, jujutsu, or when a colocated jj repo is detected.
+  operation when `jj root` succeeds or when `.jj/` exists in the repo
+  root. Use when the user mentions jj, jujutsu, or when a colocated jj
+  repo is detected.
 allowed-tools:
   - "Bash(jj log)"
   - "Bash(jj log *)"

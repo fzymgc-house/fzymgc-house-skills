@@ -54,6 +54,12 @@ teardown() {
   [ "$result" = "hello" ]
 }
 
+@test 'sanitize_for_output: strips C1 control characters (0x80-0x9F)' {
+  input=$(printf 'hel\x80lo\x9Fworld')
+  result=$(sanitize_for_output "$input")
+  [ "$result" = 'helloworld' ]
+}
+
 @test "sanitize_for_output: preserves tab and carriage-return" {
   # Tab (0x09) and CR (0x0D) are excluded from the C0 strip range and must survive.
   input=$(printf 'col1\tcol2\r\n')

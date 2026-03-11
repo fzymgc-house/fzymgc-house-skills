@@ -8,6 +8,10 @@
 # worktree isolation that receives a pre-built VCS diff as input and never
 # runs VCS commands directly.
 
+# Note: this test is a textual presence check only — it verifies that agents
+# include a reference to the VCS detection preamble in their source. Runtime
+# invocation and correct branching behavior are covered by behavioral evals
+# (B-FW1, B-VCS-GIT1).
 @test "all pr-review agents (except review-gate) reference VCS detection preamble" {
   local repo_root
   repo_root="$(cd "$BATS_TEST_DIRNAME/../../.." && pwd)"

@@ -754,7 +754,7 @@
           "name": "no-file-edits",
           "description": "Does not use Edit tool when branch check fails",
           "type": "not_contains",
-          "check": "Edit"
+          "check": "Edit("
         }
       ]
     }

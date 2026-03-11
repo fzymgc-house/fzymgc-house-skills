@@ -86,7 +86,8 @@ batch-reviewed, and closed.
    **Verify checkout (VCS-dependent):**
    - git: `git branch --show-current` — confirm you are on the PR branch
    - jj: Verify the PR bookmark exists: `jj bookmark list | grep <pr-branch-name>`.
-     If not found, run `jj git fetch`, then `jj new <pr-bookmark>`.
+     If not found, run `jj git fetch` — if it fails, stop and report the error.
+     Then run `jj new <pr-bookmark>` — if it fails, stop and report the error.
      Verify with `jj log -r @- --no-graph -n 1`.
 
    If checkout fails:
@@ -370,8 +371,7 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
      bd comments add <work-bead-id> "jj log -r <change-id> failed after rebase — cannot verify conflict state. Re-queued."
      # <cleanup step 5>
      # continue to next finding
-   fi
-   if echo "$_conflict_check" | grep -q 'CONFLICT'; then
+   elif echo "$_conflict_check" | grep -q 'CONFLICT'; then
    ```
 
    If `jj log` returns non-zero: clean up workspace (step 5), mark FAILED, add bead

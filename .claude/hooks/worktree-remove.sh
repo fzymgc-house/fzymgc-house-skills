@@ -121,21 +121,31 @@ jj_forget_failed=false
 if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
-  # jj workspace cleanup — forget workspace metadata before removing directory
-  # `|| true` is intentional: mktemp failure is non-fatal for the remove operation.
-  # The `[[ -z "$_ws_list_err" ]]` guard below detects this case and emits a WARNING
-  # with a manual recovery command, then proceeds to directory removal.
+  # jj workspace cleanup — forget workspace metadata before removing directory.
+  # Strategy: use `jj workspace list` as a pre-check when possible. If the
+  # workspace isn't in the list, skip forget. If the list itself fails, attempt
+  # forget anyway (it handles "no workspace named" idempotently).
   _ws_list_err=$(mktemp 2>/dev/null) || true
+  _attempt_forget=true
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2
+    _attempt_forget=false
   elif [[ -z "$_ws_list_err" ]]; then
     echo "WARNING: mktemp failed — skipping jj workspace list check for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
-  elif [[ -n "$_ws_list_err" ]] && ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then
+    jj_forget_failed=true
+    _attempt_forget=false
+  elif ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then
     _ws_err_msg=$(cat "$_ws_list_err" 2>/dev/null)
     rm -f "$_ws_list_err"
-    echo "WARNING: jj workspace list failed: $(sanitize_for_output "${_ws_err_msg:-(no details)}") — skipping workspace forget for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
+    echo "WARNING: jj workspace list failed: $(sanitize_for_output "${_ws_err_msg:-(no details)}") — attempting workspace forget anyway for worktree-$(sanitize_for_output "$WORKSPACE_NAME")" >&2
   else
     rm -f "$_ws_list_err"
+    if ! grep -qF "worktree-${WORKSPACE_NAME}:" <<< "$_jj_ws_list"; then
+      echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list — skipping forget" >&2
+      _attempt_forget=false
+    fi
+  fi
+  if [[ "$_attempt_forget" == true ]]; then
     if ! jj_err=$(cd "$REPO_ROOT" && jj workspace forget "worktree-${WORKSPACE_NAME}" 2>&1); then
       # Accept 'no workspace named' as success (idempotent forget)
       if echo "$jj_err" | grep -qiE 'no workspace|unknown workspace|not found'; then

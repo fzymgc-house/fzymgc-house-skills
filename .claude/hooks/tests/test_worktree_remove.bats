@@ -522,7 +522,7 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
-@test "jj path: warns and skips forget when workspace not in list" {
+@test "jj path: attempts forget even when workspace not in list" {
   setup_jj_worktree
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
@@ -536,17 +536,21 @@ if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
   echo "worktree-other-wt: ssttuuvv xyz78901 (empty) (no description set)"
   exit 0
 fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  exit 0
+fi
 exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"not found in jj workspace list"* ]]
+  [[ "$output" == *"INFO"* ]]
+  [[ "$output" == *"not found in jj workspace list output"* ]]
+  [[ "$output" == *"attempting forget anyway"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
-@test "jj workspace forget skips when workspace has bare name without worktree prefix" {
+@test "jj workspace forget attempts even when workspace has bare name without worktree prefix" {
   setup_jj_worktree
   # Mock jj: workspace list returns a bare name (no "worktree-" prefix) for the path
   _setup_mock_bin_dir
@@ -561,14 +565,17 @@ if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
   echo "test-jj-wt: ssttuuvv xyz78901 (empty) (no description set)"
   exit 0
 fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  exit 0
+fi
 exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"not found in jj workspace list"* ]]
-  [[ "$output" == *"skipping forget"* ]]
+  [[ "$output" == *"INFO"* ]]
+  [[ "$output" == *"not found in jj workspace list output"* ]]
+  [[ "$output" == *"attempting forget anyway"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 

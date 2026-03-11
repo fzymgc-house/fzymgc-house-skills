@@ -386,6 +386,12 @@
           "description": "Reports that init failed rather than silently continuing",
           "type": "not_contains",
           "check": ".gitignore"
+        },
+        {
+          "name": "no-gitignore-shell-command",
+          "description": "Does not execute the step 4 gitignore modification shell command",
+          "type": "not_contains",
+          "check": "grep -qxF"
         }
       ]
     },

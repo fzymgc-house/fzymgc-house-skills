@@ -8,14 +8,20 @@ repositories that may use git or jj (Jujutsu).
 1. **Detect VCS:**
 
    ```bash
-   if jj root >/dev/null 2>&1; then echo "jj"
-   elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"
-   else echo "none"; fi
+   USE_VCS=$( \
+     if jj root >/dev/null 2>&1; then echo "jj"; \
+     elif git rev-parse --git-dir >/dev/null 2>&1; then echo "git"; \
+     else echo "none"; fi \
+   )
+   if [[ "$USE_VCS" == "none" ]]; then
+     echo "STATUS: FAILED -- No VCS detected (not inside a jj or git repository)"
+     exit 1
+   fi
    ```
 
    - `jj root` succeeds in any jj workspace (including workspaces where `.jj/` is absent from the working directory).
    - `git rev-parse --git-dir` succeeds in git worktrees where `.git` is a file rather than a directory.
-   - If the result is "none", STOP and report
+   - If the result is "none", the shell block above exits immediately. As a backup prose instruction: STOP and report
      STATUS: FAILED -- "No VCS detected (not inside a jj or git repository)"
 2. **Verify location** *(worktree-isolated agents only — orchestrator
    skills running from the main repo root should skip this step):*

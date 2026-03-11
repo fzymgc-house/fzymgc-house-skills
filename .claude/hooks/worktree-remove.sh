@@ -63,7 +63,11 @@ _root_err_file=$(mktemp) || { echo 'ERROR: mktemp failed — cannot create temp 
 #   2. The EXIT trap guard `[[ -n "${_ws_list_err:-}" ]]` safely skips cleanup when
 #      _ws_list_err was never set (git-only path or skip_vcs_cleanup path).
 #   3. This avoids allocating a temp file that is never used on the git-only path.
+#   4. _ws_list_mktemp_ok is an explicit boolean tracking whether mktemp succeeded;
+#      this avoids using an empty _ws_list_err as a sentinel for both "never used"
+#      and "mktemp failed" states.
 _ws_list_err=""
+_ws_list_mktemp_ok=false
 trap '[[ -n "${_root_err_file:-}" ]] && rm -f "$_root_err_file"; [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"' EXIT
 if ! REPO_ROOT=$(detect_repo_root 2>"$_root_err_file"); then
   _root_stderr=$(cat "$_root_err_file" 2>/dev/null)
@@ -126,12 +130,12 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   # Strategy: always attempt `jj workspace forget`. Use `jj workspace list`
   # as an informational check only — if the workspace isn't listed, log a
   # note but still attempt forget (it handles "no workspace named" idempotently).
-  _ws_list_err=$(mktemp 2>/dev/null) || true
+  _ws_list_err=$(mktemp 2>/dev/null) && _ws_list_mktemp_ok=true || true
   _attempt_forget=true
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2
     _attempt_forget=false
-  elif [[ -z "$_ws_list_err" ]]; then
+  elif [[ "$_ws_list_mktemp_ok" == false ]]; then
     echo "WARNING: mktemp failed — skipping jj workspace list check, attempting forget directly for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (if this fails, run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
     _attempt_forget=true
   elif ! _jj_ws_list=$(cd "$REPO_ROOT" && jj workspace list 2>"$_ws_list_err"); then

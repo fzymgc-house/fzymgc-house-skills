@@ -884,11 +884,17 @@ MOCK
   mkdir -p "${JJ_ROOT}/.jj"
   mkdir -p "${JJ_ROOT}_worktrees/mktemp-fail-test"
 
-  # jj mock: handles root only (workspace list is never reached when mktemp fails)
+  # jj mock: handles root and workspace forget; logs forget invocations to a marker file
+  local forget_log
+  forget_log="${JJ_ROOT}/forget-called.log"
   cat > "${clean_bin}/jj" << MOCK
 #!/bin/bash
 if [[ "\$1" == "root" ]]; then
   echo "${JJ_ROOT}"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "\$3" >> "${forget_log}"
   exit 0
 fi
 exit 1
@@ -898,12 +904,15 @@ MOCK
   PATH="$clean_bin" run bash -c \
     'cd '"$JJ_ROOT"' && echo "{\"path\": \"'"${JJ_ROOT}_worktrees/mktemp-fail-test"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
 
-  # Directory removed but exit 1 signals leaked metadata (jj_forget_failed=true)
-  [ "$status" -eq 1 ]
+  # Directory removed and exit 0 because forget succeeded
+  [ "$status" -eq 0 ]
   [[ "$output" == *"mktemp failed"* ]]
   [[ "$output" == *"skipping jj workspace list check"* ]]
   # Directory should have been removed despite the mktemp failure
   [ ! -d "${JJ_ROOT}_worktrees/mktemp-fail-test" ]
+  # jj workspace forget must have been attempted (mktemp failure skips list but not forget)
+  [ -f "${forget_log}" ]
+  [[ "$(cat "${forget_log}")" == "worktree-mktemp-fail-test" ]]
 
   rm -rf "$JJ_ROOT" "${JJ_ROOT}_worktrees" "$clean_bin" "$counter_file"
 }

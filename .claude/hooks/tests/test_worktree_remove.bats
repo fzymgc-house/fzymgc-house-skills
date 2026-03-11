@@ -163,6 +163,8 @@ setup_jj_only_worktree() {
   [[ "$(cat "${REPO_ROOT}/forget-arg.log")" == "worktree-test-jj-wt" ]]
 }
 
+# This test also covers the final exit code path (worktree-remove.sh end):
+# jj_forget_failed=true from jj-not-installed → exit 0 (metadata-only failure)
 @test "jj path: warns but still removes directory when jj not installed" {
   setup_jj_worktree
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'

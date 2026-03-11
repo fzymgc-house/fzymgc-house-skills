@@ -53,7 +53,7 @@ cleanup_on_error() {
         echo "ERROR: cleanup: .jj/ found but jj not installed — workspace 'worktree-${NAME}' was created and cannot be cleaned up; run 'jj workspace forget worktree-${NAME}' manually" >&2
         CLEANUP_FAILED=true
       else
-        echo "WARNING: cleanup: .jj/ found but jj not installed — workspace metadata not cleaned; run 'jj workspace forget worktree-${NAME}' manually" >&2
+        echo "INFO: cleanup: .jj/ found but jj not installed — no workspace was registered, no cleanup needed" >&2
       fi
     fi
   elif [[ "$WORKSPACE_CREATED" == "true" ]]; then

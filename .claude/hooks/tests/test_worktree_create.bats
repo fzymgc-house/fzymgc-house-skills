@@ -888,6 +888,44 @@ MOCK
   [[ "$output" == *"WARNING: cleanup failed for"* ]]
 }
 
+@test "jj path: cleanup preserves non-zero exit code when both workspace add and rm -rf fail" {
+  # Exercises the exit-code preservation logic at lines 79-84 of worktree-create.sh:
+  #   if [[ "$CLEANUP_FAILED" == "true" ]] && [[ $_exit_code -eq 0 ]]; then
+  #     _exit_code=1
+  #   fi
+  # When workspace add FAILS (_exit_code != 0) and rm -rf also fails
+  # (CLEANUP_FAILED=true), the exit code must NOT be promoted — the original
+  # non-zero exit code from workspace add is preserved.
+  setup_jj
+  create_failing_jj_mock
+
+  # Resolve real rm before creating mock bin
+  local real_rm
+  real_rm="$(command -v rm)"
+
+  local mock_bin
+  mock_bin=$(mktemp -d)
+
+  # Mock rm: fail on -rf (the cleanup rm -rf call); delegate everything else.
+  cat > "${mock_bin}/rm" << MOCK
+#!/bin/bash
+if [[ "\$1" == "-rf" ]]; then
+  echo "rm: \$2: Operation not permitted" >&2
+  exit 1
+fi
+exec "${real_rm}" "\$@"
+MOCK
+  chmod +x "${mock_bin}/rm"
+
+  PATH="${MOCK_JJ_BIN_DIR}:${mock_bin}:$PATH" run bash -c \
+    'echo "{\"name\": \"jj-add-rm-fail-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  rm -rf "$mock_bin"
+  # Exit code must be non-zero (from workspace add failure — NOT promoted)
+  [ "$status" -ne 0 ]
+  # WARNING about cleanup failure must appear on stderr
+  [[ "$output" == *"WARNING: cleanup failed for"* ]]
+}
+
 @test "jj path: create-then-remove lifecycle uses consistent workspace names" {
   setup_jj
   create_logging_jj_mock

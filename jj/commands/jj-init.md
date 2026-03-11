@@ -45,6 +45,7 @@ allowed-tools:
    If not present, append `.jj/` to `.gitignore`:
 
    ```bash
+   # 2>/dev/null: treat unreadable/missing .gitignore the same (append below will report real errors)
    grep -qxF '.jj/' .gitignore 2>/dev/null || {
      if ! append_err=$({ echo '.jj/' >> .gitignore; } 2>&1); then
        echo "Could not update .gitignore: ${append_err:-permission denied}" >&2

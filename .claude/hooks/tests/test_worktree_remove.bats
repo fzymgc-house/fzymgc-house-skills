@@ -62,7 +62,8 @@ esac
 GITEOF
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
+  # Exit 1: directory removed but git_prune_failed=true signals stale metadata
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
   [[ "$output" == *"git worktree remove failed"* ]]
   [[ "$output" == *"git worktree prune also failed"* ]]

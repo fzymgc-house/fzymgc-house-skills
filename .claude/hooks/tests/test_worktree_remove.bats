@@ -165,10 +165,10 @@ setup_jj_only_worktree() {
 
 # This test also covers the final exit code path (worktree-remove.sh end):
 # jj_forget_failed=true from jj-not-installed → exit 0 (metadata-only failure)
-@test "jj path: warns but still removes directory when jj not installed" {
+@test "jj path: warns and exits 1 when jj not installed (directory still removed)" {
   setup_jj_worktree
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]
 }
@@ -196,14 +196,14 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
-  [ "$status" -eq 0 ]
+  # Exit 1: directory removed but jj workspace forget failed
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"jj workspace forget failed"* ]]
 }
 
-@test "jj path: forget failure when workspace is listed emits ERROR (exit 0 per mxm.1)" {
+@test "jj path: forget failure when workspace is listed emits ERROR (exit 1)" {
   setup_jj_worktree
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
@@ -225,7 +225,7 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"jj workspace forget failed"* ]]
@@ -254,8 +254,8 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
-  [ "$status" -eq 0 ]
+  # Exit 1: directory removed but jj workspace forget failed
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
@@ -323,8 +323,8 @@ MOCK
   mkdir -p "${NON_GIT}/.jj"
   mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
   PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
-  [ "$status" -eq 0 ]
+  # Exit 1: directory removed but jj workspace forget could not run (jj not installed)
+  [ "$status" -eq 1 ]
   [[ "$output" == *"WARNING"* ]]
   [[ "$output" == *"jj not installed"* ]]
   [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]

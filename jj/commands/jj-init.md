@@ -46,8 +46,8 @@ allowed-tools:
 
    ```bash
    grep -qxF '.jj/' .gitignore 2>/dev/null || {
-     if ! append_err=$(echo '.jj/' >> .gitignore 2>&1); then
-       echo "Could not update .gitignore: $append_err"
+     if ! append_err=$({ echo '.jj/' >> .gitignore; } 2>&1); then
+       echo "Could not update .gitignore: ${append_err:-permission denied}"
      fi
    }
    ```

@@ -118,6 +118,7 @@ if [[ "$_REPO_ROOT_INFERRED" == "true" ]]; then
 fi
 
 jj_forget_failed=false
+git_prune_failed=false
 if [[ "$_skip_vcs_cleanup" == "true" ]]; then
   : # Skip VCS deregistration, proceed directly to directory removal below
 elif [[ -d "${REPO_ROOT}/.jj" ]]; then
@@ -160,6 +161,7 @@ else
     echo "WARNING: git worktree remove failed for '$(sanitize_for_output "$WORKTREE_PATH")': $(sanitize_for_output "${git_err:0:500}")" >&2
     if ! prune_err=$(git worktree prune 2>&1); then
       echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain in .git/worktrees/" >&2
+      git_prune_failed=true
     fi
   fi
 fi
@@ -177,4 +179,4 @@ cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
 rm -f "$_root_err_file"
 [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"
 trap - EXIT
-if $jj_forget_failed; then exit 1; fi
+if $jj_forget_failed || $git_prune_failed; then exit 1; fi

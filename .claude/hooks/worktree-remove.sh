@@ -148,8 +148,12 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   else
     rm -f "$_ws_list_err"; _ws_list_err=''
     if ! grep -qF "worktree-${WORKSPACE_NAME}:" <<< "$_jj_ws_list"; then
-      echo "INFO: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list output — skipping forget" >&2
-      _attempt_forget=false
+      if grep -qF "worktree-${WORKSPACE_NAME}" <<< "$_jj_ws_list"; then
+        echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' found in jj workspace list but format differs from expected (missing colon separator) — attempting forget anyway" >&2
+      else
+        echo "INFO: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list output — skipping forget" >&2
+        _attempt_forget=false
+      fi
     fi
   fi
   if [[ "$_attempt_forget" == true ]]; then

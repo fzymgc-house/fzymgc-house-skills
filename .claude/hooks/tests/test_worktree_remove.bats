@@ -62,8 +62,8 @@ esac
 GITEOF
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  # Exit 1: directory removed but git_prune_failed=true signals stale metadata
-  [ "$status" -eq 1 ]
+  # Exit 0: directory removed; git_prune_failed=true is metadata-only (mxm.1)
+  [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
   [[ "$output" == *"git worktree remove failed"* ]]
   [[ "$output" == *"git worktree prune also failed"* ]]
@@ -196,7 +196,8 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
+  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
+  [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"jj workspace forget failed"* ]]
@@ -253,7 +254,8 @@ exit 1
 MOCK
   chmod +x "${MOCK_JJ_BIN_DIR}/jj"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
+  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
+  [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
@@ -321,7 +323,8 @@ MOCK
   mkdir -p "${NON_GIT}/.jj"
   mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
   PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 1 ]
+  # Exit 0: directory removed; jj_forget_failed is metadata-only (mxm.1)
+  [ "$status" -eq 0 ]
   [[ "$output" == *"WARNING"* ]]
   [[ "$output" == *"jj not installed"* ]]
   [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]

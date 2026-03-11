@@ -709,10 +709,12 @@ MOCK
 }
 
 @test "POSIX fallback: removes worktree when realpath unavailable" {
-  # This test exercises the cd+pwd-P fallback paths (lines 30-36 and 81-83
-  # of worktree-remove.sh) that run when realpath is not in PATH.
-  # On ubuntu-latest (CI), realpath is always present in /usr/bin, so the test
-  # self-skips there. Run manually on a POSIX-minimal system to verify coverage.
+  # Manual-only test: exercises cd+pwd-P fallback paths (lines 30-36 and 81-83
+  # of worktree-remove.sh) on systems where realpath is genuinely absent.
+  # CI coverage note: this test ALWAYS self-skips on ubuntu-latest (realpath
+  # in /usr/bin). The POSIX fallback code path IS covered in CI by the companion
+  # test "POSIX fallback: removes worktree when realpath absent from PATH" below,
+  # which uses a curated PATH excluding realpath.
   command -v realpath &>/dev/null && skip "realpath is available — POSIX fallback cannot be tested on this system"
 
   ALT_ROOT=$(mktemp -d)

@@ -42,7 +42,7 @@ cleanup_empty_parent() {
 }
 
 # Detect repo root. Supports colocated jj repos (have .git/) and falls back
-# to 'jj root' for non-colocated repos when .jj/ exists.
+# to 'jj root' when jj is in PATH.
 detect_repo_root() {
   local root
   root=$(git rev-parse --show-toplevel 2>/dev/null)

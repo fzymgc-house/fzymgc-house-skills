@@ -448,9 +448,9 @@
       "id": "JJ-B-CLEANUP1",
       "type": "behavioral",
       "skill": "jujutsu",
-      "prompt": "the worktree creation just failed with an ERROR about leaked workspace metadata",
-      "context": "worktree-create.sh returned non-zero with stderr containing: ERROR: cleanup: jj workspace forget worktree-my-feature failed — workspace metadata may be leaked",
-      "expected_output": "Should surface the error and instruct the user to run 'jj workspace forget worktree-my-feature' manually to recover",
+      "prompt": "The worktree-create hook just printed the following to stderr and exited non-zero:\n\nERROR: cleanup: jj workspace forget worktree-my-feature failed — workspace metadata may be leaked\n\nWhat should I do?",
+      "context": "Agent received hook stderr output verbatim. The hook is worktree-create.sh. The workspace name 'worktree-my-feature' appears in the error text.",
+      "expected_output": "Should extract the workspace name 'worktree-my-feature' from the hook stderr output and tell the user to run 'jj workspace forget worktree-my-feature' manually. Should identify the error as coming from the hook stderr, not from a jj command the agent ran.",
       "assertions": [
         {
           "name": "tells-user-forget-command",
@@ -459,10 +459,22 @@
           "check": "jj workspace forget"
         },
         {
+          "name": "names-specific-workspace",
+          "description": "Agent extracts and names the specific workspace from the stderr output",
+          "type": "contains",
+          "check": "worktree-my-feature"
+        },
+        {
           "name": "indicates-manual-recovery",
           "description": "Agent indicates that manual recovery is needed",
           "type": "contains",
           "check": "manual"
+        },
+        {
+          "name": "attributes-error-to-hook",
+          "description": "Agent identifies the error as coming from the hook stderr, not a jj command it ran",
+          "type": "manual",
+          "check": "Verify the agent attributes the error to hook stderr output (worktree-create.sh) rather than treating it as a jj command failure it caused"
         }
       ]
     }

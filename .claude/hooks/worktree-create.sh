@@ -84,12 +84,11 @@ cleanup_on_error() {
   fi
   exit $_exit_code
 }
-trap - EXIT
+trap cleanup_on_error EXIT
 mkdir -p "$WORKTREE_PARENT" || {
   echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
   exit 1
 }
-trap cleanup_on_error EXIT
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — verify jj is installed

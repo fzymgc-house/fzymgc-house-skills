@@ -25,6 +25,8 @@ repositories that may use git or jj (Jujutsu).
      STATUS: FAILED -- "No VCS detected (not inside a jj or git repository)"
 2. **Verify location** *(worktree-isolated agents only — orchestrator
    skills running from the main repo root should skip this step):*
+
+   > **Skills:** Skip this step. Step 2 is for worktree-isolated agents only.
    - jj: Check whether the working directory is under a worktree workspace
      (sibling `_worktrees/` directory) rather than the default workspace:
 

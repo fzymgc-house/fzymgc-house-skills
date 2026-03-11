@@ -508,6 +508,33 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 
+@test "jj path: cleans up partial directory when old jj creates it before rejecting --name" {
+  setup_jj
+  # Mock jj that creates the target directory then rejects --name (simulates old jj
+  # that partially executes workspace add before failing on the unknown flag).
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "workspace" && "$2" == "add" ]]; then
+  # Simulate old jj: create the target directory, then fail on --name
+  mkdir -p "$3"
+  echo "error: unexpected argument '--name' found" >&2
+  exit 1
+fi
+if [[ "$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit $?
+fi
+exit 0
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"name\": \"partial-test\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--name"* ]]
+  # EXIT trap must clean up the partial directory created by the mock
+  [ ! -d "${REPO_ROOT}_worktrees/partial-test" ]
+}
+
 @test "jj path: exits with error when jj workspace add fails" {
   setup_jj
   create_always_failing_jj_mock

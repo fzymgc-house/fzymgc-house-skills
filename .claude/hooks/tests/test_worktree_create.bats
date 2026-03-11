@@ -776,13 +776,15 @@ MOCK
 @test "git path: cleanup_on_error skips git worktree remove when WORKSPACE_CREATED is false" {
   # Fail git worktree add (branch already exists) so WORKSPACE_CREATED stays false.
   # Wrap git to log any 'worktree remove' calls; the guard must prevent them.
+  local real_git
+  real_git="$(command -v git)"
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/git" << MOCK
 #!/bin/bash
 if [[ "\$1" == "worktree" && "\$2" == "remove" ]]; then
   echo "worktree-remove-called" >> "${REPO_ROOT}/git-calls.log"
 fi
-exec $(which git) "\$@"
+exec "${real_git}" "\$@"
 MOCK
   chmod +x "${REPO_ROOT}/bin/git"
   # Create the branch so 'git worktree add -b worktree/guard-test' fails (branch exists)
@@ -801,6 +803,8 @@ MOCK
 @test "git path: cleanup_on_error calls git worktree prune on partial add (WORKSPACE_CREATED=false)" {
   # Mock git: make 'worktree add' fail so WORKSPACE_CREATED stays false,
   # log 'worktree prune' calls, and pass everything else to the real git.
+  local real_git
+  real_git="$(command -v git)"
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/git" << MOCK
 #!/bin/bash
@@ -811,7 +815,7 @@ fi
 if [[ "\$1" == "worktree" && "\$2" == "prune" ]]; then
   echo "worktree-prune-called" >> "${REPO_ROOT}/git-calls.log"
 fi
-exec $(which git) "\$@"
+exec "${real_git}" "\$@"
 MOCK
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c \
@@ -825,6 +829,8 @@ MOCK
 @test "git path: cleanup_on_error warns when git worktree prune fails on partial add" {
   # Mock git: make both 'worktree add' and 'worktree prune' fail to exercise
   # the warning branch at lines 64-65 of worktree-create.sh.
+  local real_git
+  real_git="$(command -v git)"
   mkdir -p "${REPO_ROOT}/bin"
   cat > "${REPO_ROOT}/bin/git" << MOCK
 #!/bin/bash
@@ -836,7 +842,7 @@ if [[ "\$1" == "worktree" && "\$2" == "prune" ]]; then
   echo "mock: prune failed" >&2
   exit 1
 fi
-exec $(which git) "\$@"
+exec "${real_git}" "\$@"
 MOCK
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c \

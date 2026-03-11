@@ -367,6 +367,33 @@ MOCK
   rm -rf "$non_git_dir" "$mock_bin"
 }
 
+@test "detect_repo_root: exact error format when jj root exits non-zero with stderr" {
+  # Verify the precise error message format produced when git rev-parse fails
+  # and jj root also fails (non-zero exit) with a stderr message.
+  local mock_bin
+  mock_bin=$(mktemp -d)
+  cat > "$mock_bin/jj" << 'MOCK'
+#!/bin/bash
+if [[ "$1" == "root" ]]; then
+  echo "There is no jj repo in \"$(pwd)\"" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "$mock_bin/jj"
+
+  local non_git_dir
+  non_git_dir=$(mktemp -d)
+  run env -i HOME="$HOME" PATH="${mock_bin}:/usr/bin:/bin" \
+    bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
+  [ "$status" -ne 0 ]
+  # Exact error prefix: "ERROR: not inside a git/jj repository (git rev-parse and jj root both failed; jj: ...)"
+  [[ "$output" == *"ERROR: not inside a git/jj repository (git rev-parse and jj root both failed; jj: "* ]]
+  # jj stderr is embedded after "jj: "
+  [[ "$output" == *'There is no jj repo in'* ]]
+  rm -rf "$non_git_dir" "$mock_bin"
+}
+
 @test "detect_repo_root: emits WARNING when mktemp fails and jj is in PATH" {
   # Scenario: non-git directory, jj is available, but mktemp fails.
   # The function should emit the WARNING and handle gracefully (no crash/unbound var).

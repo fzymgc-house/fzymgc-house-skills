@@ -338,7 +338,7 @@ Do NOT attempt to cherry-pick or rebase a PARTIAL result.
 must be cleaned up to prevent resource leaks:
 
 - git: `git worktree remove ../<repo>_worktrees/<worktree-name>`
-- jj: `jj workspace forget worktree-<name> && rm -rf ../<repo>_worktrees/<worktree-name>`
+- jj: `jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; rm -rf ../<repo>_worktrees/<worktree-name>`
 
 #### Git repos
 

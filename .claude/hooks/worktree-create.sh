@@ -124,6 +124,6 @@ if [[ -f "${REPO_ROOT}/lefthook.yml" ]]; then
   fi
 fi
 
-trap - EXIT
+trap - EXIT  # disarm after success
 
 echo "$WORKTREE_PATH"

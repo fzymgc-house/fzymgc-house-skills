@@ -235,7 +235,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"forget-wt\"}" | bash '"$patched"
   rm -f "$patched"
@@ -270,7 +270,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"forget-fail-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -313,7 +313,7 @@ MOCK
   # Replace "trap - EXIT" with PATH-clearing then false so the EXIT trap fires
   # with jj no longer in PATH.  The mock jj dir is removed from PATH here so
   # cleanup_on_error sees command -v jj fail.
-  sed 's|^trap - EXIT$|PATH="/usr/bin:/bin"; false|' \
+  sed 's|^trap - EXIT  # disarm after success$|PATH="/usr/bin:/bin"; false|' \
     "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"jj-gone-wt\"}" | bash '"$patched"' 2>&1'
@@ -375,7 +375,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
     'echo "{\"name\": \"git-cleanup-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -406,7 +406,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
     'echo "{\"name\": \"git-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -453,7 +453,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/false/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${mock_bin}:$PATH" run bash -c \
     'echo "{\"name\": \"rm-fail-cleanup-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -817,7 +817,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's|^trap - EXIT$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's|^trap - EXIT  # disarm after success$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   run bash -c \
     'echo "{\"name\": \"missing-root-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -835,7 +835,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's|^trap - EXIT$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's|^trap - EXIT  # disarm after success$|rm -rf "$REPO_ROOT"; false|' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"missing-root-jj-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
@@ -878,7 +878,7 @@ MOCK
   local patched
   patched=$(mktemp "$BATS_TEST_DIRNAME/../worktree-create-${BATS_TEST_NUMBER}-XXXXXX.sh")
   trap 'rm -f "$patched"' RETURN
-  sed 's/^trap - EXIT$/exit 0/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
+  sed 's/^trap - EXIT  # disarm after success$/exit 0/' "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:${mock_bin}:$PATH" run bash -c \
     'echo "{\"name\": \"promote-exit-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"

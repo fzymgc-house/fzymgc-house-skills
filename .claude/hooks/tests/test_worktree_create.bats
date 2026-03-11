@@ -341,6 +341,7 @@ MOCK
   rm -rf "$SANDBOX"
   [ "$status" -eq 1 ]
   [[ "$output" == *"failed to create worktree parent directory"* ]]
+  [[ "$output" != *"jj workspace forget"* ]]
 }
 
 @test "git path: cleans up empty parent on worktree add failure" {

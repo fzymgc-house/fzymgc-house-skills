@@ -88,6 +88,7 @@ trap cleanup_on_error EXIT
 
 mkdir -p "$WORKTREE_PARENT" || {
   echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
+  trap - EXIT
   exit 1
 }
 

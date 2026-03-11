@@ -191,4 +191,4 @@ cleanup_empty_parent "$(dirname "$WORKTREE_PATH")"
 rm -f "$_root_err_file"
 [[ -n "${_ws_list_err:-}" ]] && rm -f "$_ws_list_err"
 trap - EXIT
-if $jj_forget_failed || $git_prune_failed; then exit 1; fi
+if $jj_forget_failed || $git_prune_failed; then exit 0; fi

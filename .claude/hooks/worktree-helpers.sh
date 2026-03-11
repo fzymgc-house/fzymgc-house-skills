@@ -66,10 +66,10 @@ detect_repo_root() {
       jj_out=$(jj root 2>"$_jj_err_file") || jj_rc=$?
       jj_err=$(cat "$_jj_err_file")
       rm -f "$_jj_err_file"
-    fi
-    if [[ $jj_rc -eq 0 && -n "$jj_out" && -d "$jj_out" ]]; then
-      printf '%s\n' "$jj_out"
-      return 0
+      if [[ $jj_rc -eq 0 && -n "$jj_out" && -d "$jj_out" ]]; then
+        printf '%s\n' "$jj_out"
+        return 0
+      fi
     fi
   fi
   if [[ "$jj_attempted" == "true" ]]; then

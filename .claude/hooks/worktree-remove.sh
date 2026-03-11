@@ -135,6 +135,7 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
   if ! command -v jj &>/dev/null; then
     echo "WARNING: .jj/ found but jj not installed — workspace metadata not cleaned (run: jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") from $(sanitize_for_output "$REPO_ROOT") after reinstalling jj)" >&2
     _attempt_forget=false
+    jj_forget_failed=true
   elif [[ "$_ws_list_mktemp_ok" == false ]]; then
     echo "WARNING: mktemp failed — skipping jj workspace list check, attempting forget directly for worktree-$(sanitize_for_output "$WORKSPACE_NAME") (if this fails, run: cd $(sanitize_for_output "$REPO_ROOT") && jj workspace forget worktree-$(sanitize_for_output "$WORKSPACE_NAME") to clean up)" >&2
     _attempt_forget=true

@@ -166,7 +166,7 @@ setup_jj_only_worktree() {
 @test "jj path: warns but still removes directory when jj not installed" {
   setup_jj_worktree
   PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]
 }
@@ -319,7 +319,7 @@ MOCK
   mkdir -p "${NON_GIT}/.jj"
   mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
   PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [[ "$output" == *"WARNING"* ]]
   [[ "$output" == *"jj not installed"* ]]
   [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]

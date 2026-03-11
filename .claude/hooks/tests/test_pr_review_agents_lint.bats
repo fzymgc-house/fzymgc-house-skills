@@ -27,8 +27,9 @@
   while IFS= read -r agent_file; do
     # review-gate is read-only and receives a pre-built diff; no VCS commands needed
     [[ "$(basename "$agent_file")" == "review-gate.md" ]] && continue
-    if ! grep -q "vcs-detection-preamble" "$agent_file" || \
-       ! grep -qE '(references/|pr-review/).*vcs-detection-preamble' "$agent_file"; then
+    # Check presence of the preamble path in an actionable "Follow ... procedure" context
+    if ! grep -qE 'Follow.*(procedure|startup procedure)' "$agent_file" || \
+       ! grep -qE '`pr-review/references/vcs-detection-preamble\.md`' "$agent_file"; then
       missing+=("$agent_file")
     fi
   done < <(find "$agents_dir" -maxdepth 1 -name "*.md" | sort)
@@ -55,8 +56,9 @@
   local missing=()
   local skill_file
   while IFS= read -r skill_file; do
-    if ! grep -q "vcs-detection-preamble" "$skill_file" || \
-       ! grep -qE '(references/|pr-review/).*vcs-detection-preamble' "$skill_file"; then
+    # Check presence of the preamble path in an actionable "Follow ... procedure" context
+    if ! grep -qE 'Follow.*(procedure|startup procedure)' "$skill_file" || \
+       ! grep -qE '`pr-review/references/vcs-detection-preamble\.md`' "$skill_file"; then
       missing+=("$skill_file")
     fi
   done < <(find "$skills_dir" -name "SKILL.md" | sort)

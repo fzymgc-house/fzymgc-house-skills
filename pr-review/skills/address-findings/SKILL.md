@@ -310,8 +310,12 @@ Loop while open, non-deferred findings remain:
 
    2. git: `git -C <worktree-path> branch --show-current`
       — if the command fails or returns empty (e.g., detached HEAD), mark FAILED.
-   3. jj: `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
-      — reads the committed fix (parent of working copy). If it fails, mark FAILED.
+   3. jj: First verify `test -d <worktree-path>` — if the directory was already
+      removed (e.g., by PARTIAL cleanup), mark FAILED with message:
+      'VCS inference failed: worktree directory already removed during prior cleanup'.
+      Otherwise run `cd <worktree-path> && jj log -r @- --no-graph -T 'change_id.short(8)'`
+      — reads the committed fix (parent of working copy). If jj log fails, mark FAILED
+      with message: 'VCS inference failed: jj log error: \<error output\>'.
    4. Log warning: "fix-worker omitted VCS field — inferred \<vcs\>"
 
 ### Phase 4b: Integrate Fix Commits

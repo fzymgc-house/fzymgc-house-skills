@@ -57,7 +57,13 @@ repositories that may use git or jj (Jujutsu).
      > when it's actually in a worktree) occurs if the hook naming convention
      > changes — more dangerous, since the worktree check is skipped entirely.
      > This is an accepted trade-off since `jj workspace list` does not mark the
-     > current workspace (jj 0.39+).
+     > current workspace (jj 0.39+). A false-negative causes an unnecessary
+     > `STATUS: FAILED` — the agent refuses to proceed. This is a **safe failure
+     > mode**: no data corruption occurs, and the operator can retry after
+     > correcting the naming convention. Note the asymmetry: this jj check is
+     > **heuristic** (directory naming convention), while the git check in Step 2
+     > is **authoritative** (branch name pattern matching `worktree/*`) and
+     > provides a stronger guarantee.
 
      Do NOT rely on `jj workspace list` output to identify the current
      workspace; jj 0.39+ does not emit a `(current)` marker.

@@ -25,6 +25,11 @@ for _dir in "${_path_dirs[@]}"; do
 done
 export _NO_JJ_PATH
 
+# Clean up _NO_JJ_FILTERED_DIR on process exit
+if [[ -n "$_NO_JJ_FILTERED_DIR" ]]; then
+  trap 'rm -rf "$_NO_JJ_FILTERED_DIR"' EXIT
+fi
+
 # Ensure MOCK_JJ_BIN_DIR is set and the directory exists.
 _setup_mock_bin_dir() {
   MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"

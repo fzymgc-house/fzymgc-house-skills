@@ -27,6 +27,7 @@ WORKTREE_PARENT="$(dirname "$REPO_ROOT")/${REPO_NAME}_worktrees"
 WORKTREE_PATH="${WORKTREE_PARENT}/${NAME}"
 
 WORKSPACE_CREATED=false
+PARENT_CREATED=false
 
 cleanup_on_error() {
   local _exit_code=$?
@@ -36,7 +37,10 @@ cleanup_on_error() {
     echo "WARNING: cleanup: proceeding with directory removal despite missing REPO_ROOT" >&2
   elif [[ -d "${REPO_ROOT}/.jj" ]]; then
     # jj repo: check jj availability before attempting workspace forget
-    if command -v jj &>/dev/null; then
+    if [[ "$PARENT_CREATED" == "false" ]]; then
+      # mkdir -p failed before any workspace was created — nothing to forget
+      : # no-op: workspace directory was never created
+    elif command -v jj &>/dev/null; then
       # Always attempt workspace forget — safe even if workspace wasn't fully
       # registered (jj workspace add may partially complete before failing).
       # Suppress errors since forget is best-effort here.
@@ -94,6 +98,7 @@ mkdir -p "$WORKTREE_PARENT" || {
   echo "ERROR: failed to create worktree parent directory '$WORKTREE_PARENT'" >&2
   exit 1
 }
+PARENT_CREATED=true
 
 if [[ -d "${REPO_ROOT}/.jj" ]]; then
   # jj workspace — jj availability already verified above

@@ -737,6 +737,40 @@
       ]
     },
     {
+      "id": "B-VCS-FW-GIT1",
+      "type": "behavioral",
+      "skill": "address-findings",
+      "prompt": "Dispatch a fix-worker agent to fix finding example-fw.1 in file src/utils.py line 25",
+      "context": "Repo has .git/ directory but no .jj/ directory (git-only repo). Agent is in a worktree on branch worktree/fix-worker-abc.",
+      "expected_output": "fix-worker should detect git-only repo, use git commit, and report WORKTREE_BRANCH (not CHANGE_ID) in its output",
+      "assertions": [
+        {
+          "name": "reports-worktree-branch",
+          "description": "Reports WORKTREE_BRANCH in git-only repo",
+          "type": "contains",
+          "check": "WORKTREE_BRANCH"
+        },
+        {
+          "name": "no-change-id",
+          "description": "Does not report CHANGE_ID in git-only repo",
+          "type": "not_contains",
+          "check": "CHANGE_ID"
+        },
+        {
+          "name": "reports-vcs-git",
+          "description": "Reports VCS: git in structured output",
+          "type": "contains",
+          "check": "VCS: git"
+        },
+        {
+          "name": "uses-git-commit",
+          "description": "Uses git commit for committing in git-only repo",
+          "type": "contains",
+          "check": "git commit"
+        }
+      ]
+    },
+    {
       "id": "B-VCS-GIT1",
       "type": "behavioral",
       "skill": "address-findings",

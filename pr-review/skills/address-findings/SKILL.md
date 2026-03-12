@@ -342,7 +342,7 @@ Do NOT attempt to cherry-pick or rebase a PARTIAL result.
 must be cleaned up to prevent resource leaks:
 
 - git: `git worktree remove ../<repo>_worktrees/<worktree-name> || { echo "WARNING: git worktree remove failed" >&2; git worktree prune; }`
-- jj: `jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm -rf worktree directory failed" >&2`
+- jj: `{ jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; }; { rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm -rf worktree directory failed" >&2; }`
 
 #### Git repos
 
@@ -461,11 +461,12 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
    `worktree-agent-abc12345`.
 
    ```bash
-   jj workspace forget worktree-<name>
-   rm -rf ../<repo>_worktrees/<worktree-name>
+   jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2
+   rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm -rf worktree directory failed" >&2
    ```
 
    If `jj workspace forget` fails, log a warning but proceed with `rm -rf`.
+   If `rm -rf` fails, log a warning — the directory leak is detectable.
 
 #### Post-batch verification
 

@@ -62,7 +62,9 @@ esac
 GITEOF
   chmod +x "${REPO_ROOT}/bin/git"
   PATH="${REPO_ROOT}/bin:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
-  # Exit 0: directory removed; git_prune_failed=true is metadata-only (mxm.1)
+  # Exit 0: directory removed via rm -rf; prune failure is best-effort (WARNING only).
+  # Note: prune is only called when git_remove_failed=true, so a prune-only failure
+  # is unreachable. This test covers the combined remove+prune failure path.
   [ "$status" -eq 0 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-wt" ]
   [[ "$output" == *"git worktree remove failed"* ]]

@@ -387,6 +387,25 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
      # <cleanup step 5>
      # continue to next finding
    elif echo "$_conflict_check" | grep -q 'CONFLICT'; then
+     # Conflict detected — undo the rebase
+     jj undo || {
+       # jj undo failed — STOP and escalate
+       bd comments add <work-bead-id> "jj undo failed to revert conflicted rebase — manual recovery required."
+       # STOP: report STATUS: FAILED. Do NOT re-queue; escalate to user.
+     }
+     _post_undo_tip=$(jj log -r <pr-bookmark> --no-graph -T 'change_id.short(8)')
+     if [[ "$_post_undo_tip" != "$_pre_rebase_tip" ]]; then
+       # jj undo did not restore expected state — STOP and escalate
+       bd comments add <work-bead-id> "jj undo did not restore expected state — manual recovery required."
+       # <cleanup step 5>
+       # STOP: report STATUS: FAILED. Do NOT re-queue; escalate to user.
+     fi
+     # Clean up workspace (step 5), mark FAILED, re-queue
+     # continue to next finding
+   else
+     # No conflict — proceed to step 4
+     :
+   fi
    ```
 
    If `jj log` returns non-zero: clean up workspace (step 5), mark FAILED, add bead

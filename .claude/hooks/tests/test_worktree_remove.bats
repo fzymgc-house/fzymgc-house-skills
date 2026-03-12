@@ -325,8 +325,8 @@ MOCK
   PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   # Exit 1: directory removed but jj workspace forget could not run (jj not installed)
   [ "$status" -eq 1 ]
-  [[ "$output" == *"WARNING"* ]]
-  [[ "$output" == *"jj not installed"* ]]
+  [[ "$output" == *"WARNING: .jj/ found but jj not installed"* ]]
+  [[ "$output" == *"workspace metadata not cleaned"* ]]
   [ ! -d "${NON_GIT}_worktrees/orphan-jj-wt" ]
   rm -rf "$NON_GIT" "${NON_GIT}_worktrees"
 }

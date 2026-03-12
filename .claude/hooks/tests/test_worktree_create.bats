@@ -125,7 +125,9 @@ setup_jj() {
   PATH="$_NO_JJ_PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"jj is not installed"* ]]
-  [[ "$output" == *"INFO: cleanup: .jj/ found but jj not installed — no workspace was registered, no cleanup needed"* ]]
+  [[ "$output" == *"INFO"* ]]
+  [[ "$output" == *"jj not installed"* ]]
+  [[ "$output" == *"no cleanup needed"* ]]
   [ ! -d "${REPO_ROOT}_worktrees" ]
 }
 

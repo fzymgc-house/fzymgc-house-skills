@@ -86,7 +86,7 @@ if ! log_err=$(jj log --no-graph -n 3 2>&1); then
   jj_rc=1
 fi
 if [ "$jj_rc" -ne 0 ]; then
-  echo "Verification failed: ${jj_err}. Check jj log manually — init may have partially succeeded."
+  echo "WARNING: jj git init --colocate may have failed — jj status check returned an error: ${jj_err}. Run \`jj st\` manually to verify."
 fi
 exit $jj_rc
 '
@@ -118,8 +118,7 @@ MOCK
   chmod +x "$MOCK_BIN/jj"
   run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
   [ "$status" -ne 0 ]
-  [[ "$output" == *"Verification failed"* ]]
-  [[ "$output" == *"Check jj log manually"* ]]
+  [[ "$output" == *"WARNING: jj git init --colocate may have failed"* ]]
 }
 
 @test "verification: reports error when jj log fails but jj st succeeds" {

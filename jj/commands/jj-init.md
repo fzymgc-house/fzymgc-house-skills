@@ -67,5 +67,6 @@ allowed-tools:
    > NOTE: `.jj/` was not added to `.gitignore` (see error above). Add it manually to prevent
    > jj internals from being tracked by git.
 
-   If `jj st` or `jj log` fails, report the error output and advise the user
-   to check `jj log` manually — the init may have partially succeeded.
+   If `jj st` or `jj log` fails, report this as a potential init failure:
+   "WARNING: jj git init --colocate may have failed — jj status check returned
+   an error: \<error\>. Run `jj st` manually to verify." Do NOT report success.

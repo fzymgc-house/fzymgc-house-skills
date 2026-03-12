@@ -122,7 +122,7 @@ setup_jj() {
 
 @test "jj path: rejects when jj not installed" {
   setup_jj
-  PATH="/usr/bin:/bin" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  PATH="$_NO_JJ_PATH" run bash -c 'echo "{\"name\": \"test-jj-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
   [ "$status" -eq 1 ]
   [[ "$output" == *"jj is not installed"* ]]
   [[ "$output" == *"INFO: cleanup: .jj/ found but jj not installed — no workspace was registered, no cleanup needed"* ]]
@@ -346,7 +346,7 @@ MOCK
   # Replace "trap - EXIT" with PATH-clearing then false so the EXIT trap fires
   # with jj no longer in PATH.  The mock jj dir is removed from PATH here so
   # cleanup_on_error sees command -v jj fail.
-  sed 's|^trap - EXIT  # disarm after success$|PATH="/usr/bin:/bin"; false|' \
+  sed "s|^trap - EXIT  # disarm after success\$|PATH=\"${_NO_JJ_PATH}\"; false|" \
     "$BATS_TEST_DIRNAME/../worktree-create.sh" > "$patched"
   PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c \
     'echo "{\"name\": \"jj-gone-wt\"}" | bash '"$patched"' 2>&1'

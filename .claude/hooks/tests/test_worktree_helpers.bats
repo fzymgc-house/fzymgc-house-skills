@@ -233,7 +233,7 @@ MOCK
   mkdir -p "${non_git_dir}"
   # Run detect_repo_root with a PATH that excludes jj entirely
   # and from a directory with no .git ancestor
-  run env -i HOME="$HOME" PATH="/usr/bin:/bin" \
+  run env -i HOME="$HOME" PATH="$_NO_JJ_PATH" \
     bash -c 'cd '"$non_git_dir"' && source "'"${BATS_TEST_DIRNAME}"'/../worktree-helpers.sh" && detect_repo_root'
   [ "$status" -ne 0 ]
   [[ "$output" == *"ERROR"* ]]

@@ -167,7 +167,7 @@ setup_jj_only_worktree() {
 # jj_forget_failed=true from jj-not-installed → exit 1 (leaked workspace metadata)
 @test "jj path: warns and exits 1 when jj not installed (directory still removed)" {
   setup_jj_worktree
-  PATH="/usr/bin:/bin" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  PATH="$_NO_JJ_PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   [ "$status" -eq 1 ]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
   [[ "$output" == *"WARNING"* ]]
@@ -322,7 +322,7 @@ MOCK
   NON_GIT=$(mktemp -d)
   mkdir -p "${NON_GIT}/.jj"
   mkdir -p "${NON_GIT}_worktrees/orphan-jj-wt"
-  PATH="/usr/bin:/bin" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  PATH="$_NO_JJ_PATH" run bash -c 'cd '"$NON_GIT"' && echo "{\"path\": \"'"${NON_GIT}_worktrees/orphan-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
   # Exit 1: directory removed but jj workspace forget could not run (jj not installed)
   [ "$status" -eq 1 ]
   [[ "$output" == *"WARNING: .jj/ found but jj not installed"* ]]

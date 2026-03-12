@@ -1,5 +1,12 @@
 # Shared test helpers for worktree hook BATS tests
 
+# A PATH that includes jq (which lives at /opt/homebrew/bin on macOS) but
+# excludes any real or mock jj binary.  Used to simulate "jj not installed"
+# without accidentally breaking other tools (e.g. jq) that the hook scripts
+# depend on.  Exported so subprocesses created by BATS see it as well.
+_JQ_DIR=$(dirname "$(command -v jq 2>/dev/null || echo /usr/bin/jq)")
+export _NO_JJ_PATH="${_JQ_DIR}:/usr/bin:/bin"
+
 # Ensure MOCK_JJ_BIN_DIR is set and the directory exists.
 _setup_mock_bin_dir() {
   MOCK_JJ_BIN_DIR="${REPO_ROOT}/bin"

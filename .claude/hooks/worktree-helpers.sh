@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # Shared helpers for worktree-create.sh and worktree-remove.sh
+#
+# Functions:
+#   sanitize_for_output(str)       — strip control chars for safe logging
+#   validate_safe_name(name, label) — reject path traversal/metacharacters
+#   cleanup_empty_parent(dir)      — rmdir if empty after worktree removal
+#   detect_repo_root()             — find repo root via git or jj
 
 sanitize_for_output() {
   # Strip C0 control chars (0x00-0x1F) except \t (009), \n (012), \r (015),

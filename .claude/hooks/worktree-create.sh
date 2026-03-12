@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
 # WorktreeCreate hook: create worktrees in sibling directory
-# Input: JSON on stdin with "name" field
-# Output: print the worktree path to stdout (framework reads this)
+#
+# Input:  JSON on stdin with "name" field
+# Output: worktree path printed to stdout (framework reads this)
+#
+# Behavior:
+#   1. Validate name (reject path traversal, shell metacharacters, empty)
+#   2. Detect repo root via git rev-parse or jj root
+#   3. Create parent dir: <repo-parent>/<repo-name>_worktrees/
+#   4. VCS-aware workspace creation:
+#      - jj repos (.jj/): jj workspace add --name worktree-<name>
+#      - git repos: git worktree add -b worktree/<name>
+#   5. Install git hooks (lefthook) if configured
+#   6. Print worktree path to stdout
+#
+# Cleanup: EXIT trap reverts partial state on failure (VCS deregistration,
+#          directory removal). Uses PARENT_CREATED and WORKSPACE_CREATED
+#          flags to avoid cleaning up resources that were never created.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

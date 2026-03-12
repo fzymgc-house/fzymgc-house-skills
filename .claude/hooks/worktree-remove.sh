@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 # WorktreeRemove hook: remove worktrees from sibling directory
-# Input: JSON on stdin with "path" field
+#
+# Input:  JSON on stdin with "path" field
+# Output: none (exit 0 on success, exit 1 on failure)
+#
+# Behavior:
+#   1. Validate path is under a *_worktrees/ parent (reject traversal, symlinks)
+#   2. Detect repo root (from git/jj, or inferred from _worktrees path)
+#   3. VCS-aware workspace deregistration:
+#      - jj repos (.jj/): jj workspace forget worktree-<name>
+#      - git repos (.git/): git worktree remove, then git worktree prune
+#   4. rm -rf the worktree directory
+#   5. Clean up empty parent directory
+#
+# Safety: exits cleanly (0) for nonexistent paths. Warns but continues
+#         when VCS deregistration fails — directory is always removed.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

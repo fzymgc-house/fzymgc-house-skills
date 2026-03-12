@@ -605,8 +605,10 @@ MOCK
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
-@test "jj path: skips forget when workspace not in list" {
+@test "jj path: attempts forget when workspace not in list (idempotent)" {
   setup_jj_worktree
+  # Since gl4.11, forget is always attempted when workspace not in list
+  # (jj workspace forget is idempotent for non-existent workspaces)
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
@@ -620,8 +622,7 @@ if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
-  echo "ERROR: forget should not have been called" >&2
-  exit 1
+  exit 0
 fi
 exit 1
 MOCK
@@ -630,14 +631,14 @@ MOCK
   [ "$status" -eq 0 ]
   [[ "$output" == *"INFO"* ]]
   [[ "$output" == *"not found in jj workspace list output"* ]]
-  [[ "$output" == *"skipping forget"* ]]
+  [[ "$output" == *"attempting forget anyway"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 
-@test "jj workspace skips forget when workspace has bare name without worktree prefix" {
+@test "jj workspace attempts forget when bare name (no worktree- prefix) in list" {
   setup_jj_worktree
-  # Mock jj: workspace list returns a bare name (no "worktree-" prefix) for the path
-  # grep -qF "worktree-NAME:" will not match, so forget should be skipped
+  # Mock jj: workspace list returns a bare name (no "worktree-" prefix).
+  # grep -qF "worktree-NAME:" won't match, but forget is still attempted (gl4.11).
   _setup_mock_bin_dir
   cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
 #!/bin/bash
@@ -651,8 +652,8 @@ if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
   exit 0
 fi
 if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
-  echo "ERROR: forget should not have been called" >&2
-  exit 1
+  # Idempotent: forget succeeds even for non-existent workspace names
+  exit 0
 fi
 exit 1
 MOCK
@@ -661,7 +662,7 @@ MOCK
   [ "$status" -eq 0 ]
   [[ "$output" == *"INFO"* ]]
   [[ "$output" == *"not found in jj workspace list output"* ]]
-  [[ "$output" == *"skipping forget"* ]]
+  [[ "$output" == *"attempting forget anyway"* ]]
   [ ! -d "${REPO_ROOT}_worktrees/test-jj-wt" ]
 }
 

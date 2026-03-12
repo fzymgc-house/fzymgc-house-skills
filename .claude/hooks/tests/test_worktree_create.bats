@@ -307,7 +307,8 @@ MOCK
     'echo "{\"name\": \"forget-fail-wt\"}" | bash '"$patched"' 2>&1'
   rm -f "$patched"
   [ "$status" -ne 0 ]
-  [[ "$output" == *"WARNING: cleanup: jj workspace forget"* ]]
+  # WORKSPACE_CREATED=true (post-add failure) → ERROR severity, not WARNING
+  [[ "$output" == *"ERROR: cleanup: jj workspace forget"* ]]
 }
 
 @test "jj path: cleanup_on_error errors jj-not-in-PATH after successful workspace add" {

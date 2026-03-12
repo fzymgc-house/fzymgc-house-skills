@@ -1,11 +1,29 @@
 # Shared test helpers for worktree hook BATS tests
 
-# A PATH that includes jq (which lives at /opt/homebrew/bin on macOS) but
-# excludes any real or mock jj binary.  Used to simulate "jj not installed"
-# without accidentally breaking other tools (e.g. jq) that the hook scripts
-# depend on.  Exported so subprocesses created by BATS see it as well.
-_JQ_DIR=$(dirname "$(command -v jq 2>/dev/null || echo /usr/bin/jq)")
-export _NO_JJ_PATH="${_JQ_DIR}:/usr/bin:/bin"
+# A PATH that preserves all tools (jq, git, etc.) but excludes jj.
+# Used to simulate "jj not installed" without breaking other tools.
+# On macOS (Homebrew), jj and jq share /opt/homebrew/bin — we can't just
+# exclude that directory. Instead, filter PATH to drop dirs containing jj,
+# and symlink needed tools (jq) from those dirs into a temp directory.
+_NO_JJ_PATH=""
+_NO_JJ_FILTERED_DIR=""
+IFS=: read -ra _path_dirs <<< "$PATH"
+for _dir in "${_path_dirs[@]}"; do
+  if [[ ! -x "$_dir/jj" ]]; then
+    _NO_JJ_PATH="${_NO_JJ_PATH:+$_NO_JJ_PATH:}$_dir"
+  else
+    # This dir has jj — create a filtered copy with other needed tools
+    if [[ -z "$_NO_JJ_FILTERED_DIR" ]]; then
+      _NO_JJ_FILTERED_DIR=$(mktemp -d)
+    fi
+    for _tool in "$_dir"/*; do
+      [[ -x "$_tool" && "$(basename "$_tool")" != "jj" ]] && \
+        ln -sf "$_tool" "$_NO_JJ_FILTERED_DIR/$(basename "$_tool")" 2>/dev/null || true
+    done
+    _NO_JJ_PATH="${_NO_JJ_PATH:+$_NO_JJ_PATH:}$_NO_JJ_FILTERED_DIR"
+  fi
+done
+export _NO_JJ_PATH
 
 # Ensure MOCK_JJ_BIN_DIR is set and the directory exists.
 _setup_mock_bin_dir() {

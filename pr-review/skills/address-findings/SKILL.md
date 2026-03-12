@@ -341,8 +341,8 @@ Do NOT attempt to cherry-pick or rebase a PARTIAL result.
 **Cleanup:** Even though integration is skipped, the fix-worker's worktree
 must be cleaned up to prevent resource leaks:
 
-- git: `git worktree remove ../<repo>_worktrees/<worktree-name>`
-- jj: `jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; rm -rf ../<repo>_worktrees/<worktree-name>`
+- git: `git worktree remove ../<repo>_worktrees/<worktree-name> || { echo "WARNING: git worktree remove failed" >&2; git worktree prune; }`
+- jj: `jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm -rf worktree directory failed" >&2`
 
 #### Git repos
 

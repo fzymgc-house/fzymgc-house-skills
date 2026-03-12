@@ -549,6 +549,35 @@ MOCK
   [[ "$output" == *"failed to remove worktree directory"* ]]
 }
 
+@test "jj path: reports both errors when jj forget fails AND rm -rf fails" {
+  setup_jj_worktree
+  _setup_mock_bin_dir
+  cat > "${MOCK_JJ_BIN_DIR}/jj" << MOCK
+#!/bin/bash
+if [[ "\$1" == "root" ]]; then
+  git rev-parse --show-toplevel 2>/dev/null
+  exit \$?
+fi
+if [[ "\$1" == "workspace" && "\$2" == "list" ]]; then
+  echo "default: rlvkpntz abc12345 (empty) (no description set)"
+  echo "worktree-test-jj-wt: kkmpptqz def45678 (empty) (no description set)"
+  exit 0
+fi
+if [[ "\$1" == "workspace" && "\$2" == "forget" ]]; then
+  echo "Error: workspace forget failed for some reason" >&2
+  exit 1
+fi
+exit 1
+MOCK
+  chmod +x "${MOCK_JJ_BIN_DIR}/jj"
+  chmod a-w "${REPO_ROOT}_worktrees"
+  PATH="${MOCK_JJ_BIN_DIR}:$PATH" run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/test-jj-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  chmod a+w "${REPO_ROOT}_worktrees"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"jj workspace forget failed"* ]]
+  [[ "$output" == *"failed to remove worktree directory"* ]]
+}
+
 @test "jj path: warns and attempts forget when jj workspace list fails" {
   setup_jj_worktree
   _setup_mock_bin_dir

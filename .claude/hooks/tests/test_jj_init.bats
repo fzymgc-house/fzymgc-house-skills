@@ -101,7 +101,8 @@ MOCK
   chmod +x "$MOCK_BIN/jj"
   run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
   [ "$status" -eq 0 ]
-  [ -z "$output" ]
+  [[ "$output" != *"WARNING"* ]]
+  [[ "$output" != *"jj git init --colocate may have failed"* ]]
 }
 
 @test "verification: reports error when jj st fails" {

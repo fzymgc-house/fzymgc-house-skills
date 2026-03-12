@@ -988,6 +988,21 @@ MOCK
   [[ "$output" == *"WARNING: cleanup failed for"* ]]
 }
 
+@test "git path: create-then-remove lifecycle uses consistent branch names" {
+  # Create
+  run bash -c 'echo "{\"name\": \"git-lifecycle-wt\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-create.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ -d "${REPO_ROOT}_worktrees/git-lifecycle-wt" ]
+  # Verify git worktree was created with expected branch
+  git worktree list | grep -q "git-lifecycle-wt"
+  # Remove
+  run bash -c 'echo "{\"path\": \"'"${REPO_ROOT}_worktrees/git-lifecycle-wt"'\"}" | bash '"$BATS_TEST_DIRNAME"'/../worktree-remove.sh 2>&1'
+  [ "$status" -eq 0 ]
+  [ ! -d "${REPO_ROOT}_worktrees/git-lifecycle-wt" ]
+  # Verify git worktree list no longer shows it
+  ! git worktree list | grep -q "git-lifecycle-wt"
+}
+
 @test "jj path: create-then-remove lifecycle uses consistent workspace names" {
   setup_jj
   create_logging_jj_mock

@@ -137,3 +137,26 @@ MOCK
   [ "$status" -ne 0 ]
   [[ "$output" == *"error: log command failed"* ]]
 }
+
+@test "verification: reports error when both jj st and jj log fail" {
+  MOCK_BIN="$TEST_DIR/mock_bin"
+  mkdir -p "$MOCK_BIN"
+  cat > "$MOCK_BIN/jj" << 'MOCK'
+#!/bin/bash
+if [ "$1" = "st" ]; then
+  echo "error: status check failed" >&2
+  exit 1
+fi
+if [ "$1" = "log" ]; then
+  echo "error: log check failed" >&2
+  exit 1
+fi
+exit 0
+MOCK
+  chmod +x "$MOCK_BIN/jj"
+  run env PATH="$MOCK_BIN:$PATH" bash -c "$VERIFICATION_FRAGMENT"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"error: status check failed"* ]]
+  [[ "$output" == *"error: log check failed"* ]]
+  [[ "$output" == *"WARNING: jj git init --colocate may have failed"* ]]
+}

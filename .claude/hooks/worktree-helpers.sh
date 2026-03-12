@@ -82,7 +82,7 @@ detect_repo_root() {
       echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj root returned '$(sanitize_for_output "$jj_out")' but directory does not exist)" >&2
     fi
   elif [[ "$mktemp_failed" == "true" ]]; then
-    echo "ERROR: not inside a git/jj repository (git rev-parse failed; mktemp failed so jj root check was skipped)" >&2
+    echo "ERROR: repository root detection failed — git rev-parse failed and jj root check could not run because mktemp failed (possible resource exhaustion). If this is a jj-only repo, ensure /tmp is writable and retry." >&2
   else
     echo "ERROR: not inside a git/jj repository (git rev-parse failed; jj not in PATH)" >&2
   fi

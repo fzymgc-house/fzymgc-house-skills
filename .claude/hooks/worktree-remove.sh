@@ -151,8 +151,9 @@ elif [[ -d "${REPO_ROOT}/.jj" ]]; then
       if grep -qF "worktree-${WORKSPACE_NAME}" <<< "$_jj_ws_list"; then
         echo "WARNING: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' found in jj workspace list but format differs from expected (missing colon separator) — attempting forget anyway" >&2
       else
-        echo "INFO: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list output — skipping forget" >&2
-        _attempt_forget=false
+        # jj workspace forget is idempotent for non-existent workspaces, so attempting
+        # forget is safe and avoids silent metadata leaks when jj changes its output format.
+        echo "INFO: workspace 'worktree-$(sanitize_for_output "$WORKSPACE_NAME")' not found in jj workspace list output — attempting forget anyway (idempotent)" >&2
       fi
     fi
   fi

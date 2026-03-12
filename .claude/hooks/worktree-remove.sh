@@ -183,7 +183,6 @@ fi
 if ${git_remove_failed:-false}; then
   if ! prune_err=$(git worktree prune 2>&1); then
     echo "WARNING: git worktree prune also failed: $(sanitize_for_output "${prune_err:0:500}") — stale metadata may remain in .git/worktrees/" >&2
-    git_prune_failed=true
   fi
 fi
 # Clean up empty parent directory

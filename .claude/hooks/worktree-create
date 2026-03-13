@@ -88,6 +88,10 @@ def _cleanup() -> None:
                         f"— workspace metadata may be leaked: {jj_err}",
                         file=sys.stderr,
                     )
+                    print(
+                        f"LEAKED_WORKSPACE: worktree-{_name}",
+                        file=sys.stderr,
+                    )
                 else:
                     print(
                         f"WARNING: cleanup: jj workspace forget worktree-{_name} failed "

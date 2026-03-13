@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 HOOK_DIR = Path(__file__).resolve().parent.parent
 SCRIPT = HOOK_DIR / "worktree-remove"
+
+JJ_AVAILABLE = shutil.which("jj") is not None
 
 
 def run_hook(
@@ -17,6 +23,7 @@ def run_hook(
     *,
     cwd: Path,
     timeout: int = 30,
+    env: dict | None = None,
 ) -> subprocess.CompletedProcess:
     """Run the worktree-remove hook as a subprocess with JSON on stdin."""
     return subprocess.run(
@@ -26,6 +33,7 @@ def run_hook(
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
 
 
@@ -147,3 +155,228 @@ def test_outside_expected_parent_exits_1(git_repo: Path, tmp_path: Path) -> None
 
     # The rogue directory should NOT have been deleted
     assert rogue_dir.exists()
+
+
+# ---------------------------------------------------------------------------
+# jj integration tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not JJ_AVAILABLE, reason="jj is not installed")
+class TestJjIntegration:
+    def test_removes_jj_worktree(self, jj_repo: Path) -> None:
+        """Create a jj workspace in _worktrees sibling, remove it, verify deregistered."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "fix-worker-abc"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        # Create the jj workspace
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+        assert worktree_path.is_dir()
+
+        try:
+            # Run the remove hook from within the repo
+            result = run_hook({"path": str(worktree_path)}, cwd=jj_repo)
+            assert result.returncode == 0, f"hook failed: {result.stderr}"
+
+            # Worktree directory should be gone
+            assert not worktree_path.exists()
+
+            # jj should no longer list this workspace
+            list_result = subprocess.run(
+                ["jj", "--no-pager", "workspace", "list"],
+                cwd=str(jj_repo),
+                capture_output=True,
+                text=True,
+            )
+            assert workspace_name not in list_result.stdout
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    [
+                        "jj",
+                        "--no-pager",
+                        "workspace",
+                        "forget",
+                        workspace_name,
+                    ],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
+    def test_jj_not_installed_warning(self, jj_repo: Path, tmp_path: Path) -> None:
+        """Exits 1 with 'jj not installed' warning when jj binary is absent."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "no-jj-test"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        # Create the workspace with real jj first
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+
+        try:
+            # Build a fake bin dir containing only git (not jj)
+            fake_bin = tmp_path / "fake_bin"
+            fake_bin.mkdir()
+            git_path = shutil.which("git")
+            assert git_path is not None, "git must be available for this test"
+            (fake_bin / "git").symlink_to(git_path)
+
+            env = os.environ.copy()
+            env["PATH"] = str(fake_bin)
+
+            # Run hook with jj excluded from PATH
+            result = run_hook({"path": str(worktree_path)}, cwd=jj_repo, env=env)
+
+            # Hook should exit 1 (metadata leak = hard error) and warn about jj
+            assert result.returncode == 1
+            assert "jj not installed" in result.stderr
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    [
+                        "jj",
+                        "--no-pager",
+                        "workspace",
+                        "forget",
+                        workspace_name,
+                    ],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
+    def test_jj_workspace_not_in_list(self, jj_repo: Path) -> None:
+        """Directory in _worktrees but not registered as jj workspace still gets removed."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "unregistered-ws"
+        worktree_path = worktrees_dir / worktree_name
+        # Create directory without registering as jj workspace
+        worktree_path.mkdir()
+
+        try:
+            result = run_hook({"path": str(worktree_path)}, cwd=jj_repo)
+
+            # Hook should emit INFO about workspace not found and attempt forget
+            assert "not found" in result.stderr or "INFO" in result.stderr
+
+            # Directory should be gone (hook still removes it)
+            assert not worktree_path.exists()
+        finally:
+            if worktree_path.exists():
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
+    def test_jj_forget_failure_exits_1(self, jj_repo: Path, tmp_path: Path) -> None:
+        """jj workspace forget failure causes exit 1 (metadata leak = hard error)."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "forget-fail-test"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        # Create the workspace with real jj
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+
+        try:
+            # Create a fake jj that always exits 1 on workspace forget
+            fake_bin = tmp_path / "fake_bin"
+            fake_bin.mkdir()
+
+            # Fake jj: succeeds on workspace list, fails on workspace forget
+            fake_jj = fake_bin / "jj"
+            fake_jj.write_text(
+                "#!/bin/sh\n"
+                'if [ "$3" = "forget" ]; then\n'
+                '  echo "ERROR: fake jj forget failure" >&2\n'
+                "  exit 1\n"
+                "fi\n"
+                'exec jj "$@"\n'
+            )
+            fake_jj.chmod(0o755)
+
+            # Put fake_bin first in PATH so our fake jj takes priority
+            env = os.environ.copy()
+            env["PATH"] = f"{fake_bin}:{env['PATH']}"
+
+            result = run_hook({"path": str(worktree_path)}, cwd=jj_repo, env=env)
+
+            # jj forget failure = exit 1 (metadata leak = hard error)
+            assert result.returncode == 1
+            assert "ERROR" in result.stderr
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    [
+                        "jj",
+                        "--no-pager",
+                        "workspace",
+                        "forget",
+                        workspace_name,
+                    ],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()

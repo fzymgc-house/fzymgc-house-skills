@@ -54,7 +54,6 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
         return True  # jj_forget_failed
 
     # Check workspace list first
-    attempt_forget = True
     ws_list_result = run_cmd(["jj", "workspace", "list"], cwd=repo_root)
     if ws_list_result.returncode != 0:
         ws_err_msg = sanitize_for_output(ws_list_result.stderr.strip())
@@ -82,21 +81,20 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
                     file=sys.stderr,
                 )
 
-    if attempt_forget:
-        forget_result = run_cmd(
-            ["jj", "workspace", "forget", jj_workspace], cwd=repo_root
+    forget_result = run_cmd(
+        ["jj", "workspace", "forget", jj_workspace], cwd=repo_root
+    )
+    if forget_result.returncode != 0:
+        jj_err = sanitize_for_output(forget_result.stderr.strip()[:500])
+        print(
+            f"ERROR: jj workspace forget failed for "
+            f"{sanitize_for_output(jj_workspace)}: {jj_err}; "
+            f"workspace directory will still be removed "
+            f"(run 'jj workspace forget {sanitize_for_output(jj_workspace)}' "
+            f"manually to clean up)",
+            file=sys.stderr,
         )
-        if forget_result.returncode != 0:
-            jj_err = sanitize_for_output(forget_result.stderr.strip()[:500])
-            print(
-                f"ERROR: jj workspace forget failed for "
-                f"{sanitize_for_output(jj_workspace)}: {jj_err}; "
-                f"workspace directory will still be removed "
-                f"(run 'jj workspace forget {sanitize_for_output(jj_workspace)}' "
-                f"manually to clean up)",
-                file=sys.stderr,
-            )
-            return True  # jj_forget_failed
+        return True  # jj_forget_failed
 
     return False  # success
 

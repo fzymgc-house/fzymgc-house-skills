@@ -104,8 +104,13 @@ def detect_repo_root(*, cwd: Path | str) -> Path:
         root = result.stdout.strip()
         if root and Path(root).is_dir():
             return Path(root)
+        print(
+            f"WARNING: git rev-parse succeeded but returned unusable path "
+            f"{repr(root)} — trying jj",
+            file=sys.stderr,
+        )
 
-    # git failed — try jj
+    # git failed or returned unusable path — try jj
     if shutil.which("jj") is None:
         raise RuntimeError(
             "not inside a git/jj repository (git rev-parse failed; jj not in PATH)"

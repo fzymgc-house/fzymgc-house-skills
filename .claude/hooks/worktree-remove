@@ -105,18 +105,18 @@ def main() -> int:
         data = json.loads(raw) if raw.strip() else {}
     except json.JSONDecodeError as exc:
         print(
-            f"WARNING: failed to parse JSON input ({exc}) — skipping removal",
+            f"ERROR: failed to parse JSON input ({exc}) — skipping removal",
             file=sys.stderr,
         )
-        return 0
+        return 1
 
     worktree_path_str: str = data.get("path", "")
     if not worktree_path_str:
         print(
-            '{"warning":"no path field in WorktreeRemove input — skipping removal"}',
+            "ERROR: no path field in WorktreeRemove input — skipping removal",
             file=sys.stderr,
         )
-        return 0
+        return 1
 
     worktree_path = Path(worktree_path_str)
     if not worktree_path.is_dir():

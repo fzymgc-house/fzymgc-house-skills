@@ -105,8 +105,12 @@ def main() -> int:
     raw = sys.stdin.read()
     try:
         data = json.loads(raw) if raw.strip() else {}
-    except json.JSONDecodeError:
-        data = {}
+    except json.JSONDecodeError as exc:
+        print(
+            f"WARNING: failed to parse JSON input ({exc}) — skipping removal",
+            file=sys.stderr,
+        )
+        return 0
 
     worktree_path_str: str = data.get("path", "")
     if not worktree_path_str:

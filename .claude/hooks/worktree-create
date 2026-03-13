@@ -58,8 +58,6 @@ def _cleanup() -> None:
     if not _cleanup_registered:
         return
 
-    cleanup_failed = False
-
     if _repo_root is None or not _repo_root.is_dir():
         print(
             f"WARNING: cleanup: REPO_ROOT '{sanitize_for_output(str(_repo_root))}' "
@@ -90,7 +88,6 @@ def _cleanup() -> None:
                         f"— workspace metadata may be leaked: {jj_err}",
                         file=sys.stderr,
                     )
-                    cleanup_failed = True
                 else:
                     print(
                         f"WARNING: cleanup: jj workspace forget worktree-{_name} failed "
@@ -105,7 +102,6 @@ def _cleanup() -> None:
                     f"run 'jj workspace forget worktree-{_name}' manually",
                     file=sys.stderr,
                 )
-                cleanup_failed = True
             else:
                 print(
                     "INFO: cleanup: .jj/ found but jj not installed — no workspace was registered, no cleanup needed",
@@ -152,7 +148,6 @@ def _cleanup() -> None:
                 f"{sanitize_for_output(str(exc)[:500])}",
                 file=sys.stderr,
             )
-            cleanup_failed = True  # noqa: F841 — not used after this point but mirrors bash
 
     if _worktree_parent is not None:
         cleanup_empty_parent(_worktree_parent)

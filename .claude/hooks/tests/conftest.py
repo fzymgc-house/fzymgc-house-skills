@@ -80,6 +80,45 @@ def jj_repo(tmp_path: Path) -> Path:
 
 
 @pytest.fixture()
+def colocated_jj_repo(tmp_path: Path) -> Path:
+    """Create a colocated jj+git repo (both .jj/ and .git/) with one commit."""
+    subprocess.run(
+        ["jj", "git", "init", "--colocate", str(tmp_path)],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        [
+            "jj",
+            "--no-pager",
+            "config",
+            "set",
+            "--repo",
+            "user.email",
+            "test@example.com",
+        ],
+        cwd=str(tmp_path),
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["jj", "--no-pager", "config", "set", "--repo", "user.name", "Test User"],
+        cwd=str(tmp_path),
+        check=True,
+        capture_output=True,
+    )
+    readme = tmp_path / "README.md"
+    readme.write_text("# test\n")
+    subprocess.run(
+        ["jj", "--no-pager", "commit", "-m", "initial commit"],
+        cwd=str(tmp_path),
+        check=True,
+        capture_output=True,
+    )
+    return tmp_path
+
+
+@pytest.fixture()
 def mock_stdin(monkeypatch: pytest.MonkeyPatch):
     """Return a factory that patches sys.stdin with JSON data.
 

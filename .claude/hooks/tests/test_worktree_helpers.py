@@ -166,6 +166,13 @@ class TestDetectRepoRoot:
         root = detect_repo_root(cwd=git_repo)
         assert root == git_repo
 
+    @pytest.mark.skipif(
+        not __import__("shutil").which("jj"), reason="jj is not installed"
+    )
+    def test_detects_jj_repo(self, jj_repo):
+        root = detect_repo_root(cwd=jj_repo)
+        assert root == jj_repo
+
     def test_detects_from_subdirectory(self, git_repo):
         subdir = git_repo / "subdir"
         subdir.mkdir()

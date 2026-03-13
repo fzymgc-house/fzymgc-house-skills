@@ -244,6 +244,71 @@ class TestJjIntegration:
             if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
                 worktrees_dir.rmdir()
 
+    def test_removes_colocated_jj_worktree(self, colocated_jj_repo: Path) -> None:
+        """Create a jj workspace in a colocated jj+git repo, remove it, verify jj was used."""
+        repo_name = colocated_jj_repo.name
+        worktrees_dir = colocated_jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "fix-worker-colocated"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        # Verify colocated repo has both .jj/ and .git/
+        assert (colocated_jj_repo / ".jj").is_dir(), "Expected .jj/ in colocated repo"
+        assert (colocated_jj_repo / ".git").is_dir(), "Expected .git/ in colocated repo"
+
+        # Create the jj workspace
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(colocated_jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+        assert worktree_path.is_dir()
+
+        try:
+            # Run the remove hook from within the colocated repo
+            result = run_hook({"path": str(worktree_path)}, cwd=colocated_jj_repo)
+            assert result.returncode == 0, f"hook failed: {result.stderr}"
+
+            # Worktree directory should be gone
+            assert not worktree_path.exists()
+
+            # jj should no longer list this workspace
+            list_result = subprocess.run(
+                ["jj", "--no-pager", "workspace", "list"],
+                cwd=str(colocated_jj_repo),
+                capture_output=True,
+                text=True,
+            )
+            assert workspace_name not in list_result.stdout
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    [
+                        "jj",
+                        "--no-pager",
+                        "workspace",
+                        "forget",
+                        workspace_name,
+                    ],
+                    cwd=str(colocated_jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
     def test_jj_not_installed_warning(self, jj_repo: Path, tmp_path: Path) -> None:
         """Exits 1 with 'jj not installed' warning when jj binary is absent."""
         repo_name = jj_repo.name

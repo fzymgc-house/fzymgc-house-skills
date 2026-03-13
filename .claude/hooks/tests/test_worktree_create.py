@@ -284,6 +284,52 @@ class TestJjIntegration:
         assert result.returncode == 1
         assert "jj is not installed" in result.stderr
 
+    def test_creates_worktree_in_colocated_repo(self, colocated_jj_repo: Path) -> None:
+        """Creates a jj workspace in a colocated jj+git repo, using jj (not git)."""
+        worktree_parent = (
+            colocated_jj_repo.parent / f"{colocated_jj_repo.name}_worktrees"
+        )
+        worktree_path = worktree_parent / "feature-x"
+
+        try:
+            result = run_hook({"name": "feature-x"}, cwd=colocated_jj_repo)
+
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            output = result.stdout.strip()
+            assert output == str(worktree_path), (
+                f"Expected {worktree_path}, got {output}"
+            )
+            assert Path(output).is_dir(), "Worktree directory should exist"
+
+            # Verify .jj/ is present in the colocated repo (sanity check)
+            assert (colocated_jj_repo / ".jj").is_dir(), (
+                "Expected .jj/ in colocated repo"
+            )
+            assert (colocated_jj_repo / ".git").is_dir(), (
+                "Expected .git/ in colocated repo"
+            )
+
+            # Verify the workspace appears in jj workspace list (jj was used, not git)
+            wt_list = subprocess.run(
+                ["jj", "--no-pager", "workspace", "list"],
+                cwd=str(colocated_jj_repo),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert "worktree-feature-x" in wt_list.stdout
+
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-feature-x"],
+                    cwd=str(colocated_jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
     def test_old_jj_version_error_message(self, jj_repo: Path, tmp_path: Path) -> None:
         """When jj workspace add --name fails with version-related error, shows version message."""
         # Create a fake jj script that simulates old jj behavior

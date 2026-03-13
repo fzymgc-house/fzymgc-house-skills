@@ -39,9 +39,6 @@ def sanitize_for_output(s: str) -> str:
     return "".join(ch for ch in s if ord(ch) not in remove_chars)
 
 
-_SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9_./-]+$")
-
-
 def validate_safe_name(name: str, label: str) -> None:
     """Validate that *name* is safe for use as a filesystem component.
 
@@ -54,7 +51,7 @@ def validate_safe_name(name: str, label: str) -> None:
         raise ValueError(f"{sanitize_for_output(label)} must not be empty")
 
     # Only allow alphanumeric, underscore, dot, hyphen
-    if not re.fullmatch(r"[a-zA-Z0-9_.\\-]+", name):
+    if not re.fullmatch(r"[a-zA-Z0-9_.-]+", name):
         safe_name = sanitize_for_output(name)
         safe_label = sanitize_for_output(label)
         raise ValueError(

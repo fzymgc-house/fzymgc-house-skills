@@ -542,3 +542,46 @@ class TestJjIntegration:
                 shutil.rmtree(worktree_path, ignore_errors=True)
             if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
                 worktrees_dir.rmdir()
+
+
+# ---------------------------------------------------------------------------
+# test_inferred_repo_root_fallback — CWD outside any repo, infer from path
+# ---------------------------------------------------------------------------
+
+
+def test_inferred_repo_root_fallback(git_repo: Path) -> None:
+    """When CWD is outside any repo, hook infers repo root from _worktrees path."""
+    repo_name = git_repo.name
+    worktrees_dir = git_repo.parent / f"{repo_name}_worktrees"
+    worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+    worktree_name = "inferred-test"
+    worktree_path = worktrees_dir / worktree_name
+
+    # Create worktree
+    result = subprocess.run(
+        ["git", "worktree", "add", str(worktree_path)],
+        cwd=str(git_repo),
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"git worktree add failed: {result.stderr}"
+
+    try:
+        # Run hook from a directory that is NOT a git repo
+        # Use git_repo.parent (the tmp_path) as CWD - not a git repo
+        result = run_hook({"path": str(worktree_path)}, cwd=git_repo.parent)
+
+        assert result.returncode == 0, f"hook failed: {result.stderr}"
+        assert not worktree_path.exists(), "worktree directory should be removed"
+        # Should warn about inference
+        assert "inferred" in result.stderr.lower() or "WARNING" in result.stderr
+    finally:
+        if worktree_path.is_dir():
+            subprocess.run(
+                ["git", "worktree", "remove", "--force", str(worktree_path)],
+                cwd=str(git_repo),
+                capture_output=True,
+            )
+        if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+            worktrees_dir.rmdir()

@@ -27,6 +27,7 @@ import atexit
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -220,6 +221,13 @@ def main() -> int:
     # Register cleanup handler
     _cleanup_registered = True
     atexit.register(_cleanup)
+
+    def _sigterm_handler(signum: int, frame: object) -> None:
+        """Handle SIGTERM by running cleanup, then exiting."""
+        _cleanup()
+        sys.exit(1)
+
+    signal.signal(signal.SIGTERM, _sigterm_handler)
 
     # Check jj availability for jj repos
     if _is_jj and shutil.which("jj") is None:

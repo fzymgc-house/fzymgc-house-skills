@@ -370,6 +370,138 @@ class TestJjIntegration:
 
 
 # ---------------------------------------------------------------------------
+# Lefthook install tests
+# ---------------------------------------------------------------------------
+
+
+class TestLefthookInstall:
+    """Test lefthook install behavior in worktree-create."""
+
+    def _make_env_with_fake_bin(self, tmp_path: Path, fake_bin: Path) -> dict:
+        """Build an env dict with fake_bin prepended to PATH."""
+        env = os.environ.copy()
+        env["PATH"] = str(fake_bin) + os.pathsep + env.get("PATH", "")
+        return env
+
+    def test_lefthook_install_called_when_config_exists(
+        self, git_repo: Path, tmp_path: Path
+    ) -> None:
+        """lefthook install is called when lefthook.yml exists in the repo root."""
+        # Create lefthook.yml in the repo root
+        (git_repo / "lefthook.yml").write_text("pre-commit:\n  commands: {}\n")
+
+        # Create a fake lefthook that records it was called and exits 0
+        fake_bin = tmp_path / "fake_bin"
+        fake_bin.mkdir()
+        called_marker = tmp_path / "lefthook_called"
+        fake_lefthook = fake_bin / "lefthook"
+        fake_lefthook.write_text(f"#!/bin/sh\ntouch {called_marker}\nexit 0\n")
+        fake_lefthook.chmod(0o755)
+
+        # Copy real git so VCS detection works
+        git_path = shutil.which("git")
+        assert git_path is not None
+        (fake_bin / "git").symlink_to(git_path)
+
+        worktree_parent = git_repo.parent / f"{git_repo.name}_worktrees"
+        worktree_path = worktree_parent / "lh-test"
+
+        try:
+            env = self._make_env_with_fake_bin(tmp_path, fake_bin)
+            result = run_hook({"name": "lh-test"}, cwd=git_repo, env=env)
+
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert called_marker.exists(), (
+                "lefthook install was not called even though lefthook.yml exists"
+            )
+        finally:
+            if worktree_path.is_dir():
+                subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(worktree_path)],
+                    cwd=str(git_repo),
+                    capture_output=True,
+                )
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+    def test_lefthook_install_failure_warns(
+        self, git_repo: Path, tmp_path: Path
+    ) -> None:
+        """lefthook install failure emits a WARNING but the hook still exits 0."""
+        (git_repo / "lefthook.yml").write_text("pre-commit:\n  commands: {}\n")
+
+        fake_bin = tmp_path / "fake_bin"
+        fake_bin.mkdir()
+        fake_lefthook = fake_bin / "lefthook"
+        fake_lefthook.write_text("#!/bin/sh\necho 'install failed' >&2\nexit 1\n")
+        fake_lefthook.chmod(0o755)
+
+        git_path = shutil.which("git")
+        assert git_path is not None
+        (fake_bin / "git").symlink_to(git_path)
+
+        worktree_parent = git_repo.parent / f"{git_repo.name}_worktrees"
+        worktree_path = worktree_parent / "lh-fail"
+
+        try:
+            env = self._make_env_with_fake_bin(tmp_path, fake_bin)
+            result = run_hook({"name": "lh-fail"}, cwd=git_repo, env=env)
+
+            # Hook must succeed — lefthook failure is non-fatal
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert "WARNING" in result.stderr
+            assert "lefthook install failed" in result.stderr
+        finally:
+            if worktree_path.is_dir():
+                subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(worktree_path)],
+                    cwd=str(git_repo),
+                    capture_output=True,
+                )
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+    def test_lefthook_install_not_called_without_config(
+        self, git_repo: Path, tmp_path: Path
+    ) -> None:
+        """lefthook install is NOT called when lefthook.yml is absent."""
+        # Deliberately do NOT create lefthook.yml
+
+        fake_bin = tmp_path / "fake_bin"
+        fake_bin.mkdir()
+        called_marker = tmp_path / "lefthook_called"
+        fake_lefthook = fake_bin / "lefthook"
+        fake_lefthook.write_text(f"#!/bin/sh\ntouch {called_marker}\nexit 0\n")
+        fake_lefthook.chmod(0o755)
+
+        git_path = shutil.which("git")
+        assert git_path is not None
+        (fake_bin / "git").symlink_to(git_path)
+
+        worktree_parent = git_repo.parent / f"{git_repo.name}_worktrees"
+        worktree_path = worktree_parent / "no-lh"
+
+        try:
+            env = self._make_env_with_fake_bin(tmp_path, fake_bin)
+            result = run_hook({"name": "no-lh"}, cwd=git_repo, env=env)
+
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert not called_marker.exists(), (
+                "lefthook install was called even though lefthook.yml is absent"
+            )
+            assert "lefthook" not in result.stderr.lower()
+        finally:
+            if worktree_path.is_dir():
+                subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(worktree_path)],
+                    cwd=str(git_repo),
+                    capture_output=True,
+                )
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+
+# ---------------------------------------------------------------------------
 # _cleanup() atexit handler tests
 # ---------------------------------------------------------------------------
 
@@ -472,3 +604,151 @@ class TestCleanup:
         captured = capsys.readouterr()
         assert "no workspace was registered" in captured.err
         assert "no cleanup needed" in captured.err
+
+    def test_cleanup_git_workspace_created_removes_worktree(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup calls git worktree remove when workspace was created in a git repo."""
+        import unittest.mock
+
+        worktree_path = tmp_path / "worktree-test"
+        worktree_path.mkdir()
+        fake_result = unittest.mock.MagicMock()
+        fake_result.returncode = 0
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = True
+        worktree_mod._worktree_path = worktree_path
+        worktree_mod._worktree_parent = None
+
+        with unittest.mock.patch.object(
+            worktree_mod, "run_cmd", return_value=fake_result
+        ) as mock_run:
+            worktree_mod._cleanup()
+
+        mock_run.assert_called_once_with(
+            ["git", "worktree", "remove", "--force", str(worktree_path)],
+            cwd=tmp_path,
+        )
+        captured = capsys.readouterr()
+        assert "WARNING" not in captured.err
+
+    def test_cleanup_git_worktree_remove_failure_prunes(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup falls back to git worktree prune when remove fails."""
+        import unittest.mock
+
+        worktree_path = tmp_path / "worktree-test"
+        worktree_path.mkdir()
+        fail_result = unittest.mock.MagicMock()
+        fail_result.returncode = 1
+        fail_result.stderr = "error: failed to remove worktree"
+        ok_result = unittest.mock.MagicMock()
+        ok_result.returncode = 0
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = True
+        worktree_mod._worktree_path = worktree_path
+        worktree_mod._worktree_parent = None
+
+        with unittest.mock.patch.object(
+            worktree_mod, "run_cmd", side_effect=[fail_result, ok_result]
+        ) as mock_run:
+            worktree_mod._cleanup()
+
+        assert mock_run.call_count == 2
+        mock_run.assert_any_call(
+            ["git", "worktree", "remove", "--force", str(worktree_path)],
+            cwd=tmp_path,
+        )
+        mock_run.assert_any_call(["git", "worktree", "prune"], cwd=tmp_path)
+        captured = capsys.readouterr()
+        assert "WARNING" in captured.err
+        assert "git worktree remove failed" in captured.err
+
+    def test_cleanup_git_worktree_remove_and_prune_both_fail(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup emits two WARNINGs when both git worktree remove and prune fail."""
+        import unittest.mock
+
+        worktree_path = tmp_path / "worktree-test"
+        worktree_path.mkdir()
+        fail_result = unittest.mock.MagicMock()
+        fail_result.returncode = 1
+        fail_result.stderr = "error: remove failed"
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = True
+        worktree_mod._worktree_path = worktree_path
+        worktree_mod._worktree_parent = None
+
+        with unittest.mock.patch.object(
+            worktree_mod, "run_cmd", side_effect=[fail_result, fail_result]
+        ):
+            worktree_mod._cleanup()
+
+        captured = capsys.readouterr()
+        assert captured.err.count("WARNING") == 2
+        assert "git worktree remove failed" in captured.err
+        assert "git worktree prune also failed" in captured.err
+
+    def test_cleanup_git_partial_create_prunes(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup calls git worktree prune for partial creation (no workspace registered)."""
+        import unittest.mock
+
+        ok_result = unittest.mock.MagicMock()
+        ok_result.returncode = 0
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = False
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+
+        with unittest.mock.patch.object(
+            worktree_mod, "run_cmd", return_value=ok_result
+        ) as mock_run:
+            worktree_mod._cleanup()
+
+        mock_run.assert_called_once_with(["git", "worktree", "prune"], cwd=tmp_path)
+        captured = capsys.readouterr()
+        assert "WARNING" not in captured.err
+
+    def test_cleanup_rmtree_failure_warns(self, worktree_mod, capsys, tmp_path) -> None:
+        """_cleanup emits WARNING when shutil.rmtree raises OSError."""
+        import shutil
+        import unittest.mock
+
+        worktree_path = tmp_path / "worktree-test"
+        ok_result = unittest.mock.MagicMock()
+        ok_result.returncode = 0
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = True
+        worktree_mod._worktree_path = worktree_path
+        worktree_mod._worktree_parent = None
+
+        with unittest.mock.patch.object(
+            worktree_mod, "run_cmd", return_value=ok_result
+        ):
+            with unittest.mock.patch.object(
+                shutil, "rmtree", side_effect=OSError("permission denied")
+            ):
+                worktree_mod._cleanup()
+
+        captured = capsys.readouterr()
+        assert "WARNING" in captured.err
+        assert "cleanup failed" in captured.err

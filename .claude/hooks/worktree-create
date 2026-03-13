@@ -272,10 +272,13 @@ def main() -> int:
 
     # Install lefthook if configured
     if (repo_root / "lefthook.yml").is_file():
-        lh_result = run_cmd(["lefthook", "install"], cwd=worktree_path)
-        if lh_result.returncode != 0:
-            lh_err = sanitize_for_output((lh_result.stderr or "").strip()[:500])
-            print(f"WARNING: lefthook install failed in worktree: {lh_err}", file=sys.stderr)
+        if shutil.which("lefthook") is None:
+            print("WARNING: lefthook.yml found but lefthook not installed", file=sys.stderr)
+        else:
+            lh_result = run_cmd(["lefthook", "install"], cwd=worktree_path)
+            if lh_result.returncode != 0:
+                lh_err = sanitize_for_output((lh_result.stderr or "").strip()[:500])
+                print(f"WARNING: lefthook install failed in worktree: {lh_err}", file=sys.stderr)
 
     # Disarm cleanup handler — success path
     _cleanup_registered = False

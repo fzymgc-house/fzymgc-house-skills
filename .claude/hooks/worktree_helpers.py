@@ -67,8 +67,18 @@ def validate_safe_name(name: str, label: str) -> None:
 
 
 def run_cmd(args: list[str], *, cwd: Path | str) -> subprocess.CompletedProcess:
-    """Run *args* as a subprocess in *cwd*. Never raises on non-zero exit."""
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    """Run *args* as a subprocess in *cwd*.
+
+    Returns a CompletedProcess. Never raises: returns a synthetic
+    result with returncode=127 and descriptive stderr when the
+    executable is not found in PATH.
+    """
+    try:
+        return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(
+            args=args, returncode=127, stdout="", stderr=f"command not found: {args[0]}"
+        )
 
 
 def detect_repo_root(*, cwd: Path | str) -> Path:

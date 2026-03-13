@@ -283,3 +283,37 @@ class TestJjIntegration:
 
         assert result.returncode == 1
         assert "jj is not installed" in result.stderr
+
+    def test_old_jj_version_error_message(self, jj_repo: Path, tmp_path: Path) -> None:
+        """When jj workspace add --name fails with version-related error, shows version message."""
+        # Create a fake jj script that simulates old jj behavior
+        fake_bin = tmp_path / "fake_bin"
+        fake_bin.mkdir()
+
+        # Copy real git so detect_repo_root works
+        git_path = shutil.which("git")
+        assert git_path is not None, "git must be available for this test"
+        (fake_bin / "git").symlink_to(git_path)
+
+        # Create a fake jj that fails with "unexpected argument '--name'"
+        fake_jj = fake_bin / "jj"
+        fake_jj.write_text(
+            "#!/bin/sh\n"
+            'if echo "$*" | grep -q "workspace add"; then\n'
+            "  echo \"error: unexpected argument '--name' found\" >&2\n"
+            "  exit 2\n"
+            'elif echo "$*" | grep -q "root"; then\n'
+            '  echo "' + str(jj_repo) + '"\n'
+            "else\n"
+            "  exit 0\n"
+            "fi\n"
+        )
+        fake_jj.chmod(0o755)
+
+        env = os.environ.copy()
+        env["PATH"] = str(fake_bin)
+
+        result = run_hook({"name": "old-jj-test"}, cwd=jj_repo, env=env)
+
+        assert result.returncode == 1
+        assert "jj version too old" in result.stderr

@@ -199,6 +199,16 @@ def main() -> int:
     worktree_parent = repo_root.parent / f"{repo_name}_worktrees"
     worktree_path = worktree_parent / name
 
+    # Guard: refuse to overwrite a pre-existing directory
+    if worktree_path.exists():
+        print(
+            f"ERROR: worktree path '{sanitize_for_output(str(worktree_path))}' already exists "
+            f"— refusing to create (remove manually or use a different name)",
+            file=sys.stderr,
+        )
+        # Do NOT set _worktree_path — cleanup must not delete pre-existing data
+        return 1
+
     _worktree_parent = worktree_parent
     _worktree_path = worktree_path
     _is_jj = (repo_root / ".jj").is_dir()

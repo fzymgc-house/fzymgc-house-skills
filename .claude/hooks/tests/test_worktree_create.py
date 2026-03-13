@@ -568,6 +568,40 @@ class TestCleanup:
         assert "jj not installed" in captured.err
         assert "worktree-test-ws" in captured.err
 
+    def test_cleanup_jj_workspace_forget_fails_errors(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup errors when jj workspace forget fails with jj installed."""
+        import unittest.mock
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = True
+        worktree_mod._workspace_created = True
+        worktree_mod._parent_created = True
+        worktree_mod._name = "test-ws"
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+
+        fail_result = unittest.mock.MagicMock()
+        fail_result.returncode = 1
+        fail_result.stderr = "error: workspace not found"
+
+        with unittest.mock.patch("shutil.which", return_value="/usr/bin/jj"):
+            with unittest.mock.patch.object(
+                worktree_mod, "run_cmd", return_value=fail_result
+            ) as mock_run:
+                worktree_mod._cleanup()
+
+        mock_run.assert_called_once_with(
+            ["jj", "--no-pager", "workspace", "forget", "worktree-test-ws"],
+            cwd=tmp_path,
+        )
+        captured = capsys.readouterr()
+        assert "ERROR" in captured.err
+        assert "jj workspace forget" in captured.err
+        assert "worktree-test-ws" in captured.err
+
     def test_cleanup_jj_no_parent_created_noop(
         self, worktree_mod, capsys, tmp_path
     ) -> None:

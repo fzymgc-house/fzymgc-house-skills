@@ -347,12 +347,13 @@ class TestJjIntegration:
             fake_bin = tmp_path / "fake_bin"
             fake_bin.mkdir()
 
+            real_jj = shutil.which("jj")
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
                 'case "$2" in\n'
                 '  list) echo "error: simulated list failure" >&2; exit 1;;\n'
-                '  *) exec jj "$@";;\n'
+                f'  *) exec {real_jj} "$@";;\n'
                 "esac\n"
             )
             fake_jj.chmod(0o755)
@@ -416,14 +417,15 @@ class TestJjIntegration:
             fake_bin.mkdir()
 
             # Fake jj: succeeds on workspace list, fails on workspace forget
+            real_jj = shutil.which("jj")
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
-                'if [ "$3" = "forget" ]; then\n'
+                'if [ "$2" = "forget" ]; then\n'
                 '  echo "ERROR: fake jj forget failure" >&2\n'
                 "  exit 1\n"
                 "fi\n"
-                'exec jj "$@"\n'
+                f'exec {real_jj} "$@"\n'
             )
             fake_jj.chmod(0o755)
 

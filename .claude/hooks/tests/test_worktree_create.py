@@ -299,14 +299,18 @@ class TestJjIntegration:
         fake_jj = fake_bin / "jj"
         fake_jj.write_text(
             "#!/bin/sh\n"
-            'if echo "$*" | grep -q "workspace add"; then\n'
-            "  echo \"error: unexpected argument '--name' found\" >&2\n"
-            "  exit 2\n"
-            'elif echo "$*" | grep -q "root"; then\n'
-            '  echo "' + str(jj_repo) + '"\n'
-            "else\n"
-            "  exit 0\n"
-            "fi\n"
+            'case "$*" in\n'
+            '  *"workspace add"*)\n'
+            "    echo \"error: unexpected argument '--name' found\" >&2\n"
+            "    exit 2\n"
+            "    ;;\n"
+            '  *"root"*)\n'
+            '    echo "' + str(jj_repo) + '"\n'
+            "    ;;\n"
+            "  *)\n"
+            "    exit 0\n"
+            "    ;;\n"
+            "esac\n"
         )
         fake_jj.chmod(0o755)
 

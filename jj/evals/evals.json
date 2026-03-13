@@ -507,6 +507,50 @@
           "check": "Verify the agent attributes the error to hook stderr output (worktree-create.sh) rather than treating it as a jj command failure it caused"
         }
       ]
+    },
+    {
+      "id": "JJ-B-AT1",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "I just ran jj commit, verify the committed content is correct",
+      "context": "In a jj repo, user has just run jj commit -m 'fix: update config'",
+      "expected_output": "Should inspect @- (parent commit) not @ (empty working copy) to verify committed content",
+      "assertions": [
+        {
+          "name": "uses-at-minus",
+          "description": "Uses @- revision to inspect committed state",
+          "type": "contains",
+          "check": "@-"
+        },
+        {
+          "name": "does-not-inspect-at-alone",
+          "description": "Does not inspect @ alone (which is the empty working copy)",
+          "type": "manual",
+          "check": "Verify agent uses @- (parent) not @ (working copy) for verification"
+        }
+      ]
+    },
+    {
+      "id": "JJ-B-WS2",
+      "type": "behavioral",
+      "skill": "jujutsu",
+      "prompt": "The worktree-create hook failed with: ERROR: worktree path '/tmp/repo_worktrees/my-feature' already exists — refusing to create",
+      "context": "Agent is trying to create a worktree but the name already exists from a previous run",
+      "expected_output": "Should suggest removing the existing directory or using a different name",
+      "assertions": [
+        {
+          "name": "suggests-removal-or-rename",
+          "description": "Suggests removing existing directory or using different name",
+          "type": "manual",
+          "check": "Agent suggests either removing the existing worktree directory or choosing a different name"
+        },
+        {
+          "name": "mentions-existing-path",
+          "description": "References the existing path from the error",
+          "type": "contains",
+          "check": "already exists"
+        }
+      ]
     }
   ]
 }

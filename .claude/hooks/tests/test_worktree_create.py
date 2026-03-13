@@ -176,6 +176,35 @@ class TestGitIntegration:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
+    def test_branch_already_exists_exits_1(self, git_repo: Path) -> None:
+        """Exits 1 when worktree/<name> branch already exists."""
+        # Pre-create the branch that worktree-create will try to create
+        subprocess.run(
+            ["git", "-C", str(git_repo), "branch", "worktree/duplicate"],
+            check=True,
+            capture_output=True,
+        )
+
+        worktree_parent = git_repo.parent / f"{git_repo.name}_worktrees"
+        worktree_path = worktree_parent / "duplicate"
+
+        try:
+            result = run_hook({"name": "duplicate"}, cwd=git_repo)
+
+            assert result.returncode == 1
+            assert "git worktree add failed" in result.stderr
+            # Verify no partial directory left behind
+            assert not worktree_path.exists()
+        finally:
+            if worktree_path.is_dir():
+                subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(worktree_path)],
+                    cwd=str(git_repo),
+                    capture_output=True,
+                )
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
 
 # ---------------------------------------------------------------------------
 # Sibling directory test

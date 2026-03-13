@@ -38,12 +38,12 @@ def run_hook(
 
 
 # ---------------------------------------------------------------------------
-# test_malformed_json — invalid JSON logs warning and exits 0
+# test_malformed_json — invalid JSON exits 1
 # ---------------------------------------------------------------------------
 
 
-def test_malformed_json_exits_0(git_repo: Path) -> None:
-    """Malformed JSON input exits 0 with a warning about parse failure."""
+def test_malformed_json_exits_1(git_repo: Path) -> None:
+    """Malformed JSON input exits 1 with an error about parse failure."""
     proc = subprocess.run(
         [sys.executable, str(SCRIPT)],
         input="not json",
@@ -52,19 +52,19 @@ def test_malformed_json_exits_0(git_repo: Path) -> None:
         text=True,
         timeout=30,
     )
-    assert proc.returncode == 0
+    assert proc.returncode == 1
     assert "failed to parse JSON input" in proc.stderr
 
 
 # ---------------------------------------------------------------------------
-# test_no_path_exits_0 — empty input
+# test_no_path_exits_1 — empty input
 # ---------------------------------------------------------------------------
 
 
-def test_no_path_exits_0(git_repo: Path) -> None:
-    """Empty JSON input exits 0 with a warning about missing path field."""
+def test_no_path_exits_1(git_repo: Path) -> None:
+    """Empty JSON input exits 1 with an error about missing path field."""
     result = run_hook({}, cwd=git_repo)
-    assert result.returncode == 0
+    assert result.returncode == 1
     assert "no path field" in result.stderr
 
 
@@ -347,7 +347,7 @@ class TestJjIntegration:
                 worktrees_dir.rmdir()
 
     def test_jj_not_installed_warning(self, jj_repo: Path, tmp_path: Path) -> None:
-        """Exits 1 with 'jj not installed' warning when jj binary is absent."""
+        """Exits 0 with 'jj not installed' error when jj binary is absent (advisory, not failure)."""
         repo_name = jj_repo.name
         worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
         worktrees_dir.mkdir(parents=True, exist_ok=True)
@@ -387,8 +387,8 @@ class TestJjIntegration:
             # Run hook with jj excluded from PATH
             result = run_hook({"path": str(worktree_path)}, cwd=jj_repo, env=env)
 
-            # Hook should exit 1 (metadata leak = hard error) and warn about jj
-            assert result.returncode == 1
+            # Hook should exit 0 (directory removed; jj metadata leak is advisory)
+            assert result.returncode == 0
             assert "jj not installed" in result.stderr
         finally:
             if worktree_path.exists():

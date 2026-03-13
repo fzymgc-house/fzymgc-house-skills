@@ -317,3 +317,108 @@ class TestJjIntegration:
 
         assert result.returncode == 1
         assert "jj version too old" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# _cleanup() atexit handler tests
+# ---------------------------------------------------------------------------
+
+
+class TestCleanup:
+    """Test the _cleanup() atexit handler with various flag combinations."""
+
+    @pytest.fixture()
+    def worktree_mod(self):
+        """Import the worktree-create script as a module.
+
+        The script has no .py extension so we use SourceFileLoader directly
+        rather than spec_from_file_location (which relies on extension sniffing).
+        """
+        import importlib.machinery
+        import importlib.util
+
+        loader = importlib.machinery.SourceFileLoader("worktree_create", str(SCRIPT))
+        spec = importlib.util.spec_from_loader("worktree_create", loader)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_cleanup_noop_when_not_registered(self, worktree_mod, capsys) -> None:
+        """_cleanup does nothing when _cleanup_registered is False."""
+        worktree_mod._cleanup_registered = False
+        worktree_mod._cleanup()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""
+
+    def test_cleanup_warns_on_missing_repo_root(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup warns when _repo_root is None."""
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = None
+        worktree_mod._is_jj = False
+        worktree_mod._workspace_created = False
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+        worktree_mod._cleanup()
+        captured = capsys.readouterr()
+        assert "REPO_ROOT" in captured.err
+        assert "missing" in captured.err
+
+    def test_cleanup_jj_no_jj_installed_workspace_created_warns(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup warns about leaked jj workspace when jj not installed and workspace was created."""
+        import unittest.mock
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = True
+        worktree_mod._workspace_created = True
+        worktree_mod._parent_created = True
+        worktree_mod._name = "test-ws"
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+        with unittest.mock.patch("shutil.which", return_value=None):
+            worktree_mod._cleanup()
+        captured = capsys.readouterr()
+        assert "jj not installed" in captured.err
+        assert "worktree-test-ws" in captured.err
+
+    def test_cleanup_jj_no_parent_created_noop(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup skips jj forget when parent directory was never created."""
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = True
+        worktree_mod._workspace_created = False
+        worktree_mod._parent_created = False
+        worktree_mod._name = "test-ws"
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+        worktree_mod._cleanup()
+        captured = capsys.readouterr()
+        # No error — parent mkdir failed before any workspace creation
+        assert "ERROR" not in captured.err
+
+    def test_cleanup_jj_no_jj_installed_no_workspace_info(
+        self, worktree_mod, capsys, tmp_path
+    ) -> None:
+        """_cleanup prints INFO when jj not installed and no workspace was registered."""
+        import unittest.mock
+
+        worktree_mod._cleanup_registered = True
+        worktree_mod._repo_root = tmp_path
+        worktree_mod._is_jj = True
+        worktree_mod._workspace_created = False
+        worktree_mod._parent_created = True
+        worktree_mod._name = "test-ws"
+        worktree_mod._worktree_path = None
+        worktree_mod._worktree_parent = None
+        with unittest.mock.patch("shutil.which", return_value=None):
+            worktree_mod._cleanup()
+        captured = capsys.readouterr()
+        assert "no workspace was registered" in captured.err
+        assert "no cleanup needed" in captured.err

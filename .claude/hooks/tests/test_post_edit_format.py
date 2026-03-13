@@ -53,6 +53,41 @@ def test_markdown_file_runs_rumdl(tmp_path: Path) -> None:
     assert result.returncode == 0
 
 
+def test_python_file_formatted_by_ruff(tmp_path: Path) -> None:
+    """Ruff actually formats the Python file (not just exits 0)."""
+    py_file = tmp_path / "example.py"
+    # Missing spaces around = is a formatting issue ruff will fix
+    py_file.write_text("x=1\n")
+
+    data = {"tool_input": {"file_path": str(py_file)}}
+    result = run_hook(data)
+    assert result.returncode == 0
+
+    # ruff format should have added spaces: x = 1
+    content = py_file.read_text()
+    assert "x = 1" in content, (
+        f"Expected ruff to format 'x=1' to 'x = 1', got: {content!r}"
+    )
+
+
+def test_markdown_file_formatted_by_rumdl(tmp_path: Path) -> None:
+    """rumdl actually formats the Markdown file (not just exits 0)."""
+    md_file = tmp_path / "test.md"
+    # Trailing whitespace is fixable by rumdl
+    md_file.write_text("# Hello   \n\nWorld.\n")
+
+    data = {"tool_input": {"file_path": str(md_file)}}
+    result = run_hook(data)
+    assert result.returncode == 0
+
+    content = md_file.read_text()
+    # rumdl should strip trailing whitespace from the heading line
+    assert "# Hello" in content
+    assert "Hello   \n" not in content, (
+        f"Expected rumdl to strip trailing whitespace, got: {content!r}"
+    )
+
+
 def test_unknown_extension_exits_zero(tmp_path: Path) -> None:
     """Files with unknown extensions should exit 0 without error."""
     txt_file = tmp_path / "notes.txt"

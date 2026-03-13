@@ -116,7 +116,7 @@ def detect_repo_root(*, cwd: Path | str) -> Path:
             "not inside a git/jj repository (git rev-parse failed; jj not in PATH)"
         )
 
-    jj_result = run_cmd(["jj", "root"], cwd=cwd)
+    jj_result = run_cmd(["jj", "--no-pager", "root"], cwd=cwd)
     if jj_result.returncode == 0:
         jj_root = jj_result.stdout.strip()
         if jj_root and Path(jj_root).is_dir():

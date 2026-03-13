@@ -54,7 +54,7 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
         return True  # jj_forget_failed
 
     # Check workspace list first
-    ws_list_result = run_cmd(["jj", "workspace", "list"], cwd=repo_root)
+    ws_list_result = run_cmd(["jj", "--no-pager", "workspace", "list"], cwd=repo_root)
     if ws_list_result.returncode != 0:
         ws_err_msg = sanitize_for_output(ws_list_result.stderr.strip())
         print(
@@ -82,7 +82,7 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
                 )
 
     forget_result = run_cmd(
-        ["jj", "workspace", "forget", jj_workspace], cwd=repo_root
+        ["jj", "--no-pager", "workspace", "forget", jj_workspace], cwd=repo_root
     )
     if forget_result.returncode != 0:
         jj_err = sanitize_for_output(forget_result.stderr.strip()[:500])

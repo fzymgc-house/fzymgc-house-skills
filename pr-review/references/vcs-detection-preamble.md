@@ -87,6 +87,13 @@ repositories that may use git or jj (Jujutsu).
 
 3. If anything looks wrong, STOP and report STATUS: FAILED
 
+**CRITICAL — Read Before Proceeding:**
+
+- Use ONLY relative paths for all file operations
+- Do NOT `cd` outside your working directory
+- Do NOT use absolute paths from diffs or PR metadata -- translate them
+  to relative paths within your worktree
+
 Use the detected VCS for all operations in this session. When jj is
 detected, MUST use jj commands for ALL VCS operations — commits,
 workspaces, rebases, status, etc. Never use mutating git commands

@@ -370,6 +370,8 @@ class TestJjIntegration:
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
+                "# Strip --no-pager if present\n"
+                '[ "$1" = "--no-pager" ] && shift\n'
                 'case "$2" in\n'
                 '  list) echo "error: simulated list failure" >&2; exit 1;;\n'
                 f'  *) exec {real_jj} "$@";;\n'
@@ -440,6 +442,8 @@ class TestJjIntegration:
             fake_jj = fake_bin / "jj"
             fake_jj.write_text(
                 "#!/bin/sh\n"
+                "# Strip --no-pager if present\n"
+                '[ "$1" = "--no-pager" ] && shift\n'
                 'if [ "$2" = "forget" ]; then\n'
                 '  echo "ERROR: fake jj forget failure" >&2\n'
                 "  exit 1\n"

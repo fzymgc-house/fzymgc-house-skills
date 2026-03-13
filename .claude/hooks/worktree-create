@@ -79,7 +79,7 @@ def _cleanup() -> None:
             # Always attempt workspace forget — safe even if workspace wasn't fully
             # registered (jj workspace add may partially complete before failing).
             result = run_cmd(
-                ["jj", "workspace", "forget", f"worktree-{_name}"],
+                ["jj", "--no-pager", "workspace", "forget", f"worktree-{_name}"],
                 cwd=_repo_root,
             )
             if result.returncode != 0:
@@ -233,7 +233,7 @@ def main() -> int:
     # VCS-aware workspace creation
     if _is_jj:
         result = run_cmd(
-            ["jj", "workspace", "add", str(worktree_path), "--name", f"worktree-{name}"],
+            ["jj", "--no-pager", "workspace", "add", str(worktree_path), "--name", f"worktree-{name}"],
             cwd=repo_root,
         )
         if result.returncode != 0:

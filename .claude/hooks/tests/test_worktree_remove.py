@@ -311,6 +311,78 @@ class TestJjIntegration:
             if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
                 worktrees_dir.rmdir()
 
+    def test_jj_workspace_list_failure_still_attempts_forget(
+        self, jj_repo: Path, tmp_path: Path
+    ) -> None:
+        """When jj workspace list fails, hook warns but still attempts forget."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "list-fail-test"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        # Create the workspace with real jj
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+
+        try:
+            # Create a fake jj that fails on workspace list but succeeds on forget
+            # In `jj workspace list`: $1=workspace, $2=list
+            # In `jj workspace forget <name>`: $1=workspace, $2=forget
+            fake_bin = tmp_path / "fake_bin"
+            fake_bin.mkdir()
+
+            fake_jj = fake_bin / "jj"
+            fake_jj.write_text(
+                "#!/bin/sh\n"
+                'case "$2" in\n'
+                '  list) echo "error: simulated list failure" >&2; exit 1;;\n'
+                '  *) exec jj "$@";;\n'
+                "esac\n"
+            )
+            fake_jj.chmod(0o755)
+
+            env = os.environ.copy()
+            env["PATH"] = f"{fake_bin}:{env['PATH']}"
+
+            result = run_hook({"path": str(worktree_path)}, cwd=jj_repo, env=env)
+
+            # Hook should warn about list failure but still succeed (forget works)
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert "jj workspace list failed" in result.stderr
+            assert not worktree_path.exists()
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    [
+                        "jj",
+                        "--no-pager",
+                        "workspace",
+                        "forget",
+                        workspace_name,
+                    ],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
     def test_jj_forget_failure_exits_1(self, jj_repo: Path, tmp_path: Path) -> None:
         """jj workspace forget failure causes exit 1 (metadata leak = hard error)."""
         repo_name = jj_repo.name

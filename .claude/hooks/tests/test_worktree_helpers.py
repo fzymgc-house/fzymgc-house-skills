@@ -190,6 +190,21 @@ class TestDetectRepoRoot:
                 ):
                     detect_repo_root(cwd=tmp_path)
 
+    def test_warns_on_git_empty_stdout(self, tmp_path, capsys):
+        """When git rev-parse succeeds but returns empty stdout, warns and tries jj."""
+        with patch("worktree_helpers.run_cmd") as mock_run:
+            # First call (git): success but empty stdout
+            # Second call (jj): also fails
+            mock_run.side_effect = [
+                type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})(),
+                type("R", (), {"returncode": 1, "stdout": "", "stderr": "no repo"})(),
+            ]
+            with patch("worktree_helpers.shutil.which", return_value="/usr/bin/jj"):
+                with pytest.raises(RuntimeError):
+                    detect_repo_root(cwd=tmp_path)
+        captured = capsys.readouterr()
+        assert "git rev-parse succeeded but returned unusable path" in captured.err
+
 
 # ---------------------------------------------------------------------------
 # cleanup_empty_parent

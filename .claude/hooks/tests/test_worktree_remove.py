@@ -38,6 +38,25 @@ def run_hook(
 
 
 # ---------------------------------------------------------------------------
+# test_malformed_json — invalid JSON logs warning and exits 0
+# ---------------------------------------------------------------------------
+
+
+def test_malformed_json_exits_0(git_repo: Path) -> None:
+    """Malformed JSON input exits 0 with a warning about parse failure."""
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT)],
+        input="not json",
+        cwd=str(git_repo),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert proc.returncode == 0
+    assert "failed to parse JSON input" in proc.stderr
+
+
+# ---------------------------------------------------------------------------
 # test_no_path_exits_0 — empty input
 # ---------------------------------------------------------------------------
 

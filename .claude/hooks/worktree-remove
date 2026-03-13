@@ -46,12 +46,12 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
 
     if shutil.which("jj") is None:
         print(
-            f"WARNING: .jj/ found but jj not installed — workspace metadata not cleaned "
+            f"ERROR: .jj/ found but jj not installed — workspace metadata not cleaned "
             f"(run: jj workspace forget {sanitize_for_output(jj_workspace)} "
             f"from {sanitize_for_output(str(repo_root))} after reinstalling jj)",
             file=sys.stderr,
         )
-        return True  # jj_forget_failed
+        return False  # directory removal still succeeds; metadata leak is advisory
 
     # Check workspace list first
     ws_list_result = run_cmd(["jj", "--no-pager", "workspace", "list"], cwd=repo_root)

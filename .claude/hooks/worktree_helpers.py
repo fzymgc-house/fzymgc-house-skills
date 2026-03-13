@@ -50,35 +50,13 @@ def validate_safe_name(name: str, label: str) -> None:
     if not name:
         raise ValueError(f"{sanitize_for_output(label)} must not be empty")
 
-    # Only allow alphanumeric, underscore, dot, hyphen
-    if not re.fullmatch(r"[a-zA-Z0-9_.-]+", name):
-        safe_name = sanitize_for_output(name)
-        safe_label = sanitize_for_output(label)
-        raise ValueError(
-            f"invalid {safe_label} '{safe_name}' "
-            "(alphanumeric, dots, hyphens, underscores only; "
-            "no leading dot, trailing dot, or double-dot)"
-        )
-
-    if name.startswith("."):
-        safe_name = sanitize_for_output(name)
-        safe_label = sanitize_for_output(label)
-        raise ValueError(
-            f"invalid {safe_label} '{safe_name}' "
-            "(alphanumeric, dots, hyphens, underscores only; "
-            "no leading dot, trailing dot, or double-dot)"
-        )
-
-    if name.endswith("."):
-        safe_name = sanitize_for_output(name)
-        safe_label = sanitize_for_output(label)
-        raise ValueError(
-            f"invalid {safe_label} '{safe_name}' "
-            "(alphanumeric, dots, hyphens, underscores only; "
-            "no leading dot, trailing dot, or double-dot)"
-        )
-
-    if ".." in name:
+    invalid = (
+        not re.fullmatch(r"[a-zA-Z0-9_.-]+", name)
+        or name.startswith(".")
+        or name.endswith(".")
+        or ".." in name
+    )
+    if invalid:
         safe_name = sanitize_for_output(name)
         safe_label = sanitize_for_output(label)
         raise ValueError(

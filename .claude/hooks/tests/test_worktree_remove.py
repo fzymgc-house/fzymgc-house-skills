@@ -177,6 +177,43 @@ def test_outside_expected_parent_exits_1(git_repo: Path, tmp_path: Path) -> None
 
 
 # ---------------------------------------------------------------------------
+# test_symlink_traversal_exits_1 — symlink path traversal refused
+# ---------------------------------------------------------------------------
+
+
+def test_symlink_traversal_exits_1(git_repo: Path, tmp_path: Path) -> None:
+    """Symlink pointing outside _worktrees is rejected after resolve()."""
+    repo_name = git_repo.name
+    worktrees_dir = git_repo.parent / f"{repo_name}_worktrees"
+    worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a target directory outside _worktrees
+    outside_dir = tmp_path / "outside-target"
+    outside_dir.mkdir()
+
+    # Create a symlink inside _worktrees that points to the outside directory
+    symlink_path = worktrees_dir / "evil-link"
+    symlink_path.symlink_to(outside_dir)
+
+    try:
+        result = run_hook({"path": str(symlink_path)}, cwd=git_repo)
+
+        # After resolve(), the path points outside _worktrees — should be refused
+        assert result.returncode == 1
+        assert (
+            "refusing removal" in result.stderr
+            or "outside expected parent" in result.stderr
+        )
+        # The outside directory must NOT have been deleted
+        assert outside_dir.exists()
+    finally:
+        if symlink_path.is_symlink():
+            symlink_path.unlink()
+        if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+            worktrees_dir.rmdir()
+
+
+# ---------------------------------------------------------------------------
 # jj integration tests
 # ---------------------------------------------------------------------------
 

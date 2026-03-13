@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 HOOK_DIR = Path(__file__).resolve().parent.parent
 SCRIPT = HOOK_DIR / "worktree-create"
+
+JJ_AVAILABLE = shutil.which("jj") is not None
 
 
 def run_hook(
@@ -17,6 +23,7 @@ def run_hook(
     *,
     cwd: Path,
     timeout: int = 30,
+    env: dict | None = None,
 ) -> subprocess.CompletedProcess:
     """Run the worktree-create hook as a subprocess with JSON on stdin."""
     return subprocess.run(
@@ -26,6 +33,7 @@ def run_hook(
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
 
 
@@ -213,3 +221,65 @@ class TestSiblingDirectory:
                 )
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
+
+
+# ---------------------------------------------------------------------------
+# jj integration tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not JJ_AVAILABLE, reason="jj is not installed")
+class TestJjIntegration:
+    def test_creates_worktree_in_jj_repo(self, jj_repo: Path) -> None:
+        """Creates a jj workspace and prints its path to stdout."""
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "feature-x"
+
+        try:
+            result = run_hook({"name": "feature-x"}, cwd=jj_repo)
+
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            output = result.stdout.strip()
+            assert output == str(worktree_path), (
+                f"Expected {worktree_path}, got {output}"
+            )
+            assert Path(output).is_dir(), "Worktree directory should exist"
+
+            # Verify the workspace appears in jj workspace list
+            wt_list = subprocess.run(
+                ["jj", "--no-pager", "workspace", "list"],
+                cwd=str(jj_repo),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert "worktree-feature-x" in wt_list.stdout
+
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-feature-x"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+    def test_jj_not_installed_exits_1(self, jj_repo: Path, tmp_path: Path) -> None:
+        """Exits 1 with 'jj is not installed' when jj binary is absent."""
+        # Build a fake bin dir containing only git (not jj) so detect_repo_root
+        # works but shutil.which("jj") returns None inside the hook subprocess.
+        fake_bin = tmp_path / "fake_bin"
+        fake_bin.mkdir()
+        git_path = shutil.which("git")
+        assert git_path is not None, "git must be available for this test"
+        (fake_bin / "git").symlink_to(git_path)
+
+        env = os.environ.copy()
+        env["PATH"] = str(fake_bin)
+
+        result = run_hook({"name": "no-jj"}, cwd=jj_repo, env=env)
+
+        assert result.returncode == 1
+        assert "jj is not installed" in result.stderr

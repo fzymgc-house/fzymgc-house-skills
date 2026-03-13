@@ -50,20 +50,14 @@ jobs:
             exit 1
           fi
 
-  bats:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - name: Install bats
-        run: |
-          # Install pinned bats version with sha256 verification (no apt package for 1.11.0)
-          wget -q https://github.com/bats-core/bats-core/archive/refs/tags/v1.11.0.tar.gz
-          echo "aeff09fdc8b0c88b3087c99de00cf549356d7a2f6a69e3fcec5e0e861d2f9063  v1.11.0.tar.gz" | sha256sum -c -
-          tar xzf v1.11.0.tar.gz
-          sudo bats-core-1.11.0/install.sh /usr/local
-          rm -rf v1.11.0.tar.gz bats-core-1.11.0
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Run hook tests
-        run: bats --jobs 2 .claude/hooks/tests/
+        run: uv run pytest .claude/hooks/tests/ -v
 
   lint:
     runs-on: ubuntu-latest

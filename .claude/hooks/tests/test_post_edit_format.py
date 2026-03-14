@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
+
+RUFF_AVAILABLE = shutil.which("ruff") is not None
+RUMDL_AVAILABLE = shutil.which("rumdl") is not None
 
 
 HOOK_DIR = Path(__file__).parent.parent
@@ -53,6 +59,7 @@ def test_markdown_file_runs_rumdl(tmp_path: Path) -> None:
     assert result.returncode == 0
 
 
+@pytest.mark.skipif(not RUFF_AVAILABLE, reason="ruff is not installed")
 def test_python_file_formatted_by_ruff(tmp_path: Path) -> None:
     """Ruff actually formats the Python file (not just exits 0)."""
     py_file = tmp_path / "example.py"
@@ -70,6 +77,7 @@ def test_python_file_formatted_by_ruff(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.skipif(not RUMDL_AVAILABLE, reason="rumdl is not installed")
 def test_markdown_file_formatted_by_rumdl(tmp_path: Path) -> None:
     """rumdl actually formats the Markdown file (not just exits 0)."""
     md_file = tmp_path / "test.md"

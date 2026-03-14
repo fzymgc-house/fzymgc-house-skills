@@ -295,10 +295,12 @@ class TestJjIntegration:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
-    def test_jj_not_installed_exits_1(self, jj_repo: Path, tmp_path: Path) -> None:
+    def test_jj_not_installed_exits_1(
+        self, colocated_jj_repo: Path, tmp_path: Path
+    ) -> None:
         """Exits 1 with 'jj is not installed' when jj binary is absent."""
-        # Build a fake bin dir containing only git (not jj) so detect_repo_root
-        # works but shutil.which("jj") returns None inside the hook subprocess.
+        # Use colocated repo so git rev-parse succeeds (detect_repo_root works)
+        # but jj is absent from PATH so shutil.which("jj") returns None.
         fake_bin = tmp_path / "fake_bin"
         fake_bin.mkdir()
         git_path = shutil.which("git")
@@ -308,7 +310,7 @@ class TestJjIntegration:
         env = os.environ.copy()
         env["PATH"] = str(fake_bin)
 
-        result = run_hook({"name": "no-jj"}, cwd=jj_repo, env=env)
+        result = run_hook({"name": "no-jj"}, cwd=colocated_jj_repo, env=env)
 
         assert result.returncode == 1
         assert "jj is not installed" in result.stderr

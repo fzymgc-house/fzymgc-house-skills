@@ -88,6 +88,7 @@ batch-reviewed, and closed.
      jj git fetch || { echo "ERROR: jj git fetch failed"; exit 1; }
      BOOKMARK=$(gh pr view <number> --json headRefName --jq .headRefName) || { echo "ERROR: gh pr view failed"; exit 1; }
      [[ -n "$BOOKMARK" ]] || { echo "ERROR: headRefName was empty"; exit 1; }
+     jj bookmark track "${BOOKMARK}@origin" 2>/dev/null  # track if not already local
      jj edit "$BOOKMARK" || { echo "ERROR: jj edit failed"; exit 1; }
      # Verify: @ is the target commit after jj edit
      jj log -r @ --no-graph -n 1
@@ -342,7 +343,12 @@ Do NOT attempt to cherry-pick or rebase a PARTIAL result.
 must be cleaned up to prevent resource leaks:
 
 - git: `git worktree remove ../<repo>_worktrees/<worktree-name> || { echo "WARNING: git worktree remove failed" >&2; git worktree prune; }`
-- jj: `{ jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2; }; { rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm -rf worktree directory failed" >&2; }`
+- jj: forget workspace then remove directory:
+
+  ```bash
+  jj workspace forget worktree-<name> || echo "WARNING: jj workspace forget failed" >&2
+  rm -rf ../<repo>_worktrees/<worktree-name> || echo "WARNING: rm failed" >&2
+  ```
 
 #### Git repos
 

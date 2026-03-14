@@ -36,20 +36,23 @@ def main() -> None:
 
     suffix = path.suffix.lower()
 
-    if suffix == ".py":
-        subprocess.run(
-            ["ruff", "check", "--fix", "--quiet", str(path)],
-            capture_output=True,
-        )
-        subprocess.run(
-            ["ruff", "format", "--quiet", str(path)],
-            capture_output=True,
-        )
-    elif suffix == ".md":
-        subprocess.run(
-            ["rumdl", "check", "--fix", str(path)],
-            capture_output=True,
-        )
+    try:
+        if suffix == ".py":
+            subprocess.run(
+                ["ruff", "check", "--fix", "--quiet", str(path)],
+                capture_output=True,
+            )
+            subprocess.run(
+                ["ruff", "format", "--quiet", str(path)],
+                capture_output=True,
+            )
+        elif suffix == ".md":
+            subprocess.run(
+                ["rumdl", "check", "--fix", str(path)],
+                capture_output=True,
+            )
+    except FileNotFoundError:
+        pass  # formatter not installed — best-effort, skip silently
 
     sys.exit(0)
 

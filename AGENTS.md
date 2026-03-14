@@ -16,7 +16,8 @@ bd sync               # Sync issues
 
 **ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
 
-Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode on some systems, causing the agent to hang indefinitely waiting for y/n input.
+Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode
+on some systems, causing the agent to hang indefinitely waiting for y/n input.
 
 **Use these forms instead:**
 
@@ -48,7 +49,8 @@ Run `bd onboard` for the full workflow guide, or see `.beads/README.md`.
 
 ## Landing the Plane (Session Completion)
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until push succeeds (`git push` or `jj git push --bookmark <current-bookmark>`).
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete
+until push succeeds (`git push` or `jj git push --bookmark <current-bookmark>`).
 
 **MANDATORY WORKFLOW:**
 

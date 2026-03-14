@@ -70,14 +70,14 @@ def run_cmd(args: list[str], *, cwd: Path | str) -> subprocess.CompletedProcess:
     """Run *args* as a subprocess in *cwd*.
 
     Returns a CompletedProcess. Never raises: returns a synthetic
-    result with returncode=127 and descriptive stderr when the
-    executable is not found in PATH.
+    result with returncode=127 and descriptive stderr on OSError
+    (executable not found, permission denied, etc.).
     """
     try:
         return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
-    except FileNotFoundError:
+    except OSError as exc:
         return subprocess.CompletedProcess(
-            args=args, returncode=127, stdout="", stderr=f"command not found: {args[0]}"
+            args=args, returncode=127, stdout="", stderr=f"{type(exc).__name__}: {exc}"
         )
 
 

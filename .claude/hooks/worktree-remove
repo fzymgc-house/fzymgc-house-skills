@@ -46,7 +46,7 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
 
     if shutil.which("jj") is None:
         print(
-            f"ERROR: .jj/ found but jj not installed — workspace metadata not cleaned "
+            f"WARNING: .jj/ found but jj not installed — workspace metadata not cleaned "
             f"(run: jj workspace forget {sanitize_for_output(jj_workspace)} "
             f"from {sanitize_for_output(str(repo_root))} after reinstalling jj)",
             file=sys.stderr,
@@ -181,6 +181,19 @@ def main() -> int:
         if inferred_name.endswith("_worktrees"):
             repo_name_inferred = inferred_name[: -len("_worktrees")]
             repo_root = inferred_root_parent / repo_name_inferred
+            if not repo_root.is_dir():
+                print(
+                    f"ERROR: inferred repo root "
+                    f"'{sanitize_for_output(str(repo_root))}' does not exist "
+                    f"— refusing removal for safety",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Manual cleanup required: rm -rf "
+                    f"'{sanitize_for_output(str(worktree_path))}'",
+                    file=sys.stderr,
+                )
+                return 1
             repo_root_inferred = True
             print(
                 f"WARNING: detect_repo_root failed — inferred repo root as "

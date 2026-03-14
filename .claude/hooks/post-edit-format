@@ -51,8 +51,8 @@ def main() -> None:
                 ["rumdl", "check", "--fix", str(path)],
                 capture_output=True,
             )
-    except FileNotFoundError:
-        pass  # formatter not installed — best-effort, skip silently
+    except OSError:
+        pass  # formatter not installed or not executable — best-effort, skip
 
     sys.exit(0)
 

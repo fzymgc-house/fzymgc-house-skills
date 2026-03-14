@@ -54,8 +54,10 @@ _is_jj: bool = False
 
 def _cleanup() -> None:
     """Revert partial state on failure. Disarmed by setting _cleanup_registered=False."""
+    global _cleanup_registered
     if not _cleanup_registered:
         return
+    _cleanup_registered = False  # idempotent: prevent double-run via SIGTERM + atexit
 
     if _repo_root is None or not _repo_root.is_dir():
         print(

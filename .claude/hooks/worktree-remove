@@ -100,7 +100,11 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
 
 
 def main() -> int:
-    raw = sys.stdin.read()
+    try:
+        raw = sys.stdin.read()
+    except OSError as exc:
+        print(f"ERROR: failed to read stdin: {exc}", file=sys.stderr)
+        return 1
     try:
         data = json.loads(raw) if raw.strip() else {}
     except json.JSONDecodeError as exc:

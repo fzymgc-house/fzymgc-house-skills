@@ -81,6 +81,10 @@ Agents run non-interactively. Follow these constraints strictly:
 - When scripting jj operations, always use **change IDs** (not commit hashes) for stability across rewrites
 - If you encounter `(divergent)` markers in `jj log`, abandon the local (mutable) copy and rebase remaining work onto main
 - Prefer `jj rebase --skip-emptied` over manual `jj abandon` for cleanup -- it's idempotent and handles stacked chains
+- **Always `jj commit -m "..."` before `jj new`** -- `jj new` moves `@` to a new change; the old
+  change's files leave the working directory. Without a description or bookmark, the old change
+  is effectively lost (it still exists in history but is hard to find). Never leave meaningful
+  work in an undescribed, unbookmarked change.
 - Verify state with `jj st` after any mutation
 - Always pass `--config ui.paginate=never` if pager interferes
 

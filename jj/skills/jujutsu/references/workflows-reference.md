@@ -217,3 +217,51 @@ if jj log -r 'divergent()' --no-graph -T 'change_id' 2>/dev/null | grep -q .; th
   jj rebase -o main --skip-emptied
 fi
 ```
+
+## Common Footguns
+
+### Lost Work After `jj new`
+
+**Symptom:** You write files, run `jj new main`, and the files are "gone."
+
+**What actually happens:** jj auto-snapshots the working copy into a commit, then
+`jj new main` creates a new empty `@` on `main`. The old change still exists in
+history but has no bookmark or description, making it hard to find. The files are
+no longer in the working directory because `@` moved.
+
+**Prevention:** Always commit or describe before creating a new change:
+
+```bash
+# Write files...
+jj commit -m "feat: my work"    # Commit first, then start new work
+jj new main                      # Now safe -- previous work is committed
+
+# Or at minimum, describe and bookmark:
+jj describe -m "wip: my work"
+jj bookmark create my-work
+jj new main
+```
+
+**Recovery:** If you already lost track:
+
+```bash
+# Find orphaned changes (no bookmark, not ancestor of @)
+jj log -r 'mine() & ~ancestors(@) & ~empty()'
+
+# Edit the lost change to get files back
+jj edit <change-id>
+```
+
+### Forgetting to Update Bookmarks Before Push
+
+**Symptom:** `jj git push -b my-feature` pushes stale content.
+
+**What happens:** Bookmarks don't auto-advance in jj. After creating new commits,
+the bookmark still points at the old revision.
+
+**Fix:** Always set the bookmark before pushing:
+
+```bash
+jj bookmark set my-feature -r @
+jj git push -b my-feature
+```

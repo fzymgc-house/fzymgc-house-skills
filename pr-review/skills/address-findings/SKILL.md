@@ -376,7 +376,7 @@ For each FIXED result (fix worker reports CHANGE_ID instead of WORKTREE_BRANCH):
 2. Rebase the fix onto the PR bookmark:
 
    ```bash
-   jj rebase -r <change-id> -d <pr-bookmark>
+   jj rebase -r <change-id> -o <pr-bookmark>
    ```
 
    If rebase returns non-zero: do NOT run `jj undo` — nothing was committed.

@@ -70,7 +70,7 @@ files — callers must `rm -rf` the workspace directory after forget.
 |-------|-------------|
 | `git commit` | `jj commit` or `jj describe` + `jj new` |
 | `git merge` | `jj new branch1 branch2` (creates merge commit) |
-| `git rebase` | `jj rebase -s <source> -d <dest>` |
+| `git rebase` | `jj rebase -s <source> -o <dest>` |
 | `git checkout <branch>` | `jj edit <bookmark>` (edit tip) or `jj new <bookmark>` (new child) |
 | `git branch -d` | `jj bookmark delete <name>` |
 

@@ -49,6 +49,8 @@ metadata:
 - [Bookmarks](#bookmarks)
 - [Workspaces](#workspaces)
 - [Git Integration](#git-integration)
+- [GitHub Squash-Merge Workflow](#github-squash-merge-workflow)
+- [Divergent Changes](#divergent-changes)
 - [Conflict Handling](#conflict-handling)
 - [Quick Reference](#quick-reference)
 - [See Also](#see-also)
@@ -73,7 +75,12 @@ If jj is detected:
 
 Agents run non-interactively. Follow these constraints strictly:
 
+- Run `jj git fetch` at the **start** of any task, not just before push
 - Always use `-m` for commit/describe messages -- never open an editor
+- Do NOT `jj describe` or rewrite commits that have already been pushed
+- When scripting jj operations, always use **change IDs** (not commit hashes) for stability across rewrites
+- If you encounter `(divergent)` markers in `jj log`, abandon the local (mutable) copy and rebase remaining work onto main
+- Prefer `jj rebase --skip-emptied` over manual `jj abandon` for cleanup -- it's idempotent and handles stacked chains
 - Verify state with `jj st` after any mutation
 - Always pass `--config ui.paginate=never` if pager interferes
 
@@ -284,6 +291,91 @@ jj git push -b my-feature
 gh pr create --head my-feature --title "..." --body "..."
 ```
 
+## GitHub Squash-Merge Workflow
+
+GitHub squash-merge creates a **new commit** on `main` with a different hash than your local
+commits. jj cannot detect that your work has "landed," causing local commits to appear
+alive/divergent after fetch.
+
+### Post Squash-Merge Reconciliation
+
+After a PR is squash-merged on GitHub:
+
+```bash
+jj git fetch
+jj rebase -o main --skip-emptied
+jj bookmark delete <merged-bookmark>
+```
+
+`--skip-emptied` is critical -- it automatically abandons commits that become empty after
+rebase (their content is already in `main` via the squash merge).
+
+### Stacked PRs
+
+If you had commits A -> B -> C -> D (each a separate PR) and A's PR was just squash-merged:
+
+```bash
+jj git fetch
+jj rebase -s <change-id-of-B> -o main --skip-emptied
+jj bookmark delete <a-bookmark>
+```
+
+A becomes empty and is auto-abandoned. B, C, D rebase cleanly onto new `main`.
+
+### Complete PR Lifecycle
+
+```bash
+# 1. Start work
+jj new main
+# ... make changes ...
+jj describe -m "feat: my feature"
+jj bookmark create my-feature -r @
+jj git push
+
+# 2. Address review comments
+jj new my-feature   # new child of bookmark tip
+# ... make fixes ...
+jj squash           # fold fixes into parent
+jj git push --bookmark my-feature
+
+# 3. After squash-merge on GitHub
+jj git fetch
+jj rebase -o main --skip-emptied
+jj bookmark delete my-feature
+
+# 4. Start next piece of work
+jj new main
+```
+
+For detailed workflows and aliases, see `references/workflows-reference.md`.
+
+## Divergent Changes
+
+Divergent changes appear as `(divergent)` in `jj log` when a commit is modified both locally and remotely.
+
+### How Divergence Happens
+
+1. Push a bookmark for PR
+2. Locally `jj describe` or `jj squash` to tweak the commit
+3. PR gets squash-merged on GitHub (remote bookmark moves)
+4. `jj git fetch` -> two commits with the same change ID = divergence
+
+### Prevention Rules
+
+- **Do not modify commits after pushing** -- if the PR is up for review, leave those commits alone
+- **Always `jj git fetch` before starting new work**
+- **Use change IDs, not commit hashes** -- change IDs survive rewrites
+
+### Resolving Divergence
+
+If divergence occurs, abandon the stale local copy:
+
+```bash
+jj abandon <stale-commit-hash>
+```
+
+Or use the idempotent approach -- rebase with `--skip-emptied` to clean up automatically.
+
 ## Conflict Handling
 
 jj allows committing conflicts -- they are tracked as part of the commit, not blocking.
@@ -328,8 +420,8 @@ environments.
 | Abandon change | `jj abandon <rev>` |
 | Undo last operation | `jj undo` |
 | Restore working copy | `jj restore` |
-| Rebase onto new parent | `jj rebase -s <src> -d <dest>` |
-| Cherry-pick (single rev) | `jj rebase -r <change-id> -d <dest>` |
+| Rebase onto new parent | `jj rebase -s <src> -o <dest>` |
+| Cherry-pick (single rev) | `jj rebase -r <change-id> -o <dest>` |
 | Create bookmark | `jj bookmark create <name>` |
 | Move bookmark | `jj bookmark set <name> -r <rev>` |
 | Push bookmark | `jj git push -b <name>` |
@@ -342,5 +434,8 @@ environments.
 
 ## See Also
 
-For session-level change management (splitting, describing, inserting changes),
-see the `jjagent` plugin.
+- `references/jj-reference.md` -- detailed jj command reference, revsets, and advanced operations
+- `references/workflows-reference.md` -- end-to-end workflow recipes, aliases, and stacked PR patterns
+- `references/jj-git-interop.md` -- colocated repo behavior and git compatibility
+- For session-level change management (splitting, describing, inserting changes),
+  see the `jjagent` plugin.

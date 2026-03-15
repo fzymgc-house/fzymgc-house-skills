@@ -45,12 +45,12 @@ MUTATING_SUBCOMMANDS = {
     "worktree",
 }
 
-# Pattern: "git <subcommand>" at word boundary, possibly after &&, ||, ;, |, $(, etc.
-# Handles: git commit, git -C /path commit, git --no-pager commit
+# Pattern: "git <subcommand>" possibly after &&, ||, ;, |, $(, etc.
+# Handles: git commit, git -C /path commit, git --no-pager commit, $(git commit)
 GIT_CMD_RE = re.compile(
     r"(?:^|[;&|]\s*|&&\s*|\|\|\s*|\$\(\s*)"  # command separator or start
     r"git\s+"  # "git " with whitespace
-    r"(?:-\S+\s+)*"  # optional flags like -C /path
+    r"(?:-\S+(?:\s+\S+)?\s+)*"  # optional flags (handles -C /path as two tokens)
     r"(\w[\w-]*)",  # capture the subcommand
 )
 
@@ -100,22 +100,27 @@ def main() -> None:
 
     # Build the jj equivalents hint
     equivalents = {
-        "git add": "jj (auto-tracks)",
+        "git add": "jj (auto-tracks new files)",
         "git branch": "jj bookmark",
         "git checkout": "jj edit / jj new",
         "git cherry-pick": "jj rebase",
+        "git clean": "jj (not needed — untracked files are auto-managed)",
+        "git clone": "jj git clone",
         "git commit": "jj commit",
         "git fetch": "jj git fetch",
         "git init": "jj git init",
         "git merge": "jj new A B",
+        "git mv": "mv (jj auto-tracks renames)",
         "git pull": "jj git fetch",
         "git push": "jj git push",
         "git rebase": "jj rebase",
         "git reset": "jj restore / jj undo",
         "git restore": "jj restore",
         "git revert": "jj backout",
+        "git rm": "rm (jj auto-tracks deletions)",
         "git stash": "jj (not needed — working copy is a commit)",
         "git switch": "jj edit / jj new",
+        "git tag": "jj tag (or jj bookmark for lightweight refs)",
         "git worktree": "jj workspace",
     }
 
@@ -139,7 +144,12 @@ def main() -> None:
             "permissionDecisionReason": reason,
         }
     }
-    json.dump(result, sys.stdout)
+    try:
+        json.dump(result, sys.stdout)
+    except OSError:
+        # Broken pipe — framework closed stdout; exit 2 to block the command
+        # rather than silently allowing it
+        sys.exit(2)
 
 
 if __name__ == "__main__":

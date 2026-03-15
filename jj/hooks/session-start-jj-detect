@@ -50,8 +50,7 @@ def main() -> None:
     jj_path = shutil.which("jj")
     if jj_path is None:
         print(
-            f"jj repo detected ({repo_type}) at {jj_root} but jj is not installed.",
-            file=sys.stderr,
+            f"jj repo detected ({repo_type}) at {jj_root} but jj is not installed."
         )
         sys.exit(0)
 
@@ -80,9 +79,15 @@ def main() -> None:
     except (OSError, subprocess.TimeoutExpired):
         pass
 
-    # Build context message
+    # Build context message — write to stdout so SessionStart hook injects it
+    # into the model's context (stderr only shows in user transcript)
+    parts = [f"This is a {repo_type} repo"]
+    if jj_version:
+        parts.append(jj_version)
+    if workspace_info:
+        parts.append(workspace_info)
     lines = [
-        f"This is a {repo_type} repo. {jj_version}. {workspace_info}.",
+        ". ".join(parts) + ".",
         "VCS rules:",
         "  - Use jj commands for ALL VCS operations (commit, rebase, push, etc.)",
         "  - NEVER use mutating git commands (git commit, git checkout, git rebase, etc.)",
@@ -91,7 +96,7 @@ def main() -> None:
         lines.append("  - Read-only git (git log, git diff, git rev-parse) and gh CLI are safe")
     lines.append("  - @ = empty working copy; use @- to inspect committed state")
 
-    print("\n".join(lines), file=sys.stderr)
+    print("\n".join(lines))
 
 
 if __name__ == "__main__":

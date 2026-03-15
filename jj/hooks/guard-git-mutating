@@ -59,11 +59,11 @@ def main() -> None:
     try:
         raw = sys.stdin.read()
         data = json.loads(raw) if raw.strip() else {}
-    except (json.JSONDecodeError, OSError):
+        tool_input = data.get("tool_input") or {}
+        command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    except (json.JSONDecodeError, OSError, AttributeError):
         # Can't parse input — allow by default (best-effort)
         sys.exit(0)
-
-    command = data.get("tool_input", {}).get("command", "")
     if not command:
         sys.exit(0)
 

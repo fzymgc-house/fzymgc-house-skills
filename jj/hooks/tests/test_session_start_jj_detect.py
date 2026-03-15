@@ -116,5 +116,5 @@ class TestEdgeCases:
         subdir.mkdir(parents=True)
         result = run_hook(str(subdir))
         assert result.returncode == 0
-        # Should detect the jj repo from the parent
-        assert "jj" in result.stdout.lower() or result.stdout.strip() == ""
+        # Must detect the jj repo from the parent — output must mention jj
+        assert "pure jj" in result.stdout or "colocated" in result.stdout

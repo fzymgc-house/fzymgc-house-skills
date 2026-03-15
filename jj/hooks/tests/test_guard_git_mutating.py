@@ -172,3 +172,25 @@ class TestEdgeCases:
             timeout=10,
         )
         assert proc.returncode == 0
+
+    def test_null_tool_input(self) -> None:
+        """tool_input as null should not crash with AttributeError."""
+        proc = subprocess.run(
+            [sys.executable, str(HOOK)],
+            input=json.dumps({"tool_input": None, "cwd": "/tmp"}),
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert proc.returncode == 0
+
+    def test_string_tool_input(self) -> None:
+        """tool_input as string should not crash with AttributeError."""
+        proc = subprocess.run(
+            [sys.executable, str(HOOK)],
+            input=json.dumps({"tool_input": "not a dict", "cwd": "/tmp"}),
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert proc.returncode == 0

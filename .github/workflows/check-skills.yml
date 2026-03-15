@@ -64,7 +64,7 @@ jobs:
           rm /tmp/jj.tar.gz
           jj --version
       - name: Run hook tests
-        run: uv run --with pytest pytest .claude/hooks/tests/ -v
+        run: uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ -v
 
   lint:
     runs-on: ubuntu-latest

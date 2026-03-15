@@ -31,7 +31,7 @@ they STOP and report STATUS: FAILED.
 | Push | `git push` | `jj git push -b <name>` |
 | Push (auto-bookmark) | *(no equivalent)* | `jj git push --change <id>` |
 | Fetch | `git fetch` | `jj git fetch` |
-| Cherry-pick | `git cherry-pick <sha>` | `jj rebase -r <change-id> -d <target>` |
+| Cherry-pick | `git cherry-pick <sha>` | `jj rebase -r <change-id> -o <target>` |
 | Undo | `git reset` / `git revert` | `jj undo` |
 | Create workspace | `git worktree add <path> -b <branch> HEAD` | `jj workspace add <path> --name <name>` |
 | Remove workspace | `git worktree remove <path>` | `jj workspace forget <name>` + `rm -rf <path>` |

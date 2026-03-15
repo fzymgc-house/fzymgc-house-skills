@@ -1,12 +1,12 @@
 {
-  ".": "1.0.3",
-  "homelab/skills/grafana": "1.0.0",
-  "homelab/skills/terraform": "1.0.0",
-  "homelab/skills/skill-qa": "1.0.0",
-  "pr-review": "2.0.2",
-  "pr-review/skills/review-pr": "2.0.1",
-  "pr-review/skills/address-findings": "2.0.3",
-  "pr-review/skills/respond-to-comments": "2.0.1",
-  "jj": "0.1.0",
-  "jj/skills/jujutsu": "0.1.0"
+  ".": "1.1.0",
+  "homelab/skills/grafana": "1.1.0",
+  "homelab/skills/terraform": "1.1.0",
+  "homelab/skills/skill-qa": "1.1.0",
+  "pr-review": "2.1.0",
+  "pr-review/skills/review-pr": "2.1.0",
+  "pr-review/skills/address-findings": "2.1.0",
+  "pr-review/skills/respond-to-comments": "2.1.0",
+  "jj": "0.2.0",
+  "jj/skills/jujutsu": "0.2.0"
 }

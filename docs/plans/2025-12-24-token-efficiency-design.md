@@ -6,6 +6,7 @@
 ## Problem
 
 The Grafana skill consumes excessive tokens through:
+
 1. Discovery overhead - runtime `--describe` calls to learn tool schemas
 2. Multi-step workflows - sequential calls that accumulate in context
 3. Output verbosity - pretty-printed JSON with wrapper structure
@@ -24,13 +25,16 @@ Update `grafana_mcp.py` with new output options.
 | `--brief` | (flag) | off | Return essential fields only |
 
 **Structural changes:**
+
 - Flatten wrapper: return data directly, errors to stderr
 - Exit code 1 on errors
 
 **Example:**
+
 ```bash
-$ grafana_mcp.py list_datasources '{}' --brief
+grafana_mcp.py list_datasources '{}' --brief
 ```
+
 ```yaml
 - uid: prometheus-1
   name: Prometheus
@@ -49,15 +53,17 @@ Add workflow commands that batch common multi-step operations.
 Find errors in logs for a service.
 
 ```bash
-$ grafana_mcp.py investigate-logs '{"app":"nginx","timeRange":"1h"}'
+grafana_mcp.py investigate-logs '{"app":"nginx","timeRange":"1h"}'
 ```
 
 Internal flow:
+
 1. Find Loki datasource (auto-discover)
 2. Query stats for `{app="..."}`
 3. Query logs with `|= "error"` (limit 20)
 
 Output:
+
 ```yaml
 datasource: loki-1
 timeRange: now-1h to now
@@ -77,10 +83,11 @@ errors:
 Check metric health for a job/service.
 
 ```bash
-$ grafana_mcp.py investigate-metrics '{"job":"api","metric":"error_rate"}'
+grafana_mcp.py investigate-metrics '{"job":"api","metric":"error_rate"}'
 ```
 
 Internal flow:
+
 1. Find Prometheus datasource
 2. Query rate for specified metric
 3. Return summary with current value
@@ -90,14 +97,16 @@ Internal flow:
 Overview of system health.
 
 ```bash
-$ grafana_mcp.py quick-status '{}'
+grafana_mcp.py quick-status '{}'
 ```
 
 Internal flow:
+
 1. List active incidents
 2. List firing alerts
 
 Output:
+
 ```yaml
 incidents:
   active: 0
@@ -112,14 +121,16 @@ alerts:
 Search and summarize a dashboard.
 
 ```bash
-$ grafana_mcp.py find-dashboard '{"query":"api latency"}'
+grafana_mcp.py find-dashboard '{"query":"api latency"}'
 ```
 
 Internal flow:
+
 1. Search dashboards
 2. Get summary of top match
 
 Output:
+
 ```yaml
 found: 3 matches
 top_match:
@@ -142,6 +153,7 @@ Embed tool schemas in reference files to eliminate `--describe` calls.
 ## Tool Reference
 
 ### tool_name
+
 | Param | Required | Type | Notes |
 |-------|----------|------|-------|
 | param1 | ✅ | string | Description |

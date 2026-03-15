@@ -13,6 +13,7 @@
 ## Task 1: Create Directory Structure
 
 **Files:**
+
 - Create: `fzymgc-house/skills/terraform/SKILL.md`
 - Create: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 - Create: `fzymgc-house/skills/terraform/references/workspaces.md`
@@ -47,6 +48,7 @@ description: |
 **Step 3: Create empty reference files**
 
 Create `fzymgc-house/skills/terraform/references/workspaces.md`:
+
 ```markdown
 # Workspace Operations Reference
 
@@ -54,6 +56,7 @@ Create `fzymgc-house/skills/terraform/references/workspaces.md`:
 ```
 
 Create `fzymgc-house/skills/terraform/references/runs.md`:
+
 ```markdown
 # Run Operations Reference
 
@@ -61,6 +64,7 @@ Create `fzymgc-house/skills/terraform/references/runs.md`:
 ```
 
 Create `fzymgc-house/skills/terraform/references/providers.md`:
+
 ```markdown
 # Provider Documentation Reference
 
@@ -79,6 +83,7 @@ git commit -m "feat(terraform): scaffold terraform skill directory structure"
 ## Task 2: Implement MCP Stdio Client
 
 **Files:**
+
 - Create: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Create gateway script with MCP client**
@@ -469,6 +474,7 @@ git commit -m "feat(terraform): implement MCP stdio client and session manager
 ## Task 3: Add Direct HCP API Client
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add HCPTerraformClient class**
@@ -556,6 +562,7 @@ git commit -m "feat(terraform): add direct HCP Terraform API client
 ## Task 4: Implement workspace-status Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add workspace-status workflow function**
@@ -682,6 +689,7 @@ git commit -m "feat(terraform): add workspace-status workflow
 ## Task 5: Implement list-runs Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add list-runs workflow function**
@@ -770,6 +778,7 @@ git commit -m "feat(terraform): add list-runs workflow
 ## Task 6: Implement watch-run Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add watch-run workflow function**
@@ -948,6 +957,7 @@ git commit -m "feat(terraform): add watch-run workflow
 ## Task 7: Implement run-outputs Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add run-outputs workflow function**
@@ -1045,6 +1055,7 @@ git commit -m "feat(terraform): add run-outputs workflow
 ## Task 8: Implement provider-docs Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add provider-docs workflow function**
@@ -1191,6 +1202,7 @@ git commit -m "feat(terraform): add provider-docs workflow
 ## Task 9: Implement list-providers Workflow
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/scripts/terraform_mcp.py`
 
 **Step 1: Add list-providers workflow function**
@@ -1267,6 +1279,7 @@ git commit -m "feat(terraform): add list-providers workflow
 ## Task 10: Write Complete SKILL.md
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/SKILL.md`
 
 **Step 1: Write full skill documentation**
@@ -1291,11 +1304,13 @@ All operations MUST use the gateway script at `${CLAUDE_PLUGIN_ROOT}/skills/terr
 ### Configuration
 
 The following environment variables MUST be set:
+
 - `TFE_TOKEN` - HCP Terraform API token
 - `TFE_ORG` - Default organization name
 
 The following environment variable MAY be set:
-- `TFE_ADDRESS` - TFC/TFE URL (default: https://app.terraform.io)
+
+- `TFE_ADDRESS` - TFC/TFE URL (default: <https://app.terraform.io>)
 
 ## Quick Reference
 
@@ -1325,13 +1340,16 @@ ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run --work
 # Include plan/apply logs when complete
 ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run --workspace my-workspace --logs
 ```
+```
 
 Options:
+
 - `--workspace`, `-w` - Watch latest run for workspace
 - `--logs`, `-l` - Show plan/apply logs when run completes
 - `--interval`, `-i` - Poll interval in seconds (default: 5)
 
 The command MUST:
+
 - Poll status at regular intervals
 - Display status changes with timestamps
 - Show plan summary (resource additions/changes/destructions)
@@ -1438,10 +1456,12 @@ ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py describe <tool_n
 ## Domain References
 
 Load these as needed for detailed operations:
+
 - [workspaces.md](references/workspaces.md) - Workspace management details
 - [runs.md](references/runs.md) - Run status and lifecycle
 - [providers.md](references/providers.md) - Provider documentation lookup
-```
+
+```text
 
 **Step 2: Commit SKILL.md**
 
@@ -1460,6 +1480,7 @@ git commit -m "docs(terraform): complete SKILL.md with RFC2119 keywords
 ## Task 11: Write Reference Documentation
 
 **Files:**
+
 - Modify: `fzymgc-house/skills/terraform/references/workspaces.md`
 - Modify: `fzymgc-house/skills/terraform/references/runs.md`
 - Modify: `fzymgc-house/skills/terraform/references/providers.md`
@@ -1489,6 +1510,7 @@ git commit -m "docs(terraform): complete SKILL.md with RFC2119 keywords
 ```bash
 terraform_mcp.py workspace-status
 ```
+```
 
 ### Get Single Workspace Detail
 
@@ -1506,7 +1528,8 @@ terraform_mcp.py tool list_workspaces '{"terraform_org_name":"myorg","search_que
 
 - `list_workspaces` - List/search workspaces
 - `get_workspace_details` - Get detailed workspace info
-```
+
+```text
 
 **Step 2: Write runs.md**
 
@@ -1516,12 +1539,14 @@ terraform_mcp.py tool list_workspaces '{"terraform_org_name":"myorg","search_que
 ## Run Status Lifecycle
 
 ```
+
 pending → planning → planned → [cost_estimating →] [policy_checking →] confirmed → applying → applied
-                  ↓                                                              ↓
+                  ↓ ↓
               errored                                                        errored
-                  ↓                                                              ↓
-              discarded                                                      discarded
-```
+                  ↓ ↓
+              discarded discarded
+
+```text
 
 ## Terminal States
 
@@ -1593,6 +1618,7 @@ terraform_mcp.py provider-docs aws --list-resources
 
 # Search in output for the resource you need
 ```
+```
 
 ### Get Resource Documentation
 
@@ -1608,7 +1634,8 @@ terraform_mcp.py provider-docs azurerm --resource virtual_machine
 - `search_providers` - Find provider docs by service name
 - `get_provider_details` - Get full documentation content
 - `get_latest_provider_version` - Get latest provider version
-```
+
+```text
 
 **Step 4: Commit reference docs**
 

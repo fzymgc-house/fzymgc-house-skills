@@ -9,6 +9,16 @@ argument-hint: "[pr-number]"
 allowed-tools:
   - "Bash(${CLAUDE_PLUGIN_ROOT}/skills/respond-to-comments/scripts/pr_comments *)"
   - "Bash(git *)"
+  - "Bash(jj st)"
+  - "Bash(jj st *)"
+  - "Bash(jj log *)"
+  - "Bash(jj diff *)"
+  - "Bash(test *)"
+  - "Bash(jj root)"
+  - "Bash(jj workspace *)"
+  - "Bash(jj bookmark *)"
+  - "Bash(jj git *)"
+  - "Bash(jj commit *)"
   - "Bash(gh *)"
   - "Bash(bd create *)"
   - "Bash(bd list *)"
@@ -29,6 +39,21 @@ metadata:
 ---
 
 # PR Comment Operations
+
+## Contents
+
+- [VCS Detection](#vcs-detection)
+- [Commands](#commands)
+- [Quick lookup vs full workflow](#quick-lookup-vs-full-workflow)
+- [Full Review-Response Workflow](#full-review-response-workflow)
+- [Hard Constraints](#hard-constraints)
+- [Notes](#notes)
+
+## VCS Detection
+
+Follow the procedure in `pr-review/references/vcs-detection-preamble.md` to
+detect git vs jj and verify your location. Use `gh` CLI for GitHub
+operations regardless of VCS.
 
 **Execute** the bundled script using the full absolute path from
 your allowed-tools Bash pattern. The script outputs ready-to-run
@@ -118,11 +143,17 @@ beads and run `bd init` in the target project."
    Pass this context to sub-agents in Phase 3 so they understand
    what was already attempted.
 
-6. **Locate the worktree.** Run `git worktree list` and check whether one
-   exists for the PR's branch. Worktrees are in the sibling
-   `<repo>_worktrees/` directory. If one matches, `cd` into it and
-   verify with `git branch --show-current`. If not, ask the user
-   whether to create one.
+6. **Locate the worktree.** Worktrees are in the sibling
+   `<repo>_worktrees/` directory.
+   - **git:** Run `git worktree list` and check whether one exists for
+     the PR's branch. If one matches, `cd` into it and verify with
+     `git branch --show-current`.
+   - **jj:** Verify your working directory is under a `_worktrees/`
+     sibling directory using `case "$(pwd)" in *_worktrees/*) ...`.
+     Do NOT rely on `jj workspace list` output to identify the
+     current workspace (jj 0.39+ has no `(current)` marker).
+   If no worktree matches, ask the user whether to create one.
+
    **MUST** use an existing worktree if one matches.
 
 ### Phase 2: Categorize, clarify, and confirm
@@ -239,7 +270,7 @@ ONLY structured results (no explanations) to minimize token use:
 
 1. Read Phase 2 categorization (comment IDs, categories, user guidance)
 2. Query beads for review state: `bd list --parent <review-bead-id> --json`
-3. Run `git diff` to see actual changes
+3. Run VCS diff to see actual changes (`git diff` or `jj diff`)
 4. For EACH comment ID, output one line:
 
    ```text

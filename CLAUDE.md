@@ -36,6 +36,15 @@ pr-review/
       SKILL.md
       scripts/
       references/
+jj/
+  plugin.json         # jj (Jujutsu) VCS plugin
+  skills/
+    jujutsu/
+      SKILL.md        # Core jj workflow guidance
+      references/
+        jj-git-interop.md
+  commands/
+    jj-init.md        # /jj-init slash command
 ```
 
 ## Creating Skills
@@ -66,6 +75,8 @@ Skills should be self-contained and focused on specific tasks related to either 
   type design, comments, security, API compatibility, spec compliance, code simplification).
   Findings persisted as beads for cross-session context. User-invoked via `/review-pr [aspects]`.
 - **skill-qa** (`homelab` plugin) - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
+- **jujutsu** (`jj` plugin) - Jujutsu (jj) VCS workflow guidance. Activates when `.jj/` exists in repo root
+  or user mentions jj/jujutsu. Covers core concepts, bookmarks, workspaces, and git interop.
 
 ## Commit Workflow
 
@@ -163,8 +174,40 @@ repos (which confuses LSP servers):
 ```
 
 WorktreeCreate/WorktreeRemove hooks in `.claude/settings.json` handle
-this automatically. Do NOT manually create worktrees inside
-`.claude/worktrees/`.
+this automatically. Do NOT manually create worktrees — always use the
+hook system.
+
+**Naming constraint:** The repo directory name MUST NOT end in
+`_worktrees`. This suffix is used by the worktree-remove hook to infer
+the repo root from orphaned worktree paths, and a repo named
+`foo_worktrees` would create an ambiguous `foo_worktrees_worktrees/`
+parent directory.
+
+**VCS rule:** When jj is available (`jj root` succeeds), MUST use jj
+commands for ALL VCS operations — commits, workspaces, rebases, status,
+log, etc. This applies to colocated repos (both `.jj/` and `.git/`)
+as well as pure jj repos. Never use mutating git commands (`git commit`,
+`git worktree add`, `git checkout`, etc.) when jj is present.
+Read-only git commands (`git log`, `git diff`, `git rev-parse`) and
+`gh` CLI are safe in colocated repos.
+
+**VCS-specific behavior:**
+
+- **jj repos (including colocated)**: `jj workspace add` for worktrees,
+  `jj rebase` + `jj bookmark set` for integration, `jj workspace forget`
+  for cleanup. fix-worker reports `CHANGE_ID`.
+- **git-only repos** (no `.jj/`): `git worktree add` for worktrees,
+  `git cherry-pick` for integration, `git worktree remove` for cleanup.
+  fix-worker reports `WORKTREE_BRANCH`.
+
+### jj Operation Log Semantics
+
+jj's op log only records **successful** operations (unlike git's reflog).
+A failed `jj bookmark set` leaves no op-log entry — `jj undo` skips past
+it to the previous successful op. Never "undo twice" to account for failures.
+
+In jj, `@` is the working-copy commit (typically empty). Use `@-` (parent)
+when verifying committed state (e.g., after `jj undo` or `jj commit`).
 
 ### Skill Invocation
 

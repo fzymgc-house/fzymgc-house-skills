@@ -2,20 +2,17 @@
 
 ## [2.0.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/pr-review-v2.0.1...pr-review-v2.0.2) (2026-03-07)
 
-
 ### Bug Fixes
 
 * **address-findings:** replace git merge with cherry-pick ([#29](https://github.com/fzymgc-house/fzymgc-house-skills/issues/29)) ([c44219b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c44219bb1135181ae4eca427fa1bef8a4ae2069b))
 
 ## [2.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/pr-review-v2.0.0...pr-review-v2.0.1) (2026-03-07)
 
-
 ### Bug Fixes
 
 * **pr-review:** worktree isolation, commit protocol, and verification alignment ([#27](https://github.com/fzymgc-house/fzymgc-house-skills/issues/27)) ([74c5e29](https://github.com/fzymgc-house/fzymgc-house-skills/commit/74c5e2983c07bb76f7d85de85adf3a475a7285e6))
 
 ## [2.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/pr-review-v1.0.0...pr-review-v2.0.0) (2026-02-28)
-
 
 ### ⚠ BREAKING CHANGES
 

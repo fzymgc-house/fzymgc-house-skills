@@ -17,6 +17,11 @@
       "name": "pr-review",
       "description": "PR review workflow with specialized review agents and automated fix loop",
       "source": "./pr-review"
+    },
+    {
+      "name": "jj",
+      "description": "Jujutsu (jj) VCS workflow guidance for colocated repos",
+      "source": "./jj"
     }
   ]
 }

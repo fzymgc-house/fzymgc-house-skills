@@ -82,6 +82,27 @@
           "path": "pr-review/skills/respond-to-comments/SKILL.md"
         }
       ]
+    },
+    "jj": {
+      "release-type": "simple",
+      "package-name": "jj",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "jj/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "jj/skills/jujutsu": {
+      "release-type": "simple",
+      "package-name": "jujutsu",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "jj/skills/jujutsu/SKILL.md"
+        }
+      ]
     }
   }
 }

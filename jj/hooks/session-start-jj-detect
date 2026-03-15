@@ -1,0 +1,103 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""SessionStart hook: detect jj repo and prime context.
+
+Checks if the working directory is inside a jj repo. If so, prints
+context about the repo type (pure jj vs colocated) and VCS rules
+to stderr, which becomes additional context for the session.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, OSError):
+        sys.exit(0)
+
+    cwd = data.get("cwd", os.getcwd())
+
+    # Walk up to find .jj/
+    jj_root = None
+    check_dir = cwd
+    for _ in range(50):
+        if os.path.isdir(os.path.join(check_dir, ".jj")):
+            jj_root = check_dir
+            break
+        parent = os.path.dirname(check_dir)
+        if parent == check_dir:
+            break
+        check_dir = parent
+
+    if jj_root is None:
+        sys.exit(0)
+
+    # Determine repo type
+    has_git = os.path.isdir(os.path.join(jj_root, ".git"))
+    repo_type = "colocated jj+git" if has_git else "pure jj"
+
+    # Check jj availability
+    jj_path = shutil.which("jj")
+    if jj_path is None:
+        print(
+            f"jj repo detected ({repo_type}) at {jj_root} but jj is not installed."
+        )
+        sys.exit(0)
+
+    # Get jj version for context
+    jj_version = ""
+    try:
+        result = subprocess.run(
+            ["jj", "--no-pager", "version"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            jj_version = result.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    # Get current workspace info
+    workspace_info = ""
+    try:
+        result = subprocess.run(
+            ["jj", "--no-pager", "workspace", "list"],
+            cwd=jj_root, capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            ws_count = len(result.stdout.strip().splitlines())
+            workspace_info = f"{ws_count} workspace(s)"
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    # Build context message — write to stdout so SessionStart hook injects it
+    # into the model's context (stderr only shows in user transcript)
+    parts = [f"This is a {repo_type} repo"]
+    if jj_version:
+        parts.append(jj_version)
+    if workspace_info:
+        parts.append(workspace_info)
+    lines = [
+        ". ".join(parts) + ".",
+        "VCS rules:",
+        "  - Use jj commands for ALL VCS operations (commit, rebase, push, etc.)",
+        "  - NEVER use mutating git commands (git commit, git checkout, git rebase, etc.)",
+    ]
+    if has_git:
+        lines.append("  - Read-only git (git log, git diff, git rev-parse) and gh CLI are safe")
+    lines.append("  - @ = empty working copy; use @- to inspect committed state")
+
+    print("\n".join(lines))
+
+
+if __name__ == "__main__":
+    main()

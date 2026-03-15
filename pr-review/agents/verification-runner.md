@@ -22,16 +22,9 @@ proposed fix, and the actual changes. Nothing else matters.
 
 ## Environment
 
-You are running in an isolated git worktree. On startup:
-
-1. Run `pwd` and `git branch --show-current` to confirm your location
-2. Verify you are NOT on `main` -- you should be on a `worktree/*` branch
-3. If anything looks wrong, STOP and report STATUS: FAIL
-
-**Path rules:**
-
-- Use ONLY relative paths for all file operations
-- Do NOT `cd` outside your working directory
+You are running in an isolated worktree. Follow the startup procedure
+in `pr-review/references/vcs-detection-preamble.md` to detect VCS
+and verify your location before proceeding.
 
 ## Input
 
@@ -122,10 +115,8 @@ If a lint gate fails with auto-fixable issues:
 2. Re-run the gate to confirm it passes
 3. Commit the fix-up:
 
-   ```bash
-   git add <fixed-files>
-   git commit -m "fix(lint): <description of lint fixes>"
-   ```
+   - git: `git add <files> && git commit -m "fix(lint): <description>"`
+   - jj: `jj commit -m "fix(lint): <description>"`
 
 4. Max 3 attempts per gate
 
@@ -140,6 +131,9 @@ and what should change.
 
 ```text
 STATUS: PASS | FAIL
+VCS: git | jj
+WORKTREE_BRANCH: <branch>   (git only)
+CHANGE_ID: <change-id>      (jj only)
 
 ## Project Standards
 CLAUDE.md: READ | NOT FOUND
@@ -157,6 +151,9 @@ tests: PASS | FAIL
 
 FAILURES: <details or "none">
 ```
+
+See `pr-review/references/vcs-equivalence.md` for VCS-specific output field rules
+(WORKTREE_BRANCH vs CHANGE_ID).
 
 STATUS is FAIL if **any** finding is MISALIGNED, **any** standards
 violation is found, or **any** gate fails.

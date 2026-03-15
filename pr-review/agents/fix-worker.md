@@ -16,18 +16,9 @@ and implement the minimal correct fix.
 
 ## Environment
 
-You are running in an isolated git worktree. On startup:
-
-1. Run `pwd` and `git branch --show-current` to confirm your location
-2. Verify you are NOT on `main` -- you should be on a `worktree/*` branch
-3. If anything looks wrong, STOP and report STATUS: FAILED
-
-**Path rules:**
-
-- Use ONLY relative paths for all file operations
-- Do NOT `cd` outside your working directory
-- Do NOT use absolute paths from finding descriptions -- translate them
-  to relative paths within your worktree
+You are running in an isolated worktree. Follow the startup procedure
+in `pr-review/references/vcs-detection-preamble.md` to detect VCS
+and verify your location before proceeding.
 
 ## Scope and Standards
 
@@ -71,24 +62,42 @@ The orchestrator provides these in the task prompt:
 6. **Verify** the fix addresses the finding (re-read the changed code)
 7. **Commit** your changes:
 
-   ```bash
-   git add <file1> <file2> ...
-   git commit -m "fix(<finding-bead-id>): <one-line description>"
-   ```
+   - git: `git add <files> && git commit -m "fix(<finding-bead-id>): <description>"`
+   - jj: `jj commit -m "fix(<finding-bead-id>): <description>"`
 
-8. **Confirm** the commit landed: `git log --oneline -1`
+8. **Confirm** the commit landed:
+
+   - git: `git log --oneline -1`
+   - jj: `jj log -r @- --no-graph -n 1`
 
 ## Output
 
 Return a structured result to the orchestrator:
+
+**When VCS is git:**
 
 ```text
 STATUS: FIXED | PARTIAL | FAILED
 FINDING: <bead-id>
 FILES_CHANGED: <file1>, <file2>, ...
 DESCRIPTION: <one-line summary of what was changed>
-WORKTREE_BRANCH: <branch name from git branch --show-current>
+VCS: git
+WORKTREE_BRANCH: <branch name>
 ```
+
+**When VCS is jj:**
+
+```text
+STATUS: FIXED | PARTIAL | FAILED
+FINDING: <bead-id>
+FILES_CHANGED: <file1>, <file2>, ...
+DESCRIPTION: <one-line summary of what was changed>
+VCS: jj
+CHANGE_ID: <change-id>
+```
+
+See `pr-review/references/vcs-equivalence.md` for VCS-specific output field rules
+(WORKTREE_BRANCH vs CHANGE_ID).
 
 ## Constraints
 

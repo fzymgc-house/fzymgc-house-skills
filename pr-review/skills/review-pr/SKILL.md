@@ -23,6 +23,13 @@ allowed-tools:
   - "Bash(git ls-files *)"
   - "Bash(git rev-parse *)"
   - "Bash(git merge-base *)"
+  - "Bash(test *)"
+  - "Bash(jj st *)"
+  - "Bash(jj log *)"
+  - "Bash(jj diff *)"
+  - "Bash(jj show *)"
+  - "Bash(jj file list *)"
+  - "Bash(jj root)"
   - "Bash(gh pr view *)"
   - "Bash(gh pr diff *)"
   - "Bash(gh pr list *)"
@@ -42,6 +49,18 @@ metadata:
 ---
 
 # Comprehensive PR Review
+
+## Contents
+
+- [VCS Detection](#vcs-detection)
+- [Review Aspects](#review-aspects)
+- [Workflow](#workflow)
+
+## VCS Detection
+
+Follow the procedure in `pr-review/references/vcs-detection-preamble.md` to
+detect git vs jj and verify your location. Use `gh` CLI for GitHub
+operations regardless of VCS.
 
 Orchestrate specialized review agents against a PR's changes. Each agent
 runs as an independent Task with its own system prompt, tools, and

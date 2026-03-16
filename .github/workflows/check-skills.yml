@@ -86,8 +86,10 @@ jobs:
           rumdl check homelab/skills/*/SKILL.md \
             pr-review/skills/*/SKILL.md \
             jj/skills/*/SKILL.md \
+            superpowers/skills/*/SKILL.md \
             jj/commands/*.md \
-            pr-review/agents/*.md
+            pr-review/agents/*.md \
+            superpowers/agents/*.md
       - name: Validate evals against schema
         run: |
           pip install 'check-jsonschema>=0.37,<0.38'

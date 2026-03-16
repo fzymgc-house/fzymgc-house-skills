@@ -16,11 +16,15 @@ jobs:
         run: |
           # Auto-discover plugin directories that contain a skills/ subdirectory.
           # This avoids hardcoding plugin names — new plugins are found automatically.
-          skill_find_paths=""
+          skill_find_paths=()
           for d in */skills; do
-            [ -d "$d" ] && skill_find_paths="$skill_find_paths $d"
+            [ -d "$d" ] && skill_find_paths+=("$d")
           done
-          actual=$(find $skill_find_paths -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
+          if [ ${#skill_find_paths[@]} -eq 0 ]; then
+            echo "::error::No plugin skill directories found"
+            exit 1
+          fi
+          actual=$(find "${skill_find_paths[@]}" -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
           # release-please-config.json may have plugin-level keys (e.g., "jj")
           # or skill-level keys (e.g., "homelab/skills/grafana"). This script
           # handles both by expanding plugin-level keys to their skill dirs.

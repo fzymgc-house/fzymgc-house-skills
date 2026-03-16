@@ -45,6 +45,25 @@ jj/
         jj-git-interop.md
   commands/
     jj-init.md        # /jj-init slash command
+superpowers/
+  plugin.json         # Fork of obra/superpowers with jj VCS support
+  references/
+    vcs-preamble.md   # VCS detection + git/jj command mapping
+    upstream-manifest.md  # Tracks upstream version for sync
+  scripts/
+    sync-upstream     # Fetch and reconcile upstream changes
+  skills/
+    using-worktrees/  # VCS-agnostic workspace creation (was using-git-worktrees)
+    finishing-a-development-branch/  # Merge/PR/cleanup with git+jj
+    requesting-code-review/          # VCS-aware diff ranges
+    brainstorming/    # VCS-aware commit step
+    writing-plans/    # VCS-aware task examples
+    executing-plans/  # Updated skill references
+    subagent-driven-development/     # Updated skill references
+    # Plus 7 verbatim skills from upstream (no modifications)
+  commands/           # Slash commands (brainstorm, execute-plan, write-plan)
+  agents/             # code-reviewer agent
+  hooks/              # Session hooks
 ```
 
 ## Creating Skills
@@ -77,6 +96,10 @@ Skills should be self-contained and focused on specific tasks related to either 
 - **skill-qa** (`homelab` plugin) - Validates SKILL.md files against Claude Code best practices (Claude-only, auto-triggered during skill reviews)
 - **jujutsu** (`jj` plugin) - Jujutsu (jj) VCS workflow guidance. Activates when `.jj/` exists in repo root
   or user mentions jj/jujutsu. Covers core concepts, bookmarks, workspaces, and git interop.
+- **superpowers** (`superpowers` plugin) - Fork of obra/superpowers v5.0.2 with git+jj VCS support.
+  Drop-in replacement: 7 modified skills (using-worktrees, finishing-a-development-branch,
+  requesting-code-review, brainstorming, writing-plans, executing-plans, subagent-driven-development)
+  plus 7 verbatim skills from upstream. Use `scripts/sync-upstream` to pull upstream updates.
 
 ## Commit Workflow
 

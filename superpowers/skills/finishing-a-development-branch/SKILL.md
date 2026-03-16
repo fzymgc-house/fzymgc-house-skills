@@ -119,7 +119,7 @@ git branch -d <feature-branch>
 
 ```bash
 # Rebase feature onto base branch, skip commits that become empty
-jj rebase -s <rev> -d main --skip-emptied
+jj rebase -s <rev> -o main --skip-emptied
 
 # Verify tests on merged result
 <test command>

@@ -22,6 +22,11 @@
       "name": "jj",
       "description": "Jujutsu (jj) VCS workflow guidance for colocated repos",
       "source": "./jj"
+    },
+    {
+      "name": "superpowers",
+      "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)",
+      "source": "./superpowers"
     }
   ]
 }

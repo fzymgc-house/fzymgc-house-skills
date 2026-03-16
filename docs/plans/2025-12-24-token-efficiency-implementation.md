@@ -1060,6 +1060,9 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"qu
 ```
 ```
 
+
+```text
+
 ### Output Options
 
 ```bash
@@ -1068,7 +1071,6 @@ ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"qu
 --format compact # Minimal output
 --brief          # Essential fields only
 ```
-
 
 ```text
 
@@ -1108,7 +1110,6 @@ Search and summarize:
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/skills/grafana/scripts/grafana_mcp.py find-dashboard '{"query":"api latency"}'
 ```
-
 
 ```text
 

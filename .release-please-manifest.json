@@ -8,5 +8,13 @@
   "pr-review/skills/address-findings": "2.1.0",
   "pr-review/skills/respond-to-comments": "2.1.0",
   "jj": "0.2.0",
-  "jj/skills/jujutsu": "0.2.0"
+  "jj/skills/jujutsu": "0.2.0",
+  "superpowers": "0.1.0",
+  "superpowers/skills/using-worktrees": "0.1.0",
+  "superpowers/skills/finishing-a-development-branch": "0.1.0",
+  "superpowers/skills/requesting-code-review": "0.1.0",
+  "superpowers/skills/brainstorming": "0.1.0",
+  "superpowers/skills/writing-plans": "0.1.0",
+  "superpowers/skills/executing-plans": "0.1.0",
+  "superpowers/skills/subagent-driven-development": "0.1.0"
 }

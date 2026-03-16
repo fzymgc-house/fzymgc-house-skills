@@ -14,7 +14,17 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Check release-please config covers all skills
         run: |
-          actual=$(find homelab/skills pr-review/skills jj/skills -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
+          # Auto-discover plugin directories that contain a skills/ subdirectory.
+          # This avoids hardcoding plugin names — new plugins are found automatically.
+          skill_find_paths=()
+          for d in */skills; do
+            [ -d "$d" ] && skill_find_paths+=("$d")
+          done
+          if [ ${#skill_find_paths[@]} -eq 0 ]; then
+            echo "::error::No plugin skill directories found"
+            exit 1
+          fi
+          actual=$(find "${skill_find_paths[@]}" -name SKILL.md -exec dirname {} \; 2>/dev/null | sort -u)
           # release-please-config.json may have plugin-level keys (e.g., "jj")
           # or skill-level keys (e.g., "homelab/skills/grafana"). This script
           # handles both by expanding plugin-level keys to their skill dirs.
@@ -86,8 +96,15 @@ jobs:
           rumdl check homelab/skills/*/SKILL.md \
             pr-review/skills/*/SKILL.md \
             jj/skills/*/SKILL.md \
+            superpowers/skills/using-worktrees/SKILL.md \
+            superpowers/skills/requesting-code-review/SKILL.md \
+            superpowers/references/vcs-preamble.md \
             jj/commands/*.md \
             pr-review/agents/*.md
+          # Note: superpowers skills that are lightly modified from upstream
+          # (brainstorming, writing-plans, finishing-a-development-branch,
+          # subagent-driven-development) are excluded from lint to avoid
+          # diverging from upstream style, which would complicate sync-upstream.
       - name: Validate evals against schema
         run: |
           pip install 'check-jsonschema>=0.37,<0.38'

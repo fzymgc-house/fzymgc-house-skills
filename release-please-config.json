@@ -103,6 +103,87 @@
           "path": "jj/skills/jujutsu/SKILL.md"
         }
       ]
+    },
+    "superpowers": {
+      "release-type": "simple",
+      "package-name": "superpowers",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "superpowers/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "superpowers/skills/using-worktrees": {
+      "release-type": "simple",
+      "package-name": "using-worktrees",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/using-worktrees/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/finishing-a-development-branch": {
+      "release-type": "simple",
+      "package-name": "finishing-a-development-branch",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/finishing-a-development-branch/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/requesting-code-review": {
+      "release-type": "simple",
+      "package-name": "requesting-code-review",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/requesting-code-review/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/brainstorming": {
+      "release-type": "simple",
+      "package-name": "brainstorming",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/brainstorming/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/writing-plans": {
+      "release-type": "simple",
+      "package-name": "writing-plans",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/writing-plans/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/executing-plans": {
+      "release-type": "simple",
+      "package-name": "executing-plans",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/executing-plans/SKILL.md"
+        }
+      ]
+    },
+    "superpowers/skills/subagent-driven-development": {
+      "release-type": "simple",
+      "package-name": "subagent-driven-development",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "superpowers/skills/subagent-driven-development/SKILL.md"
+        }
+      ]
     }
   }
 }

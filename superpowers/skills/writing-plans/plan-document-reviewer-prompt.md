@@ -6,7 +6,7 @@ Use this template when dispatching a plan document reviewer subagent.
 
 **Dispatch after:** Each plan chunk is written
 
-```
+```text
 Task tool (general-purpose):
   description: "Review plan chunk N"
   prompt: |

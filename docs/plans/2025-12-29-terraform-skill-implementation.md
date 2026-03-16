@@ -1342,6 +1342,9 @@ ${CLAUDE_PLUGIN_ROOT}/skills/terraform/scripts/terraform_mcp.py watch-run --work
 ```
 ```
 
+
+```text
+
 Options:
 
 - `--workspace`, `-w` - Watch latest run for workspace
@@ -1512,6 +1515,8 @@ terraform_mcp.py workspace-status
 ```
 ```
 
+```text
+
 ### Get Single Workspace Detail
 
 ```bash
@@ -1619,6 +1624,9 @@ terraform_mcp.py provider-docs aws --list-resources
 # Search in output for the resource you need
 ```
 ```
+
+
+```text
 
 ### Get Resource Documentation
 

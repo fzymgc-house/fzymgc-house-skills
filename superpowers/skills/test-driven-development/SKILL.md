@@ -16,12 +16,14 @@ Write the test first. Watch it fail. Write minimal code to pass.
 ## When to Use
 
 **Always:**
+
 - New features
 - Bug fixes
 - Refactoring
 - Behavior changes
 
 **Exceptions (ask your human partner):**
+
 - Throwaway prototypes
 - Generated code
 - Configuration files
@@ -30,13 +32,14 @@ Thinking "skip TDD just this once"? Stop. That's rationalization.
 
 ## The Iron Law
 
-```
+```text
 NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
 ```
 
 Write code before the test? Delete it. Start over.
 
 **No exceptions:**
+
 - Don't keep it as "reference"
 - Don't "adapt" it while writing tests
 - Don't look at it
@@ -87,7 +90,8 @@ test('retries failed operations 3 times', async () => {
   expect(result).toBe('success');
   expect(attempts).toBe(3);
 });
-```
+
+```text
 Clear name, tests real behavior, one thing
 </Good>
 
@@ -102,10 +106,12 @@ test('retry works', async () => {
   expect(mock).toHaveBeenCalledTimes(3);
 });
 ```
+
 Vague name, tests mock not code
 </Bad>
 
 **Requirements:**
+
 - One behavior
 - Clear name
 - Real code (no mocks unless unavoidable)
@@ -119,6 +125,7 @@ npm test path/to/test.test.ts
 ```
 
 Confirm:
+
 - Test fails (not errors)
 - Failure message is expected
 - Fails because feature missing (not typos)
@@ -174,6 +181,7 @@ npm test path/to/test.test.ts
 ```
 
 Confirm:
+
 - Test passes
 - Other tests still pass
 - Output pristine (no errors, warnings)
@@ -185,6 +193,7 @@ Confirm:
 ### REFACTOR - Clean Up
 
 After green only:
+
 - Remove duplication
 - Improve names
 - Extract helpers
@@ -208,6 +217,7 @@ Next failing test for next feature.
 **"I'll write tests after to verify it works"**
 
 Tests written after code pass immediately. Passing immediately proves nothing:
+
 - Might test wrong thing
 - Might test implementation, not behavior
 - Might miss edge cases you forgot
@@ -218,6 +228,7 @@ Test-first forces you to see the test fail, proving it actually tests something.
 **"I already manually tested all the edge cases"**
 
 Manual testing is ad-hoc. You think you tested everything but:
+
 - No record of what you tested
 - Can't re-run when code changes
 - Easy to forget cases under pressure
@@ -228,6 +239,7 @@ Automated tests are systematic. They run the same way every time.
 **"Deleting X hours of work is wasteful"**
 
 Sunk cost fallacy. The time is already gone. Your choice now:
+
 - Delete and rewrite with TDD (X more hours, high confidence)
 - Keep it and add tests after (30 min, low confidence, likely bugs)
 
@@ -236,6 +248,7 @@ The "waste" is keeping code you can't trust. Working code without real tests is 
 **"TDD is dogmatic, being pragmatic means adapting"**
 
 TDD IS pragmatic:
+
 - Finds bugs before commit (faster than debugging after)
 - Prevents regressions (tests catch breaks immediately)
 - Documents behavior (tests show how to use code)
@@ -292,6 +305,7 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 **Bug:** Empty email accepted
 
 **RED**
+
 ```typescript
 test('rejects empty email', async () => {
   const result = await submitForm({ email: '' });
@@ -300,12 +314,14 @@ test('rejects empty email', async () => {
 ```
 
 **Verify RED**
+
 ```bash
 $ npm test
 FAIL: expected 'Email required', got undefined
 ```
 
 **GREEN**
+
 ```typescript
 function submitForm(data: FormData) {
   if (!data.email?.trim()) {
@@ -316,6 +332,7 @@ function submitForm(data: FormData) {
 ```
 
 **Verify GREEN**
+
 ```bash
 $ npm test
 PASS
@@ -357,13 +374,14 @@ Never fix bugs without a test.
 ## Testing Anti-Patterns
 
 When adding mocks or test utilities, read @testing-anti-patterns.md to avoid common pitfalls:
+
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes
 - Mocking without understanding dependencies
 
 ## Final Rule
 
-```
+```text
 Production code → test exists and failed first
 Otherwise → not TDD
 ```

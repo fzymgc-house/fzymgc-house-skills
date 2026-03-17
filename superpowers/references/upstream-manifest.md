@@ -44,6 +44,7 @@ commands/execute-plan.md: verbatim
 commands/write-plan.md: verbatim
 agents/code-reviewer.md: verbatim
 hooks/hooks.json: verbatim
+hooks/run-hook.cmd: verbatim
 hooks/session-start: verbatim
 
 # Modified skills — manual review on sync

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.2.0...fzymgc-house-skills-v1.2.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* add superpowers plugin to marketplace.json ([174215d](https://github.com/fzymgc-house/fzymgc-house-skills/commit/174215db19f3dc9557f81d718631f4e8746a8046))
+* **superpowers:** add missing run-hook.cmd polyglot wrapper ([4c9c6ac](https://github.com/fzymgc-house/fzymgc-house-skills/commit/4c9c6acdb2f4b05a6ab821a9c3ce730a97947a20))
+
 ## [1.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.1.0...fzymgc-house-skills-v1.2.0) (2026-03-16)
 
 

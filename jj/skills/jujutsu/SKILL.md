@@ -442,4 +442,4 @@ environments.
 - `references/workflows-reference.md` -- end-to-end workflow recipes, aliases, and stacked PR patterns
 - `references/jj-git-interop.md` -- colocated repo behavior and git compatibility
 - For session-level change management (splitting, describing, inserting changes),
-  see the `jjagent` plugin.
+  use `jj commit`, `jj describe`, and `jj new` directly.

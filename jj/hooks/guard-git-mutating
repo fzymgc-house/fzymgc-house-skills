@@ -2,11 +2,14 @@
 # /// script
 # requires-python = ">=3.11"
 # ///
-"""PreToolUse hook: warn when mutating git commands are used in a jj repo.
+"""PreToolUse hook: warn on unsafe commands in a jj repo.
+
+Checks for:
+1. Mutating git commands (should use jj equivalents)
+2. Interactive jj commands (jj split, jj resolve, jj squash -i) that hang in agent environments
 
 Reads hook JSON from stdin, checks if .jj/ exists in the working directory,
-and if the Bash command contains a mutating git operation, returns an "ask"
-decision so the user can approve or deny.
+and returns an "ask" decision so the user can approve or deny.
 
 Read-only git commands (log, diff, status, rev-parse, show, blame, remote)
 and gh CLI are always allowed.
@@ -55,6 +58,22 @@ GIT_CMD_RE = re.compile(
 )
 
 
+def _check_interactive_jj(command: str) -> list[str]:
+    """Check for interactive jj commands that hang in agent environments."""
+    found = []
+    # jj split (always interactive unless given paths — but even with paths,
+    # it opens a diff editor by default)
+    if re.search(r"(?:^|[;&|]\s*|&&\s*|\|\|\s*)\s*jj\s+split\b", command):
+        found.append("jj split")
+    # jj resolve (opens merge tool)
+    if re.search(r"(?:^|[;&|]\s*|&&\s*|\|\|\s*)\s*jj\s+resolve\b", command):
+        found.append("jj resolve")
+    # jj squash -i / --interactive
+    if re.search(r"(?:^|[;&|]\s*|&&\s*|\|\|\s*)\s*jj\s+squash\s+.*(?:-i\b|--interactive\b)", command):
+        found.append("jj squash -i")
+    return found
+
+
 def main() -> None:
     try:
         raw = sys.stdin.read()
@@ -94,9 +113,40 @@ def main() -> None:
         if subcommand in MUTATING_SUBCOMMANDS:
             mutating_found.append(f"git {subcommand}")
 
-    if not mutating_found:
-        # Read-only git command or no git at all — allow
+    # Also check for interactive jj commands that hang in agent environments
+    interactive_jj_found = _check_interactive_jj(command)
+
+    if not mutating_found and not interactive_jj_found:
+        # Safe command — allow
         sys.exit(0)
+
+    if interactive_jj_found and not mutating_found:
+        alternatives = {
+            "jj split": "use jj squash --from <rev> <paths> to move specific files",
+            "jj resolve": "edit conflict markers directly, then jj squash",
+            "jj squash -i": "use jj squash (non-interactive) or jj squash <paths>",
+        }
+        hints = []
+        for cmd in interactive_jj_found:
+            hint = alternatives.get(cmd, "use non-interactive alternative")
+            hints.append(f"  {cmd} → {hint}")
+        reason = (
+            f"Interactive jj command detected: {', '.join(interactive_jj_found)}.\n"
+            "These commands open an editor/TUI and will hang in agent environments.\n"
+            "Non-interactive alternatives:\n" + "\n".join(hints)
+        )
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": reason,
+            }
+        }
+        try:
+            json.dump(result, sys.stdout)
+        except OSError:
+            sys.exit(2)
+        return
 
     # Build the jj equivalents hint
     equivalents = {

@@ -62,6 +62,41 @@ SKILL.md](../SKILL.md#workspaces) for full command reference and key behaviors.
 Key removal note: `jj workspace forget` de-registers a workspace but does NOT delete
 files — callers must `rm -rf` the workspace directory after forget.
 
+## Auto-Sync Sequence (Every jj Command)
+
+In colocated repos, every jj command runs this sequence:
+
+1. **Import Git HEAD** — detect external `git checkout` etc.
+2. **Snapshot working copy** — auto-commit filesystem changes into `@`
+3. **Import Git refs** — update jj bookmarks from `refs/heads/*`
+4. **Execute the command** — the actual jj operation
+5. **Export Git refs** — write jj bookmark changes back to `refs/heads/*`
+6. **Update Git HEAD** — set `.git/HEAD` to working-copy parent (detached)
+7. **Update working copy** — write files to disk to match new `@`
+
+Manual import/export (`jj git import`/`jj git export`) is unnecessary in
+colocated repos — it happens automatically.
+
+## GC Protection
+
+jj creates refs in `refs/jj/keep/*` to prevent Git's garbage collector from
+removing commits that jj still references but have no Git branch. Run
+`jj util gc` to clean up unreachable refs after abandoning work.
+
+## Conflict Storage in Git
+
+Commits with jj-internal conflicts are stored as Git commits with special tree
+entries (`.jjconflict-base-*/` and `.jjconflict-side-*/` directories). The
+authoritative conflict data is in a non-standard `jj:trees` commit header.
+Never `git checkout` a conflicted commit — use `jj` to navigate to it.
+
+## Change ID Header
+
+jj stores Change IDs in a non-standard Git commit header. This header is
+preserved by most forges (GitHub, GitLab) and controlled by the
+`git.write-change-id-header` config flag. Losing it doesn't break anything
+but means the change ID is regenerated.
+
 ## What NOT To Do
 
 **MUST NOT use mutating git commands** when jj is available (colocated or pure):
@@ -73,7 +108,26 @@ files — callers must `rm -rf` the workspace directory after forget.
 | `git rebase` | `jj rebase -s <source> -o <dest>` |
 | `git checkout <branch>` | `jj edit <bookmark>` (edit tip) or `jj new <bookmark>` (new child) |
 | `git branch -d` | `jj bookmark delete <name>` |
+| `git worktree add` | `jj workspace add` |
 
 **Read-only git commands are fine**: `git log`, `git diff`, `git status`, `git rev-parse`, `git remote -v`.
 
 If a mutating git command causes sync issues, use `jj undo` to revert to the previous jj state.
+
+## Recovery from Accidental `git commit`
+
+If someone runs `git commit` in a colocated repo:
+
+1. Git creates a commit on detached HEAD
+2. Next `jj` command auto-imports it (appears in `jj op log` as "import git refs")
+3. Recovery: `jj undo` reverts the import, or simply use `jj abandon` on the unwanted commit
+
+## Known Limitations
+
+| Area | Status |
+|------|--------|
+| Git hooks | Not supported (issue #405). Use `jj-pre-push` package or `jj util exec` aliases. |
+| Git submodules | Not supported. Use native `git submodule` in colocated mode. |
+| Git LFS | Not supported (issue #80) |
+| Secondary workspace `.git/` | Missing — tools requiring `.git/` won't work (PR #4644) |
+| Git staging area/index | Ignored by jj. Use `jj split`/`jj squash` instead. |

@@ -74,7 +74,34 @@ jj log -r @ --no-graph -T 'change_id'
 
 ## Advanced Rebase
 
-### Rebase Variants
+### Source Modes
+
+| Flag | Behavior |
+|------|----------|
+| `-r <rev>` | Moves ONLY the specified revision; children reparented onto its parent. **Unique:** can rebase onto own descendant. |
+| `-s <rev>` | Moves the revision and all its descendants (subtree) |
+| `-b <rev>` | Moves the entire branch (equivalent to `-s 'roots(dest..rev)'`) |
+| (none) | Defaults to `-b @` |
+
+### Destination Modes
+
+| Flag | Behavior |
+|------|----------|
+| `-o <dest>` | Rebase onto dest; existing descendants of dest unaffected |
+| `-A <dest>` | Insert after dest: reparent dest's children onto the rebased revisions |
+| `-B <dest>` | Insert before dest: rebase onto dest's parents, reparent dest onto rebased revisions |
+
+`-A` and `-B` can be combined. Multiple destinations create merge commits.
+
+### Key Flags
+
+| Flag | Behavior |
+|------|----------|
+| `--skip-emptied` | Auto-abandons commits that become empty after rebase (NOT those already empty). Never skips merge commits with multiple non-empty parents. |
+| `--keep-divergent` | Keeps divergent copies during rebase instead of auto-abandoning them |
+| `--simplify-parents` | Removes redundant parents (ancestors of other parents) during rebase |
+
+### Rebase Recipes
 
 ```bash
 # Rebase a single revision (detach from its current location)
@@ -88,16 +115,70 @@ jj rebase -b <rev> -o <dest>
 
 # Rebase with auto-abandon of emptied commits
 jj rebase -o <dest> --skip-emptied
+
+# Reorder: move M to right after J (before K)
+jj rebase -r M -A J
+# Result: J → M' → K' → L'
+
+# Insert X between B and C
+jj rebase -r X -A B
+# B's children (including C) become children of X
+
+# Insert before: move K before L
+jj rebase -r K -B L
+# K becomes L's parent; L and descendants shift up
+
+# Create a merge commit via multi-destination rebase
+jj rebase -s L -o K -o M
+
+# Rebase all branches onto updated main at once
+jj rebase -s 'all:roots(trunk()..@)' -o trunk() --skip-emptied
+# The all: prefix is required when revset returns multiple revisions
 ```
 
-### Key Differences
+## Absorb
 
-| Flag | Behavior |
-|------|----------|
-| `-r` | Moves only the specified revision; children are rebased onto its parent |
-| `-s` | Moves the revision and all its descendants |
-| `-b` | Moves the entire branch containing the revision |
-| `--skip-emptied` | Auto-abandons commits that become empty after rebase |
+Automatically distributes working-copy changes to the ancestor commits that last
+modified those lines. Replaces the `git add -p → git commit --fixup → git rebase -i --autosquash`
+workflow with a single command.
+
+```bash
+# Absorb all working copy changes into mutable ancestors
+jj absorb
+
+# Absorb only specific files/paths
+jj absorb src/auth/ tests/
+
+# Absorb from a specific revision (not just @)
+jj absorb --from <rev>
+
+# Limit how far back it looks
+jj absorb --into 'ancestors(@, 5)'
+
+# Review what absorb did
+jj op show -p
+```
+
+**Algorithm:** For each changed hunk, jj uses file annotation (like `git blame`) to find
+which ancestor last modified those lines. If the hunk maps unambiguously to one ancestor,
+it's moved there. Ambiguous hunks stay in the source. The source is abandoned if it becomes
+empty and has no description.
+
+## Evolution Log (evolog)
+
+Traces the complete history of a single ChangeId across all rewrites, including
+auto-snapshots. Critical for understanding what happened to a change and recovering work.
+
+```bash
+# Show all versions of the current change
+jj evolog
+
+# Show with file-level patches (see every intermediate state)
+jj evolog --patch
+
+# Show evolog for a specific change
+jj evolog -r <change-id>
+```
 
 ## Bookmark Management
 
@@ -123,8 +204,17 @@ jj bookmark set <name> -r @
 # Move bookmark to parent (useful after jj new)
 jj bookmark set <name> -r @-
 
+# Auto-advance closest bookmark to @ (solves the "forgot to move bookmark" footgun)
+jj bookmark advance <name>
+
 # Force-push after bookmark move
 jj git push -b <name>
+
+# Forget a bookmark (local only, does NOT propagate deletion to remote)
+jj bookmark forget <name>
+
+# Delete a bookmark (propagates deletion to remote on next push)
+jj bookmark delete <name>
 ```
 
 ## File Operations
@@ -146,22 +236,168 @@ jj diff -r <rev> <path>
 
 ## Operation Log
 
-jj tracks all operations for undo/redo:
+jj tracks all operations for undo/redo. The op log is **global** (shared across
+all workspaces) and **lock-free** (concurrent operations create a DAG that is
+auto-merged).
 
 ```bash
 # View operation history
 jj op log
 
-# Undo last operation
+# Show what changed in the last operation (with patches)
+jj op show -p
+
+# Compare repo state between two operations
+jj op diff --from <op1> --to <op2> -s
+
+# Undo last operation (repeatable -- walks further back each time)
 jj undo
 
-# Restore to a specific operation
+# Redo after undo (walks forward)
+jj redo
+
+# Restore to a specific operation (bulk reset)
 jj op restore <op-id>
+
+# Surgically invert ONE past operation (keeps later work)
+jj op revert <op-id>
+
+# Selectively revert (experimental): repo state only, keep remote-tracking
+jj op revert <op-id> --what=repo
+
+# View repo as it was at a past operation (read-only inspection)
+jj --at-op=<op-id> log
+
+# Prune old operation history
+jj op abandon ..<op-id>
+jj util gc                  # garbage collect unreachable objects
+jj util gc --expire=now     # immediate cleanup (careful!)
 ```
+
+### When to Use Which
+
+| Command | Use Case |
+|---------|----------|
+| `jj undo` | Quick "oops" for the last command |
+| `jj op restore <id>` | Reset to a known good state (bulk undo) |
+| `jj op revert <id>` | Undo one past operation, keep everything after it |
 
 **Important:** The op log only records **successful** operations. A failed command
 leaves no op-log entry. `jj undo` always targets the most recent successful
 operation -- never "undo twice" to account for a failure.
+
+## Push Safety
+
+`jj git push` uses **force-with-lease semantics** automatically. The remote is
+updated only if its current state matches what jj last fetched. No `--force`
+flag is needed or available.
+
+```bash
+# Push specific bookmarks
+jj git push -b <name>
+
+# Push with auto-generated bookmark (creates push-<change-id-prefix>)
+jj git push --change @
+
+# Push with explicit name in one shot
+jj git push --named my-feature=@
+
+# Push all tracked bookmarks
+jj git push --tracked
+
+# Preview without pushing
+jj git push --dry-run
+
+# Allow pushing commits with empty descriptions
+jj git push --allow-empty-description
+```
+
+## Snapshot Control
+
+jj snapshots the working copy at the start of every command. Control this with:
+
+```bash
+# Manual snapshot trigger (useful for scripting/cron)
+jj util snapshot
+jj util snapshot --quiet
+
+# Skip snapshot (shows potentially stale state; useful for prompts)
+jj log --ignore-working-copy
+
+# Config: max file size for auto-tracking new files (default 1 MiB)
+# In config.toml: snapshot.max-new-file-size = "10MiB"
+```
+
+## Fix (Auto-Format Across History)
+
+Runs configured formatters on files in mutable commits and all their descendants.
+Unlike `jj absorb` (which routes working-copy changes to ancestors by blame),
+`jj fix` pipes file content through external tools and rewrites commits in place.
+
+```bash
+# Fix all changed files in your mutable stack (default revset)
+jj fix
+
+# Fix specific files only
+jj fix src/main.py tests/
+
+# Fix starting from a specific commit (and all descendants)
+jj fix -s <rev>
+
+# Fix ALL files (not just changed ones)
+jj fix --include-unchanged-files
+```
+
+**Configuration** (in config.toml):
+
+```toml
+[fix.tools.ruff-format]
+command = ["ruff", "format", "--stdin-filename=$path", "-"]
+patterns = ["glob:'**/*.py'"]
+
+[fix.tools.prettier]
+command = ["prettier", "--stdin-filepath=$path"]
+patterns = ["glob:'**/*.{js,ts,jsx,tsx,json,css}'"]
+```
+
+**Key properties:**
+
+- Deterministic: same input always produces same output (required for dedup)
+- Deduplicates: identical file content at the same path runs through the tool only once
+- Never creates new conflicts
+- Files with existing conflicts are fixed on all sides of the conflict
+- Descendants are auto-fixed too, so formatting fixes propagate down the stack
+
+## Additional Revsets
+
+```bash
+# All your unpushed work
+jj log -r 'mine() & ~ancestors(trunk())'
+
+# Stack of commits you're working on
+jj log -r 'reachable(@, mutable())'
+
+# Commits with conflicts
+jj log -r 'conflicts()'
+
+# Divergent commits (same change ID, different content)
+jj log -r 'divergent()'
+
+# Safe scripting: evaluates to none() if rev doesn't exist
+jj log -r 'present(my-bookmark)'
+
+# Newest N commits by timestamp
+jj log -r 'latest(mine(), 5)'
+
+# Fork point of commits
+jj log -r 'fork_point(@)'
+
+# All immutable commits (trunk + tags + untracked remotes)
+jj log -r 'immutable()'
+
+# All mutable commits
+jj log -r 'mutable()'
+```
 
 ## Diff Formats
 

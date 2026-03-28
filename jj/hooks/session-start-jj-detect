@@ -79,6 +79,36 @@ def main() -> None:
     except (OSError, subprocess.TimeoutExpired):
         pass
 
+    # Get active work summary (unpushed, non-empty changes)
+    active_work = ""
+    try:
+        result = subprocess.run(
+            ["jj", "--no-pager", "--ignore-working-copy", "log", "-r",
+             "mine() & ~ancestors(trunk()) & ~empty()", "--no-graph",
+             "-T", r'change_id.short(8) ++ " " ++ description.first_line() ++ "\n"',
+             "-n", "5"],
+            cwd=jj_root, capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            active_work = result.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    # Check for conflicts
+    conflicts = ""
+    try:
+        result = subprocess.run(
+            ["jj", "--no-pager", "--ignore-working-copy", "log", "-r",
+             "conflicts()", "--no-graph",
+             "-T", r'change_id.short(8) ++ " " ++ description.first_line() ++ "\n"',
+             "-n", "5"],
+            cwd=jj_root, capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            conflicts = result.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
     # Build context message — write to stdout so SessionStart hook injects it
     # into the model's context (stderr only shows in user transcript)
     parts = [f"This is a {repo_type} repo"]
@@ -95,6 +125,11 @@ def main() -> None:
     if has_git:
         lines.append("  - Read-only git (git log, git diff, git rev-parse) and gh CLI are safe")
     lines.append("  - @ = empty working copy; use @- to inspect committed state")
+
+    if active_work:
+        lines.append(f"Active work (unpushed, non-empty):\n{active_work}")
+    if conflicts:
+        lines.append(f"Commits with conflicts:\n{conflicts}")
 
     print("\n".join(lines))
 

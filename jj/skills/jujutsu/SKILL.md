@@ -31,7 +31,20 @@ allowed-tools:
   - "Bash(jj file *)"
   - "Bash(jj undo)"
   - "Bash(jj undo *)"
+  - "Bash(jj redo)"
   - "Bash(jj root)"
+  - "Bash(jj evolog)"
+  - "Bash(jj evolog *)"
+  - "Bash(jj op *)"
+  - "Bash(jj util *)"
+  - "Bash(jj fix)"
+  - "Bash(jj fix *)"
+  - "Bash(jj simplify-parents)"
+  - "Bash(jj simplify-parents *)"
+  - "Bash(jj config *)"
+  - "Bash(jj sync)"
+  - "Bash(jj tug)"
+  - "Bash(jj landed)"
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
@@ -174,10 +187,26 @@ jj squash --into <rev>
 ```bash
 # Auto-distribute working copy changes to the commits that last modified those lines
 jj absorb
+
+# Absorb only specific files
+jj absorb src/auth/ tests/
+
+# Review what absorb did
+jj op show -p
 ```
 
-This automatically routes each hunk to the right ancestor commit (similar to the
-third-party `git-absorb` tool, but built into jj).
+This automatically routes each hunk to the right ancestor commit using blame data.
+Ambiguous hunks (spanning multiple ancestors) stay in the source. Source is abandoned
+if it becomes empty and has no description.
+
+### Evolution Log (Recovery)
+
+```bash
+# Trace all versions of a change (including auto-snapshots)
+jj evolog --patch
+```
+
+Use `jj evolog` to find a lost intermediate state, then `jj new <commit-id>` to recover.
 
 ### Abandon, Undo, and Restore
 
@@ -415,31 +444,43 @@ environments.
 | New empty change | `jj new` |
 | New change on specific parent | `jj new <rev>` |
 | New merge change | `jj new <rev1> <rev2>` |
+| Insert change mid-chain | `jj new -A <after> -B <before>` |
 | View log | `jj log` |
 | View diff | `jj diff` |
 | Show revision | `jj show <rev>` |
 | Status | `jj st` |
 | Squash into parent | `jj squash` |
+| Squash into specific rev | `jj squash --into <rev>` |
 | Absorb into ancestors | `jj absorb` |
+| Trace change history | `jj evolog --patch` |
 | Abandon change | `jj abandon <rev>` |
 | Undo last operation | `jj undo` |
+| Redo after undo | `jj redo` |
+| Revert specific past op | `jj op revert <op-id>` |
 | Restore working copy | `jj restore` |
 | Rebase onto new parent | `jj rebase -s <src> -o <dest>` |
-| Cherry-pick (single rev) | `jj rebase -r <change-id> -o <dest>` |
+| Rebase single rev (extract) | `jj rebase -r <rev> -o <dest>` |
+| Insert rev after target | `jj rebase -r <rev> -A <target>` |
+| Rebase all branches | `jj rebase -s 'all:roots(trunk()..@)' -o trunk()` |
 | Create bookmark | `jj bookmark create <name>` |
 | Move bookmark | `jj bookmark set <name> -r <rev>` |
+| Advance bookmark to @ | `jj bookmark advance <name>` |
 | Push bookmark | `jj git push -b <name>` |
+| Push with auto-bookmark | `jj git push --change @` |
+| Push all tracked | `jj git push --tracked` |
 | Fetch remotes | `jj git fetch` |
 | List files | `jj file list` |
 | Current location | `jj log -r @ --no-graph -T 'change_id.short(8)'` |
+| Manual snapshot | `jj util snapshot` |
 | Add workspace | `jj workspace add <path> --name <name>` |
 | List workspaces | `jj workspace list` |
 | Remove workspace | `jj workspace forget <name>` + `rm -rf <path>` |
 
 ## See Also
 
-- `references/jj-reference.md` -- detailed jj command reference, revsets, and advanced operations
-- `references/workflows-reference.md` -- end-to-end workflow recipes, aliases, and stacked PR patterns
-- `references/jj-git-interop.md` -- colocated repo behavior and git compatibility
+- `references/jj-reference.md` -- detailed jj command reference, revsets, absorb, evolog, and advanced operations
+- `references/workflows-reference.md` -- end-to-end workflow recipes, aliases, stacked PR patterns, agent fan-out, megamerge
+- `references/jj-git-interop.md` -- colocated repo behavior, auto-sync sequence, conflict storage, and git compatibility
+- `references/jj-agent-config.md` -- recommended jj configuration for non-interactive agent environments
 - For session-level change management (splitting, describing, inserting changes),
   use `jj commit`, `jj describe`, and `jj new` directly.

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.3.0...jj-v0.4.0) (2026-03-28)
+
+
+### Features
+
+* **jj:** add advanced workflows, agent patterns, and hook enhancements ([#37](https://github.com/fzymgc-house/fzymgc-house-skills/issues/37)) ([18e3aa8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/18e3aa8b20f508539933bca2cebe385889cdda23))
+
 ## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.2.0...jj-v0.3.0) (2026-03-16)
 
 

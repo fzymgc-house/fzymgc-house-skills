@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.2.0...fzymgc-house-skills-v1.3.0) (2026-03-28)
+
+
+### Features
+
+* **jj:** add advanced workflows, agent patterns, and hook enhancements ([#37](https://github.com/fzymgc-house/fzymgc-house-skills/issues/37)) ([18e3aa8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/18e3aa8b20f508539933bca2cebe385889cdda23))
+
+
+### Bug Fixes
+
+* add superpowers plugin to marketplace.json ([174215d](https://github.com/fzymgc-house/fzymgc-house-skills/commit/174215db19f3dc9557f81d718631f4e8746a8046))
+* **superpowers:** add missing run-hook.cmd polyglot wrapper ([4c9c6ac](https://github.com/fzymgc-house/fzymgc-house-skills/commit/4c9c6acdb2f4b05a6ab821a9c3ce730a97947a20))
+* **superpowers:** add run-hook.cmd to upstream manifest ([b0083e0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b0083e015e786686ec3b15718ae492dacfb27420))
+
 ## [1.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.1.0...fzymgc-house-skills-v1.2.0) (2026-03-16)
 
 

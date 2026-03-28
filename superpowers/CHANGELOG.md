@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/superpowers-v0.2.0...superpowers-v0.2.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **superpowers:** add missing run-hook.cmd polyglot wrapper ([4c9c6ac](https://github.com/fzymgc-house/fzymgc-house-skills/commit/4c9c6acdb2f4b05a6ab821a9c3ce730a97947a20))
+* **superpowers:** add run-hook.cmd to upstream manifest ([b0083e0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b0083e015e786686ec3b15718ae492dacfb27420))
+
 ## [0.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/superpowers-v0.1.0...superpowers-v0.2.0) (2026-03-16)
 
 

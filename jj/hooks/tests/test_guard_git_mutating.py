@@ -47,7 +47,7 @@ def git_repo(tmp_path: Path) -> Path:
 
 
 class TestMutatingCommands:
-    """Mutating git commands in jj repos should trigger 'ask'."""
+    """Mutating git commands in jj repos should be denied."""
 
     @pytest.mark.parametrize(
         "command",
@@ -63,29 +63,30 @@ class TestMutatingCommands:
             "git worktree add /tmp/wt",
         ],
     )
-    def test_mutating_command_asks(self, jj_repo: Path, command: str) -> None:
+    def test_mutating_command_denied(self, jj_repo: Path, command: str) -> None:
         result = run_hook(command, str(jj_repo))
         assert result.returncode == 0
         output = json.loads(result.stdout)
-        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert "systemMessage" in output
 
     def test_git_c_path_commit(self, jj_repo: Path) -> None:
         """git -C /path commit must be caught (the regex fix)."""
         result = run_hook("git -C /tmp/repo commit -m test", str(jj_repo))
         output = json.loads(result.stdout)
-        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
         assert "git commit" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
     def test_chained_command(self, jj_repo: Path) -> None:
         """Only the mutating part of a chain is flagged."""
         result = run_hook("git log && git commit -m fix", str(jj_repo))
         output = json.loads(result.stdout)
-        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
         assert "git commit" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
 
-class TestReadOnlyCommands:
-    """Read-only git commands should pass silently."""
+class TestAdvisoryCommands:
+    """Read-only git commands with better jj equivalents produce advisory tips."""
 
     @pytest.mark.parametrize(
         "command",
@@ -93,16 +94,35 @@ class TestReadOnlyCommands:
             "git log --oneline",
             "git diff HEAD~1",
             "git status",
-            "git rev-parse --show-toplevel",
             "git show HEAD",
             "git blame file.py",
-            "git remote -v",
         ],
     )
-    def test_readonly_allowed(self, jj_repo: Path, command: str) -> None:
+    def test_advisory_commands_educate(self, jj_repo: Path, command: str) -> None:
         result = run_hook(command, str(jj_repo))
         assert result.returncode == 0
-        assert result.stdout.strip() == ""  # no JSON output = allow
+        output = json.loads(result.stdout)
+        assert "systemMessage" in output
+        assert "hookSpecificOutput" not in output  # no permission decision — allowed
+        assert "jj" in output["systemMessage"]  # mentions jj alternative
+
+
+class TestSilentCommands:
+    """Git plumbing commands with no jj advantage pass silently."""
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "git rev-parse --show-toplevel",
+            "git remote -v",
+            "git ls-files",
+            "git config user.name",
+        ],
+    )
+    def test_plumbing_allowed_silently(self, jj_repo: Path, command: str) -> None:
+        result = run_hook(command, str(jj_repo))
+        assert result.returncode == 0
+        assert result.stdout.strip() == ""  # no output = silent allow
 
 
 class TestNonJjRepo:
@@ -133,6 +153,22 @@ class TestEquivalents:
         output = json.loads(result.stdout)
         reason = output["hookSpecificOutput"]["permissionDecisionReason"]
         assert "jj rebase" in reason
+
+
+class TestJjExempt:
+    """The # jj-exempt escape hatch escalates to ask (human approval)."""
+
+    def test_exempt_escalates_to_ask(self, jj_repo: Path) -> None:
+        result = run_hook("git push origin main # jj-exempt", str(jj_repo))
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert "jj-exempt" in output["hookSpecificOutput"]["permissionDecisionReason"]
+
+    def test_exempt_not_silent_allow(self, jj_repo: Path) -> None:
+        """jj-exempt must NOT silently allow — it requires human approval."""
+        result = run_hook("git commit -m fix # jj-exempt", str(jj_repo))
+        assert result.stdout.strip() != ""  # must produce output (ask decision)
 
 
 class TestEdgeCases:

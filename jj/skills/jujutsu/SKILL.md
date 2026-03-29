@@ -78,30 +78,30 @@ if jj root >/dev/null 2>&1; then echo "jj repo detected"; fi
 
 If jj is detected:
 
-- Use `jj` for ALL version control operations
-- Do NOT use `git commit`, `git checkout`, `git branch`, `git merge`, `git rebase`, or other
-  mutating git commands
-- `gh` (GitHub CLI) is fine -- it only reads `.git/` metadata
-- Read-only git commands (`git log`, `git diff`, `git status`, `git rev-parse`, `git remote -v`) are safe to use
+- You MUST use `jj` for all version control operations
+- You MUST NOT use mutating git commands (`git commit`, `git checkout`, `git branch`,
+  `git merge`, `git rebase`, etc.) -- they are blocked by a PreToolUse guard hook
+- You SHOULD prefer jj equivalents over read-only git commands (`jj log` over `git log`,
+  `jj diff` over `git diff`, etc.)
+- You MAY use git plumbing commands (`git rev-parse`, `git ls-files`) and `gh` CLI
 
 ## Agent Environment Rules
 
-Agents run non-interactively. Follow these constraints strictly:
+Agents run non-interactively. These rules prevent common failures:
 
-- Run `jj git fetch` at the **start** of any task, not just before push
-- Always use `-m` for commit/describe messages -- never open an editor
-- Do NOT `jj describe` or rewrite commits that have already been pushed
-- When scripting jj operations, always use **change IDs** (not commit hashes) for stability across rewrites
-- If you encounter `(divergent)` markers in `jj log`, abandon the local (mutable) copy and rebase remaining work onto main
-- Prefer `jj rebase --skip-emptied` over manual `jj abandon` for cleanup -- it's idempotent and handles stacked chains
-- **Always `jj commit -m "..."` before `jj new`** -- `jj new` moves `@` to a new change; the old
-  change's files leave the working directory. Without a description or bookmark, the old change
-  is effectively lost (it still exists in history but is hard to find). Never leave meaningful
-  work in an undescribed, unbookmarked change.
-- Verify state with `jj st` after any mutation
-- Always pass `--config ui.paginate=never` if pager interferes
+- You MUST run `jj git fetch` at the **start** of any task, not just before push
+- You MUST use `-m` for commit/describe messages -- never open an editor
+- You MUST NOT `jj describe` or rewrite commits that have already been pushed
+- You MUST use **change IDs** (not commit hashes) when scripting -- they survive rewrites
+- You MUST `jj commit -m "..."` before `jj new` -- `jj new` moves `@` to a new change;
+  without a description or bookmark, the old change is effectively lost
+- You SHOULD verify state with `jj st` after any mutation
+- You SHOULD prefer `jj rebase --skip-emptied` over manual `jj abandon` -- it's idempotent and handles chains
+- You SHOULD pass `--config ui.paginate=never` if pager interferes
+- If you encounter `(divergent)` markers in `jj log`, you MUST abandon the stale local copy
+  and rebase remaining work onto main
 
-**Never use these interactive commands:**
+**You MUST NOT use these interactive commands (they hang in agent environments):**
 
 | Command | Why | Alternative |
 |---------|-----|-------------|
@@ -124,7 +124,7 @@ is automatically part of the working-copy commit.
 | Stability | Stable across rewrites | Changes on rewrite |
 | Use for | Referring to logical changes | Pinpointing exact versions |
 
-Prefer change IDs when referring to revisions -- they survive `squash`, `rebase`, and `amend`.
+You MUST prefer change IDs when referring to revisions -- they survive `squash`, `rebase`, and `amend`.
 
 ### Key Revsets
 
@@ -224,7 +224,7 @@ jj restore
 jj restore --from <rev> <path>
 ```
 
-**Note:** `jj split` is interactive and not safe for agents. To split a commit
+**Note:** You MUST NOT use `jj split` -- it is interactive and hangs in agent environments. To split a commit
 (extract specific files into a new child):
 
 1. `jj new <commit>` — create a new empty change after the target
@@ -252,8 +252,8 @@ jj bookmark delete <name>
 
 Short forms: `jj b c`, `jj b s`, `jj b l`, `jj b d`.
 
-Bookmarks do NOT auto-advance when you create new commits. You must explicitly update
-them before pushing:
+Bookmarks do NOT auto-advance when you create new commits. You MUST explicitly
+update them before pushing:
 
 ```bash
 jj bookmark set my-feature -r @
@@ -262,9 +262,9 @@ jj git push -b my-feature
 
 ## Workspaces
 
-Workspaces provide isolated working copies sharing the same repo storage. When jj
-is available, MUST use `jj workspace add` — never `git worktree add`. This applies
-to both colocated and pure jj repos.
+Workspaces provide isolated working copies sharing the same repo storage. You MUST
+use `jj workspace add` — you MUST NOT use `git worktree add`. This applies to both
+colocated and pure jj repos.
 
 ```bash
 # Create a workspace
@@ -395,9 +395,9 @@ Divergent changes appear as `(divergent)` in `jj log` when a commit is modified 
 
 ### Prevention Rules
 
-- **Do not modify commits after pushing** -- if the PR is up for review, leave those commits alone
-- **Always `jj git fetch` before starting new work**
-- **Use change IDs, not commit hashes** -- change IDs survive rewrites
+- You MUST NOT modify commits after pushing -- if the PR is up for review, leave those commits alone
+- You MUST run `jj git fetch` before starting new work
+- You MUST use change IDs, not commit hashes -- change IDs survive rewrites
 
 ### Resolving Divergence
 
@@ -432,8 +432,8 @@ jj log  # Conflicted commits show a conflict icon
 3. Save the file
 4. Run `jj st` to verify the conflict is resolved
 
-Do NOT use `jj resolve` -- it launches an interactive merge tool that hangs in agent
-environments.
+You MUST NOT use `jj resolve` -- it launches an interactive merge tool that hangs in
+agent environments.
 
 ## Quick Reference
 

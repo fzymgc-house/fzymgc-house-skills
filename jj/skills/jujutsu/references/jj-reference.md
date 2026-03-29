@@ -284,7 +284,7 @@ jj util gc --expire=now     # immediate cleanup (careful!)
 
 **Important:** The op log only records **successful** operations. A failed command
 leaves no op-log entry. `jj undo` always targets the most recent successful
-operation -- never "undo twice" to account for a failure.
+operation — you MUST NOT "undo twice" to account for a failure.
 
 ## Push Safety
 

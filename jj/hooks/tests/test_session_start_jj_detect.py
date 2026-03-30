@@ -51,13 +51,15 @@ class TestJjDetection:
         result = run_hook(str(jj_repo))
         assert result.returncode == 0
         assert "pure jj" in result.stdout
-        assert "VCS rules:" in result.stdout
+        assert "VCS Policy" in result.stdout
+        assert "MUST use jj" in result.stdout
 
     def test_colocated_repo_detected(self, colocated_repo: Path) -> None:
         result = run_hook(str(colocated_repo))
         assert result.returncode == 0
         assert "colocated jj+git" in result.stdout
-        assert "Read-only git" in result.stdout
+        assert "Colocated Repo Notes" in result.stdout
+        assert "MAY use read-only git plumbing" in result.stdout
 
     def test_git_only_repo_silent(self, git_repo: Path) -> None:
         result = run_hook(str(git_repo))
@@ -74,12 +76,18 @@ class TestOutputFormat:
     def test_output_goes_to_stdout_not_stderr(self, colocated_repo: Path) -> None:
         """Context must be on stdout for SessionStart injection."""
         result = run_hook(str(colocated_repo))
-        assert "VCS rules:" in result.stdout
+        assert "VCS Policy" in result.stdout
         assert result.stderr.strip() == ""
 
     def test_at_minus_mentioned(self, jj_repo: Path) -> None:
         result = run_hook(str(jj_repo))
         assert "@-" in result.stdout
+
+    def test_quick_reference_included(self, jj_repo: Path) -> None:
+        """Session start should include git→jj command reference."""
+        result = run_hook(str(jj_repo))
+        assert "Quick Reference" in result.stdout
+        assert "jj commit" in result.stdout
 
     def test_no_double_dots_when_jj_info_missing(self, jj_repo: Path) -> None:
         """When jj version/workspace fails, no '. . .' artifacts."""

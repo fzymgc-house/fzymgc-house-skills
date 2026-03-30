@@ -2,17 +2,16 @@
 # /// script
 # requires-python = ">=3.11"
 # ///
-"""PreToolUse hook: warn on unsafe commands in a jj repo.
+"""PreToolUse hook: enforce jj-first VCS usage in jj repos.
 
-Checks for:
-1. Mutating git commands (should use jj equivalents)
-2. Interactive jj commands (jj split, jj resolve, jj squash -i) that hang in agent environments
+Four-tier response model:
+1. Mutating git commands (commit, push, rebase, ...) — DENY with jj equivalent
+2. Read-only git with better jj alternatives (log, diff, status, ...) — ALLOW + educate
+3. Interactive jj commands (split, resolve, squash -i) — ASK (human decides)
+4. Plumbing git commands (rev-parse, ls-files, ...) — ALLOW silently
 
-Reads hook JSON from stdin, checks if .jj/ exists in the working directory,
-and returns an "ask" decision so the user can approve or deny.
-
-Read-only git commands (log, diff, status, rev-parse, show, blame, remote)
-and gh CLI are always allowed.
+Escape hatch: include '# jj-exempt' in the command to escalate from DENY to ASK
+(requires human approval, not a free pass).
 """
 
 from __future__ import annotations
@@ -22,7 +21,7 @@ import os
 import re
 import sys
 
-# Mutating git subcommands that should use jj equivalents
+# Mutating git subcommands that should use jj equivalents (DENY)
 MUTATING_SUBCOMMANDS = {
     "add",
     "branch",
@@ -46,6 +45,29 @@ MUTATING_SUBCOMMANDS = {
     "switch",
     "tag",
     "worktree",
+}
+
+# Read-only git subcommands that work but have better jj equivalents (ADVISE)
+ADVISORY_SUBCOMMANDS = {
+    "blame": "jj file annotate",
+    "diff": "jj diff (understands working-copy commit; use jj diff -r X for arbitrary revisions)",
+    "log": "jj log (shows change IDs, working copy, divergent/conflicted state)",
+    "show": "jj show (or jj diff -r <rev>)",
+    "status": "jj status (shows working-copy changes relative to parent)",
+}
+
+# Truly read-only git commands with no meaningful jj advantage — always silent
+# rev-parse, ls-files, ls-tree, remote (read), config (read), describe, cat-file
+SILENT_SUBCOMMANDS = {
+    "cat-file",
+    "config",
+    "describe",
+    "ls-files",
+    "ls-remote",
+    "ls-tree",
+    "remote",
+    "rev-list",
+    "rev-parse",
 }
 
 # Pattern: "git <subcommand>" possibly after &&, ||, ;, |, $(, etc.
@@ -86,6 +108,21 @@ def main() -> None:
     if not command:
         sys.exit(0)
 
+    # Escape hatch: explicit opt-out, but require human approval
+    if "# jj-exempt" in command:
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": (
+                    "jj-exempt: agent is requesting to use a raw git command "
+                    "in a jj repo. Review the command and approve or deny."
+                ),
+            }
+        }
+        json.dump(result, sys.stdout)
+        return
+
     cwd = data.get("cwd", "")
     if not cwd:
         sys.exit(0)
@@ -106,19 +143,37 @@ def main() -> None:
         # Not a jj repo — allow everything
         sys.exit(0)
 
-    # Find all git subcommands in the command string
+    # Classify all git subcommands in the command string
     mutating_found = []
+    advisory_found = {}  # subcommand -> jj equivalent
     for match in GIT_CMD_RE.finditer(command):
         subcommand = match.group(1)
         if subcommand in MUTATING_SUBCOMMANDS:
             mutating_found.append(f"git {subcommand}")
+        elif subcommand in ADVISORY_SUBCOMMANDS:
+            advisory_found[f"git {subcommand}"] = ADVISORY_SUBCOMMANDS[subcommand]
+        # SILENT_SUBCOMMANDS and unknown subcommands: no action
 
     # Also check for interactive jj commands that hang in agent environments
     interactive_jj_found = _check_interactive_jj(command)
 
-    if not mutating_found and not interactive_jj_found:
-        # Safe command — allow
+    if not mutating_found and not interactive_jj_found and not advisory_found:
+        # Safe command, no advice needed — allow silently
         sys.exit(0)
+
+    # Advisory-only: allow but educate via systemMessage
+    if advisory_found and not mutating_found and not interactive_jj_found:
+        hints = [f"  {cmd} → {jj_alt}" for cmd, jj_alt in advisory_found.items()]
+        result = {
+            "systemMessage": (
+                "Tip: jj has better equivalents for these read-only git commands:\n"
+                + "\n".join(hints)
+                + "\njj commands understand the working-copy commit model and show "
+                "change IDs, conflicts, and divergence. Consider switching."
+            ),
+        }
+        json.dump(result, sys.stdout)
+        return
 
     if interactive_jj_found and not mutating_found:
         alternatives = {
@@ -182,17 +237,23 @@ def main() -> None:
             hints.append(f"  {cmd} → use jj equivalent")
 
     reason = (
-        f"Mutating git command in jj repo: {', '.join(mutating_found)}.\n"
-        f"jj equivalents:\n" + "\n".join(hints) + "\n"
-        "Use jj commands instead, or approve to proceed with git."
+        f"BLOCKED: Mutating git command in jj repo: {', '.join(mutating_found)}.\n"
+        f"jj equivalents:\n" + "\n".join(hints)
+    )
+
+    system_msg = (
+        f"This is a jj repo. Use jj equivalents instead of git:\n"
+        + "\n".join(hints)
+        + "\nIf git is genuinely required, add '# jj-exempt' comment to the command (requires human approval)."
     )
 
     result = {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
-            "permissionDecision": "ask",
+            "permissionDecision": "deny",
             "permissionDecisionReason": reason,
-        }
+        },
+        "systemMessage": system_msg,
     }
     try:
         json.dump(result, sys.stdout)

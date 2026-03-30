@@ -65,8 +65,8 @@ jj squash                        # Fold into parent
 jj git push --bookmark my-feature
 ```
 
-**Important:** Once you've pushed, do NOT locally `jj describe` or `jj squash`
-to tweak the commit further. This creates divergence when the PR is merged.
+You MUST NOT locally `jj describe` or `jj squash` after pushing. This creates
+divergence when the PR is merged.
 
 ### 3. After Squash-Merge on GitHub
 
@@ -137,9 +137,9 @@ jj bookmark delete feature-b
 
 ### Key Points
 
-- Always use `-s` (source + descendants) when rebasing stacked PRs
-- `--skip-emptied` handles the abandoned commits automatically
-- Use change IDs (not commit hashes) -- they survive the rebase
+- You MUST use `-s` (source + descendants) when rebasing stacked PRs
+- You SHOULD use `--skip-emptied` -- it handles abandoned commits automatically
+- You MUST use change IDs (not commit hashes) -- they survive the rebase
 
 ## Divergence Recovery
 
@@ -195,7 +195,7 @@ jj log -r 'mine() & ~ancestors(trunk())'
 
 ### Task Start
 
-Every agent should begin with:
+Every agent MUST begin with:
 
 ```bash
 jj git fetch
@@ -204,7 +204,7 @@ jj rebase -o main --skip-emptied
 
 ### Scripting with Change IDs
 
-Always use change IDs for stability:
+You MUST use change IDs for stability:
 
 ```bash
 # Get change ID for scripting
@@ -335,7 +335,7 @@ jj rebase -s 'all:roots(trunk()..@)' -o trunk() --skip-emptied
 
 GitHub's "Update branch" button (merge or rebase mode) creates commits that
 diverge from your local state. This causes **bookmark conflicts** (`bookmark??`
-in jj log). Always rebase locally instead:
+in jj log). You MUST rebase locally instead:
 
 ```bash
 jj git fetch
@@ -397,7 +397,7 @@ jj new <merge-point-change-id> -m "wip: experimental refactor"
 history but has no bookmark or description, making it hard to find. The files are
 no longer in the working directory because `@` moved.
 
-**Prevention:** Always commit or describe before creating a new change:
+**Prevention:** You MUST commit or describe before creating a new change:
 
 ```bash
 # Write files...
@@ -427,7 +427,7 @@ jj edit <change-id>
 **What happens:** Bookmarks don't auto-advance in jj. After creating new commits,
 the bookmark still points at the old revision.
 
-**Fix:** Always set the bookmark before pushing:
+**Fix:** You MUST set the bookmark before pushing:
 
 ```bash
 jj bookmark set my-feature -r @

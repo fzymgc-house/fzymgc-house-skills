@@ -36,9 +36,9 @@ After fetching, new remote branches appear as `<bookmark>@<remote>` (e.g., `main
 
 ## Detached HEAD
 
-jj puts git into **detached HEAD** state. This is normal and expected. Do not attempt to "fix" it
-by checking out a branch in git. jj manages the git HEAD internally to track the current working
-copy commit.
+jj puts git into **detached HEAD** state. This is normal and expected. You MUST NOT attempt to
+"fix" it by checking out a branch in git. jj manages the git HEAD internally to track the
+current working copy commit.
 
 ## GitHub CLI Compatibility
 
@@ -54,9 +54,8 @@ Ensure the bookmark is pushed (`jj git push -b <name>`) before creating a PR.
 
 ## Workspaces
 
-Workspaces replace git worktrees in jj repos. When jj is available, MUST use
-`jj workspace add` — never `git worktree add`. This applies to both colocated
-and pure jj repos. See the [Workspaces section in
+Workspaces replace git worktrees in jj repos. You MUST use `jj workspace add` —
+you MUST NOT use `git worktree add`. This applies to both colocated and pure jj repos. See the [Workspaces section in
 SKILL.md](../SKILL.md#workspaces) for full command reference and key behaviors.
 
 Key removal note: `jj workspace forget` de-registers a workspace but does NOT delete
@@ -88,7 +87,7 @@ removing commits that jj still references but have no Git branch. Run
 Commits with jj-internal conflicts are stored as Git commits with special tree
 entries (`.jjconflict-base-*/` and `.jjconflict-side-*/` directories). The
 authoritative conflict data is in a non-standard `jj:trees` commit header.
-Never `git checkout` a conflicted commit — use `jj` to navigate to it.
+You MUST NOT `git checkout` a conflicted commit — use `jj` to navigate to it.
 
 ## Change ID Header
 
@@ -99,7 +98,7 @@ but means the change ID is regenerated.
 
 ## What NOT To Do
 
-**MUST NOT use mutating git commands** when jj is available (colocated or pure):
+You **MUST NOT** use mutating git commands when jj is available (colocated or pure):
 
 | Avoid | Use Instead |
 |-------|-------------|

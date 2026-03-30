@@ -20,7 +20,7 @@ paginate = "never"
 diff-editor = ":"
 
 # No-op merge editor -- prevents jj resolve from opening a tool
-# (agents should edit conflict markers directly)
+# (agents MUST edit conflict markers directly)
 merge-editor = ":"
 
 [templates]

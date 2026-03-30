@@ -118,18 +118,74 @@ def main() -> None:
         parts.append(workspace_info)
     lines = [
         ". ".join(parts) + ".",
-        "VCS rules:",
-        "  - Use jj commands for ALL VCS operations (commit, rebase, push, etc.)",
-        "  - NEVER use mutating git commands (git commit, git checkout, git rebase, etc.)",
+        "",
+        "## VCS Policy: jj-first (enforced by PreToolUse guard hook)",
+        "",
+        "You MUST use jj commands for all VCS operations in this repo.",
+        "You MUST NOT use mutating git commands (they are blocked by a PreToolUse hook).",
+        "You SHOULD prefer jj equivalents over read-only git commands (log, diff, status, etc.).",
+        "You MAY use git plumbing commands (rev-parse, ls-files) and gh CLI.",
+        "",
+        "## Quick Reference: git → jj",
+        "",
+        "Everyday workflow:",
+        "  git status        → jj status (or jj st)",
+        "  git diff           → jj diff (working copy) / jj diff -r REV",
+        "  git add + commit   → jj commit -m 'msg' (auto-tracks all files)",
+        "  git commit --amend → jj describe -m 'msg' (edit current change description)",
+        "  git log            → jj log (shows change IDs, conflicts, divergence)",
+        "  git show COMMIT    → jj show REV (or jj diff -r REV)",
+        "",
+        "Branching & navigation:",
+        "  git checkout BRANCH → jj new BOOKMARK (new change on top) / jj edit REV (edit in-place)",
+        "  git switch -c NAME  → jj new; jj bookmark create NAME -r @",
+        "  git branch           → jj bookmark list",
+        "  git branch -d NAME   → jj bookmark delete NAME",
+        "",
+        "History rewriting:",
+        "  git rebase --onto D S → jj rebase -s S -d D (use -d not --onto in jj 0.25+)",
+        "  git cherry-pick REV   → jj duplicate REV (whole commit) / jj restore --from REV PATH (files)",
+        "  git revert REV        → jj backout -r REV",
+        "  git reset --soft HEAD~ → jj squash --into @-- (fold into grandparent)",
+        "  git stash              → not needed (@ is always a commit; jj new to start fresh)",
+        "",
+        "Remote operations:",
+        "  git fetch   → jj git fetch",
+        "  git pull    → jj git fetch (then jj rebase -d BOOKMARK if needed)",
+        "  git push    → jj git push (pushes bookmarks with remote tracking)",
+        "",
+        "Workspace (worktrees):",
+        "  git worktree add → jj workspace add PATH --name NAME",
+        "  git worktree list → jj workspace list",
+        "  git worktree remove → jj workspace forget NAME",
+        "",
+        "## Key jj Concepts",
+        "",
+        "  @ = working-copy commit (often empty until you edit files)",
+        "  @- = parent of working copy (your most recent meaningful commit)",
+        "  Change ID (e.g. kxqpmsqz) is stable across rebases; commit ID changes",
+        "  All files are auto-tracked — no staging area, no 'git add'",
+        "  Working copy is always a commit — no stashing needed",
+        "",
+        "## Escape Hatch",
+        "",
+        "  If git is genuinely required, append '# jj-exempt' to the command.",
+        "  This escalates to human approval (ask) — it is NOT a free pass.",
     ]
     if has_git:
-        lines.append("  - Read-only git (git log, git diff, git rev-parse) and gh CLI are safe")
-    lines.append("  - @ = empty working copy; use @- to inspect committed state")
+        lines.append("")
+        lines.append("## Colocated Repo Notes")
+        lines.append("")
+        lines.append("  You MAY use read-only git plumbing (rev-parse, ls-files) and gh CLI.")
+        lines.append("  You SHOULD use jj log/diff/status/show instead of git equivalents")
+        lines.append("  (the guard hook will advise when better jj alternatives exist).")
 
     if active_work:
-        lines.append(f"Active work (unpushed, non-empty):\n{active_work}")
+        lines.append("")
+        lines.append(f"## Active Work (unpushed, non-empty)\n{active_work}")
     if conflicts:
-        lines.append(f"Commits with conflicts:\n{conflicts}")
+        lines.append("")
+        lines.append(f"## Commits with Conflicts\n{conflicts}")
 
     print("\n".join(lines))
 

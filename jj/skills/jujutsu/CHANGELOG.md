@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.4.0...jujutsu-v0.5.0) (2026-03-30)
+
+
+### Features
+
+* **jj:** enforce jj-first VCS policy with four-tier guard hook ([#38](https://github.com/fzymgc-house/fzymgc-house-skills/issues/38)) ([185776b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/185776b3bb874ab274a9bd2ba7d6adca61a0d3e1))
+
 ## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.3.0...jujutsu-v0.4.0) (2026-03-28)
 
 

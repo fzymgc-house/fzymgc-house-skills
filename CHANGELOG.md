@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.3.0...fzymgc-house-skills-v1.4.0) (2026-03-30)
+
+
+### Features
+
+* **jj:** enforce jj-first VCS policy with four-tier guard hook ([#38](https://github.com/fzymgc-house/fzymgc-house-skills/issues/38)) ([185776b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/185776b3bb874ab274a9bd2ba7d6adca61a0d3e1))
+
 ## [1.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.2.0...fzymgc-house-skills-v1.3.0) (2026-03-28)
 
 

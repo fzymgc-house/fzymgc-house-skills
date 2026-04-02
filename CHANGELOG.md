@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.4.0...fzymgc-house-skills-v1.5.0) (2026-04-02)
+
+
+### Features
+
+* **superpowers:** sync upstream obra/superpowers v5.0.7 ([#40](https://github.com/fzymgc-house/fzymgc-house-skills/issues/40)) ([faae322](https://github.com/fzymgc-house/fzymgc-house-skills/commit/faae322eacc8ae0456b2b06ff5eaadec6378e951))
+
 ## [1.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.3.0...fzymgc-house-skills-v1.4.0) (2026-03-30)
 
 

@@ -7,7 +7,7 @@ description: >-
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
-  upstream: obra/superpowers v5.0.2 (skills/finishing-a-development-branch)
+  upstream: obra/superpowers v5.0.7 (skills/finishing-a-development-branch)
 ---
 
 # Finishing a Development Branch
@@ -19,7 +19,7 @@ metadata:
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests -> Present options -> Execute choice -> Clean up.
+**Core principle:** Verify tests → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -256,7 +256,7 @@ delete files -- you must `rm -rf` the directory after.
 
 **Open-ended questions**
 
-- **Problem:** "What should I do next?" -> ambiguous
+- **Problem:** "What should I do next?" → ambiguous
 - **Fix:** Present exactly 4 structured options
 
 **Automatic workspace cleanup**

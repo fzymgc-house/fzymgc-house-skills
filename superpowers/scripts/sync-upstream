@@ -29,7 +29,7 @@ error() { printf "${RED}ERROR: %s${RESET}\n" "$*" >&2; }
 header(){ printf "\n${BOLD}=== %s ===${RESET}\n" "$*"; }
 
 # --- Read current upstream version from manifest frontmatter ---
-current_version=$(sed -n '/^---$/,/^---$/{ /^upstream_version:/{ s/.*: *//; p; } }' "$MANIFEST")
+current_version=$(awk '/^---$/{n++; next} n==1 && /^upstream_version:/{sub(/.*: */, ""); print}' "$MANIFEST")
 if [[ -z "$current_version" ]]; then
   error "Could not read upstream_version from $MANIFEST"
   exit 1

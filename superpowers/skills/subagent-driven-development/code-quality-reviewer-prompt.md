@@ -6,7 +6,7 @@ Use this template when dispatching a code quality reviewer subagent.
 
 **Only dispatch after spec compliance review passes.**
 
-```text
+```
 Task tool (superpowers:code-reviewer):
   Use template at requesting-code-review/code-reviewer.md
 
@@ -18,7 +18,6 @@ Task tool (superpowers:code-reviewer):
 ```
 
 **In addition to standard code quality concerns, the reviewer should check:**
-
 - Does each file have one clear responsibility with a well-defined interface?
 - Are units decomposed so they can be understood and tested independently?
 - Is the implementation following the file structure from the plan?

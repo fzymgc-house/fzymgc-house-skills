@@ -83,11 +83,22 @@ class TestOutputFormat:
         result = run_hook(str(jj_repo))
         assert "@-" in result.stdout
 
+    def test_skill_loading_directive(self, jj_repo: Path) -> None:
+        """Session start must instruct Claude to load the jujutsu skill."""
+        result = run_hook(str(jj_repo))
+        assert 'skill="jj:jujutsu"' in result.stdout
+
     def test_quick_reference_included(self, jj_repo: Path) -> None:
         """Session start should include git→jj command reference."""
         result = run_hook(str(jj_repo))
         assert "Quick Reference" in result.stdout
         assert "jj commit" in result.stdout
+
+    def test_rebase_flag_uses_onto(self, jj_repo: Path) -> None:
+        """Rebase quick reference must use -o (not deprecated -d)."""
+        result = run_hook(str(jj_repo))
+        assert "-o D" in result.stdout or "--onto" in result.stdout
+        assert "-d D" not in result.stdout
 
     def test_no_double_dots_when_jj_info_missing(self, jj_repo: Path) -> None:
         """When jj version/workspace fails, no '. . .' artifacts."""

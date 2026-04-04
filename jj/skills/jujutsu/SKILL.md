@@ -97,9 +97,19 @@ Agents run non-interactively. These rules prevent common failures:
   without a description or bookmark, the old change is effectively lost
 - You SHOULD verify state with `jj st` after any mutation
 - You SHOULD prefer `jj rebase --skip-emptied` over manual `jj abandon` -- it's idempotent and handles chains
-- You SHOULD pass `--config ui.paginate=never` if pager interferes
+- You MUST pass `--no-pager` on every `jj` command (e.g., `jj --no-pager log`).
+  Agent environments cannot interact with pagers. Alternatively, pass
+  `--config ui.paginate=never` as a flag.
 - If you encounter `(divergent)` markers in `jj log`, you MUST abandon the stale local copy
   and rebase remaining work onto main
+
+**Parallel agent safety:**
+
+- You MUST NOT dispatch multiple agents against the same jj working copy — they
+  will fight over `@` and cause orphaned branches. Each parallel agent MUST work
+  in its own workspace created via `jj workspace add`. The orchestrating skill
+  is responsible for workspace creation before dispatch and cleanup after.
+  See `references/workflows-reference.md` "Agent Fan-Out" for the full pattern.
 
 **You MUST NOT use these interactive commands (they hang in agent environments):**
 
@@ -223,6 +233,13 @@ jj restore
 # Restore a specific file from a revision
 jj restore --from <rev> <path>
 ```
+
+**Warning — op log semantics:** The op log only records **successful** operations.
+A failed jj command leaves no trace in the op log (unlike git's reflog). `jj undo`
+always targets the most recent *successful* operation — do NOT "undo twice" to
+account for a failure. If you need to recover from a bad state, use
+`jj op log` to find the right operation ID, then `jj op restore <op-id>`.
+See `references/jj-reference.md` for the full op log reference.
 
 **Note:** You MUST NOT use `jj split` -- it is interactive and hangs in agent environments. To split a commit
 (extract specific files into a new child):
@@ -422,7 +439,8 @@ jj log  # Conflicted commits show a conflict icon
 
 ### Resolving Conflicts
 
-1. Open the conflicted file and resolve the conflict markers (jj 0.39 format):
+1. Open the conflicted file and resolve the conflict markers (jj 0.39+ format;
+   older versions use a simpler format without `%%%%%%%` diff sections):
    - `<<<<<<< Conflict N of M` — conflict block start (includes commit references)
    - `+++++++ Contents of side #1` — snapshot of the first side (full content)
    - `%%%%%%% Changes from base to side #2` — diff from base to second side
@@ -482,5 +500,3 @@ agent environments.
 - `references/workflows-reference.md` -- end-to-end workflow recipes, aliases, stacked PR patterns, agent fan-out, megamerge
 - `references/jj-git-interop.md` -- colocated repo behavior, auto-sync sequence, conflict storage, and git compatibility
 - `references/jj-agent-config.md` -- recommended jj configuration for non-interactive agent environments
-- For session-level change management (splitting, describing, inserting changes),
-  use `jj commit`, `jj describe`, and `jj new` directly.

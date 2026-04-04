@@ -81,20 +81,38 @@ def _jj_cleanup(repo_root: Path, workspace_name: str) -> bool:
                     file=sys.stderr,
                 )
 
+    # Determine if workspace appeared in the list (or if listing failed, assume it might be listed)
+    ws_was_listed = (
+        ws_list_result.returncode != 0  # list failed — can't confirm absence
+        or ws_with_colon in (ws_list_result.stdout or "")
+        or jj_workspace in (ws_list_result.stdout or "")
+    )
+
     forget_result = run_cmd(
         ["jj", "--no-pager", "workspace", "forget", jj_workspace], cwd=repo_root
     )
     if forget_result.returncode != 0:
         jj_err = sanitize_for_output(forget_result.stderr.strip()[:500])
-        print(
-            f"ERROR: jj workspace forget failed for "
-            f"{sanitize_for_output(jj_workspace)}: {jj_err}; "
-            f"workspace directory will still be removed "
-            f"(run 'jj workspace forget {sanitize_for_output(jj_workspace)}' "
-            f"manually to clean up)",
-            file=sys.stderr,
-        )
-        return True  # jj_forget_failed
+        if ws_was_listed:
+            # Workspace was registered but forget failed — real metadata leak
+            print(
+                f"ERROR: jj workspace forget failed for "
+                f"{sanitize_for_output(jj_workspace)}: {jj_err}; "
+                f"workspace directory will still be removed "
+                f"(run 'jj workspace forget {sanitize_for_output(jj_workspace)}' "
+                f"manually to clean up)",
+                file=sys.stderr,
+            )
+            return True  # jj_forget_failed — metadata leak
+        else:
+            # Workspace was not listed — forget failure is expected, not a leak
+            print(
+                f"INFO: jj workspace forget failed for "
+                f"{sanitize_for_output(jj_workspace)} (workspace was not registered): "
+                f"{jj_err}",
+                file=sys.stderr,
+            )
+            return False  # no metadata leak
 
     return False  # success
 

@@ -100,6 +100,10 @@ Agents run non-interactively. These rules prevent common failures:
 - You MUST pass `--no-pager` on every `jj` command (e.g., `jj --no-pager log`).
   Agent environments cannot interact with pagers. Alternatively, pass
   `--config ui.paginate=never` as a flag.
+- You MUST NOT redirect stderr to `/dev/null` (`2>/dev/null`) on jj commands.
+  jj reports errors and important warnings on stderr. Suppressing it hides
+  failures silently (e.g., `jj workspace add` appears to succeed but creates
+  nothing). If jj output is noisy, use `--quiet` instead.
 - If you encounter `(divergent)` markers in `jj log`, you MUST abandon the stale local copy
   and rebase remaining work onto main
 
@@ -279,9 +283,13 @@ jj git push -b my-feature
 
 ## Workspaces
 
-Workspaces provide isolated working copies sharing the same repo storage. You MUST
-use `jj workspace add` — you MUST NOT use `git worktree add`. This applies to both
-colocated and pure jj repos.
+Workspaces provide isolated working copies sharing the same repo storage. You SHOULD
+create a workspace for each feature or task — they are near-instant and cost almost
+no disk space. See `references/workflows-reference.md` "Workspace-Per-Feature Workflow"
+for the full end-to-end pattern including push-from-primary and cleanup.
+
+You MUST use `jj workspace add` — you MUST NOT use `git worktree add`. This applies
+to both colocated and pure jj repos.
 
 ```bash
 # Create a workspace

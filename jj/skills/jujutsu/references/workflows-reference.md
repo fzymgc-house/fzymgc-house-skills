@@ -30,7 +30,118 @@ The `tug` alias solves the most common footgun: bookmarks don't auto-advance in 
 so `jj git push -b my-feature` pushes stale content unless you `jj bookmark set` first.
 With `tug`, the workflow becomes: edit → `jj tug` → `jj git push`.
 
-## Single PR Lifecycle (Detailed)
+## Workspace-Per-Feature Workflow
+
+**Always create a workspace for new work.** jj workspaces share the object
+store so creation is near-instant and costs almost no disk space. Using a
+workspace per feature avoids `@` conflicts, enables clean context switching,
+and prevents agents from stomping on each other.
+
+### Start Work (Create Workspace)
+
+```bash
+# From the primary workspace (the one with .git/)
+REPO=$(basename "$(jj --no-pager root)")
+FEATURE=my-feature
+
+jj git fetch
+jj workspace add "../${REPO}_worktrees/${FEATURE}" --name "$FEATURE" -r main
+cd "../${REPO}_worktrees/${FEATURE}"
+
+# Verify
+jj --no-pager st
+```
+
+### Do Work (In Secondary Workspace)
+
+Work normally — jj auto-snapshots every change into the workspace's `@`:
+
+```bash
+# Edit files...
+jj describe -m "feat: my feature"
+# Continue editing...
+jj commit -m "feat: implement core logic"
+jj new   # Start next change in the stack
+```
+
+### Push and Create PR (From Primary Workspace)
+
+Secondary workspaces in colocated repos do NOT have `.git/`, so `gh` CLI
+and `jj git push` must run from the primary workspace. Changes made in the
+secondary workspace are immediately visible in the primary — shared storage
+means no syncing is needed.
+
+```bash
+# Switch back to primary workspace
+cd /path/to/repo    # the one with .git/
+
+# Create bookmark pointing at the work done in the secondary workspace
+# Use the change ID — it's the same across all workspaces
+CHANGE_ID=$(cd "../${REPO}_worktrees/${FEATURE}" && jj --no-pager log -r @- --no-graph -T 'change_id.short(8)')
+jj bookmark create "$FEATURE" -r "$CHANGE_ID"
+jj git push -b "$FEATURE"
+gh pr create --head "$FEATURE" --title "feat: my feature" --body "..."
+```
+
+### Update After Review (In Secondary Workspace)
+
+```bash
+cd "../${REPO}_worktrees/${FEATURE}"
+# Make review fixes...
+jj describe -m "feat: my feature (address review)"
+# Or use squash style:
+jj new "$CHANGE_ID"
+# ... fix ...
+jj squash   # Fold into parent
+
+# Push from primary
+cd /path/to/repo
+jj tug      # Advance bookmark to latest
+jj git push -b "$FEATURE"
+```
+
+### After PR Merges (Cleanup)
+
+```bash
+cd /path/to/repo
+jj git fetch
+jj workspace forget "$FEATURE"
+rm -rf "../${REPO}_worktrees/${FEATURE}"
+jj rebase -o main --skip-emptied
+jj bookmark delete "$FEATURE"
+```
+
+### Context Switching
+
+To switch between features, just `cd` to the workspace directory:
+
+```bash
+cd "../${REPO}_worktrees/feature-a"   # Work on feature A
+cd "../${REPO}_worktrees/feature-b"   # Switch to feature B
+cd /path/to/repo                       # Back to primary
+```
+
+No stashing, no branch switching, no lost state.
+
+### Key Rules
+
+| Rule | Why |
+|------|-----|
+| Push from primary workspace | Secondary workspaces lack `.git/` in colocated repos |
+| Use change IDs across workspaces | Commit hashes change on rewrite; change IDs survive |
+| `rm -rf` after `jj workspace forget` | `forget` only de-registers, doesn't delete files |
+| One `@` per workspace | Never share a workspace between concurrent agents |
+
+### When NOT to Use a Workspace
+
+For a truly trivial one-off (typo fix, config tweak) where you'll commit and
+push within seconds, `jj new main` in the default workspace is fine. But if
+you're not sure, create a workspace — the cost is near zero.
+
+## Single PR Lifecycle (Inline)
+
+The workspace-per-feature workflow above is preferred. This section shows
+the simpler inline pattern for quick changes in the default workspace.
 
 ### 1. Start Work
 
@@ -219,7 +330,7 @@ jj rebase -r "$CHANGE_ID" -o main
 
 ```bash
 # Check for divergent commits
-if jj log -r 'divergent()' --no-graph -T 'change_id' 2>/dev/null | grep -q .; then
+if jj --no-pager log -r 'divergent()' --no-graph -T 'change_id' --quiet | grep -q .; then
   echo "Divergent commits detected -- abandoning stale copies"
   jj abandon 'divergent() & mutable()'
   jj rebase -o main --skip-emptied

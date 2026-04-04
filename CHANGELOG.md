@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.5.1...fzymgc-house-skills-v1.6.0) (2026-04-04)
+
+
+### Features
+
+* **jj:** add workspace-per-feature workflow and ban stderr suppression ([#44](https://github.com/fzymgc-house/fzymgc-house-skills/issues/44)) ([c9afaa7](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c9afaa71c3dfd708932ee4b2bc71168504e7bf20))
+
 ## [1.5.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.5.0...fzymgc-house-skills-v1.5.1) (2026-04-04)
 
 

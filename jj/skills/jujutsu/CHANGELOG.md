@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.5.1...jujutsu-v0.6.0) (2026-04-04)
+
+
+### Features
+
+* **jj:** add workspace-per-feature workflow and ban stderr suppression ([#44](https://github.com/fzymgc-house/fzymgc-house-skills/issues/44)) ([c9afaa7](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c9afaa71c3dfd708932ee4b2bc71168504e7bf20))
+
 ## [0.5.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.5.0...jujutsu-v0.5.1) (2026-04-04)
 
 

@@ -1,5 +1,5 @@
 {
-  ".": "1.5.1",
+  ".": "1.6.0",
   "homelab/skills/grafana": "1.2.0",
   "homelab/skills/terraform": "1.2.0",
   "homelab/skills/skill-qa": "1.2.0",
@@ -8,7 +8,7 @@
   "pr-review/skills/address-findings": "2.2.0",
   "pr-review/skills/respond-to-comments": "2.2.0",
   "jj": "0.5.1",
-  "jj/skills/jujutsu": "0.5.1",
+  "jj/skills/jujutsu": "0.6.0",
   "superpowers": "0.3.0",
   "superpowers/skills/using-worktrees": "0.3.0",
   "superpowers/skills/finishing-a-development-branch": "0.3.0",

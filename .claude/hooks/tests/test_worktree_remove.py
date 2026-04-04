@@ -426,6 +426,9 @@ class TestJjIntegration:
 
             # Directory should be gone (hook still removes it)
             assert not worktree_path.exists()
+
+            # Hook should succeed (unregistered workspace is not a metadata leak)
+            assert result.returncode == 0
         finally:
             if worktree_path.exists():
                 shutil.rmtree(worktree_path, ignore_errors=True)

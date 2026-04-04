@@ -119,12 +119,20 @@ def main() -> None:
     lines = [
         ". ".join(parts) + ".",
         "",
+        "## REQUIRED: Load jj skill",
+        "",
+        "You MUST invoke the Skill tool with skill=\"jj:jujutsu\" BEFORE your"
+        " first response in this session. The skill contains workspace"
+        " management, conflict resolution, and advanced jj workflows"
+        " beyond this quick reference.",
+        "",
         "## VCS Policy: jj-first (enforced by PreToolUse guard hook)",
         "",
         "You MUST use jj commands for all VCS operations in this repo.",
         "You MUST NOT use mutating git commands (they are blocked by a PreToolUse hook).",
         "You SHOULD prefer jj equivalents over read-only git commands (log, diff, status, etc.).",
         "You MAY use git plumbing commands (rev-parse, ls-files) and gh CLI.",
+        "You MUST pass --no-pager on every jj command in agent environments.",
         "",
         "## Quick Reference: git → jj",
         "",
@@ -143,7 +151,7 @@ def main() -> None:
         "  git branch -d NAME   → jj bookmark delete NAME",
         "",
         "History rewriting:",
-        "  git rebase --onto D S → jj rebase -s S -d D (use -d not --onto in jj 0.25+)",
+        "  git rebase --onto D S → jj rebase -s S -o D (-d is deprecated; use -o / --onto)",
         "  git cherry-pick REV   → jj duplicate REV (whole commit) / jj restore --from REV PATH (files)",
         "  git revert REV        → jj backout -r REV",
         "  git reset --soft HEAD~ → jj squash --into @-- (fold into grandparent)",
@@ -151,7 +159,7 @@ def main() -> None:
         "",
         "Remote operations:",
         "  git fetch   → jj git fetch",
-        "  git pull    → jj git fetch (then jj rebase -d BOOKMARK if needed)",
+        "  git pull    → jj git fetch (then jj rebase -o BOOKMARK if needed)",
         "  git push    → jj git push (pushes bookmarks with remote tracking)",
         "",
         "Workspace (worktrees):",

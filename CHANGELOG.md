@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.5.0...fzymgc-house-skills-v1.5.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* **jj:** harden plugin with pager safety, undo docs, and parallel agent warnings ([#43](https://github.com/fzymgc-house/fzymgc-house-skills/issues/43)) ([c10eed6](https://github.com/fzymgc-house/fzymgc-house-skills/commit/c10eed62475cb8cc6ede04d061f6243e8acc5c9e))
+
 ## [1.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.4.0...fzymgc-house-skills-v1.5.0) (2026-04-02)
 
 

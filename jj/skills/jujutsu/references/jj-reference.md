@@ -21,7 +21,7 @@ Revsets are jj's query language for selecting revisions.
 | `remote_bookmarks()` | All remote-tracking bookmarks |
 | `mine()` | Revisions authored by you |
 | `empty()` | Empty revisions (no diff) |
-| `conflict()` | Revisions with unresolved conflicts |
+| `conflicts()` | Revisions with unresolved conflicts |
 | `description(pattern)` | Revisions matching description |
 | `author(pattern)` | Revisions by author |
 
@@ -51,11 +51,79 @@ jj log -r 'trunk()..@'
 jj log -r 'bookmarks() & empty()'
 
 # Commits with conflicts
-jj log -r 'conflict()'
+jj log -r 'conflicts()'
 
 # All mutable (non-immutable) commits
 jj log -r 'mutable()'
 ```
+
+## Conflict Markers
+
+For the canonical resolution workflow (`jj new` → edit → `jj diff` → `jj squash`)
+see SKILL.md "Conflict Handling". This section documents the marker format itself.
+
+### Snapshot+Diff Format (jj 0.39+, default)
+
+`ui.conflict-marker-style = "diff"` materializes conflicts as one full snapshot
+plus one diff per other side. Resolve by applying each diff to the snapshot.
+
+```text
+<<<<<<< conflict 1 of 1
+%%%%%%% diff from: vpxusssl 38d49363 "merge base"
+\\\\\\\        to: rtsqusxu 2768b0b9 "commit A"
+ apple
+-grape
++grapefruit
+ orange
++++++++ ysrnknol 7a20f389 "commit B"
+APPLE
+GRAPE
+ORANGE
+>>>>>>> conflict 1 of 1 ends
+```
+
+| Marker | Meaning |
+|--------|---------|
+| `<<<<<<< conflict N of M` | Block start (numbered when a file has multiple conflicts) |
+| `+++++++ <commit>` | Snapshot of one side -- full content |
+| `%%%%%%% diff from: ... to: ...` | Diff to apply to the snapshot to reach another side |
+| `\\\\\\\` | Header continuation for the long `diff from`/`to` label |
+| `>>>>>>> conflict N of M ends` | Block end |
+
+To resolve: pick the snapshot side (`+++++++` block), mentally (or in `$EDITOR`)
+apply each `%%%%%%%` diff to it, write the final content into the file, delete
+all marker lines (`<<<`, `+++`, `%%%`, `\\\`, `>>>`), save. Then `jj st` should
+report no conflict on that file. Resolution example for the snippet above:
+
+```text
+APPLE
+GRAPEFRUIT
+ORANGE
+```
+
+### Multi-Sided Conflicts
+
+When 3+ commits are merged at once, jj produces a single `+++++++` snapshot and
+multiple `%%%%%%%` diff blocks. Apply each diff in turn. **`jj resolve` cannot
+handle 3+ sided conflicts** -- marker editing is the only path.
+
+### Alternative Marker Styles
+
+```toml
+[ui]
+conflict-marker-style = "snapshot"  # Show full content of every side, no diffs
+conflict-marker-style = "git"       # diff3 format; falls back to "snapshot" for 3+ sides
+```
+
+The `"git"` style produces standard `<<<<<<<`/`|||||||`/`=======`/`>>>>>>>`
+markers compatible with tools that expect git's diff3 output, but only for
+2-sided conflicts.
+
+### Long Markers
+
+If a file's contents could be confused for conflict markers (e.g. lines
+starting with `=======`), jj extends marker length, e.g. `<<<<<<<<<<<<<<<` and
+`%%%%%%%%%%%%%%%`. Match the actual length when removing them.
 
 ## Templates
 

@@ -436,30 +436,67 @@ Or use the idempotent approach -- rebase with `--skip-emptied` to clean up autom
 
 ## Conflict Handling
 
-jj allows committing conflicts -- they are tracked as part of the commit, not blocking.
+jj records conflicts inside commits rather than blocking operations: rebases,
+merges, and `jj new` always succeed, and descendants of a conflicted commit
+inherit a tagged conflict that auto-clears when the ancestor is fixed.
 
 ### Detecting Conflicts
 
 ```bash
-jj st   # Shows "Conflict" markers if present
-jj log  # Conflicted commits show a conflict icon
+jj st                       # Per-file status with "Conflict" markers
+jj log -r 'conflicts()'     # All commits with unresolved conflicts
+jj resolve --list           # Conflicted paths in @ (does not launch a merge tool)
 ```
 
-### Resolving Conflicts
+### Canonical Resolution Workflow
 
-1. Open the conflicted file and resolve the conflict markers (jj 0.39+ format;
-   older versions use a simpler format without `%%%%%%%` diff sections):
-   - `<<<<<<< Conflict N of M` — conflict block start (includes commit references)
-   - `+++++++ Contents of side #1` — snapshot of the first side (full content)
-   - `%%%%%%% Changes from base to side #2` — diff from base to second side
-   - `\\\\\\\` — separator between the diff header and the 'to' snapshot section
-   - `>>>>>>> Conflict N of M ends` — conflict block end
-2. Edit the file to the desired final content, removing all marker lines
-3. Save the file
-4. Run `jj st` to verify the conflict is resolved
+The official jj tutorial -- and jj's own auto-printed hint after a rebase
+produces conflicts -- gives this exact recipe. Follow it:
 
-You MUST NOT use `jj resolve` -- it launches an interactive merge tool that hangs in
-agent environments.
+```bash
+jj new <lowest-conflicted-commit>   # 1. Resolution commit on top of it
+$EDITOR <conflicted-file>           # 2. Edit markers (or jj resolve; see below)
+jj diff                             # 3. Verify ONLY the resolution shows
+jj squash                           # 4. Fold into the conflicted ancestor
+```
+
+**Always resolve at the lowest conflicted ancestor**, never the tip. `jj squash`
+auto-rebases descendants and reports `Existing conflicts were resolved or
+abandoned from N commits` -- a single resolution heals the entire stack.
+
+**Why `jj new` + `jj squash` instead of `jj edit`:** the resolution lives in
+its own change ID, so `jj diff` shows only the fix, `jj abandon @` cleanly
+reverts a misstep, and `jj op log` records two reversible operations instead
+of one hard-to-undo mutation.
+
+### Editing Markers vs `jj resolve`
+
+`jj resolve` invokes an external 3-way merge tool one file at a time. It only
+supports 2-sided conflicts and requires a TTY.
+
+| Context | Approach |
+|---------|----------|
+| Interactive human | Set `ui.merge-editor = "mergiraf"` (structural, language-aware) and use `jj resolve`. Built-in alternatives: `meld`, `kdiff3`, `vscode`, `vimdiff`, `smerge`. |
+| Non-interactive agent | **MUST NOT use `jj resolve`** -- it hangs without a TTY. Edit conflict markers directly in the file. `references/jj-agent-config.md` neutralizes the merge editor with `merge-editor = ":"` as a safety net. |
+| Pick one whole side | `jj resolve --tool :ours` or `--tool :theirs` (built-in pseudo-tools) |
+| 3+ sided conflicts | Marker editing only -- `jj resolve` cannot handle these |
+
+For the snapshot+diff marker format and how to read it line by line, see
+`references/jj-reference.md` "Conflict Markers".
+
+### Stack Rebase Example
+
+```bash
+jj rebase -s B2 -o A                 # → conflicts in B2 and C; rebase completes
+jj log -r 'conflicts()'              # → B2, C
+jj new B2                            # resolution commit on lowest ancestor
+$EDITOR file1                        # apply each %%%%%%% diff to the +++++++ snapshot
+jj diff                              # verify only the resolution shows
+jj squash                            # → "conflicts resolved from 2 commits"
+jj log -r 'conflicts()'              # → empty
+```
+
+C automatically inherits the resolution -- never resolve the same conflict twice.
 
 ## Quick Reference
 

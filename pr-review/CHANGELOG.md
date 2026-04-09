@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/pr-review-v2.2.0...pr-review-v2.3.0) (2026-04-09)
+
+
+### Features
+
+* **codex:** add marketplace wrappers for repo skills ([#47](https://github.com/fzymgc-house/fzymgc-house-skills/issues/47)) ([b92fd8e](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b92fd8e160ad8bff3038827564954f4db968720e))
+
 ## [2.2.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/pr-review-v2.1.0...pr-review-v2.2.0) (2026-03-16)
 
 

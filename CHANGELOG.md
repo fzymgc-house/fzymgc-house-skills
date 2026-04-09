@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.6.0...fzymgc-house-skills-v1.7.0) (2026-04-09)
+
+
+### Features
+
+* **codex:** add marketplace wrappers for repo skills ([#47](https://github.com/fzymgc-house/fzymgc-house-skills/issues/47)) ([b92fd8e](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b92fd8e160ad8bff3038827564954f4db968720e))
+
 ## [1.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.5.1...fzymgc-house-skills-v1.6.0) (2026-04-04)
 
 

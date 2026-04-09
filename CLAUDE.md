@@ -20,6 +20,15 @@ lefthook run pre-commit --all-files  # Run linters on all files
 ## Structure
 
 ```text
+.claude-plugin/
+  marketplace.json      # Claude marketplace manifest
+.agents/plugins/
+  marketplace.json      # Codex marketplace manifest for repo-local wrappers
+plugins/
+  <plugin-name>/
+    .codex-plugin/
+      plugin.json       # Codex wrapper manifest
+    ...                 # Symlinks back to source plugin content
 homelab/
   plugin.json         # Homelab plugin (grafana, terraform, skill-qa)
   skills/
@@ -125,6 +134,10 @@ Skills are model-invoked (Claude decides when to use them based on the descripti
 1. Install the plugin locally: `claude plugin install .`
 2. Start a session: `claude`
 3. Trigger the skill by asking Claude to perform the relevant task
+
+For Codex, use the repo-local marketplace at
+`.agents/plugins/marketplace.json`. The `plugins/` directory contains thin
+Codex wrappers that symlink back to the source plugin directories.
 
 ### Validating SKILL.md Files
 
@@ -236,3 +249,15 @@ when verifying committed state (e.g., after `jj undo` or `jj commit`).
 
 Skills are **model-invoked** (Claude decides when to use them), not user-invoked slash commands.
 The `description` field determines when Claude loads a skill. Make descriptions specific with trigger phrases.
+
+### Codex Wrappers
+
+The `plugins/` directory is a compatibility layer for Codex. Keep the
+actual skill content in the source plugin directories (`homelab/`,
+`pr-review/`, `jj/`, `superpowers/`) and point the Codex wrappers back to
+those paths instead of duplicating files.
+
+Do not assume Claude-only agent features exist in Codex. For workflows
+that reference named `Task` agents, keep the prompt files accessible and
+use the compatibility guidance in
+`superpowers/skills/using-superpowers/references/codex-tools.md`.

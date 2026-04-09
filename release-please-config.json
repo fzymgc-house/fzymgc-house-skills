@@ -12,6 +12,22 @@
         }
       ]
     },
+    "homelab": {
+      "release-type": "simple",
+      "package-name": "homelab",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "homelab/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "plugins/homelab/.codex-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
     "homelab/skills/grafana": {
       "release-type": "simple",
       "package-name": "grafana",
@@ -49,6 +65,11 @@
         {
           "type": "json",
           "path": "pr-review/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "plugins/pr-review/.codex-plugin/plugin.json",
           "jsonpath": "$.version"
         }
       ]
@@ -91,6 +112,11 @@
           "type": "json",
           "path": "jj/plugin.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "plugins/jj/.codex-plugin/plugin.json",
+          "jsonpath": "$.version"
         }
       ]
     },
@@ -111,6 +137,11 @@
         {
           "type": "json",
           "path": "superpowers/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "plugins/superpowers/.codex-plugin/plugin.json",
           "jsonpath": "$.version"
         }
       ]

@@ -33,14 +33,17 @@ PR change directly affects their behavior.
 
 Before starting your analysis, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   testing requirements, and quality constraints.
-2. Check CI/lint/CQ and test configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, testing requirements, workflow constraints, and
+   cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ and test configuration relevant to changed files:
    - Test config: `pyproject.toml [tool.pytest]`, `jest.config.*`,
      `vitest.config.*`, `Cargo.toml [dev-dependencies]`
    - Coverage config: `.coveragerc`, `codecov.yml`, `nyc` config
    - CI pipelines: `.github/workflows/`, `Taskfile.yml`
-3. Violations of project testing standards in changed code are findings,
+4. Violations of project testing standards in changed code are findings,
    regardless of whether existing tests pass.
 
 ## Core Responsibilities

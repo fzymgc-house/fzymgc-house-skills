@@ -33,14 +33,16 @@ change directly interacts with or depends on them.
 
 Before starting your analysis, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   code style, and workflow constraints.
-2. Check CI/lint/CQ configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, code style, workflow constraints, and cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration relevant to changed files:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Commit validation: `cog.toml`, `commitlint.config.*`
    - Pre-commit hooks: `lefthook.yml`, `.pre-commit-config.yaml`
-3. Violations of project standards in changed code are findings,
+4. Violations of project standards in changed code are findings,
    regardless of whether the code "works."
 
 ## What to Check Against
@@ -50,7 +52,8 @@ Search the repository for design authority documents:
 - `docs/` or `design/` directories
 - Architecture Decision Records (ADRs) in `docs/adr/` or `adr/`
 - `ARCHITECTURE.md`, `DESIGN.md`, `SPEC.md`
-- `CLAUDE.md` (project conventions and patterns)
+- `AGENTS.md` (shared project conventions and patterns)
+- `CLAUDE.md` (Claude-specific addendum when relevant)
 - `README.md` sections on architecture or conventions
 - Issue/PR descriptions linked to the changes
 - Inline `# Design:` or `# Spec:` comments

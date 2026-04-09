@@ -116,9 +116,16 @@ cd fzymgc-house-skills
 lefthook install
 ```
 
+Repo-wide agent guidance lives in `AGENTS.md`. `CLAUDE.md` remains in the
+repo as a Claude-specific addendum and compatibility shim.
+
 ### Repository Structure
 
 ```text
+AGENTS.md
+  ...                  # Canonical cross-platform agent instructions
+CLAUDE.md
+  ...                  # Claude-specific addendum and compatibility shim
 .claude-plugin/
   marketplace.json      # Claude marketplace manifest listing the source plugins
 .agents/plugins/

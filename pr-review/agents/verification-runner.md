@@ -55,16 +55,19 @@ wasn't necessary to address the specific finding, flag it.
 Before evaluating fix alignment, understand the project's rules.
 These are the authority on how code in this repo should look and behave.
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   commit format, code style expectations, and workflow constraints.
-2. Check CI/lint/CQ configuration files that define enforceable standards:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, commit format, code style expectations, workflow
+   constraints, and cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration files that define enforceable standards:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Formatter config: `.editorconfig`, `.prettierrc`, `rustfmt.toml`
    - Commit validation: `cog.toml`, `commitlint.config.*`
    - Pre-commit hooks: `lefthook.yml`, `.pre-commit-config.yaml`
    - Type checking: `mypy.ini`, `tsconfig.json`, `pyrightconfig.json`
-3. Any fix that violates these standards is MISALIGNED, even if it
+4. Any fix that violates these standards is MISALIGNED, even if it
    solves the stated problem. A correct fix that breaks project
    conventions is not correct.
 
@@ -136,6 +139,7 @@ WORKTREE_BRANCH: <branch>   (git only)
 CHANGE_ID: <change-id>      (jj only)
 
 ## Project Standards
+AGENTS.md: READ | NOT FOUND
 CLAUDE.md: READ | NOT FOUND
 CI/lint config: <files checked>
 violations: <list or "none">

@@ -34,13 +34,16 @@ the PR change directly invalidates them.
 
 Before starting your analysis, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   documentation style, and comment guidelines.
-2. Check CI/lint/CQ configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, documentation style, workflow constraints, and
+   cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration relevant to changed files:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Doc generation: `mkdocs.yml`, `sphinx/conf.py`, `typedoc.json`
-3. Violations of project standards in changed code are findings,
+4. Violations of project standards in changed code are findings,
    regardless of whether the comments "seem fine."
 
 ## Primary Mission

@@ -1,93 +1,242 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+`AGENTS.md` is the shared source of truth for repository instructions in this
+repo. Use it for Codex, Claude Code, and other agents. `CLAUDE.md` is a
+Claude-specific addendum only.
 
-## Quick Reference
+## Repository Purpose
+
+This repository publishes four source plugins for the fzymgc-house skills
+marketplace:
+
+- `homelab` - infrastructure skills for Grafana, Terraform, and skill QA
+- `pr-review` - PR review orchestrators plus review/fix/verification agents
+- `jj` - Jujutsu workflow guidance
+- `superpowers` - development workflow skills forked from obra/superpowers
+
+It also publishes a repo-local Codex compatibility layer:
+
+- `.agents/plugins/marketplace.json` - Codex marketplace manifest
+- `plugins/<name>/` - thin Codex wrapper plugins
+
+Keep the real skill content in the source plugin directories (`homelab/`,
+`pr-review/`, `jj/`, `superpowers/`). The `plugins/` wrappers should point
+back to those sources instead of copying them.
+
+## Quick Start
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work atomically
-bd close <id>         # Complete work
-bd sync               # Sync issues
+# Install git hooks
+lefthook install
+
+# Verify hooks and local quality gates
+lefthook run pre-commit --all-files
 ```
+
+## Agent Docs
+
+- Read this file first for repo-wide rules.
+- Read `CLAUDE.md` only for Claude-specific behavior and compatibility notes.
+- In agent prompts or skills, prefer `AGENTS.md` first and `CLAUDE.md` second.
+
+## Repository Structure
+
+```text
+.claude-plugin/
+  marketplace.json      # Claude marketplace manifest
+.agents/plugins/
+  marketplace.json      # Codex marketplace manifest
+plugins/
+  <plugin-name>/
+    .codex-plugin/
+      plugin.json       # Codex wrapper manifest
+    ...                 # Symlinks back to source plugin content
+homelab/
+  plugin.json
+  skills/
+pr-review/
+  plugin.json
+  agents/
+  references/
+  skills/
+jj/
+  plugin.json
+  commands/
+  hooks/
+  skills/
+superpowers/
+  plugin.json
+  agents/
+  commands/
+  hooks/
+  references/
+  scripts/
+  skills/
+```
+
+## Issue Tracking With bd
+
+This project uses **bd (beads)** for all issue tracking. Do not use markdown
+TODO lists or ad-hoc task tracking.
+
+Start with:
+
+```bash
+bd onboard
+bd ready
+```
+
+Quick reference:
+
+```bash
+bd ready                 # Find available work
+bd show <id>             # View issue details
+bd update <id> --claim   # Claim work atomically
+bd close <id>            # Complete work
+bd prime                 # Show current workflow guidance
+bd dolt push             # Push bead history if a Dolt remote is configured
+```
+
+If bead synchronization matters, check whether a Dolt remote exists first:
+
+```bash
+bd dolt remote list
+```
+
+If no remote is configured, do not invent a sync step.
 
 ## Non-Interactive Shell Commands
 
-**ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
-
-Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode
-on some systems, causing the agent to hang indefinitely waiting for y/n input.
-
-**Use these forms instead:**
+Always use non-interactive flags with file operations to avoid hangs from
+interactive aliases.
 
 ```bash
-# Force overwrite without prompting
-cp -f source dest           # NOT: cp source dest
-mv -f source dest           # NOT: mv source dest
-rm -f file                  # NOT: rm file
-
-# For recursive operations
-rm -rf directory            # NOT: rm -r directory
-cp -rf source dest          # NOT: cp -r source dest
+cp -f source dest
+mv -f source dest
+rm -f file
+rm -rf directory
+cp -rf source dest
+scp -o BatchMode=yes ...
+ssh -o BatchMode=yes ...
+apt-get -y ...
+HOMEBREW_NO_AUTO_UPDATE=1 brew ...
 ```
 
-**Other commands that may prompt:**
+## Development Rules
 
-- `scp` - use `-o BatchMode=yes` for non-interactive
-- `ssh` - use `-o BatchMode=yes` to fail instead of prompting
-- `apt-get` - use `-y` flag
-- `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+### Commits
 
-<!-- BEGIN BEADS INTEGRATION -->
-## Issue Tracking with bd (beads)
+All commits must follow Conventional Commits:
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking.
-Do NOT use markdown TODOs, task lists, or other tracking methods.
+```text
+<type>(<scope>): <description>
+```
 
-Run `bd onboard` for the full workflow guide, or see `.beads/README.md`.
+Examples:
 
-## Landing the Plane (Session Completion)
+```text
+feat(grafana): add incident management support
+fix(review-pr): correct agent dispatch for security aspect
+docs: update agent instructions
+```
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete
-until push succeeds (`git push` or `jj git push --bookmark <current-bookmark>`).
+Validation is enforced by `cog verify` in the commit-msg hook.
 
-**MANDATORY WORKFLOW:**
+### Testing and Linting
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+Primary local checks:
 
-   ```bash
-   # Detect VCS
-   if jj root >/dev/null 2>&1; then VCS=jj; elif git rev-parse --git-dir >/dev/null 2>&1; then VCS=git; else VCS=none; fi
+```bash
+uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ tests/ -v --import-mode=importlib
+rumdl check README.md AGENTS.md CLAUDE.md docs/plans/*.md
+jq empty .agents/plugins/marketplace.json plugins/*/.codex-plugin/plugin.json
+```
 
-   # Pull, sync, push
-   if [[ "$VCS" == "jj" ]]; then
-     jj git fetch
-     bd sync
-     jj git push --bookmark <current-bookmark>
-   else
-     git pull --rebase
-     bd sync
-     git push
-   fi
+Use narrower commands when touching only part of the repo, but verify the
+relevant surface before claiming completion.
 
-   # Verify
-   # git repos: git status
-   # jj repos: jj st
-   ```
+### Release Versioning
 
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+Versions are managed by release-please. Do not manually bump versions in:
 
-**CRITICAL RULES:**
+- `.claude-plugin/marketplace.json`
+- `plugin.json`
+- `.codex-plugin/plugin.json`
+- `SKILL.md` metadata version markers
 
-- Work is NOT complete until push succeeds (`git push` or `jj git push --bookmark <current-bookmark>`)
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+When adding or removing a skill or plugin package, keep these in sync:
 
-<!-- END BEADS INTEGRATION -->
+- `release-please-config.json`
+- `.release-please-manifest.json`
+
+### MCP Servers
+
+Repo-level MCP servers are declared in `.mcp.json`:
+
+- `grafana`
+- `context7`
+- `terraform`
+
+Codex wrapper plugins may expose these via symlinks or manifest paths, but the
+source configuration remains repo-rooted.
+
+## Cross-Platform Guidance
+
+### Claude and Codex
+
+- Claude installs from `.claude-plugin/marketplace.json` and the source plugin
+  directories.
+- Codex uses `.agents/plugins/marketplace.json` and the thin wrappers in
+  `plugins/`.
+- Do not duplicate skill trees across the Claude and Codex layers.
+
+### Agent Dispatch
+
+Some workflows, especially in `pr-review` and `superpowers`, were authored for
+Claude-style named subagents. In Codex, use the compatibility guidance in:
+
+`superpowers/skills/using-superpowers/references/codex-tools.md`
+
+That guidance explains how to map named agent dispatch to `spawn_agent`
+workflows while reusing the existing prompt files.
+
+## Gotchas
+
+### Worktree Layout
+
+Agent worktrees use a sibling directory layout:
+
+```text
+<repo>/
+<repo>_worktrees/
+  <worktree-name>/
+```
+
+Do not manually invent nested worktree repos under the main checkout.
+
+### jj Rule
+
+When `jj root` succeeds, treat the repo as a jj repo even if `.git/` also
+exists. Use jj for mutating VCS operations.
+
+- Allowed git usage: read-only commands such as `git log`, `git diff`,
+  `git rev-parse`
+- Disallowed when jj is present: `git commit`, `git checkout`,
+  `git worktree add`, `git merge`, `git push`
+
+### Session Completion
+
+Work is not complete until the relevant changes are committed and pushed.
+
+Required sequence:
+
+1. File follow-up beads for leftover work
+2. Run quality gates for the changed surface
+3. Update or close the related bead
+4. Push Git or jj changes
+5. If a Dolt remote is configured, run `bd dolt push`
+6. Verify final state with `git status` or `jj st`
+7. Hand off concise context for the next session
+
+Never stop at "ready to push." Push the branch yourself when the workflow
+expects it.

@@ -36,28 +36,32 @@ achieve the PR's stated purpose, that is a valid finding.
 
 Before starting your analysis, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   code style, and workflow constraints.
-2. Check CI/lint/CQ configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, code style, workflow constraints, and cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration relevant to changed files:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Formatter config: `.editorconfig`, `.prettierrc`, `rustfmt.toml`
    - Type checking: `mypy.ini`, `tsconfig.json`, `pyrightconfig.json`
-3. Violations of project standards in changed code are findings,
+4. Violations of project standards in changed code are findings,
    regardless of whether the code "works."
 
 ## Core Responsibilities
 
 1. **Project Guidelines Compliance** - Verify adherence to explicit
-   rules from CLAUDE.md including imports, frameworks, language-specific
-   styles, error handling, logging, testing, naming conventions, and
-   platform compatibility.
+   rules from `AGENTS.md` plus any relevant Claude-specific addendum in
+   `CLAUDE.md`, including imports, frameworks, language-specific styles,
+   error handling, logging, testing, naming conventions, and platform
+   compatibility.
 
 2. **Bug Detection** - Identify actual functionality-impacting bugs:
    logic errors, null/undefined handling, race conditions, memory leaks,
    security vulnerabilities, and performance issues.
 
-3. **Code Quality** - Evaluate duplication, missing error handling, accessibility problems, and test coverage gaps.
+3. **Code Quality** - Evaluate duplication, missing error handling,
+   accessibility problems, and test coverage gaps.
 
 ## Confidence Scoring (0-100)
 
@@ -72,7 +76,8 @@ Before starting your analysis, understand the project's rules:
 ## Analysis Process
 
 1. Read the diff and identify all changed files
-2. For each file, check against project conventions (CLAUDE.md if available)
+2. For each file, check against project conventions in `AGENTS.md` and
+   the `CLAUDE.md` addendum if available
 3. Analyze logic flow for potential bugs
 4. Check error handling completeness
 5. Verify naming conventions and code style consistency

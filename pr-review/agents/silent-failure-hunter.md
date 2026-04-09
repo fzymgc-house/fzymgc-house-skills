@@ -33,14 +33,16 @@ interacts with or depends on them.
 
 Before starting your analysis, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   code style, and workflow constraints.
-2. Check CI/lint/CQ configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, code style, workflow constraints, and cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration relevant to changed files:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Formatter config: `.editorconfig`, `.prettierrc`, `rustfmt.toml`
    - Type checking: `mypy.ini`, `tsconfig.json`, `pyrightconfig.json`
-3. Violations of project standards in changed code are findings,
+4. Violations of project standards in changed code are findings,
    regardless of whether the code "works."
 
 ## Core Responsibilities

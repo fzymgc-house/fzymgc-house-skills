@@ -1,5 +1,6 @@
 {
   ".": "1.6.0",
+  "homelab": "0.7.0",
   "homelab/skills/grafana": "1.2.0",
   "homelab/skills/terraform": "1.2.0",
   "homelab/skills/skill-qa": "1.2.0",

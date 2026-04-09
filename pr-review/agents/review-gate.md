@@ -37,13 +37,15 @@ the finding's scope, that is a FAIL (scope creep).
 
 Before evaluating, understand the project's rules:
 
-1. Read `CLAUDE.md` (root and any nested ones) for project conventions,
-   code style, and workflow constraints.
-2. Check CI/lint/CQ configuration relevant to changed files:
+1. Read `AGENTS.md` (root and any nested ones) for shared project
+   conventions, code style, workflow constraints, and cross-platform rules.
+2. Read `CLAUDE.md` (root and any nested ones) only as a Claude-specific
+   addendum when present.
+3. Check CI/lint/CQ configuration relevant to changed files:
    - Linter config: `.ruff.toml`, `pyproject.toml [tool.ruff]`,
      `.eslintrc.*`, `.golangci.yml`, `clippy.toml`
    - Commit validation: `cog.toml`, `commitlint.config.*`
-3. Fixes that violate project standards are FAIL, even if they solve
+4. Fixes that violate project standards are FAIL, even if they solve
    the stated problem.
 
 ## Input

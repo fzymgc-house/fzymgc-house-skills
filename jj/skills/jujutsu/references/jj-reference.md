@@ -342,17 +342,40 @@ jj util gc                  # garbage collect unreachable objects
 jj util gc --expire=now     # immediate cleanup (careful!)
 ```
 
+### Inspect First with `--at-op`
+
+Before running any op-log-mutating command, inspect read-only first.
+`jj --at-op=<op-id>` loads the repo at a past operation without writing
+anything. Use it with `log`, `st`, or `diff` to understand the state before
+choosing a recovery command.
+
+```bash
+# View repo as it was at a past operation
+jj --at-op=<op-id> log
+jj --at-op=<op-id> st
+```
+
 ### When to Use Which
 
 | Command | Use Case |
 |---------|----------|
-| `jj undo` | Quick "oops" for the last command |
-| `jj op restore <id>` | Reset to a known good state (bulk undo) |
-| `jj op revert <id>` | Undo one past operation, keep everything after it |
+| `jj --at-op=<id> <read-cmd>` | **Always start here.** Read-only inspection of a past state. |
+| `jj undo` | Undo the last successful op. Inspect `jj op log` first: if the last op was a merge, `jj undo` will fail and suggest `jj op restore` — ignore the hint and ask the user. If the last op was `jj git push`, do not undo (corrupts bookmarks); ask the user. |
+| `jj op revert <id>` | **Default for past-op fixes.** Surgical: appends an op that inverts a specific past op. Lock-free safe; does not rewind the global view. Use `--what=repo` to keep remote-tracking refs. |
+| `jj op restore <id>` | **MUST NOT run without explicit user approval.** Rewinds the global op log. Multi-workspace blast radius: other workspaces go stale and may silently lose recent edits via `jj workspace update-stale`. |
+| `jj op abandon ..<id>` | **MUST NOT run without explicit user approval.** Same blast-radius class as `op restore`, plus an active upstream bug (jj-vcs/jj#9208) that silently breaks `jj undo` afterward. |
 
 **Important:** The op log only records **successful** operations. A failed command
 leaves no op-log entry. `jj undo` always targets the most recent successful
 operation — you MUST NOT "undo twice" to account for a failure.
+
+**Why the gate on `op restore` / `op abandon`:** the op log is repo-global, not
+per-workspace. Rewinding it in one workspace makes every other workspace
+stale. The next jj command in a stale workspace triggers
+`jj workspace update-stale`, which picks the surviving commit at the recorded
+change-id from the rewound view — which is the pre-rewind version. Concurrent
+edits in other workspaces can disappear this way. `jj op revert` avoids this
+because it appends rather than rewinds.
 
 ## Push Safety
 

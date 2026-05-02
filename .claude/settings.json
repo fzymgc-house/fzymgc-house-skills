@@ -2,23 +2,23 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
         "hooks": [
           {
-            "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-format",
-            "timeout": 15
+            "timeout": 15,
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "Edit|Write"
       }
     ],
     "WorktreeCreate": [
       {
         "hooks": [
           {
-            "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/worktree-create",
-            "timeout": 30
+            "timeout": 30,
+            "type": "command"
           }
         ]
       }
@@ -27,9 +27,9 @@
       {
         "hooks": [
           {
-            "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/worktree-remove",
-            "timeout": 15
+            "timeout": 15,
+            "type": "command"
           }
         ]
       }

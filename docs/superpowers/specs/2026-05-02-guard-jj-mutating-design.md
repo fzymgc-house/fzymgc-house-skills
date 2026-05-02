@@ -53,8 +53,8 @@ Mirrors `guard-git-mutating`'s four-tier vocabulary, restricted to the
 | Condition | Response | Mechanism |
 |---|---|---|
 | `# jj-op-approved` substring in command | **ASK** (human prompted) | `permissionDecision: "ask"` JSON to stdout |
-| Matched command, no marker, in jj repo | **DENY** with stderr message | exit 2 + stderr |
-| Not a matched command, OR not in a jj repo, OR malformed input | **ALLOW** silently | exit 0 |
+| Matched command, no marker, in jj repo | **DENY** | `permissionDecision: "deny"` JSON + `systemMessage` to stdout (fallback `exit 2` only on broken pipe) |
+| Not a matched command, OR not in a jj repo, OR malformed input | **ALLOW** silently | `sys.exit(0)` |
 
 Marker check happens **before** the jj-repo check. If an agent appends
 the marker, the human prompt fires regardless of `.jj/` presence — the
@@ -103,7 +103,10 @@ command line — appearing anywhere in the string is sufficient.
 5. Read `cwd` from input; walk up max 50 dirs looking for `.jj/`; if not
    found → `sys.exit(0)`
 6. Run `JJ_OP_BLOCKED_RE.search(command)`; if no match → `sys.exit(0)`
-7. **DENY**: print message to stderr, `sys.exit(2)`
+7. **DENY**: emit JSON to stdout with `permissionDecision: "deny"`,
+   `permissionDecisionReason`, and top-level `systemMessage`; wrap the
+   `json.dump` in `try/except OSError` and fall back to `sys.exit(2)` on
+   broken pipe (mirrors `guard-git-mutating` lines 258–263)
 
 ### Response shapes
 
@@ -119,12 +122,17 @@ command line — appearing anywhere in the string is sufficient.
 }
 ```
 
-**DENY** stderr (one line, three sentences):
+**DENY** (matched command, no marker, in jj repo):
 
-```text
-jj op restore/abandon blocked: rewinds the global op log and can silently lose edits in sibling workspaces.
-Use `jj op revert <op-id>` for surgical recovery (see jj skill recovery ladder).
-If the user has explicitly approved, append `# jj-op-approved` to the command.
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "BLOCKED: jj op restore/abandon rewinds the global op log and can silently lose edits in sibling workspaces. Use `jj op revert <op-id>` for surgical recovery (see jj skill recovery ladder)."
+  },
+  "systemMessage": "jj op restore/abandon was blocked. These commands rewind the global op log and may silently lose edits in sibling workspaces via `jj workspace update-stale`. Prefer `jj op revert <op-id>` for surgical recovery. If the user has explicitly approved this op-log rewind, append `# jj-op-approved` to the command (escalates to ASK)."
+}
 ```
 
 ### Plugin wiring
@@ -154,7 +162,7 @@ of `test_guard_git_mutating.py`:
 
 | Class | Cases |
 |---|---|
-| `TestBlocked` | `jj op restore`, `jj op abandon`, `jj operation restore`, `jj operation abandon`, with `--at-op=` flag, with `--repo /x` flag, in compound (`jj op restore && echo ok`), in subshell (`$(jj op restore)`) — all in a jj repo, all expect exit 2 + stderr containing "jj op revert" |
+| `TestBlocked` | `jj op restore`, `jj op abandon`, `jj operation restore`, `jj operation abandon`, with `--at-op=` flag, with `--repo /x` flag, in compound (`jj op restore && echo ok`), in subshell (`$(jj op restore)`) — all in a jj repo, all expect exit 0 + stdout JSON with `permissionDecision: "deny"` and `systemMessage` containing "jj op revert" |
 | `TestApprovedMarker` | Each blocked form **with** `# jj-op-approved` appended → expect exit 0 + stdout JSON with `permissionDecision: "ask"` |
 | `TestAllowed` | `jj op log`, `jj op show`, `jj op revert <id>`, `jj op diff`, `jj status`, `jj new`, `git status`, plain `ls` — all expect exit 0 + no stdout |
 | `TestNotInJjRepo` | `jj op restore` in a tmpdir with no `.jj/` → exit 0 (silent allow; jj itself will reject) |

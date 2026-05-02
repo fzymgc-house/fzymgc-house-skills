@@ -360,7 +360,7 @@ jj --at-op=<op-id> st
 | Command | Use Case |
 |---------|----------|
 | `jj --at-op=<id> <read-cmd>` | **Always start here.** Read-only inspection of a past state. |
-| `jj undo` | Quick "oops" for the last command. Two traps: do NOT follow the "cannot undo a merge" hint to `jj op restore` (ask the user instead); never undo a `jj git push` (corrupts bookmarks). |
+| `jj undo` | Undo the last successful op. Inspect `jj op log` first: if the last op was a merge, `jj undo` will fail and suggest `jj op restore` — ignore the hint and ask the user. If the last op was `jj git push`, do not undo (corrupts bookmarks); ask the user. |
 | `jj op revert <id>` | **Default for past-op fixes.** Surgical: appends an op that inverts a specific past op. Lock-free safe; does not rewind the global view. Use `--what=repo` to keep remote-tracking refs. |
 | `jj op restore <id>` | **MUST NOT run without explicit user approval.** Rewinds the global op log. Multi-workspace blast radius: other workspaces go stale and may silently lose recent edits via `jj workspace update-stale`. |
 | `jj op abandon ..<id>` | **MUST NOT run without explicit user approval.** Same blast-radius class as `op restore`, plus an active upstream bug (jj-vcs/jj#9208) that silently breaks `jj undo` afterward. |

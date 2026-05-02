@@ -249,11 +249,14 @@ these in order. Stop at the first one that fits.
 1. **Inspect read-only first.** `jj --at-op=<op-id> log` shows the repo as it
    looked at any past op without mutating anything. Use this to understand
    what happened before reaching for any recovery command.
-2. **`jj undo`** — for the most recent successful op only. Two traps:
-   - If `jj undo` errors with "cannot undo a merge" and suggests
-     `jj op restore`, stop and ask the user. Do not follow the hint.
-   - Never `jj undo` a `jj git push`. It corrupts bookmarks. If you just
-     pushed and need to back out, ask the user.
+2. **`jj undo`** — undo the last successful op (see warning above; do
+   not undo twice to compensate for a failure). Two traps detected via
+   `jj op log`:
+   - If the last op was a merge, `jj undo` will fail and suggest
+     `jj op restore`. Stop and ask the user. Do not follow the hint
+     regardless of exact error wording.
+   - If the last op was `jj git push`, do not `jj undo` — it corrupts
+     bookmarks. Ask the user.
 3. **`jj op revert <op-id>`** — surgical fix for a specific past op. Appends
    a new operation that inverts the target without rewinding the op log.
    Lock-free safe and won't disturb concurrent workspaces. Use `--what=repo`
@@ -265,17 +268,12 @@ these in order. Stop at the first one that fits.
    losing later edits). No per-workspace scoping flag exists — the blast
    radius is structural.
 
-**Why this matters.** The op log is repo-global, not per-workspace. When one
-workspace runs `jj op restore`, the global view rewinds, which makes every
-other workspace stale. The next jj command in a stale workspace runs
-`jj workspace update-stale` and picks the surviving commit at the recorded
-change-id from the rewound view — which is the pre-rewind version. Concurrent
-edits in other workspaces can disappear this way. `jj op abandon` has the
-same blast radius and an active upstream bug (jj-vcs/jj#9208) where it
-silently breaks `jj undo` afterward. `jj op revert` does not have this
-problem — it appends rather than rewinds.
-
-See `references/jj-reference.md` for the full op log reference.
+**Why the gate.** The op log is repo-global. Rewinding it in one
+workspace makes every other workspace stale, and `jj workspace
+update-stale` may silently resurrect pre-rewind content. `jj op revert`
+appends an inverse op instead of rewinding and so does not have this
+problem. See `references/jj-reference.md` for the full explanation
+(including upstream bug jj-vcs/jj#9208).
 
 **Note:** You MUST NOT use `jj split` -- it is interactive and hangs in agent environments. To split a commit
 (extract specific files into a new child):

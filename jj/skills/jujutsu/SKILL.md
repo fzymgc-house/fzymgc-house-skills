@@ -243,8 +243,8 @@ A failed jj command leaves no trace in the op log (unlike git's reflog). `jj und
 always targets the most recent *successful* operation — do NOT "undo twice" to
 account for a failure.
 
-**Recovery ladder.** When you need to recover from a bad state, work through
-these in order. Stop at the first one that fits.
+**Recovery ladder.** When you need to recover from a bad state in a jj
+repo, work through these in order. Stop at the first one that fits.
 
 1. **Inspect read-only first.** `jj --at-op=<op-id> log` shows the repo as it
    looked at any past op without mutating anything. Use this to understand

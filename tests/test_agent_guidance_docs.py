@@ -9,13 +9,11 @@ CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
 PR_REVIEW_AGENTS_DIR = REPO_ROOT / "pr-review" / "agents"
 
 
-def test_claude_doc_is_a_shim_to_agents() -> None:
-    agents_text = AGENTS_PATH.read_text()
-    claude_text = CLAUDE_PATH.read_text()
-
-    assert "source of truth" in agents_text
-    assert "Read `AGENTS.md` first." in claude_text
-    assert "Claude-specific addendum" in claude_text
+def test_agents_doc_is_symlink_to_claude_doc() -> None:
+    assert AGENTS_PATH.is_symlink(), "AGENTS.md must be a symlink"
+    assert AGENTS_PATH.resolve() == CLAUDE_PATH.resolve(), (
+        "AGENTS.md must point to CLAUDE.md"
+    )
 
 
 def test_pr_review_agents_read_agents_before_claude() -> None:

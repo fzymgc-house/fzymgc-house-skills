@@ -57,17 +57,23 @@ Jujutsu workflow guidance for colocated and standalone repositories.
 
 ### superpowers
 
-Development workflow skills with git and jj support.
+Development workflow skills with git and jj support, forked from
+[obra/superpowers](https://github.com/obra/superpowers) and adapted for
+this repository.
+
+Highlights:
 
 | Skill | Description |
 |-------|-------------|
 | **using-superpowers** | Entry skill that enforces skill discovery and platform adaptation |
 | **brainstorming** | Design workflow before implementation |
-| **writing-plans** | Detailed implementation planning |
-| **executing-plans** | Inline execution of approved plans |
-| **subagent-driven-development** | Multi-agent plan execution |
+| **writing-plans** / **executing-plans** | Plan-driven implementation workflow |
 | **systematic-debugging** | Structured debugging workflow |
 | **verification-before-completion** | Verification gate before claiming success |
+
+See [`superpowers/skills/`](superpowers/skills/) for the complete skill
+list — additional skills cover worktrees, parallel agents, code review,
+TDD, and skill authoring.
 
 ## Installation
 

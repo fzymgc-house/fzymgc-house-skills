@@ -88,6 +88,12 @@ the subcommand, then backtracks to leave `op` for the subcommand group.
 
 Same shell-context tolerance as `GIT_CMD_RE` in `guard-git-mutating`.
 
+Like `guard-git-mutating`, this regex matches occurrences of the blocked
+phrase inside quoted shell strings (e.g. `echo 'jj op restore is bad'`).
+Accepted limitation: shell-aware quoting parsing is out of scope for these
+guard hooks; the cost of a false-positive DENY on a benign quoted mention
+is treated as acceptable.
+
 ### Approval marker syntax
 
 `# jj-op-approved` — distinct from the existing `# jj-exempt` marker.

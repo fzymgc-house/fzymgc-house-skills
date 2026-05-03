@@ -65,7 +65,7 @@ order in `guard-git-mutating`.
 
 ```python
 JJ_OP_BLOCKED_RE = re.compile(
-    r"\bjj\b(?:\s+(?:--?[A-Za-z][\w-]*(?:=\S+)?|-[A-Za-z]))*\s+(?:op|operation)\s+(?:restore|abandon)\b"
+    r"\bjj\b(?:\s+-\S+(?:\s+\S+)?)*\s+(?:op|operation)\s+(?:restore|abandon)\b"
 )
 ```
 
@@ -73,9 +73,18 @@ Matches:
 
 - `jj op restore`, `jj op abandon`
 - Long form `jj operation restore`, `jj operation abandon`
-- With intervening flags: `jj --repo /x op restore`, `jj --at-op=abc op abandon`
+- With intervening flags, single-token (`--at-op=abc`) or two-token
+  (`--repo /x`, `-R /tmp`) form: `jj --repo /x op restore`,
+  `jj --at-op=abc op abandon`, `jj -R /tmp op restore`
 - In compound shell context: `jj op restore && echo ok`, `$(jj op restore)`,
   `prev_cmd; jj op abandon`
+
+The flag fragment mirrors `GIT_CMD_RE`'s `(?:-\S+(?:\s+\S+)?\s+)*` in
+`guard-git-mutating`, which optionally consumes one value token per flag.
+Regex backtracking handles the ambiguity when a "flag" has no value and
+the next token is the subcommand (e.g. `jj --quiet op restore`): the
+engine first tries to consume `op` as the flag's value, fails to match
+the subcommand, then backtracks to leave `op` for the subcommand group.
 
 Same shell-context tolerance as `GIT_CMD_RE` in `guard-git-mutating`.
 

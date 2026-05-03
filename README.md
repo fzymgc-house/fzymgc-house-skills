@@ -73,17 +73,14 @@ Development workflow skills with git and jj support.
 
 ### Claude Code
 
-```bash
-claude plugin install github:fzymgc-house/fzymgc-house-skills
-```
-
-Or install individual plugins:
+Add the marketplace, then install plugins by name:
 
 ```bash
-claude plugin install github:fzymgc-house/fzymgc-house-skills/homelab
-claude plugin install github:fzymgc-house/fzymgc-house-skills/pr-review
-claude plugin install github:fzymgc-house/fzymgc-house-skills/jj
-claude plugin install github:fzymgc-house/fzymgc-house-skills/superpowers
+claude plugin marketplace add fzymgc-house/fzymgc-house-skills
+claude plugin install homelab@fzymgc-house-skills
+claude plugin install pr-review@fzymgc-house-skills
+claude plugin install jj@fzymgc-house-skills
+claude plugin install superpowers@fzymgc-house-skills
 ```
 
 ### Codex

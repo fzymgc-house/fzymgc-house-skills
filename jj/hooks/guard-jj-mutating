@@ -1,0 +1,42 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""PreToolUse hook: gate jj op restore/abandon behind explicit approval.
+
+Mirrors guard-git-mutating's response model. DENYs `jj op restore` and
+`jj op abandon` invocations in jj repos unless the agent appends a
+`# jj-op-approved` marker (which escalates to ASK so the human can
+decide).
+
+Why these two commands are gated: both rewind the global jj op log.
+In multi-workspace repos, sibling workspaces go stale and
+`jj workspace update-stale` may silently resurrect pre-rewind content,
+losing later edits. See jj-vcs/jj#9208 and the recovery ladder in
+jj/skills/jujutsu/SKILL.md.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+        tool_input = data.get("tool_input") or {}
+        command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    except (json.JSONDecodeError, OSError, AttributeError):
+        sys.exit(0)
+
+    if not command:
+        sys.exit(0)
+
+    # Marker check, repo check, and regex match come in later tasks.
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

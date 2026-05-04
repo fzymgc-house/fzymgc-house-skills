@@ -93,3 +93,41 @@ class TestEdgeCases:
         result = run_hook("", "/tmp")
         assert result.returncode == 0
         assert result.stdout == ""
+
+
+class TestApprovedMarker:
+    """The `# jj-op-approved` marker escalates to ASK regardless of context."""
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "jj op restore # jj-op-approved",
+            "jj op abandon # jj-op-approved",
+            "jj operation restore # jj-op-approved",
+            "jj operation abandon # jj-op-approved",
+            "jj --at-op=abc op restore # jj-op-approved",
+            "jj op restore && echo done # jj-op-approved",
+        ],
+    )
+    def test_marker_escalates_to_ask(self, jj_repo: Path, command: str) -> None:
+        result = run_hook(command, str(jj_repo))
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert (
+            "jj-op-approved" in output["hookSpecificOutput"]["permissionDecisionReason"]
+        )
+
+    def test_marker_works_outside_jj_repo(self, tmp_path: Path) -> None:
+        """Marker check fires before repo check — ASK even with no .jj/."""
+        result = run_hook("jj op restore # jj-op-approved", str(tmp_path))
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+
+    def test_marker_with_unrelated_command(self, jj_repo: Path) -> None:
+        """Marker on a command we don't gate also escalates (defensive)."""
+        result = run_hook("ls # jj-op-approved", str(jj_repo))
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        assert output["hookSpecificOutput"]["permissionDecision"] == "ask"

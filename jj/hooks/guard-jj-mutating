@@ -34,7 +34,23 @@ def main() -> None:
     if not command:
         sys.exit(0)
 
-    # Marker check, repo check, and regex match come in later tasks.
+    # Approval marker escapes the gate — escalate to ASK so the human decides.
+    # Runs before the repo check so the marker signals intent regardless of cwd.
+    if "# jj-op-approved" in command:
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": (
+                    "jj-op-approved: agent is requesting to rewind the global "
+                    "jj op log (jj op restore/abandon). Review and approve or deny."
+                ),
+            }
+        }
+        json.dump(result, sys.stdout)
+        return
+
+    # Repo check and regex match come in later tasks.
     sys.exit(0)
 
 

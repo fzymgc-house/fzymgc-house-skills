@@ -131,3 +131,29 @@ class TestApprovedMarker:
         assert result.returncode == 0
         output = json.loads(result.stdout)
         assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
+
+
+class TestNotInJjRepo:
+    """Outside a jj repo, the hook must not block jj op commands."""
+
+    def test_no_jj_dir_anywhere(self, tmp_path: Path) -> None:
+        """No .jj/ in cwd or any ancestor → silent allow."""
+        result = run_hook("jj op restore", str(tmp_path))
+        assert result.returncode == 0
+        assert result.stdout == ""
+
+    def test_only_git_dir(self, git_repo: Path) -> None:
+        """A pure git repo (no .jj/) → silent allow."""
+        result = run_hook("jj op restore", str(git_repo))
+        assert result.returncode == 0
+        assert result.stdout == ""
+
+    def test_subdirectory_finds_parent_jj(self, jj_repo: Path) -> None:
+        """A subdirectory of a jj repo must still be detected as a jj repo."""
+        subdir = jj_repo / "src" / "deep"
+        subdir.mkdir(parents=True)
+        # Without the regex match (Task 4) yet, this currently exits 0 either
+        # way; this test will become meaningful once Task 4 lands. For now it
+        # asserts no crash from the walk logic on a subdirectory cwd.
+        result = run_hook("ls", str(subdir))
+        assert result.returncode == 0

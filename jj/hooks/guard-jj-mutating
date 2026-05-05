@@ -19,6 +19,7 @@ jj/skills/jujutsu/SKILL.md.
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 
@@ -50,7 +51,26 @@ def main() -> None:
         json.dump(result, sys.stdout)
         return
 
-    # Repo check and regex match come in later tasks.
+    cwd = data.get("cwd", "")
+    if not cwd:
+        sys.exit(0)
+
+    # Walk up from cwd looking for .jj/ (depth-limited to avoid pathological loops).
+    jj_found = False
+    check_dir = cwd
+    for _ in range(50):
+        if os.path.isdir(os.path.join(check_dir, ".jj")):
+            jj_found = True
+            break
+        parent = os.path.dirname(check_dir)
+        if parent == check_dir:
+            break
+        check_dir = parent
+
+    if not jj_found:
+        sys.exit(0)
+
+    # Regex match comes in the next task.
     sys.exit(0)
 
 

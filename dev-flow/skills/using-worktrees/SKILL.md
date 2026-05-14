@@ -4,7 +4,6 @@ description: Use when starting feature work that needs isolation from current wo
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
-  upstream: obra/superpowers v5.1.0 (skills/using-git-worktrees)
 ---
 
 # Using Worktrees

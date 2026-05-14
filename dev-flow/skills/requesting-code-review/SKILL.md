@@ -6,7 +6,6 @@ description: >-
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
-  upstream: obra/superpowers v5.1.0 (skills/requesting-code-review)
 ---
 
 # Requesting Code Review

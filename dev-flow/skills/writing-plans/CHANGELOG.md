@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/writing-plans-v0.3.0...writing-plans-v0.4.0) (2026-05-14)
+
+
+### Features
+
+* **dev-flow:** Phase 1 — foundation rename superpowers/ → dev-flow/ ([#67](https://github.com/fzymgc-house/fzymgc-house-skills/issues/67)) ([67c47c0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/67c47c01c89c88bbbcc039d1edb9054fb317d547))
+* **dev-flow:** Phase 6 — wire existing skills into beads + review-gate workflow ([#72](https://github.com/fzymgc-house/fzymgc-house-skills/issues/72)) ([3376fcf](https://github.com/fzymgc-house/fzymgc-house-skills/commit/3376fcfcfe1f0f961ebad2073acca1c93966d4e3))
+
 ## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/writing-plans-v0.2.0...writing-plans-v0.3.0) (2026-04-02)
 
 ### Features

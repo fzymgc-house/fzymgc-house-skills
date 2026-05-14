@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.3.0...dev-flow-v0.4.0) (2026-05-14)
+
+
+### Features
+
+* **dev-flow:** Phase 1 — foundation rename superpowers/ → dev-flow/ ([#67](https://github.com/fzymgc-house/fzymgc-house-skills/issues/67)) ([67c47c0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/67c47c01c89c88bbbcc039d1edb9054fb317d547))
+* **dev-flow:** Phase 2 — codify Rules 1-7 in dev-flow/AGENTS.md ([#68](https://github.com/fzymgc-house/fzymgc-house-skills/issues/68)) ([5a8a79c](https://github.com/fzymgc-house/fzymgc-house-skills/commit/5a8a79cb2fd99339398932d512c793d679ad11da))
+* **dev-flow:** Phase 3 — lift plan-to-beads, bead-create-smart, handoff-prompt ([#69](https://github.com/fzymgc-house/fzymgc-house-skills/issues/69)) ([dc31c7d](https://github.com/fzymgc-house/fzymgc-house-skills/commit/dc31c7d5aabd50553e9551c999a219451573960b))
+* **dev-flow:** Phase 4 — ADR capture subsystem (skill + agent + hook + doctor) ([#70](https://github.com/fzymgc-house/fzymgc-house-skills/issues/70)) ([d6df93b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/d6df93b006742cb66c6824928dc59b8afea0b3f7))
+* **dev-flow:** Phase 5 — design-reviewer + plan-reviewer agents ([#71](https://github.com/fzymgc-house/fzymgc-house-skills/issues/71)) ([7921c69](https://github.com/fzymgc-house/fzymgc-house-skills/commit/7921c69a1633a7916165cdedb3fd203508277205))
+
 ## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/superpowers-v0.2.1...superpowers-v0.3.0) (2026-04-02)
 
 ### Features

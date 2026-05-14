@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.5.1...jj-v0.6.0) (2026-05-14)
+
+
+### Features
+
+* **jj/hooks:** guard jj op restore/abandon (fhsk-406) ([#62](https://github.com/fzymgc-house/fzymgc-house-skills/issues/62)) ([d97295c](https://github.com/fzymgc-house/fzymgc-house-skills/commit/d97295c5da566b2d454d83c7e1e881aaecc511b2))
+
 ## [0.5.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.5.0...jj-v0.5.1) (2026-04-04)
 
 

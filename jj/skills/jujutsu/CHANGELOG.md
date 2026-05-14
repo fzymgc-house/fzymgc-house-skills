@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.6.0...jujutsu-v0.7.0) (2026-05-14)
+
+
+### Features
+
+* **jj:** gate op restore and op abandon behind explicit approval ([#50](https://github.com/fzymgc-house/fzymgc-house-skills/issues/50)) ([acf562d](https://github.com/fzymgc-house/fzymgc-house-skills/commit/acf562d3e085fc9ca467759eeb09cd98c39d0530))
+
 ## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.5.1...jujutsu-v0.6.0) (2026-04-04)
 
 

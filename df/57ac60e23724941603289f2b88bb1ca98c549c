@@ -1,0 +1,24 @@
+tests/test_review_gate_agents.py
+  s_cd3994bc444749::t_c98fa5f2bc09b0 1-73,75-142
+dev-flow/agents/design-reviewer.md
+  s_cd3994bc444749::t_fe70756f1c2c1c 1-175
+dev-flow/commands/review-design.md
+  s_cd3994bc444749::t_aad95442d148d5 1-2,4-19
+  s_cd3994bc444749::t_d8bde74ed0a83c 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "df57ac60e23724941603289f2b88bb1ca98c549c",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

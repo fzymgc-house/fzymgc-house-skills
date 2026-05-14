@@ -1,0 +1,23 @@
+tests/test_agent_guidance_docs.py
+  s_cd3994bc444749::t_11c363b8595940 12-16
+CLAUDE.md
+  ai_agent 1
+AGENTS.md
+  ai_agent 1-324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "2f54f179f4c7649491e9707ef3b62b520869e9f1",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

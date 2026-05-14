@@ -9,10 +9,11 @@ CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
 PR_REVIEW_AGENTS_DIR = REPO_ROOT / "pr-review" / "agents"
 
 
-def test_agents_doc_is_symlink_to_claude_doc() -> None:
-    assert AGENTS_PATH.is_symlink(), "AGENTS.md must be a symlink"
-    assert AGENTS_PATH.resolve() == CLAUDE_PATH.resolve(), (
-        "AGENTS.md must point to CLAUDE.md"
+def test_claude_doc_is_symlink_to_agents_doc() -> None:
+    assert CLAUDE_PATH.is_symlink(), "CLAUDE.md must be a symlink"
+    assert not AGENTS_PATH.is_symlink(), "AGENTS.md must be the canonical file"
+    assert CLAUDE_PATH.resolve() == AGENTS_PATH.resolve(), (
+        "CLAUDE.md must point to AGENTS.md"
     )
 
 

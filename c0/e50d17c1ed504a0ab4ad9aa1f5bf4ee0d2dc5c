@@ -1,0 +1,23 @@
+dev-flow/skills/brainstorming/SKILL.md
+  s_cd3994bc444749::t_564a73ca17c3ca 4,19-35
+  s_cd3994bc444749::t_8fddf77ac58a80 45-55
+  s_cd3994bc444749::t_2ada7fa91e6c41 177-189,191
+  s_cd3994bc444749::t_f01049808b73d9 61,66,70,73-76,78,83-84,88-89,91-95,99
+  s_cd3994bc444749::t_327791cfd1f679 113-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c0e50d17c1ed504a0ab4ad9aa1f5bf4ee0d2dc5c",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

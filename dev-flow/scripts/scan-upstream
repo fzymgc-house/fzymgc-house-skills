@@ -3,12 +3,12 @@ set -euo pipefail
 
 # scan-upstream: read-only upstream changelog scanner.
 # Surfaces upstream obra/superpowers changes for selective cherry-pick review.
-# Does NOT auto-apply changes. Compare with the per-skill divergence ledger
-# in references/upstream-manifest.md to decide what to lift.
+# Does NOT mutate any files in this repo — no rsync, no cp, no sed on the
+# manifest. The user reviews the report and decides what to lift, then runs
+# `cp` or `git apply` manually for the changes they want.
 #
-# NOTE: the verbatim-update code path below still copies files in place; that
-# auto-apply behavior is retained for now and slated for follow-up removal so
-# this script becomes purely a diff/changelog viewer.
+# Compare with the per-skill divergence ledger in references/upstream-manifest.md
+# to decide what to lift.
 
 # --- Paths ---
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
@@ -147,8 +147,9 @@ while IFS= read -r line; do
 done < "$MANIFEST"
 
 # --- Process verbatim entries ---
-header "Verbatim Updates"
-auto_count=0
+header "Verbatim Entries — Compare Against Upstream"
+verbatim_changed=0
+verbatim_unchanged=0
 verbatim_fail=0
 
 for entry in "${VERBATIM_ENTRIES[@]}"; do
@@ -156,23 +157,29 @@ for entry in "${VERBATIM_ENTRIES[@]}"; do
   dst="$PLUGIN_DIR/$entry"
 
   if [[ "$entry" == */ ]]; then
-    # Directory entry
+    # Directory entry — compare recursively
     if [[ -d "$src" ]]; then
-      mkdir -p "$dst"
-      rsync -a --delete "$src" "$dst"
-      printf "  ${GREEN}Updated${RESET} %s (directory)\n" "$entry"
-      auto_count=$((auto_count + 1))
+      if [[ -d "$dst" ]] && diff -rq "$src" "$dst" >/dev/null 2>&1; then
+        printf "  ${GREEN}Unchanged${RESET} %s (directory)\n" "$entry"
+        verbatim_unchanged=$((verbatim_unchanged + 1))
+      else
+        printf "  ${YELLOW}CHANGED${RESET} %s (directory) — review and lift manually with rsync/cp\n" "$entry"
+        verbatim_changed=$((verbatim_changed + 1))
+      fi
     else
       printf "  ${YELLOW}MISSING${RESET} %s — not found in upstream\n" "$entry"
       verbatim_fail=$((verbatim_fail + 1))
     fi
   else
-    # Single file
+    # Single file — compare via diff
     if [[ -f "$src" ]]; then
-      mkdir -p "$(dirname "$dst")"
-      cp -f "$src" "$dst"
-      printf "  ${GREEN}Updated${RESET} %s\n" "$entry"
-      auto_count=$((auto_count + 1))
+      if [[ -f "$dst" ]] && diff -q "$src" "$dst" >/dev/null 2>&1; then
+        printf "  ${GREEN}Unchanged${RESET} %s\n" "$entry"
+        verbatim_unchanged=$((verbatim_unchanged + 1))
+      else
+        printf "  ${YELLOW}CHANGED${RESET} %s — review and lift manually with cp\n" "$entry"
+        verbatim_changed=$((verbatim_changed + 1))
+      fi
     else
       printf "  ${YELLOW}MISSING${RESET} %s — not found in upstream\n" "$entry"
       verbatim_fail=$((verbatim_fail + 1))
@@ -256,24 +263,23 @@ if [[ "$new_count" -eq 0 ]]; then
   printf "  ${GREEN}None${RESET}\n"
 fi
 
-# --- Update manifest frontmatter ---
-header "Updating Manifest"
-today=$(date +%Y-%m-%d)
-sed -i '' "s/^upstream_version: .*/upstream_version: $latest_tag/" "$MANIFEST"
-sed -i '' "s/^synced_at: .*/synced_at: $today/" "$MANIFEST"
-info "Updated upstream_version to $latest_tag, synced_at to $today"
-
 # --- Summary ---
 header "Scan Summary"
-printf "  Previous version:  %s\n" "$current_version"
-printf "  New version:       ${GREEN}%s${RESET}\n" "$latest_tag"
-printf "  Verbatim updated:  ${GREEN}%d${RESET}\n" "$auto_count"
+printf "  Local version:      %s\n" "$current_version"
+printf "  Upstream version:   ${GREEN}%s${RESET}\n" "$latest_tag"
+printf "  Verbatim unchanged: ${GREEN}%d${RESET}\n" "$verbatim_unchanged"
+printf "  Verbatim changed:   ${YELLOW}%d${RESET} (lift manually if desired)\n" "$verbatim_changed"
 if [[ "$verbatim_fail" -gt 0 ]]; then
-  printf "  Verbatim missing:  ${RED}%d${RESET}\n" "$verbatim_fail"
+  printf "  Verbatim missing:   ${RED}%d${RESET}\n" "$verbatim_fail"
 fi
-printf "  Modified (review): ${YELLOW}%d${RESET}\n" "$modified_count"
-printf "  New (triage):      ${YELLOW}%d${RESET}\n" "$new_count"
+printf "  Modified (review):  ${YELLOW}%d${RESET}\n" "$modified_count"
+printf "  New (triage):       ${YELLOW}%d${RESET}\n" "$new_count"
 echo
+warn "This script does not mutate any files. Lift changes manually with cp/rsync."
+warn "After lifting, update references/upstream-manifest.md frontmatter:"
+printf "    upstream_version: %s\n" "$latest_tag"
+printf "    synced_at: %s\n" "$(date +%Y-%m-%d)"
 if [[ "$modified_count" -gt 0 || "$new_count" -gt 0 ]]; then
-  warn "Manual review needed for modified/new files above."
+  echo
+  warn "Modified/new files above need design decisions before lifting."
 fi

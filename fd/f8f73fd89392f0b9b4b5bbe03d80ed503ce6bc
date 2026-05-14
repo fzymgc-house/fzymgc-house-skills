@@ -1,0 +1,21 @@
+dev-flow/skills/writing-plans/SKILL.md
+  s_cd3994bc444749::t_8e5fd3675ce436 127-137
+  s_cd3994bc444749::t_3d05cd18b10fb9 4,19,24
+  s_cd3994bc444749::t_bbe2b39de98822 150-173,175,177-179,181,183,185,187,189,191-194,196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "fdf8f73fd89392f0b9b4b5bbe03d80ed503ce6bc",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

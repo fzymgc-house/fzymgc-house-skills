@@ -1,7 +1,7 @@
 {
   "name": "dev-flow",
   "version": "0.1.0",
-  "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)",
+  "description": "Development workflow skills with git and jj VCS support, plus beads + ADR integration (originally derived from obra/superpowers v5.0.7, now evolved independently)",
   "author": {
     "name": "Sean Brandt",
     "email": "4678+seanb4t@users.noreply.github.com",
@@ -13,9 +13,9 @@
   "keywords": ["planning", "debugging", "review", "workflow"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Superpowers",
-    "shortDescription": "Development workflow skills with git and jj support.",
-    "longDescription": "Codex wrapper for the superpowers plugin. Reuses the existing workflow skills and keeps agent, hook, command, and reference files available for Codex-compatible execution paths.",
+    "displayName": "Dev-Flow",
+    "shortDescription": "Development workflow skills with git and jj support, plus beads + ADR integration.",
+    "longDescription": "Codex wrapper for the dev-flow plugin (originally derived from obra/superpowers v5.0.7; evolved independently with first-class jj support, bead-based execution tracking, ADR capture, and adversarial in-session review gates). Reuses the existing workflow skills and keeps agent, hook, command, and reference files available for Codex-compatible execution paths.",
     "developerName": "fzymgc-house",
     "category": "Developer Tools",
     "capabilities": ["Read", "Run", "Write"],

@@ -1,0 +1,22 @@
+dev-flow/AGENTS.md
+  s_cd3994bc444749::t_53ca525ef07b1f 1-189
+CLAUDE.md
+  s_cd3994bc444749::t_4c94452fc0f8fb 243-246
+  s_cd3994bc444749::t_d627bc6b4bd7dd 241-242,247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "86132b68e1a3c063813e266fe153dc515ce0689e",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

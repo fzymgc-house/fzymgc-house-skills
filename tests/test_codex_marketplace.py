@@ -11,7 +11,7 @@ EXPECTED_EXTRA_PATHS = {
     "homelab": [".mcp.json"],
     "pr-review": ["agents", "references"],
     "jj": ["hooks", "commands"],
-    "superpowers": ["agents", "hooks", "references", "scripts", "commands"],
+    "superpowers": ["hooks", "references", "scripts", "commands"],
 }
 
 
@@ -21,14 +21,18 @@ def load_json(path: Path) -> dict:
 
 
 def test_codex_marketplace_lists_expected_plugins() -> None:
-    assert MARKETPLACE_PATH.exists(), f"Missing marketplace manifest: {MARKETPLACE_PATH}"
+    assert MARKETPLACE_PATH.exists(), (
+        f"Missing marketplace manifest: {MARKETPLACE_PATH}"
+    )
 
     marketplace = load_json(MARKETPLACE_PATH)
     plugin_names = [entry["name"] for entry in marketplace["plugins"]]
 
     assert plugin_names == EXPECTED_PLUGIN_ORDER
 
-    for plugin_name, entry in zip(EXPECTED_PLUGIN_ORDER, marketplace["plugins"], strict=True):
+    for plugin_name, entry in zip(
+        EXPECTED_PLUGIN_ORDER, marketplace["plugins"], strict=True
+    ):
         assert entry["source"] == {
             "source": "local",
             "path": f"./plugins/{plugin_name}",
@@ -41,7 +45,9 @@ def test_codex_marketplace_lists_expected_plugins() -> None:
 
 
 def test_codex_plugin_manifests_reference_existing_paths() -> None:
-    assert MARKETPLACE_PATH.exists(), f"Missing marketplace manifest: {MARKETPLACE_PATH}"
+    assert MARKETPLACE_PATH.exists(), (
+        f"Missing marketplace manifest: {MARKETPLACE_PATH}"
+    )
 
     marketplace = load_json(MARKETPLACE_PATH)
 

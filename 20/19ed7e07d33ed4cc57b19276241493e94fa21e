@@ -1,0 +1,37 @@
+docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md
+  s_cd3994bc444749::t_9c51848d1bb422 798
+  s_cd3994bc444749::t_e8f76f41aba905 156
+  s_cd3994bc444749::t_4ef2158856786d 175
+  s_cd3994bc444749::t_697ed2e801c4c3 372
+  s_cd3994bc444749::t_62d85c9eeb1ee6 711
+  s_cd3994bc444749::t_6d12e285739932 91
+  s_cd3994bc444749::t_ac7f1333404b12 108
+docs/superpowers/plans/2026-05-14-dev-flow-beads-integration.md
+  s_cd3994bc444749::t_1367ac356a7280 1242
+  s_cd3994bc444749::t_3b745990689b21 781,783-793,800-801
+  s_cd3994bc444749::t_7fdc1e53774176 297
+  s_cd3994bc444749::t_341368a3ccfdfd 300
+  s_cd3994bc444749::t_42f054dfbfa3ea 1030,1198
+  s_cd3994bc444749::t_12e0079550f1aa 230
+  s_cd3994bc444749::t_a5223b4a643e6f 13
+  s_cd3994bc444749::t_2f2d06341d35ce 205
+  s_cd3994bc444749::t_3ebf5db2ff148d 465-477,479,481-484,486-492
+  s_cd3994bc444749::t_f60dadcce24f59 317,320,325-326,331
+  s_cd3994bc444749::t_3f6f9b1d318565 398-401,406
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "2019ed7e07d33ed4cc57b19276241493e94fa21e",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

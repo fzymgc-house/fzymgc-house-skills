@@ -238,6 +238,13 @@ Required sequence:
 Never stop at "ready to push." Push the branch yourself when the workflow
 expects it.
 
+## Dev-Flow Conventions
+
+For workflow-skill conventions covering spec/plan discipline, bead
+lifecycle, model selection, and grounding tools, see
+[`dev-flow/AGENTS.md`](dev-flow/AGENTS.md). Rules 1-7 there apply to
+every `dev-flow` skill and review-gate agent.
+
 ## Claude-Specific Notes
 
 ### Claude Marketplace

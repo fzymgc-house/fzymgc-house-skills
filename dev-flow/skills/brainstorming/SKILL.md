@@ -1,6 +1,7 @@
 ---
 name: brainstorming
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+allowed-tools: "Read, Edit, Write, Bash, AskUserQuestion, mcp__probe__*, mcp__context7__*, mcp__deepwiki__*, mcp__exa__*, mcp__firecrawl-mcp__firecrawl_scrape"
 ---
 
 > **Before running any VCS commands, read references/vcs-preamble.md and use the appropriate commands for the detected VCS (git or jj).**
@@ -15,6 +16,24 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+## Open the design bead (Rule 6)
+
+Before exploring the idea, open a design bead so the whole lifecycle (brainstorming → design-reviewer → writing-plans → plan-reviewer → capture-adrs → plan-to-beads) shares one stable bd ID and audit trail.
+
+1. Ask the user via `AskUserQuestion`: "Open a design bead in bd to track this work? (Y/n)"
+   - Default **Y** for substantive prompts (anything that sounds like a project / feature / refactor / subsystem).
+   - Default **N** for clearly exploratory prompts ("let me try X to see", "just curious how Y works").
+2. On **Y**: run `bd create --type=task --title="Design: <provisional>" --labels="phase:design" --priority=2`. Capture the returned bead ID — every grounding-trace note and reviewer-round note below references it.
+3. On **N**: skip bead creation; proceed without tracking. (If implementation work later emerges, `plan-to-beads` will mint a fresh design bead at that point.)
+
+Record provenance notes as the session progresses:
+
+- After the spec is written: `bd note <design-bead-id> "Spec: <path>"`.
+- After each grounding source consulted (next section): `bd note <design-bead-id> "grounding/<source>: <query> — <summary>"`.
+- After each design-reviewer round (end-of-skill): `bd note <design-bead-id> "design-review round N: <verdict>"`.
+
+If `bd` is unavailable, the skill warns once and continues without the bead. Grounding still runs; reviewer still fires; no audit trail.
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
@@ -23,49 +42,61 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+1. **Open the design bead** — per Rule 6 (see "Open the design bead" section above)
+2. **Explore project context** — check files, docs, recent commits
+3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
+4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+5. **Run the Rule 7 grounding checklist** — probe the codebase + context7 every named dependency + deepwiki for upstream conventions (see "Grounding before design" section below). Append a `bd note` per source consulted.
+6. **Propose 2-3 approaches** — with trade-offs and your recommendation
+7. **Present design** — in sections scaled to their complexity, get user approval after each section
+8. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit. Append `bd note <design-bead-id> "Spec: <path>"`.
+9. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
+10. **User reviews written spec** — ask user to review the spec file before proceeding
+11. **Invoke design-reviewer** — parse VERDICT line; on READY suggest writing-plans, on NOT READY print findings and exit (see "Design review gate" section below)
 
 ## Process Flow
 
 ```dot
 digraph brainstorming {
+    "Open design bead\n(Rule 6)" [shape=box];
     "Explore project context" [shape=box];
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
+    "Rule 7 grounding checklist\n(probe + context7 + deepwiki)" [shape=box];
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write design doc" [shape=box];
+    "Write design doc\nbd note: Spec: <path>" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Invoke design-reviewer" [shape=box];
+    "VERDICT?" [shape=diamond];
+    "Print findings + exit\nbd note: NOT READY" [shape=box];
+    "Suggest writing-plans\nbd note: READY" [shape=doublecircle];
 
+    "Open design bead\n(Rule 6)" -> "Explore project context";
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches";
+    "Ask clarifying questions" -> "Rule 7 grounding checklist\n(probe + context7 + deepwiki)";
+    "Rule 7 grounding checklist\n(probe + context7 + deepwiki)" -> "Propose 2-3 approaches";
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Spec self-review\n(fix inline)";
+    "User approves design?" -> "Write design doc\nbd note: Spec: <path>" [label="yes"];
+    "Write design doc\nbd note: Spec: <path>" -> "Spec self-review\n(fix inline)";
     "Spec self-review\n(fix inline)" -> "User reviews spec?";
-    "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+    "User reviews spec?" -> "Write design doc\nbd note: Spec: <path>" [label="changes requested"];
+    "User reviews spec?" -> "Invoke design-reviewer" [label="approved"];
+    "Invoke design-reviewer" -> "VERDICT?";
+    "VERDICT?" -> "Print findings + exit\nbd note: NOT READY" [label="NOT READY"];
+    "VERDICT?" -> "Suggest writing-plans\nbd note: READY" [label="READY"];
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is the design-reviewer gate.** On READY: suggest `writing-plans` as the next step. On NOT READY: print findings and exit — user revises the spec and re-invokes brainstorming. Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill the user invokes after a READY verdict is writing-plans.
 
 ## The Process
 
@@ -78,6 +109,17 @@ digraph brainstorming {
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
 - Focus on understanding: purpose, constraints, success criteria
+
+**Grounding before design (Rule 7):**
+
+Before proposing any approach you MUST consult the grounding sources below. Each consulted source becomes a `bd note` line on the design bead — `plan-reviewer` later reads these traces to flag ungrounded plans. The grounding precedence is **semantic-first, then raw**: probe before Read; context7 before WebFetch.
+
+- **Probe the codebase for prior art.** Use `mcp__probe__search_code "<feature name>"` to surface existing implementations the user may have forgotten. Append `bd note <design-bead-id> "grounding/probe: <query> — <hit summary>"`.
+- **Context7 every named external dependency.** If any approach mentions a library, framework, SDK, API, CLI tool, or cloud service, call `mcp__context7__resolve-library-id "<name>"` then `mcp__context7__query-docs <library-id> "<the question>"`. This is **not optional**, even for libraries you think you know — training data goes stale. Append `bd note <design-bead-id> "grounding/context7: <library-id> — <one-line summary>"` per library.
+- **Deepwiki for upstream-repo conventions.** When the topic touches a GitHub-hosted library whose conventions matter (proto file layout, plugin API shape, migration discipline), start with `mcp__deepwiki__read_wiki_structure <org>/<repo>` to map topics, then `mcp__deepwiki__read_wiki_contents` for the relevant section OR `mcp__deepwiki__ask_question` for targeted Q&A. Append `bd note <design-bead-id> "grounding/deepwiki: <repo> — <summary>"`.
+- **Optional: Exa + firecrawl for state-of-the-art.** When the question is "what's the current state of the art for X" or "has Y changed recently", use `mcp__exa__web_search_exa` to surface relevant URLs, then `mcp__firecrawl-mcp__firecrawl_scrape` (or the `firecrawl` skill) for content. Append `bd note <design-bead-id> "grounding/exa: <query> — <result summary>"`.
+
+**Degraded mode:** If a grounding tool is unavailable, note the gap inline ("context7 unavailable; relying on training data for library X — flag for reviewer"). `plan-reviewer` will surface the gap as a plan-level finding rather than treating absence as a hard error.
 
 **Exploring approaches:**
 
@@ -132,10 +174,21 @@ After the spec review loop passes, ask the user to review the written spec befor
 
 Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
 
-**Implementation:**
+## Design Review Gate
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+After the spec self-review and user review both pass, the skill MUST invoke the `design-reviewer` agent before suggesting the next step. The reviewer is read-only and adversarial; its job is to flag ungrounded specs (Rule 7) and surface contradictions.
+
+1. **Invoke `design-reviewer`** against the spec path. Pass the design bead ID (if one was opened) as additional context so the reviewer can `bd show <id>` to inspect grounding-trace notes.
+2. **Parse the first non-empty line** of the reviewer's output via exact-match regex `^VERDICT: (READY|NOT READY)$`.
+3. **Branch on the verdict:**
+
+   - **READY:** Append `bd note <design-bead-id> "design-review READY (round N)"`. Tell the user: "Spec is READY. The next step is to invoke `writing-plans` to create the implementation plan." Exit.
+   - **NOT READY:** Append `bd note <design-bead-id> "design-review round N NOT READY: <one-line finding summary>"`. Print the reviewer's full findings inline so the user sees them. Exit. The user revises the spec based on the findings and re-invokes brainstorming for the next round.
+   - **Missing or unparseable VERDICT line:** Treat as NOT READY. Print the agent's full output and append `bd note "design-review round N NOT READY: unparseable verdict"`.
+
+4. **No automatic retry.** Review→revise loops are user-paced. There is no max-iteration cap; if a verdict bounces between READY and NOT READY across runs, broaden the design discussion rather than iterating mechanically.
+
+**Do NOT invoke any other skill from inside brainstorming.** The terminal action is the design-reviewer gate. The user invokes `writing-plans` themselves after a READY verdict.
 
 ## Key Principles
 

@@ -113,3 +113,5 @@ jobs:
           check-jsonschema --schemafile pr-review/evals/evals.schema.json \
             pr-review/evals/evals.json \
             jj/evals/evals.json
+      - name: Run adr-doctor (full pass)
+        run: ./dev-flow/scripts/adr-doctor.sh

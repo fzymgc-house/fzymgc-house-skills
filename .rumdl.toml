@@ -8,6 +8,12 @@ exclude = [
     ".serena",
     "CHANGELOG.md",
     "LICENSE.md",
+    # Vendored upstream content (obra/superpowers fork). Lint debt is
+    # upstream's; the fork's diffs are tracked via
+    # superpowers/references/upstream-manifest.md and the sync-upstream
+    # script. Matches the project's primary lint scope per AGENTS.md
+    # (README/AGENTS/CLAUDE/docs only).
+    "superpowers",
 ]
 respect-gitignore = true
 

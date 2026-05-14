@@ -12,7 +12,7 @@ marketplace:
 - `homelab` - infrastructure skills for Grafana, Terraform, and skill QA
 - `pr-review` - PR review orchestrators plus review/fix/verification agents
 - `jj` - Jujutsu workflow guidance
-- `superpowers` - development workflow skills forked from obra/superpowers
+- `dev-flow` - development workflow skills forked from obra/superpowers
 
 It also publishes a repo-local Codex compatibility layer:
 
@@ -20,7 +20,7 @@ It also publishes a repo-local Codex compatibility layer:
 - `plugins/<name>/` - thin Codex wrapper plugins
 
 Keep the real skill content in the source plugin directories (`homelab/`,
-`pr-review/`, `jj/`, `superpowers/`). The `plugins/` wrappers should point
+`pr-review/`, `jj/`, `dev-flow/`). The `plugins/` wrappers should point
 back to those sources instead of copying them.
 
 ## Quick Start
@@ -62,7 +62,7 @@ jj/
   commands/
   hooks/
   skills/
-superpowers/
+dev-flow/
   plugin.json
   agents/
   commands/
@@ -189,10 +189,10 @@ source configuration remains repo-rooted.
 
 ### Agent Dispatch
 
-Some workflows, especially in `pr-review` and `superpowers`, were authored for
+Some workflows, especially in `pr-review` and `dev-flow`, were authored for
 Claude-style named subagents. In Codex, use the compatibility guidance in:
 
-`superpowers/skills/using-superpowers/references/codex-tools.md`
+`dev-flow/skills/using-superpowers/references/codex-tools.md`
 
 That guidance explains how to map named agent dispatch to `spawn_agent`
 workflows while reusing the existing prompt files.
@@ -253,7 +253,7 @@ The source plugin manifests live in:
 - `homelab/plugin.json`
 - `pr-review/plugin.json`
 - `jj/plugin.json`
-- `superpowers/plugin.json`
+- `dev-flow/plugin.json`
 
 ### Claude Hook Behavior
 

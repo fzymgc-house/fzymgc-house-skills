@@ -1,11 +1,7 @@
 {
   "mcpServers": {
-    "grafana": {
-      "type": "http",
-      "url": "https://mcp.grafana.fzymgc.house/mcp"
-    },
     "context7": {
-      "command": "npx",
+      "command": "bunx",
       "args": ["-y", "@upstash/context7-mcp@latest"]
     },
     "terraform": {

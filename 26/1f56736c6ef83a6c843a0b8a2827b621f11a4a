@@ -1,0 +1,21 @@
+superpowers/references/upstream-manifest.md
+  s_cd3994bc444749::t_c3079935715340 41
+tests/test_codex_marketplace.py
+  s_cd3994bc444749::t_72b5af451ca4a4 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "261f56736c6ef83a6c843a0b8a2827b621f11a4a",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

@@ -42,13 +42,36 @@ digraph when_to_use {
 
 ## The Process
 
+### Picking the next task (bd-driven)
+
+This skill reads tasks from `bd`, not from a markdown plan. The plan has already been materialized into beads by `writing-plans` (auto-firing `plan-to-beads`), so the source of truth for "what work remains" is `bd ready`.
+
+1. **Query `bd ready --json | jq '.[0]'`** to get the next unblocked bead. Skip claimed (`in_progress`) and blocked beads — `bd ready` does this filtering already. If the queue is empty, jump to "all tasks complete" (dispatch final reviewer, then `finishing-a-development-branch`).
+2. **Read the bead's routing hints** from the JSON:
+   - `labels[]` — look for `model:haiku`, `model:sonnet`, or `model:opus`. **Default to `sonnet` if no `model:*` label is present.** No fallback to "highest available"; explicit default keeps cost predictable (per Rule 5).
+   - `skills[]` — the bd `--skills` field is a routing hint for which subagent type to dispatch (e.g. `review`, `test`, `debug`, `infra`).
+3. **Atomically claim the bead:** `bd update <id> --claim`. Atomic claim prevents double-dispatch when multiple controllers race. If the claim fails (bead was claimed by another actor since `bd ready`), loop back to step 1.
+4. **Load the bead's full context:** `bd show <id>`. Read description, acceptance criteria, notes, `--spec-id`, dependency edges. The bead's `--spec-id` points to the originating spec/plan path; read those for surrounding context if the description references them.
+5. **Dispatch a fresh subagent:**
+   - **`subagent_type`** — map the bead's `skills[]` to an available agent type. Heuristic: `general-purpose` if no match; `code-reviewer` if `skills[]` includes `review`; specific types (e.g. `test-author`) if available and matching. Implementer judgment governs the mapping when multiple skills overlap.
+   - **`model`** — set from the bead's `model:*` label (default `sonnet` when absent).
+   - **prompt** — assembled from bead description + acceptance criteria + relevant spec/plan excerpts read in step 4. Do NOT make the subagent read the bead itself — provide the text directly per the "Make subagent read plan file" red flag.
+6. **Two-stage review after the subagent returns** (existing process: spec compliance first, then code quality).
+7. **On approval:** `bd close <id> --reason="<summary of what landed>"`. The bead's audit trail (claim time, review rounds, close reason) is preserved.
+8. **On rejection (subagent unable to complete after review loops):** `bd update <id> --status=open` to release the claim, file a `bd note <id> "Dispatch round N rejected: <reason>"`, and dispatch again with revised instructions (or escalate to the human per the BLOCKED protocol).
+9. **Loop to step 1** until `bd ready` returns empty.
+
 ```dot
 digraph process {
     rankdir=TB;
 
     subgraph cluster_per_task {
-        label="Per Task";
-        "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
+        label="Per Bead";
+        "bd ready --json | jq '.[0]'" [shape=box];
+        "Read labels (model:*) + skills[]" [shape=box];
+        "bd update <id> --claim" [shape=box];
+        "bd show <id> (read full context)" [shape=box];
+        "Dispatch implementer subagent\n(model from label; subagent_type from skills)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
@@ -58,18 +81,20 @@ digraph process {
         "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
-        "Mark task complete in TodoWrite" [shape=box];
+        "bd close <id> --reason=..." [shape=box];
     }
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
-    "More tasks remain?" [shape=diamond];
+    "More beads ready?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
-    "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Use dev-flow:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
+    "bd ready --json | jq '.[0]'" -> "Read labels (model:*) + skills[]";
+    "Read labels (model:*) + skills[]" -> "bd update <id> --claim";
+    "bd update <id> --claim" -> "bd show <id> (read full context)";
+    "bd show <id> (read full context)" -> "Dispatch implementer subagent\n(model from label; subagent_type from skills)";
+    "Dispatch implementer subagent\n(model from label; subagent_type from skills)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Answer questions, provide context" -> "Dispatch implementer subagent\n(model from label; subagent_type from skills)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
     "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
     "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
@@ -79,29 +104,34 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use superpowers:finishing-a-development-branch";
+    "Code quality reviewer subagent approves?" -> "bd close <id> --reason=..." [label="yes"];
+    "bd close <id> --reason=..." -> "More beads ready?";
+    "More beads ready?" -> "bd ready --json | jq '.[0]'" [label="yes"];
+    "More beads ready?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
+    "Dispatch final code reviewer subagent for entire implementation" -> "Use dev-flow:finishing-a-development-branch";
 }
 ```
 
-## Model Selection
+**Degraded mode:** If `bd` is unavailable, fall back to reading the plan file directly: extract `### Task N:` headers, build a local TodoWrite list, dispatch as before but without atomic claim, label-driven model selection, or close-on-completion accounting.
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
+## Model Selection (label-driven, Rule 5)
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+The bead's `model:*` label is the source of truth for dispatch model. `plan-to-beads` proposes labels heuristically based on task content; the user reviews / overrides during the dry-run preview; the labels travel with the bead.
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
+| Label | When | Examples |
+|---|---|---|
+| `model:haiku` | Mechanical, high-volume, low-judgment | Regex rename across N files, scaffold from template, generate test boilerplate, JSON manifest edits |
+| `model:sonnet` (default) | Most implementation | New feature, bug fix, refactor with judgment, normal subagent task |
+| `model:opus` | Hard reasoning, architecture, cross-cutting risk | Plan-reviewer dispatch, security-sensitive code, multi-file refactors with subtle invariants, debugging distributed-state bugs |
 
-**Architecture, design, and review tasks**: use the most capable available model.
+**Enforcement:**
 
-**Task complexity signals:**
+- Read the bead's `labels[]` array from `bd show <id> --json`.
+- Find the first entry matching `^model:(haiku|sonnet|opus)$`.
+- If found: pass that value as the Agent tool's `model` parameter.
+- If absent: pass `sonnet`. **Do NOT fall back to "highest available"** — explicit default keeps cost predictable.
 
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+Code-quality reviewer subagents inherit the same label discipline. The final whole-implementation reviewer typically warrants `opus` regardless of any individual bead's label.
 
 ## Handling Implementer Status
 
@@ -133,14 +163,16 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 ```text
 You: I'm using Subagent-Driven Development to execute this plan.
 
-[Read plan file once: docs/superpowers/plans/feature-plan.md]
-[Extract all 5 tasks with full text and context]
-[Create TodoWrite with all tasks]
+[bd ready --json | jq '.[0]']
+Bead: bd-42 — "Implement hook installation script" (labels: model:sonnet, skills: infra,test)
 
-Task 1: Hook installation script
+[bd update bd-42 --claim]
+[bd show bd-42 — read description + acceptance + spec-id (docs/superpowers/specs/...)]
 
-[Get Task 1 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
+Task: bd-42 — Hook installation script
+
+[Dispatch implementation subagent: subagent_type=general-purpose, model=sonnet,
+ prompt=bead description + acceptance + relevant spec excerpts]
 
 Implementer: "Before I begin - should the hook be installed at user or system level?"
 
@@ -156,15 +188,21 @@ Implementer: "Got it. Implementing now..."
 [Dispatch spec compliance reviewer]
 Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
 
-[Get git SHAs, dispatch code quality reviewer]
+[Get git SHAs, dispatch code quality reviewer (model=sonnet from bead label)]
 Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
 
-[Mark Task 1 complete]
+[bd close bd-42 --reason="Hook installation script + tests landed; all reviews passed"]
 
-Task 2: Recovery modes
+[bd ready --json | jq '.[0]']
+Bead: bd-43 — "Recovery modes" (labels: model:opus, skills: infra,debug)
 
-[Get Task 2 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
+[bd update bd-43 --claim]
+[bd show bd-43]
+
+Task: bd-43 — Recovery modes
+
+[Dispatch implementation subagent: subagent_type=general-purpose, model=opus
+ (cross-cutting risk per label), prompt=bead description + acceptance]
 
 Implementer: [No questions, proceeds]
 Implementer:
@@ -193,13 +231,17 @@ Implementer: Extracted PROGRESS_INTERVAL constant
 [Code reviewer reviews again]
 Code reviewer: ✅ Approved
 
-[Mark Task 2 complete]
+[bd close bd-43 --reason="Recovery modes shipped; progress reporting per spec"]
 
 ...
 
-[After all tasks]
-[Dispatch final code-reviewer]
+[bd ready returns empty — all beads in epic closed]
+[Dispatch final code-reviewer (opus) for entire implementation]
 Final reviewer: All requirements met, ready to merge
+
+[Hand off to dev-flow:finishing-a-development-branch — its Step 0 pre-flight
+ will confirm zero open beads in the epic; Step 5.5 will close the epic itself
+ after merge succeeds]
 
 Done!
 ```

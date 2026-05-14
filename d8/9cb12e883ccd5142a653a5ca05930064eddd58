@@ -1,0 +1,21 @@
+release-please-config.json
+  s_cd3994bc444749::t_abdc894914fae2 133,135,139,144,149,155,159,165,169,175,179,185,189,195,199,205,209,215
+.release-please-manifest.json
+  s_cd3994bc444749::t_0a53d665c6f1bb 13-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d89cb12e883ccd5142a653a5ca05930064eddd58",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

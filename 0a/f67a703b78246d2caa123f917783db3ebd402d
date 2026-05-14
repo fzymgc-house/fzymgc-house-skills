@@ -1,0 +1,24 @@
+lefthook.yml
+  s_cd3994bc444749::t_74ef7e63d14a36 26-29
+.github/workflows/check-skills.yml
+  s_cd3994bc444749::t_6b4305da6a2aa5 116-117
+dev-flow/scripts/adr-doctor.sh
+  s_cd3994bc444749::t_b2cf14948f39d4 1-191,193-221
+  s_cd3994bc444749::t_bc1d4a791dfcba 192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "0af67a703b78246d2caa123f917783db3ebd402d",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

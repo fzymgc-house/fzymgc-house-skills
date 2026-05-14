@@ -1,0 +1,36 @@
+superpowers/skills/using-superpowers/references/gemini-tools.md
+  ai_agent 17,19,21-39
+superpowers/skills/using-superpowers/references/codex-tools.md
+  ai_agent 7,9,25,27-30
+superpowers/skills/using-superpowers/references/copilot-tools.md
+  ai_agent 15
+superpowers/skills/systematic-debugging/root-cause-tracing.md
+  s_cd3994bc444749::t_5057d4431b6f04 27,36-38,42,44,50,59,61,67,69,97,103,125,137,179
+superpowers/references/upstream-manifest.md
+  s_cd3994bc444749::t_2191bc1d33e6af 3-4
+superpowers/skills/subagent-driven-development/code-quality-reviewer-prompt.md
+  s_cd3994bc444749::t_5057d4431b6f04 9,20
+  s_cd3994bc444749::t_e5457df3bea5a0 10,13
+superpowers/skills/systematic-debugging/CREATION-LOG.md
+  ai_agent 7-8,16,23,42,49,56,66,71,76,81,90,96,104,120
+superpowers/skills/requesting-code-review/code-reviewer.md
+  s_cd3994bc444749::t_e5457df3bea5a0 1,3,5,7-13,15,17,19,21,23,25-26,28-31,33-63,65,67-69,71-74,76,78-79,81,83-84,86-87,89-90,92-122,124-128,130
+superpowers/hooks/hooks-cursor.json
+  s_cd3994bc444749::t_e5457df3bea5a0 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1e3001a42501ddd93dbb19166d582283f88a2e12",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

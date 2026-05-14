@@ -157,3 +157,58 @@ class TestNotInJjRepo:
         # asserts no crash from the walk logic on a subdirectory cwd.
         result = run_hook("ls", str(subdir))
         assert result.returncode == 0
+
+
+class TestBlocked:
+    """jj op restore/abandon in a jj repo without the marker → DENY."""
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "jj op restore",
+            "jj op abandon",
+            "jj operation restore",
+            "jj operation abandon",
+            "jj op restore --at-op=abc123",
+            "jj op abandon abc123 def456",
+            "jj --repo /tmp/repo op restore",
+            "jj --at-op=xyz op abandon",
+            "jj op restore && echo done",
+            "echo start; jj op abandon abc",
+            "$(jj op restore)",
+            "result=$(jj op abandon abc) || true",
+        ],
+    )
+    def test_blocked_command_denied(self, jj_repo: Path, command: str) -> None:
+        result = run_hook(command, str(jj_repo))
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert "jj op revert" in output["systemMessage"]
+        assert "# jj-op-approved" in output["systemMessage"]
+
+
+class TestAllowed:
+    """Commands that don't match the regex must pass through silently."""
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "jj op log",
+            "jj op show abc",
+            "jj op revert abc",
+            "jj op diff",
+            "jj operation log",
+            "jj st",
+            "jj new",
+            "jj describe -m 'msg'",
+            "jj git push",
+            "git status",
+            "git log --oneline",
+            "ls -la",
+        ],
+    )
+    def test_allowed_command_passes(self, jj_repo: Path, command: str) -> None:
+        result = run_hook(command, str(jj_repo))
+        assert result.returncode == 0
+        assert result.stdout == ""

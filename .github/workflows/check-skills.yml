@@ -74,7 +74,7 @@ jobs:
           rm /tmp/jj.tar.gz
           jj --version
       - name: Run hook tests
-        run: uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ tests/ -v --import-mode=importlib
+        run: uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ dev-flow/hooks/tests/ tests/ -v --import-mode=importlib
 
   lint:
     runs-on: ubuntu-latest
@@ -113,3 +113,5 @@ jobs:
           check-jsonschema --schemafile pr-review/evals/evals.schema.json \
             pr-review/evals/evals.json \
             jj/evals/evals.json
+      - name: Run adr-doctor (full pass)
+        run: ./dev-flow/scripts/adr-doctor.sh

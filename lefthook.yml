@@ -23,6 +23,10 @@ pre-commit:
       run: ruff format {staged_files}
       stage_fixed: true
 
+    adr-doctor:
+      glob: "docs/adr/*.md"
+      run: ./dev-flow/scripts/adr-doctor.sh --changed-only {staged_files}
+
 commit-msg:
   commands:
     conventional-commit:

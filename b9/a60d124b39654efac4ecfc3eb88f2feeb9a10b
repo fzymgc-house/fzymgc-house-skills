@@ -1,0 +1,21 @@
+dev-flow/scripts/scan-upstream
+  s_cd3994bc444749::t_81aeed1c55bf65 268-271,273,275-276,278-281,283-284
+  s_cd3994bc444749::t_2ca23c5e2fb9d0 6-8,10-11
+  s_cd3994bc444749::t_de8e04c5ab07bc 150-152,160,162-168,174,176-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b9a60d124b39654efac4ecfc3eb88f2feeb9a10b",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

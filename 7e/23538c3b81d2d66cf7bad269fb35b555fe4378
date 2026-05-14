@@ -1,0 +1,24 @@
+plugins/dev-flow/.codex-plugin/plugin.json
+  s_cd3994bc444749::t_f19a04cffd12f9 4
+  s_cd3994bc444749::t_7a14e888e79e23 16-18
+dev-flow/hooks/session-start
+  s_cd3994bc444749::t_061165576b8778 35
+  s_cd3994bc444749::t_e60433359ac381 2
+  s_cd3994bc444749::t_6590849677273d 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "7e23538c3b81d2d66cf7bad269fb35b555fe4378",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

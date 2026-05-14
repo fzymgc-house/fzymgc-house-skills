@@ -6,7 +6,7 @@ description: >-
   development work by presenting structured options for merge, PR, or cleanup
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
+  version: 0.2.0 # x-release-please-version
 ---
 
 # Finishing a Development Branch
@@ -33,6 +33,35 @@ fi
 ```
 
 ## The Process
+
+### Step 0: Pre-flight bd Check
+
+Before verifying tests or presenting options, reconcile the bd state for this branch's epic. Open beads at this point typically indicate work that the user thinks is complete but the tracker doesn't yet know about.
+
+1. **Identify the epic / design bead.** Determine the bd ID associated with this branch's work:
+
+   - If a design bead was opened during `brainstorming` and promoted by `plan-to-beads`, its ID is the epic. Read it from session context, or query `bd list --spec <plan-path>` to find the epic for the spec/plan tied to this branch.
+   - If no design bead exists (branch was created outside the dev-flow pipeline), skip this step and proceed to Step 1.
+
+2. **List open child beads:** run `bd list --status=open --parent <epic-id>`. Also list `--status=in_progress` to catch claimed-but-not-closed beads.
+
+3. **If any open or in-progress beads exist:**
+
+   a. **Display them** with title, status, and a short description. Highlight `in_progress` (claimed) beads — those represent active work that the user may have forgotten to close.
+
+   b. **Ask via `AskUserQuestion`:** "Resolve <N> open bead(s) before finishing? Choose one: Close all / File follow-ups / Defer / Continue anyway".
+
+   c. **Close all:** for each open bead, prompt the user inline for a one-line `--reason` and run `bd close <id> --reason="<reason>"`.
+
+   d. **File follow-ups:** for each open bead, invoke `dev-flow:bead-create-smart` to file a sibling follow-up bead capturing the leftover work, then `bd close <original-id> --reason="Deferred to follow-up <new-bd-id>"`.
+
+   e. **Defer:** for each open bead, run `bd update <id> --defer=+30d`. The bead stays open but drops out of `bd ready` for 30 days.
+
+   f. **Continue anyway:** print a loud warning ("⚠️  <N> open bead(s) remain after this branch is finished; bd state will drift from VCS state"), then proceed.
+
+4. **If no open beads:** proceed to Step 1 silently.
+
+**Degraded mode:** If `bd` is unavailable, print a warning and skip the pre-flight check. Open beads are not reconciled in this run.
 
 ### Step 1: Verify Tests
 
@@ -272,6 +301,22 @@ jj bookmark delete <name>
 
 Then: cleanup workspace (Step 6).
 
+### Step 5.5: Post-Merge Interactive Close (Options 1 and 2)
+
+After **Option 1 (merge)** or **Option 2 (PR)** succeeds, reconcile bd state by closing beads whose work landed with this branch. Skip this step for Options 3 (keep) and 4 (discard).
+
+1. **List in-flight beads in the epic:** `bd list --parent <epic-id> --status=in_progress --status=open` (covers both claimed and unclaimed). If no epic is associated with this branch, skip the step.
+
+2. **Ask via `AskUserQuestion` (multi-select):** "Which beads merged with this work? (select all that apply)". Present each candidate with title and ID. Pre-select beads whose `--claim` matches the current actor as a hint.
+
+3. **For each selected bead:** run `bd close <id> --reason="Merged in <branch-name>"`. For Option 2 (PR), use `--reason="Merged in <branch-name> via PR #<number>"` if the gh CLI returned a PR number.
+
+4. **Epic auto-close:** after closing children, check `bd list --parent <epic-id> --status=open --status=in_progress`. If zero remain, run `bd close <epic-id> --reason="Epic complete; all children closed"`. The design bead's full audit trail (grounding notes, reviewer rounds, ADR IDs, materialization) is preserved on the closed epic.
+
+5. **For un-selected open beads:** leave them open. They represent work that did NOT merge with this branch — likely candidates for the next branch or for follow-up beads.
+
+**Degraded mode:** If `bd` is unavailable, print a warning and skip. The user is responsible for closing beads manually later.
+
 ### Step 6: Cleanup Workspace
 
 **Only runs for Options 1 and 4.** Options 2 and 3 always preserve the workspace.
@@ -390,11 +435,13 @@ REPO_ROOT=$(jj root 2>/dev/null)
 
 **Always:**
 
+- Run the bd pre-flight check (Step 0) before verifying tests
 - Detect VCS before running commands
 - Verify tests before offering options
 - Detect environment before presenting menu
 - Present exactly 4 options (or 3 for detached HEAD / bookmark-less workspace)
 - Get typed confirmation for Option 4
+- Run the post-merge interactive close (Step 5.5) after Options 1 and 2
 - Clean up workspace for Options 1 and 4 only
 - `cd` to main repo root before workspace removal
 - Run `git worktree prune` after removal (git)

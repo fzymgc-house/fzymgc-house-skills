@@ -1,0 +1,19 @@
+jj/hooks/tests/test_guard_jj_mutating.py
+  s_cd3994bc444749::t_6e78a6f55e0c2a 96-116,118-133
+  s_cd3994bc444749::t_3faa5d80e937ea 160-214
+  s_cd3994bc444749::t_fdc2e776f616ac 134-154,158-159
+jj/hooks/guard-jj-mutating
+  s_cd3994bc444749::t_e2340e8f225447 22
+  s_cd3994bc444749::t_857601d21f0b56 64-67,69-82
+  s_cd3994bc444749::t_f478678234fc09 83-110
+  s_cd3994bc444749::t_8e1c1ebca34a48 50-63
+  s_cd3994bc444749::t_86ec7c050eba32 23,26-33
+jj/plugin.json
+  s_cd3994bc444749::t_2ab9413eac5234 25-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "49a070022ab8d1e84c3a45c8b12ef22e61c77379",
+  "prompts": {}
+}

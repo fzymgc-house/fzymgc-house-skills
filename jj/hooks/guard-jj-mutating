@@ -1,0 +1,114 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""PreToolUse hook: gate jj op restore/abandon behind explicit approval.
+
+Mirrors guard-git-mutating's response model. DENYs `jj op restore` and
+`jj op abandon` invocations in jj repos unless the agent appends a
+`# jj-op-approved` marker (which escalates to ASK so the human can
+decide).
+
+Why these two commands are gated: both rewind the global jj op log.
+In multi-workspace repos, sibling workspaces go stale and
+`jj workspace update-stale` may silently resurrect pre-rewind content,
+losing later edits. See jj-vcs/jj#9208 and the recovery ladder in
+jj/skills/jujutsu/SKILL.md.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+
+# Match `jj op restore`, `jj op abandon`, and the long form `jj operation
+# restore` / `jj operation abandon`. Tolerates intervening flags including
+# two-token forms like `jj --repo /tmp/repo op restore` and value-attached
+# forms like `jj --at-op=abc op abandon`. Used with .search() so it fires
+# in shell-compound contexts (`&&`, `;`, `$(...)`).
+JJ_OP_BLOCKED_RE = re.compile(
+    r"\bjj\b(?:\s+-\S+(?:\s+\S+)?)*\s+(?:op|operation)\s+(?:restore|abandon)\b"
+)
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+        tool_input = data.get("tool_input") or {}
+        command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    except (json.JSONDecodeError, OSError, AttributeError):
+        sys.exit(0)
+
+    if not command:
+        sys.exit(0)
+
+    # Approval marker escapes the gate — escalate to ASK so the human decides.
+    # Runs before the repo check so the marker signals intent regardless of cwd.
+    if "# jj-op-approved" in command:
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": (
+                    "jj-op-approved: agent is requesting to rewind the global "
+                    "jj op log (jj op restore/abandon). Review and approve or deny."
+                ),
+            }
+        }
+        json.dump(result, sys.stdout)
+        return
+
+    cwd = data.get("cwd", "")
+    if not cwd:
+        sys.exit(0)
+
+    # Walk up from cwd looking for .jj/ (depth-limited to avoid pathological loops).
+    jj_found = False
+    check_dir = cwd
+    for _ in range(50):
+        if os.path.isdir(os.path.join(check_dir, ".jj")):
+            jj_found = True
+            break
+        parent = os.path.dirname(check_dir)
+        if parent == check_dir:
+            break
+        check_dir = parent
+
+    if not jj_found:
+        sys.exit(0)
+
+    if not JJ_OP_BLOCKED_RE.search(command):
+        sys.exit(0)
+
+    reason = (
+        "BLOCKED: jj op restore/abandon rewinds the global op log and can "
+        "silently lose edits in sibling workspaces. Use `jj op revert <op-id>` "
+        "for surgical recovery (see jj skill recovery ladder)."
+    )
+    system_msg = (
+        "jj op restore/abandon was blocked. These commands rewind the global "
+        "op log and may silently lose edits in sibling workspaces via "
+        "`jj workspace update-stale`. Prefer `jj op revert <op-id>` for "
+        "surgical recovery. If the user has explicitly approved this op-log "
+        "rewind, append `# jj-op-approved` to the command (escalates to ASK)."
+    )
+
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "systemMessage": system_msg,
+    }
+    try:
+        json.dump(result, sys.stdout)
+    except OSError:
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

@@ -22,6 +22,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/guard-git-mutating",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/guard-jj-mutating",
+            "timeout": 5
           }
         ]
       }

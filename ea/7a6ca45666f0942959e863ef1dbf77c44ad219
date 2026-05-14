@@ -1,0 +1,22 @@
+docs/adr/README.md
+  s_cd3994bc444749::t_535251c44503e4 1-2,5-13
+  s_cd3994bc444749::t_c631121cb072af 3-4,14-22
+tests/test_adr_docs.py
+  s_cd3994bc444749::t_7e52507cd4fd62 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ea7a6ca45666f0942959e863ef1dbf77c44ad219",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

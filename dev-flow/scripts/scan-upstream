@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# scan-upstream: read-only upstream changelog scanner.
+# Surfaces upstream obra/superpowers changes for selective cherry-pick review.
+# Does NOT auto-apply changes. Compare with the per-skill divergence ledger
+# in references/upstream-manifest.md to decide what to lift.
+#
+# NOTE: the verbatim-update code path below still copies files in place; that
+# auto-apply behavior is retained for now and slated for follow-up removal so
+# this script becomes purely a diff/changelog viewer.
+
 # --- Paths ---
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PLUGIN_DIR=$(dirname "$SCRIPT_DIR")
@@ -255,7 +264,7 @@ sed -i '' "s/^synced_at: .*/synced_at: $today/" "$MANIFEST"
 info "Updated upstream_version to $latest_tag, synced_at to $today"
 
 # --- Summary ---
-header "Sync Summary"
+header "Scan Summary"
 printf "  Previous version:  %s\n" "$current_version"
 printf "  New version:       ${GREEN}%s${RESET}\n" "$latest_tag"
 printf "  Verbatim updated:  ${GREEN}%d${RESET}\n" "$auto_count"

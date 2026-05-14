@@ -15,29 +15,40 @@ Load plan, review critically, execute all tasks, report when complete.
 
 ## The Process
 
-### Step 1: Load and Review Plan
+### Step 1: Load Plan + Confirm bd State
 
-1. Read plan file
-2. Review critically - identify any questions or concerns about the plan
-3. If concerns: Raise them with your human partner before starting
-4. If no concerns: Create TodoWrite and proceed
+1. Read the plan file for context (acceptance criteria, ordering hints, architecture). The plan is **reference material**; the source of truth for "what work remains" is `bd ready`.
+2. Verify `bd ready` returns at least one bead tied to this plan's spec/epic. If empty:
+   - If the plan was never materialized (`plan-to-beads` didn't run), invoke `plan-to-beads <plan-path>` first.
+   - Otherwise: all work is closed; jump to Step 3.
+3. Review the plan critically — identify any questions or concerns. If concerns: raise them with your human partner before starting.
 
-### Step 2: Execute Tasks
+### Step 2: Execute Beads Serially
 
-For each task:
+This skill is the single-session, serial counterpart to `subagent-driven-development`. Same `bd ready` loop, but each bead is executed in the **current session** instead of via a fresh subagent dispatch.
 
-1. Mark as in_progress
-2. Follow each step exactly (plan has bite-sized steps)
-3. Run verifications as specified
-4. Mark as completed
+For each bead:
+
+1. **`bd ready --json | jq '.[0]'`** — get the next unblocked bead.
+2. **`bd update <id> --claim`** — atomically claim it. If the claim fails (race with another actor), loop back.
+3. **Note the bead's `model:*` label as guidance.** Because this skill executes in the current session (not a fresh subagent), you cannot change models mid-task. Treat the label as a heads-up about expected reasoning load:
+   - `model:opus` beads suggest the user may want to run this skill in a Claude Max / opus session. If the current session is sonnet or haiku and the bead is labeled opus, **warn the user** and let them choose: continue in-session, dispatch a subagent (handing off to `subagent-driven-development`), or pause.
+   - `model:haiku` and `model:sonnet` beads proceed inline without warning.
+4. **`bd show <id>`** — read the full description + acceptance criteria + notes + `--spec-id`.
+5. **Execute the bead's work** in the current session: write code, run tests, commit. Follow the bite-sized steps from the corresponding plan task if the bead references it.
+6. **Run verifications** as specified in the bead's acceptance criteria.
+7. **`bd close <id> --reason="<one-line summary>"`** on completion. Append a `bd note <id>` with anything noteworthy (deviations, follow-ups identified).
+8. **Loop to step 1** until `bd ready` returns empty.
 
 ### Step 3: Complete Development
 
-After all tasks complete and verified:
+After `bd ready` returns empty:
 
 - Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch
-- Follow that skill to verify tests, present options, execute choice
+- **REQUIRED SUB-SKILL:** Use `dev-flow:finishing-a-development-branch`
+- Follow that skill: Step 0 pre-flight reconciles any stragglers; tests → options → execute choice; Step 5.5 closes the epic on merge.
+
+**Degraded mode:** If `bd` is unavailable, fall back to reading the plan's `### Task N:` headers directly, executing each task inline. No model-label guidance; no atomic claim; no close-on-completion accounting.
 
 ## When to Stop and Ask for Help
 
@@ -61,8 +72,10 @@ After all tasks complete and verified:
 
 ## Remember
 
-- Review plan critically first
-- Follow plan steps exactly
+- `bd ready` drives task pickup; the plan is reference material
+- `bd update --claim` before starting; `bd close` after completion
+- Heed `model:opus` labels — warn the user if running in a weaker session
+- Follow plan steps exactly when the bead references them
 - Don't skip verifications
 - Reference skills when plan says to
 - Stop when blocked, don't guess

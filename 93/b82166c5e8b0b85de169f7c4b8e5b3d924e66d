@@ -1,0 +1,20 @@
+dev-flow/skills/executing-plans/SKILL.md
+  s_cd3994bc444749::t_a3cbea8462bdb1 75-78
+  s_cd3994bc444749::t_a5a20d2c4a22b0 18,20-24,26,28,30-41,45,48-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "93b82166c5e8b0b85de169f7c4b8e5b3d924e66d",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

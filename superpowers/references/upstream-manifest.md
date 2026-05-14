@@ -38,10 +38,7 @@ skills/subagent-driven-development/implementer-prompt.md: verbatim
 skills/subagent-driven-development/spec-reviewer-prompt.md: verbatim
 skills/requesting-code-review/code-reviewer.md: verbatim
 
-# Verbatim commands, agents, hooks
-commands/brainstorm.md: verbatim
-commands/execute-plan.md: verbatim
-commands/write-plan.md: verbatim
+# Verbatim hooks
 hooks/hooks.json: verbatim
 hooks/run-hook.cmd: verbatim
 hooks/session-start: verbatim

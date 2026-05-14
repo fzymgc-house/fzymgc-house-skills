@@ -11,7 +11,7 @@ EXPECTED_EXTRA_PATHS = {
     "homelab": [".mcp.json"],
     "pr-review": ["agents", "references"],
     "jj": ["hooks", "commands"],
-    "superpowers": ["hooks", "references", "scripts", "commands"],
+    "superpowers": ["hooks", "references", "scripts"],
 }
 
 

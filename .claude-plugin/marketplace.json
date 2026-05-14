@@ -24,9 +24,9 @@
       "source": "./jj"
     },
     {
-      "name": "superpowers",
+      "name": "dev-flow",
       "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)",
-      "source": "./superpowers"
+      "source": "./dev-flow"
     }
   ]
 }

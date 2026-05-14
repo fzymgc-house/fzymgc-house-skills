@@ -293,7 +293,7 @@ Loop while open, non-deferred findings remain:
         worktree directory if it still exists (`rm -rf <worktree-path>`).
         Add a bead comment: "fix-worker returned no VCS, WORKTREE_BRANCH,
         or CHANGE_ID — result is unrecoverable". Re-queue the finding.
-      Only fall through to inference if the path is accessible.
+   Only fall through to inference if the path is accessible.
 
    1. Detect VCS in the main repo:
       `if jj root > /dev/null 2>&1; then echo jj; elif git rev-parse --git-dir > /dev/null 2>&1; then echo git; else echo none; fi`

@@ -2,9 +2,10 @@
 
 A [Claude Code](https://claude.ai/code) plugin marketplace for the fzymgc-house
 self-hosted cluster. It currently ships four plugins: homelab operations,
-automated PR review, jj workflow guidance, and a forked superpowers workflow
-suite. The repo now also includes a repo-local Codex marketplace that wraps the
-same skill content for Codex.
+automated PR review, jj workflow guidance, and a development-flow workflow
+suite (originally forked from obra/superpowers, evolved independently). The
+repo now also includes a repo-local Codex marketplace that wraps the same
+skill content for Codex.
 
 ## Plugins
 
@@ -55,11 +56,12 @@ Jujutsu workflow guidance for colocated and standalone repositories.
 |-------|-------------|
 | **jujutsu** | Core jj workflows, git interop, bookmarks, and workspace guidance |
 
-### superpowers
+### dev-flow
 
-Development workflow skills with git and jj support, forked from
-[obra/superpowers](https://github.com/obra/superpowers) and adapted for
-this repository.
+Development workflow skills with git and jj support. Originally derived
+from [obra/superpowers](https://github.com/obra/superpowers) v5.0.7 and
+evolved independently for this repository (first-class jj support, bead
+integration, ADR capture).
 
 Highlights:
 
@@ -71,7 +73,7 @@ Highlights:
 | **systematic-debugging** | Structured debugging workflow |
 | **verification-before-completion** | Verification gate before claiming success |
 
-See [`superpowers/skills/`](superpowers/skills/) for the complete skill
+See [`dev-flow/skills/`](dev-flow/skills/) for the complete skill
 list — additional skills cover worktrees, parallel agents, code review,
 TDD, and skill authoring.
 
@@ -86,7 +88,7 @@ claude plugin marketplace add fzymgc-house/fzymgc-house-skills
 claude plugin install homelab@fzymgc-house-skills
 claude plugin install pr-review@fzymgc-house-skills
 claude plugin install jj@fzymgc-house-skills
-claude plugin install superpowers@fzymgc-house-skills
+claude plugin install dev-flow@fzymgc-house-skills
 ```
 
 ### Codex
@@ -94,13 +96,13 @@ claude plugin install superpowers@fzymgc-house-skills
 Use the repo-local Codex marketplace at
 `.agents/plugins/marketplace.json`. The `plugins/` directory contains thin
 Codex wrappers that symlink back to the existing `homelab/`, `pr-review/`,
-`jj/`, and `superpowers/` directories so the underlying SKILL.md content
+`jj/`, and `dev-flow/` directories so the underlying SKILL.md content
 remains single-source.
 
 Current Codex limitation: named Claude plugin agents are not installed
-natively. `pr-review` and some `superpowers` workflows still work in Codex,
+natively. `pr-review` and some `dev-flow` workflows still work in Codex,
 but agent-dispatch steps must follow the compatibility guidance in
-`superpowers/skills/using-superpowers/references/codex-tools.md`.
+`dev-flow/skills/using-superpowers/references/codex-tools.md`.
 
 ## Development
 
@@ -154,10 +156,10 @@ jj/
   plugin.json           # Plugin manifest
   skills/
     jujutsu/            # Jujutsu workflow guidance
-superpowers/
+dev-flow/
   plugin.json           # Plugin manifest
   skills/
-    ...                 # Workflow skills forked from obra/superpowers
+    ...                 # Workflow skills (originally from obra/superpowers v5.0.7)
 ```
 
 ### Commits

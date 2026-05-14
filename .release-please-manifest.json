@@ -10,12 +10,12 @@
   "pr-review/skills/respond-to-comments": "2.2.0",
   "jj": "0.5.1",
   "jj/skills/jujutsu": "0.6.0",
-  "superpowers": "0.3.0",
-  "superpowers/skills/using-worktrees": "0.3.0",
-  "superpowers/skills/finishing-a-development-branch": "0.3.0",
-  "superpowers/skills/requesting-code-review": "0.3.0",
-  "superpowers/skills/brainstorming": "0.3.0",
-  "superpowers/skills/writing-plans": "0.3.0",
-  "superpowers/skills/executing-plans": "0.2.0",
-  "superpowers/skills/subagent-driven-development": "0.3.0"
+  "dev-flow": "0.3.0",
+  "dev-flow/skills/using-worktrees": "0.3.0",
+  "dev-flow/skills/finishing-a-development-branch": "0.3.0",
+  "dev-flow/skills/requesting-code-review": "0.3.0",
+  "dev-flow/skills/brainstorming": "0.3.0",
+  "dev-flow/skills/writing-plans": "0.3.0",
+  "dev-flow/skills/executing-plans": "0.2.0",
+  "dev-flow/skills/subagent-driven-development": "0.3.0"
 }

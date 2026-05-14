@@ -1,0 +1,43 @@
+superpowers/skills/writing-plans/SKILL.md
+  s_cd3994bc444749::t_7e7cf0ae6421e5 18
+superpowers/skills/using-worktrees/SKILL.md
+  s_cd3994bc444749::t_8cc3b271bdc233 17-19
+  s_cd3994bc444749::t_1a7bd33107cf09 75-77
+  s_cd3994bc444749::t_3a553ca65cc842 158-161
+  s_cd3994bc444749::t_95daf893f81bd6 230-234
+  s_cd3994bc444749::t_c1216d3afceb05 105-108
+  s_cd3994bc444749::t_5361e4aa24a013 54-61
+  s_cd3994bc444749::t_50e292e31216ac 3,7,21-22,24,33,39,41-53,62-74,78-81,85-104,109-118,138-140,162-173,192,197-198,205,218-223,226-228,238,240-246,256,261-266,273-294,297,303-308,316,323-329,337-350,362
+  s_cd3994bc444749::t_e334fd060d08b2 82-84
+superpowers/skills/finishing-a-development-branch/SKILL.md
+  s_cd3994bc444749::t_4d6a23f37f00bf 10,22,61-98,115,117,130-142,145,152-154,156-157,163-165,167,174-177,183-185,187,228,232,242,256-262,269,274,276,278,280,282,285-287,290,295-300,309-311,314,319-323,325-326,339,344,346-347,349,351,354-369,374,388-390,396-397,400-401
+  s_cd3994bc444749::t_5da46f065e931d 302-304
+  s_cd3994bc444749::t_d375bc5c8882f5 291-293
+  s_cd3994bc444749::t_3c69ca5ff57c8a 315-317
+superpowers/skills/subagent-driven-development/SKILL.md
+  s_cd3994bc444749::t_e24e8d4fb780f9 14-15
+  s_cd3994bc444749::t_c59e0d78d6dcd1 283
+superpowers/skills/requesting-code-review/SKILL.md
+  s_cd3994bc444749::t_ae63ff7229269d 134
+  s_cd3994bc444749::t_e4e8816166947a 101,117-118
+  s_cd3994bc444749::t_ed5021c6dc19c3 9
+  s_cd3994bc444749::t_8d43f0f75b3384 76
+superpowers/skills/executing-plans/SKILL.md
+  s_cd3994bc444749::t_a66ee3063af1d6 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "0ff2b37cd5dc41e9b95fdabee9f78652aef874bc",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

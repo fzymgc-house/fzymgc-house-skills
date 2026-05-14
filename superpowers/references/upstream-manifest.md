@@ -1,7 +1,7 @@
 ---
 upstream_repo: obra/superpowers
-upstream_version: v5.0.7
-synced_at: 2026-04-01
+upstream_version: v5.1.0
+synced_at: 2026-05-14
 ---
 
 # Upstream Manifest
@@ -42,7 +42,6 @@ skills/requesting-code-review/code-reviewer.md: verbatim
 commands/brainstorm.md: verbatim
 commands/execute-plan.md: verbatim
 commands/write-plan.md: verbatim
-agents/code-reviewer.md: verbatim
 hooks/hooks.json: verbatim
 hooks/run-hook.cmd: verbatim
 hooks/session-start: verbatim

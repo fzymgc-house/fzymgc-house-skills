@@ -6,7 +6,7 @@ description: >-
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
-  upstream: obra/superpowers v5.0.7 (skills/requesting-code-review)
+  upstream: obra/superpowers v5.1.0 (skills/requesting-code-review)
 ---
 
 # Requesting Code Review
@@ -14,7 +14,7 @@ metadata:
 > **Before running any VCS commands, read `references/vcs-preamble.md` and use
 > the appropriate commands for the detected VCS (git or jj).**
 
-Dispatch superpowers:code-reviewer subagent to catch issues before they
+Dispatch a code reviewer subagent to catch issues before they
 cascade. The reviewer gets precisely crafted context for evaluation --
 never your session's history. This keeps the reviewer focused on the work
 product, not your thought process, and preserves your own context for
@@ -67,17 +67,16 @@ BASE_SHA=$(jj log -r '@--' --no-graph -T 'commit_id.short(12)')
 HEAD_SHA=$(jj log -r '@-' --no-graph -T 'commit_id.short(12)')
 ```
 
-**2. Dispatch code-reviewer subagent:**
+**2. Dispatch code reviewer subagent:**
 
-Use Task tool with superpowers:code-reviewer type, fill template at `code-reviewer.md`
+Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`
 
 **Placeholders:**
 
-- `{WHAT_WAS_IMPLEMENTED}` - What you just built
+- `{DESCRIPTION}` - Brief summary of what you built
 - `{PLAN_OR_REQUIREMENTS}` - What it should do
 - `{BASE_SHA}` - Starting commit
 - `{HEAD_SHA}` - Ending commit
-- `{DESCRIPTION}` - Brief summary
 
 **3. Act on feedback:**
 
@@ -98,12 +97,11 @@ You: Let me request code review before proceeding.
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[Dispatch superpowers:code-reviewer subagent]
-  WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
+[Dispatch code reviewer subagent]
+  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
 ```
 
 **jj:**
@@ -116,12 +114,11 @@ You: Let me request code review before proceeding.
 BASE_SHA=$(jj log -r '@--' --no-graph -T 'commit_id.short(12)')
 HEAD_SHA=$(jj log -r '@-' --no-graph -T 'commit_id.short(12)')
 
-[Dispatch superpowers:code-reviewer subagent]
-  WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
+[Dispatch code reviewer subagent]
+  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
   BASE_SHA: a7981ec3d2f1
   HEAD_SHA: 3df7661b8a04
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
 ```
 
 ## Integration with Workflows
@@ -134,7 +131,7 @@ HEAD_SHA=$(jj log -r '@-' --no-graph -T 'commit_id.short(12)')
 
 **Executing Plans:**
 
-- Review after each batch (3 tasks)
+- Review after each task or at natural checkpoints
 - Get feedback, apply, continue
 
 **Ad-Hoc Development:**

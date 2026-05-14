@@ -1,10 +1,10 @@
 ---
 name: using-worktrees
-description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated workspaces (git worktrees or jj workspaces) with smart directory selection and safety verification
+description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace exists via native tools or git/jj fallback
 metadata:
   author: fzymgc-house
   version: 0.1.0 # x-release-please-version
-  upstream: obra/superpowers v5.0.7 (skills/using-git-worktrees)
+  upstream: obra/superpowers v5.1.0 (skills/using-git-worktrees)
 ---
 
 # Using Worktrees
@@ -14,13 +14,14 @@ metadata:
 
 ## Overview
 
-Workspaces create isolated working copies sharing the same repository, allowing
-work on multiple features simultaneously without switching branches.
+Ensure work happens in an isolated workspace. Prefer your platform's
+native worktree tools. Fall back to manual git worktrees or jj workspaces
+only when no native tool is available.
 
-- **git**: Uses git worktrees
-- **jj**: Uses jj workspaces (MUST use `jj workspace add`, never `git worktree add`)
+- **git**: linked worktrees via `git worktree add`
+- **jj**: additional workspaces via `jj workspace add` (MUST use this, never `git worktree add` in jj repos)
 
-**Core principle:** Sibling directory layout + VCS detection + safety verification = reliable isolation.
+**Core principle:** Detect existing isolation first. Then use native tools. Then fall back to git/jj. Never fight the harness.
 
 **Announce at start:** "I'm using the using-worktrees skill to set up an isolated workspace."
 
@@ -29,17 +30,92 @@ work on multiple features simultaneously without switching branches.
 ```bash
 if jj root >/dev/null 2>&1; then
   VCS=jj
-  # jj: always fetch at start
-  jj git fetch
+  jj git fetch  # jj: always fetch at start
 else
   VCS=git
 fi
 ```
 
-## Workspace Directory Convention
+## Step 0: Detect Existing Isolation
 
-All workspaces use the **sibling directory** pattern to avoid confusing LSP
-servers with nested repos:
+**Before creating anything, check if you are already in an isolated workspace.**
+
+**git:**
+
+```bash
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
+GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+BRANCH=$(git branch --show-current)
+SUPERPROJECT=$(git rev-parse --show-superproject-working-tree 2>/dev/null)
+```
+
+`GIT_DIR != GIT_COMMON` is also true inside git submodules — `SUPERPROJECT` distinguishes a submodule from a linked worktree.
+
+- **`GIT_DIR != GIT_COMMON` AND `SUPERPROJECT` empty**: You are already
+  in a linked worktree. Skip to Step 3 (Project Setup). Do NOT create
+  another worktree.
+  - On a branch: "Already in isolated workspace at `<path>` on branch
+    `<BRANCH>`."
+  - Detached HEAD (empty `BRANCH`): "Already in isolated workspace at
+    `<path>` (detached HEAD, externally managed). Branch creation needed
+    at finish time."
+- **`GIT_DIR == GIT_COMMON` (or in a submodule)**: You are in a normal repo checkout — continue to Step 1.
+
+**jj:**
+
+```bash
+REPO_ROOT=$(jj root 2>/dev/null)
+WORKSPACE_PATH=$(jj workspace root 2>/dev/null)
+WORKSPACE_NAME=$(jj workspace list 2>/dev/null | awk -F: 'NR==1{print $1}')
+BOOKMARK=$(jj log -r '@-' --no-graph -T 'bookmarks' --limit 1 2>/dev/null)
+```
+
+- **`WORKSPACE_PATH != REPO_ROOT`**: You are already in an additional jj workspace. Skip to Step 3 (Project Setup). Do NOT create another workspace.
+  - With bookmark: "Already in isolated workspace `<WORKSPACE_NAME>` at `<path>` (bookmark `<BOOKMARK>`)."
+  - No bookmark: "Already in isolated workspace `<WORKSPACE_NAME>` at
+    `<path>` (no bookmark — externally managed). Bookmark creation needed
+    at finish time."
+- **`WORKSPACE_PATH == REPO_ROOT`**: You are in the default workspace — continue to Step 1.
+
+### Consent
+
+Has the user already indicated their worktree preference in your
+instructions (CLAUDE.md, AGENTS.md, or this session)? If yes, honor it
+without asking. If not:
+
+> "Would you like me to set up an isolated worktree? It protects your current branch from changes."
+
+If the user declines consent, work in place and skip to Step 3.
+
+## Step 1: Create Isolated Workspace
+
+**You have two mechanisms. Try them in this order.**
+
+### 1a. Native Worktree Tools (preferred)
+
+The user has asked for an isolated workspace (Step 0 consent). Do you already have a way to create a worktree? It might be:
+
+- A tool named `EnterWorktree`, `WorktreeCreate`, or similar
+- A `/worktree` slash command
+- A `--worktree` flag on the command you're invoking
+- A repo-level `WorktreeCreate` hook (this repo has one at `.claude/hooks/worktree-create` — VCS-aware, handles both git and jj)
+
+If you have one, use it and skip to Step 3.
+
+Native tools handle directory placement, branch/bookmark creation, hook
+installation, and cleanup automatically. Using `git worktree add` or
+`jj workspace add` when you have a native tool creates phantom state your
+harness can't see or manage.
+
+Only proceed to Step 1b if you have no native worktree tool available.
+
+### 1b. Manual Fallback
+
+**Only use this if Step 1a does not apply.**
+
+#### Workspace Directory Convention
+
+Use the **sibling directory** pattern to avoid confusing LSP servers with nested repos:
 
 ```text
 <repo>/                    # main repo
@@ -48,15 +124,7 @@ servers with nested repos:
   fix-bug-123/
 ```
 
-The parent directory is `../<repo-basename>_worktrees/`. This is determined
-automatically — no user prompt needed.
-
-## Creation Steps
-
-### 1. Detect Project Info
-
 ```bash
-# Get repo root and name
 if [ "$VCS" = "jj" ]; then
   repo_root=$(jj root)
 else
@@ -64,15 +132,12 @@ else
 fi
 project=$(basename "$repo_root")
 worktree_parent="$(dirname "$repo_root")/${project}_worktrees"
-```
-
-### 2. Create Parent Directory
-
-```bash
 mkdir -p "$worktree_parent"
 ```
 
-### 3. Create Workspace
+The parent directory is `../<repo-basename>_worktrees/`. This is determined automatically — no user prompt needed.
+
+#### Create the Workspace
 
 **git:**
 
@@ -90,7 +155,22 @@ cd "$worktree_parent/$WORKSPACE_NAME"
 jj bookmark create "$WORKSPACE_NAME" -r @
 ```
 
-### 4. Run Project Setup
+**Sandbox fallback:** If `git worktree add` / `jj workspace add` fails
+with a permission error (sandbox denial), tell the user the sandbox
+blocked workspace creation and you're working in the current directory
+instead. Then run setup and baseline tests in place.
+
+## Step 2: Install Hooks
+
+If the repo uses git hooks, install them in the new workspace:
+
+```bash
+[[ -f lefthook.yaml ]] && lefthook install
+[[ -f .pre-commit-config.yaml ]] && pre-commit install
+[[ -f .beads/config.yaml ]] && bd hooks install --chain
+```
+
+## Step 3: Project Setup
 
 Auto-detect and run appropriate setup:
 
@@ -109,33 +189,20 @@ if [ -f pyproject.toml ]; then poetry install; fi
 if [ -f go.mod ]; then go mod download; fi
 ```
 
-### 5. Install Hooks
-
-If the repo uses git hooks, install them in the new workspace:
-
-```bash
-[[ -f lefthook.yaml ]] && lefthook install
-[[ -f .pre-commit-config.yaml ]] && pre-commit install
-[[ -f .beads/config.yaml ]] && bd hooks install --chain
-```
-
-### 6. Verify Clean Baseline
+## Step 4: Verify Clean Baseline
 
 Run tests to ensure workspace starts clean:
 
 ```bash
-# Examples — use project-appropriate command
-npm test
-cargo test
-pytest
-go test ./...
+# Use project-appropriate command
+npm test / cargo test / pytest / go test ./...
 ```
 
 **If tests fail:** Report failures, ask whether to proceed or investigate.
 
 **If tests pass:** Report ready.
 
-### 7. Report Location
+### Report
 
 ```text
 Workspace ready at <full-path>
@@ -144,45 +211,39 @@ Tests passing (<N> tests, 0 failures)
 Ready to implement <feature-name>
 ```
 
-## Cleanup
-
-When done with a workspace:
-
-**git:**
-
-```bash
-git worktree remove <path>
-```
-
-**jj:**
-
-```bash
-jj workspace forget <name>
-rm -rf <path>
-```
-
-Note: `jj workspace forget` de-registers the workspace but does NOT delete
-files — you must `rm -rf` the directory after.
-
 ## Quick Reference
 
 | Situation | Action |
 |-----------|--------|
-| VCS is git | `git worktree add ../<repo>_worktrees/<name> -b <name>` |
-| VCS is jj | `jj workspace add ../<repo>_worktrees/<name> --name <name>` |
-| Project has package.json | Run `npm install` after creation |
-| Project has lefthook.yaml | Run `lefthook install` after creation |
+| Already in linked worktree / additional jj workspace | Skip creation (Step 0) |
+| In a submodule (git) | Treat as normal repo (Step 0 guard) |
+| Native worktree tool available | Use it (Step 1a) |
+| Repo has `WorktreeCreate` hook | Native tool — Step 1a |
+| No native tool, VCS is git | Manual git worktree (Step 1b) |
+| No native tool, VCS is jj | Manual jj workspace (Step 1b) |
 | Tests fail during baseline | Report failures + ask |
 | No package.json/Cargo.toml | Skip dependency install |
-| Cleanup (git) | `git worktree remove <path>` |
-| Cleanup (jj) | `jj workspace forget <name>` + `rm -rf <path>` |
+| Permission error on create | Sandbox fallback, work in place |
+
+## Cleanup
+
+Cleanup happens in `finishing-a-development-branch` using a provenance
+check — only workspaces created under known superpowers/repo-owned paths
+(`<repo>_worktrees/`, `.worktrees/`, `worktrees/`,
+`~/.config/superpowers/worktrees/`) are removed. Harness-owned workspaces
+are left in place for the host to manage.
 
 ## Common Mistakes
 
-### Nesting worktrees inside the repo
+### Fighting the harness
 
-- **Problem:** LSP servers see nested repos, causing indexing confusion
-- **Fix:** Always use sibling directory pattern (`<repo>_worktrees/`)
+- **Problem:** Using `git worktree add` / `jj workspace add` when the platform already provides isolation
+- **Fix:** Step 0 detects existing isolation. Step 1a defers to native tools.
+
+### Skipping detection
+
+- **Problem:** Creating a nested workspace inside an existing one
+- **Fix:** Always run Step 0 before creating anything
 
 ### Using git worktree in jj repos
 
@@ -192,30 +253,59 @@ files — you must `rm -rf` the directory after.
 ### Forgetting to create a bookmark (jj)
 
 - **Problem:** Can't push or create PRs without a bookmark
-- **Fix:** Always `jj bookmark create <name> -r @` after workspace creation
+- **Fix:** Always `jj bookmark create <name> -r @` after workspace creation (Step 1b)
 
 ### Forgetting to fetch (jj)
 
 - **Problem:** Workspace starts with stale state
-- **Fix:** Always `jj git fetch` before creating workspace
+- **Fix:** Always `jj git fetch` before creating workspace (VCS Detection block)
+
+### Nesting workspaces inside the repo
+
+- **Problem:** LSP servers see nested repos, causing indexing confusion
+- **Fix:** Always use sibling directory pattern (`<repo>_worktrees/`)
 
 ### Proceeding with failing tests
 
 - **Problem:** Can't distinguish new bugs from pre-existing issues
 - **Fix:** Report failures, get explicit permission to proceed
 
+## Red Flags
+
+**Never:**
+
+- Create a workspace when Step 0 detects existing isolation
+- Use `git worktree add` / `jj workspace add` when you have a native worktree tool. This is the #1 mistake — if you have it, use it.
+- Skip Step 1a by jumping straight to Step 1b's commands
+- Use `git worktree add` in jj repos
+- Skip the `jj bookmark create` step in jj workspaces
+- Skip baseline test verification
+- Proceed with failing tests without asking
+
+**Always:**
+
+- Run Step 0 detection first
+- Detect VCS before running commands
+- Prefer native tools over manual fallback
+- Use sibling `<repo>_worktrees/` layout for manual creation
+- `jj git fetch` before creating a jj workspace
+- Auto-detect and run project setup
+- Verify clean test baseline
+
 ## Example Workflow
 
-**git:**
+**git (manual fallback):**
 
 ```text
 You: I'm using the using-worktrees skill to set up an isolated workspace.
 
 [VCS detected: git]
-[Create workspace: git worktree add ../myproject_worktrees/auth -b feature/auth]
-[Run npm install]
-[Run lefthook install]
-[Run npm test — 47 passing]
+[Step 0: GIT_DIR == GIT_COMMON → normal repo, continue]
+[Step 1a: no native worktree tool detected]
+[Step 1b: git worktree add ../myproject_worktrees/auth -b feature/auth]
+[Step 2: lefthook install]
+[Step 3: npm install]
+[Step 4: npm test — 47 passing]
 
 Workspace ready at /Users/dev/myproject_worktrees/auth
 VCS: git
@@ -223,22 +313,38 @@ Tests passing (47 tests, 0 failures)
 Ready to implement auth feature
 ```
 
-**jj:**
+**jj (manual fallback):**
 
 ```text
 You: I'm using the using-worktrees skill to set up an isolated workspace.
 
 [VCS detected: jj]
 [jj git fetch]
-[Create workspace: jj workspace add ../myproject_worktrees/auth --name auth]
-[jj bookmark create auth -r @]
-[Run npm install]
-[Run lefthook install]
-[Run npm test — 47 passing]
+[Step 0: WORKSPACE_PATH == REPO_ROOT → default workspace, continue]
+[Step 1a: no native worktree tool detected]
+[Step 1b: jj workspace add ../myproject_worktrees/auth --name auth]
+[Step 1b: jj bookmark create auth -r @]
+[Step 2: lefthook install]
+[Step 3: npm install]
+[Step 4: npm test — 47 passing]
 
 Workspace ready at /Users/dev/myproject_worktrees/auth
 VCS: jj
 Tests passing (47 tests, 0 failures)
+Ready to implement auth feature
+```
+
+**git (already in worktree — Step 0 skip):**
+
+```text
+You: I'm using the using-worktrees skill to set up an isolated workspace.
+
+[VCS detected: git]
+[Step 0: GIT_DIR != GIT_COMMON, not a submodule → already isolated]
+
+Already in isolated workspace at /Users/dev/myproject_worktrees/auth on branch feature/auth.
+[Step 3: npm install]
+[Step 4: npm test — 47 passing]
 Ready to implement auth feature
 ```
 
@@ -253,4 +359,4 @@ Ready to implement auth feature
 
 **Pairs with:**
 
-- **finishing-a-development-branch** — REQUIRED for cleanup after work complete
+- **finishing-a-development-branch** — Handles cleanup with the same provenance check

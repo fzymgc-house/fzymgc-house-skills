@@ -1,0 +1,22 @@
+dev-flow/skills/finishing-a-development-branch/SKILL.md
+  s_cd3994bc444749::t_51ba95a878d18d 9
+  s_cd3994bc444749::t_4b09382c708f43 438,444
+  s_cd3994bc444749::t_e96b9f56dd53c5 304-319
+  s_cd3994bc444749::t_302bd2b2c65c41 37-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "fe7a3685eff689e442f11c3295a7ca7ff7a62784",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

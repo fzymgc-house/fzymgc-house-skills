@@ -1,0 +1,23 @@
+dev-flow/skills/subagent-driven-development/SKILL.md
+  s_cd3994bc444749::t_45012707dfbe1b 191,194-197,199-200,202-205
+  s_cd3994bc444749::t_f4f574700f8db3 166-170,172,174-175
+  s_cd3994bc444749::t_7dab94389c1b5e 117,119,121-125,127,129-132,134
+  s_cd3994bc444749::t_c2a57e14cb8767 45-63,69-74,84,87,89,91-95,97,107-111,115
+  s_cd3994bc444749::t_797ad272232498 234,238-239,242-244
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "e9efd94cf7aad0309a1da1a42837c74c1d8ef059",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

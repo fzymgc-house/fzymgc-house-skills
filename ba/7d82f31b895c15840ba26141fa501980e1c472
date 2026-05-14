@@ -1,0 +1,27 @@
+plugins/dev-flow/.codex-plugin/plugin.json
+  s_cd3994bc444749::t_b811e911119209 2
+.rumdl.toml
+  s_cd3994bc444749::t_5c4f72b246f919 11-13,16
+.claude-plugin/marketplace.json
+  s_cd3994bc444749::t_e294a0ca5d326f 27,29
+tests/test_codex_marketplace.py
+  s_cd3994bc444749::t_6a02c015f49543 9,14
+.agents/plugins/marketplace.json
+  s_cd3994bc444749::t_9e9df5aab38abd 44,47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ba7d82f31b895c15840ba26141fa501980e1c472",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md
+  s_cd3994bc444749::t_3c07369694e991 373-376
+  s_cd3994bc444749::t_4eb3dc72a50cb6 400-401
+  s_cd3994bc444749::t_61a7fc1586be07 345-359
+  s_cd3994bc444749::t_895d2726906f30 177-223
+  s_cd3994bc444749::t_1bc7c66d542b68 382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "96a30659927a1be3ef6a5cb3c475733c750cf8d7",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

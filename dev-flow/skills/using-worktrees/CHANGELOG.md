@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/using-worktrees-v0.3.0...using-worktrees-v0.4.0) (2026-05-14)
+
+
+### Features
+
+* **dev-flow:** Phase 1 — foundation rename superpowers/ → dev-flow/ ([#67](https://github.com/fzymgc-house/fzymgc-house-skills/issues/67)) ([67c47c0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/67c47c01c89c88bbbcc039d1edb9054fb317d547))
+
 ## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/using-worktrees-v0.2.0...using-worktrees-v0.3.0) (2026-04-02)
 
 ### Features

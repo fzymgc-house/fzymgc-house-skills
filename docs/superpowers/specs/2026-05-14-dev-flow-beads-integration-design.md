@@ -174,6 +174,53 @@ A single bead tracks design work from brainstorming through plan materialization
 - **No duplicate state.** Bd is the source of truth for design work-in-progress just like it's the source of truth for execution work-in-progress. Plan/spec files are the artifacts; the bead is the tracking record.
 - **Portable across repos.** Uses only bd CLI features (verified against v0.60.0). Both fzymgc-house-skills and holomush can adopt the same lifecycle.
 
+## Rule 7: Grounding before design — codebase + dependencies first
+
+Workflow skills MUST consult appropriate grounding sources BEFORE proposing designs, before declaring plans READY, and before materializing beads. The default failure mode this prevents: designs that propose library calls that don't exist, file paths that don't match the codebase, function signatures invented from memory.
+
+**Evidence (holomush 30-day transcript audit, 2026-04-14 → 2026-05-14):** 3-5 critical grounding misses + 30-40 minor corrections across ~1513 sessions. Most recoverable at ~1-2 hour delays each; aggregate ~5-10 hours of rework per major phase. Pattern: grounding was *reactive* (after corrections caught divergence) instead of *proactive* (at design proposal time). Moving grounding left into brainstorming/writing-plans is the fix.
+
+### Tool inventory
+
+| Tool | Use for | Required by |
+|---|---|---|
+| `mcp__probe__search_code` | "Where is X defined?" / "How does Y work?" — semantic code search returning AST blocks | `brainstorming` (before proposing approaches), `writing-plans` (before listing files touched), `design-reviewer` + `plan-reviewer` (verifying claimed file/symbol references exist) |
+| `mcp__probe__extract_code` | Pull a specific symbol or `path:line` range by name | All workflow skills — MUST use over `Read` when the target is a known symbol |
+| `mcp__probe__grep` | Structured ripgrep with file/line metadata, when probe's semantic search is too broad | All workflow skills as a fallback to `search_code` |
+| `mcp__context7__resolve-library-id` + `query-docs` | ANY mention of a library, framework, SDK, API, CLI, cloud service — even ones in training data | `brainstorming` (whenever an external dependency is named in proposed approaches), `writing-plans` (verifying API signatures, flag names, capabilities), `plan-reviewer` (re-verification before READY) |
+| `mcp__deepwiki__ask_question` / `read_wiki_contents` / `read_wiki_structure` | GitHub repo conventions, especially for upstream-tracked libraries | `brainstorming` (when the question is "how does this library handle X?"), `writing-plans` (cross-referencing repo conventions and prior art) |
+| `mcp__exa__web_search_exa` | Current web search — news, comparison, real-world adoption signals, recent breaking changes | `brainstorming` (exploring approach trade-offs against real-world evidence); `writing-plans` only when grounding requires external context not in `context7` or `deepwiki` |
+| `mcp__firecrawl-mcp__firecrawl_scrape` (or `firecrawl` skill) | Page-content extraction once Exa surfaces a relevant URL | Chained from Exa in `brainstorming` and `writing-plans` |
+
+### Tool precedence (semantic-first, then raw)
+
+```text
+probe.search_code  →  probe.extract_code  →  probe.grep  →  rg  →  Read
+context7           →  deepwiki            →  exa+firecrawl  →  WebFetch
+```
+
+Skills MUST follow this precedence: only fall back to a lower-precedence tool when the higher-precedence one has been tried and is insufficient. Falling straight to `Read` or `WebFetch` when a semantic tool would have answered the question is the failure mode Rule 7 exists to prevent.
+
+### Brainstorming MUST-use checklist
+
+Before proposing any approach, `brainstorming` MUST:
+
+1. **Probe the codebase** for prior art on the topic at hand. Even a quick `mcp__probe__search_code "<feature name>"` surfaces existing implementations the user may have forgotten.
+2. **Context7 every named external dependency.** If a user says "use library X", `brainstorming` MUST call `mcp__context7__resolve-library-id "X"` and then `mcp__context7__query-docs <id> "<user's question>"` to confirm the proposed integration matches current library reality. Skipping this is the #1 source of bad designs.
+3. **Deepwiki for upstream conventions** when the topic touches an upstream-tracked library where conventions matter (e.g., proto file layout, plugin API shape, migration discipline).
+4. **Exa + firecrawl** when the design question is "what's the current state of the art for X" or "has Y changed recently" — surface real-world adoption signals before locking in a direction.
+
+### Plan-reviewer enforcement
+
+`plan-reviewer` MUST flag plans where grounding looks thin. Indicators:
+
+- Named libraries with no apparent context7 lookup trace in the brainstorming transcript window.
+- File paths in "Files touched" that don't exist on disk (`mcp__probe__search_code` for the path component returns nothing).
+- Function signatures cited in plan code blocks that don't match probe's extract_code output for the same symbol.
+- Plans that reference upstream library behavior without a deepwiki or context7 anchor.
+
+Flagged plans receive NOT READY verdict; user re-engages grounding before next pass.
+
 ## Identity: `superpowers` → `dev-flow`
 
 | Aspect | Current | Target |
@@ -295,6 +342,21 @@ Calling skills (`brainstorming` and `writing-plans`) parse this first non-empty 
 
 If the verdict line is missing or unparseable, the calling skill treats it as NOT READY and prints the agent's full output for human review.
 
+## Plugin runtime requirements
+
+`dev-flow` assumes the following MCP servers + skills are available in the user's Claude Code environment:
+
+| Component | Required by | Failure mode if absent |
+|---|---|---|
+| `bd` CLI (Steve Yegge's `beads` plugin v0.60.0+) | Every workflow skill | Hard failure; degraded-mode logic returns clear error |
+| `mcp__probe__*` (probe MCP) | `brainstorming`, `writing-plans`, `design-reviewer`, `plan-reviewer`, `adr-extractor` | Soft failure — workflow skill warns and falls back to `Read`/`Grep`, but Rule 7 enforcement weakens; review-gate agents lose ability to verify file/symbol claims |
+| `mcp__context7__*` (context7 MCP) | `brainstorming`, `writing-plans`, `plan-reviewer` | Soft failure — library-grounded design step skipped; plan-reviewer flags affected plans as ungrounded |
+| `mcp__deepwiki__*` | `brainstorming`, `writing-plans` (occasional) | Soft failure — alternative grounding paths used |
+| `mcp__exa__*` | `brainstorming` (occasional) | Soft failure — web grounding skipped |
+| `mcp__firecrawl-mcp__*` or the `firecrawl` skill | `brainstorming`, `writing-plans` (chained from Exa) | Soft failure — same |
+
+`dev-flow/README.md` documents installation: which MCP servers to configure, with links to upstream install guides. The plugin itself does not bundle MCP server configs — those live in the user's `~/.claude.json` or repo `.mcp.json` per their preference.
+
 ## Skill Inventory
 
 ### Lifted from holomush (with adaptation)
@@ -308,16 +370,16 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 
 ### New (designed during this brainstorm)
 
-| Skill / Agent | Role | Output contract |
-|---|---|---|
-| `design-reviewer` (agent) | Read-only adversarial review of spec; runs at end of `brainstorming`. Read-only sonnet. | READY \| NOT READY verdict + grounded findings (each finding cites `path:section` or `path:line`). |
-| `plan-reviewer` (agent) | Read-only adversarial review of plan; runs at end of `writing-plans`. Read-only sonnet. | Same contract. |
+| Skill / Agent | Role | Output contract | Tools |
+|---|---|---|---|
+| `design-reviewer` (agent) | Read-only adversarial review of spec; runs at end of `brainstorming`. Read-only sonnet. Authorized to flag ungrounded specs (Rule 7 enforcement). | READY \| NOT READY verdict (first non-empty line, regex `^VERDICT: (READY\|NOT READY)$`) + grounded findings (each finding cites `path:section` or `path:line`). | `Read, Grep, Glob, mcp__probe__search_code, mcp__probe__extract_code, mcp__probe__grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__deepwiki__ask_question, mcp__deepwiki__read_wiki_contents` |
+| `plan-reviewer` (agent) | Read-only adversarial review of plan; runs at end of `writing-plans`. Read-only sonnet. Authorized to flag ungrounded plans (Rule 7 enforcement). | Same contract. | Same tools as `design-reviewer` plus `Bash` (read-only, e.g. for `bd show <id>` lookups to verify referenced beads exist). |
 
 ### Lifted agents
 
 | Agent | Adapted from | Adaptation |
 |---|---|---|
-| `adr-extractor` | `.claude/agents/adr-extractor.md` (holomush PR #3833) | Drop holomush-specific tools (probe, jj skill). Keep four-criterion worthiness test + transcript scan strategies + strict JSON output contract. |
+| `adr-extractor` | `.claude/agents/adr-extractor.md` (holomush PR #3833) | **Keep probe tools** (they're our convention per Rule 7). Drop only holomush-repo-specific skill references (jj skill — we have our own VCS preamble). Keep four-criterion worthiness test + transcript scan strategies + strict JSON output contract. Tools frontmatter: `Read, Grep, Glob, Bash, mcp__probe__search_code, mcp__probe__extract_code, mcp__probe__grep`. |
 
 ### Lifted hooks
 
@@ -335,8 +397,8 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 
 | Skill | Change |
 |---|---|
-| `brainstorming` | At session start: open the design bead (`bd create --type=task --title="Design: <provisional>" --labels="phase:design"` with one-prompt opt-out for ad-hoc work). Append notes at each transition (spec drafted, reviewer rounds, etc.). At end of skill body, after spec self-review: invoke `design-reviewer`. On READY, suggest `writing-plans`. |
-| `writing-plans` | Append note to design bead: "Plan: <path>". At end of skill body: invoke `plan-reviewer`. On READY: auto-fire `capture-adrs`; then conditional auto-fire `plan-to-beads`. |
+| `brainstorming` | At session start: open the design bead (`bd create --type=task --title="Design: <provisional>" --labels="phase:design"` with one-prompt opt-out for ad-hoc work). **Apply Rule 7 grounding checklist before proposing any approach**: probe codebase for prior art on the topic; context7 every named external dependency (no exceptions); deepwiki for upstream library conventions when relevant; exa+firecrawl for "current state of the art" questions. Append notes at each transition (spec drafted, reviewer rounds, grounding sources consulted). At end of skill body, after spec self-review: invoke `design-reviewer`. On READY, suggest `writing-plans`. SKILL.md `allowed-tools`: `Read, Edit, Write, Bash, AskUserQuestion, mcp__probe__*, mcp__context7__*, mcp__deepwiki__*, mcp__exa__*, mcp__firecrawl-mcp__firecrawl_scrape`. |
+| `writing-plans` | Append note to design bead: "Plan: <path>". **Apply Rule 7 grounding to plan content**: verify file paths in "Files touched" exist via `mcp__probe__search_code`; verify function signatures cited in plan code blocks match `mcp__probe__extract_code` output; re-verify library API claims via context7 if any were named in the spec. At end of skill body: invoke `plan-reviewer`. On READY: auto-fire `capture-adrs`; then conditional auto-fire `plan-to-beads`. SKILL.md `allowed-tools`: same grounding suite as `brainstorming`. |
 | `plan-to-beads` | Reads design bead ID from session context (or accepts as flag). Behavior per task count: 3+ → `bd update <design-bead-id> --type=epic --title="<feature name>"`, file children with `--parent <id>`. 1-2 → `bd update <id> --title="<feature name>"` (stays `task`), file optional sibling. 0 → `bd close <id> --reason="Design-only; no implementation tracked"`. |
 | `finishing-a-development-branch` | Add pre-flight check: `bd list --status=open` filtered to current epic (or task-with-siblings group). If any open: `AskUserQuestion` to resolve (close / file follow-up / defer). After merge succeeds (Options 1/2/4): prompt `bd close <ids>` for beads whose work merged. |
 | `subagent-driven-development` | When picking next task: prefer `bd ready --json | jq` to fetch next unblocked bead. Use bead's `--skills` for dispatch routing hint. Use bead's `model:*` label for Agent tool's `model` parameter (default sonnet absent label). Lifecycle: `bd update --claim` → work → `bd close`. |

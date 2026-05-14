@@ -1,0 +1,27 @@
+dev-flow/hooks/tests/test_nudge_adr_capture.py
+  s_cd3994bc444749::t_b0790d8e8e8736 1-33
+dev-flow/hooks/tests/test_nudge_adr_capture.sh
+  s_cd3994bc444749::t_c405442a8ccde0 1-149
+dev-flow/hooks/hooks.json
+  s_cd3994bc444749::t_1a8a5142d867a0 14-25
+dev-flow/hooks/nudge-adr-capture
+  s_cd3994bc444749::t_2c39387cb029e3 1-134
+.github/workflows/check-skills.yml
+  s_cd3994bc444749::t_10e9602fd37dc8 77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "bff7ba46ef0dba8281e8b0b429520c6b71e58dc8",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

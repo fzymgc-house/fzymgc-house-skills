@@ -4,7 +4,7 @@ Use this template when dispatching a code reviewer subagent.
 
 **Purpose:** Review completed work against requirements and code quality standards before it cascades into more work.
 
-```
+```text
 Task tool (general-purpose):
   description: "Review code changes"
   prompt: |
@@ -122,6 +122,7 @@ Task tool (general-purpose):
 ```
 
 **Placeholders:**
+
 - `{DESCRIPTION}` — brief summary of what was built
 - `{PLAN_OR_REQUIREMENTS}` — what it should do (plan file path, task text, or requirements)
 - `{BASE_SHA}` — starting commit
@@ -131,7 +132,7 @@ Task tool (general-purpose):
 
 ## Example Output
 
-```
+```text
 ### Strengths
 - Clean database schema with proper migrations (db.ts:15-42)
 - Comprehensive test coverage (18 tests, all edge cases)

@@ -146,8 +146,8 @@ What works perfectly for Opus might need more detail for Haiku. If you plan to u
 <Note>
   **YAML Frontmatter**: The SKILL.md frontmatter requires two fields:
 
-  * `name` - Human-readable name of the Skill (64 characters maximum)
-  * `description` - One-line description of what the Skill does and when to use it (1024 characters maximum)
+* `name` - Human-readable name of the Skill (64 characters maximum)
+* `description` - One-line description of what the Skill does and when to use it (1024 characters maximum)
 
   For complete Skill structure details, see the [Skills overview](/en/docs/agents-and-tools/agent-skills/overview#skill-structure).
 </Note>
@@ -189,9 +189,9 @@ The `description` field enables Skill discovery and should include both what the
 <Warning>
   **Always write in third person**. The description is injected into the system prompt, and inconsistent point-of-view can cause discovery problems.
 
-  * **Good:** "Processes Excel files and generates reports"
-  * **Avoid:** "I can help you process Excel files"
-  * **Avoid:** "You can use this to process Excel files"
+* **Good:** "Processes Excel files and generates reports"
+* **Avoid:** "I can help you process Excel files"
+* **Avoid:** "You can use this to process Excel files"
 </Warning>
 
 **Be specific and include key terms**. Include both what the Skill does and specific triggers/contexts for when to use it.
@@ -254,7 +254,7 @@ As your Skill grows, you can bundle additional content that Claude loads only wh
 
 The complete Skill directory structure might look like this:
 
-```
+```text
 pdf/
 ├── SKILL.md              # Main instructions (loaded when triggered)
 ├── FORMS.md              # Form-filling guide (loaded as needed)
@@ -279,6 +279,7 @@ description: Extracts text and tables from PDF files, fills forms, and merges do
 ## Quick start
 
 Extract text with pdfplumber:
+
 ```python
 import pdfplumber
 with pdfplumber.open("file.pdf") as pdf:
@@ -298,7 +299,7 @@ Claude loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
 
 For Skills with multiple domains, organize content by domain to avoid loading irrelevant context. When a user asks about sales metrics, Claude only needs to read sales-related schemas, not finance or marketing data. This keeps token usage low and context focused.
 
-```
+```text
 bigquery-skill/
 ├── SKILL.md (overview and navigation)
 └── reference/
@@ -360,12 +361,15 @@ Claude may partially read files when they're referenced from other referenced fi
 
 ```markdown  theme={null}
 # SKILL.md
+
 See [advanced.md](advanced.md)...
 
-# advanced.md
+## advanced.md
+
 See [details.md](details.md)...
 
-# details.md
+## details.md
+
 Here's the actual information...
 ```
 
@@ -390,6 +394,7 @@ For reference files longer than 100 lines, include a table of contents at the to
 # API Reference
 
 ## Contents
+
 - Authentication and setup
 - Core methods (create, read, update, delete)
 - Advanced features (batch operations, webhooks)
@@ -397,9 +402,11 @@ For reference files longer than 100 lines, include a table of contents at the to
 - Code examples
 
 ## Authentication and setup
+
 ...
 
 ## Core methods
+
 ...
 ```
 
@@ -420,7 +427,7 @@ Break complex operations into clear, sequential steps. For particularly complex 
 
 Copy this checklist and track your progress:
 
-```
+```text
 Research Progress:
 - [ ] Step 1: Read all source documents
 - [ ] Step 2: Identify key themes
@@ -429,26 +436,27 @@ Research Progress:
 - [ ] Step 5: Verify citations
 ```
 
-**Step 1: Read all source documents**
+## Step 1: Read all source documents
 
 Review each document in the `sources/` directory. Note the main arguments and supporting evidence.
 
-**Step 2: Identify key themes**
+## Step 2: Identify key themes
 
 Look for patterns across sources. What themes appear repeatedly? Where do sources agree or disagree?
 
-**Step 3: Cross-reference claims**
+## Step 3: Cross-reference claims
 
 For each major claim, verify it appears in the source material. Note which source supports each point.
 
-**Step 4: Create structured summary**
+## Step 4: Create structured summary
 
 Organize findings by theme. Include:
+
 - Main claim
 - Supporting evidence from sources
 - Conflicting viewpoints (if any)
 
-**Step 5: Verify citations**
+## Step 5: Verify citations
 
 Check that every claim references the correct source document. If citations are incomplete, return to Step 3.
 ````
@@ -462,7 +470,7 @@ This example shows how workflows apply to analysis tasks that don't require code
 
 Copy this checklist and check off items as you complete them:
 
-```
+```text
 Task Progress:
 - [ ] Step 1: Analyze the form (run analyze_form.py)
 - [ ] Step 2: Create field mapping (edit fields.json)
@@ -471,27 +479,27 @@ Task Progress:
 - [ ] Step 5: Verify output (run verify_output.py)
 ```
 
-**Step 1: Analyze the form**
+## Step 1: Analyze the form
 
 Run: `python scripts/analyze_form.py input.pdf`
 
 This extracts form fields and their locations, saving to `fields.json`.
 
-**Step 2: Create field mapping**
+## Step 2: Create field mapping
 
 Edit `fields.json` to add values for each field.
 
-**Step 3: Validate mapping**
+## Step 3: Validate mapping
 
 Run: `python scripts/validate_fields.py fields.json`
 
 Fix any validation errors before continuing.
 
-**Step 4: Fill the form**
+## Step 4: Fill the form
 
 Run: `python scripts/fill_form.py input.pdf fields.json output.pdf`
 
-**Step 5: Verify output**
+## Step 5: Verify output
 
 Run: `python scripts/verify_output.py output.pdf`
 
@@ -612,14 +620,17 @@ ALWAYS use this exact template structure:
 # [Analysis Title]
 
 ## Executive summary
+
 [One-paragraph overview of key findings]
 
 ## Key findings
+
 - Finding 1 with supporting data
 - Finding 2 with supporting data
 - Finding 3 with supporting data
 
 ## Recommendations
+
 1. Specific actionable recommendation
 2. Specific actionable recommendation
 ```
@@ -636,12 +647,15 @@ Here is a sensible default format, but use your best judgment based on the analy
 # [Analysis Title]
 
 ## Executive summary
+
 [Overview]
 
 ## Key findings
+
 [Adapt sections based on what you discover]
 
 ## Recommendations
+
 [Tailor to the specific context]
 ```
 
@@ -660,7 +674,8 @@ Generate commit messages following these examples:
 **Example 1:**
 Input: Added user authentication with JWT tokens
 Output:
-```
+
+```text
 feat(auth): implement JWT-based authentication
 
 Add login endpoint and token validation middleware
@@ -669,7 +684,8 @@ Add login endpoint and token validation middleware
 **Example 2:**
 Input: Fixed bug where dates displayed incorrectly in reports
 Output:
-```
+
+```text
 fix(reports): correct date formatting in timezone conversion
 
 Use UTC timestamps consistently across report generation
@@ -678,7 +694,8 @@ Use UTC timestamps consistently across report generation
 **Example 3:**
 Input: Updated dependencies and refactored error handling
 Output:
-```
+
+```text
 chore: update dependencies and refactor error handling
 
 - Upgrade lodash to 4.17.21
@@ -841,6 +858,7 @@ Don't present multiple approaches unless necessary:
 
 **Good example: Provide a default** (with escape hatch):
 "Use pdfplumber for text extraction:
+
 ```python
 import pdfplumber
 ```
@@ -939,6 +957,7 @@ python scripts/analyze_form.py input.pdf > fields.json
 ```
 
 Output format:
+
 ```json
 {
   "field_name": {"type": "text", "x": 100, "y": 200},
@@ -968,6 +987,7 @@ When inputs can be rendered as images, have Claude analyze them:
 ## Form layout analysis
 
 1. Convert PDF to images:
+
    ```bash
    python scripts/pdf_to_images.py form.pdf
    ```
@@ -1037,7 +1057,7 @@ Skills run in a code execution environment with filesystem access, bash commands
 
 **Example:**
 
-```
+```text
 bigquery-skill/
 ├── SKILL.md (overview, points to reference files)
 └── reference/
@@ -1082,10 +1102,12 @@ Don't assume packages are available:
 "Install required package: `pip install pypdf`
 
 Then use it:
+
 ```python
 from pypdf import PdfReader
 reader = PdfReader("file.pdf")
 ```"
+```
 ````
 
 ## Technical notes

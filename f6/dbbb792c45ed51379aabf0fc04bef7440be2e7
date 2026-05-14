@@ -1,0 +1,23 @@
+tests/test_codex_marketplace.py
+  s_cd3994bc444749::t_72b5af451ca4a4 14
+  ai_agent 24-26,33-35,48-50
+superpowers/references/upstream-manifest.md
+  s_cd3994bc444749::t_2191bc1d33e6af 3-4
+  s_cd3994bc444749::t_c3079935715340 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f6dbbb792c45ed51379aabf0fc04bef7440be2e7",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

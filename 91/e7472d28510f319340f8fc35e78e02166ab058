@@ -1,0 +1,23 @@
+CLAUDE.md
+  s_cd3994bc444749::t_9640e7e4b4dd64 65
+  s_cd3994bc444749::t_00e4ea9861210f 23
+  s_cd3994bc444749::t_e184a6d7a2b605 15
+  s_cd3994bc444749::t_d45d9d3cb17d45 192,195
+  s_cd3994bc444749::t_6d8801c71d09e8 256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "91e7472d28510f319340f8fc35e78e02166ab058",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

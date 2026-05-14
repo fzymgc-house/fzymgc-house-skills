@@ -1,0 +1,20 @@
+.github/workflows/check-skills.yml
+  s_cd3994bc444749::t_446f5d7d6b878d 101-103,106,109
+  s_cd3994bc444749::t_0992ba257d7c86 96-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ece552f9c9b076217533df6e1727633f0244c1c9",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

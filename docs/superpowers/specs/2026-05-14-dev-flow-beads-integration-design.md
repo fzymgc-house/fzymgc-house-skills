@@ -78,7 +78,7 @@ Tracked beads use `bd create`'s native flags. The `--description` field carries 
 | Priority | `--priority 0-4` | 0=critical, 2=default, 4=backlog |
 | Labels | `--labels` | Namespaced tags (e.g. `aspect:security`, `area:jj`, `model:opus`) |
 | Required skills | `--skills` | Dispatch routing hints (e.g. `jj`, `proto`, `migrations`) |
-| Design link | `--spec-id <path>` + `--design-file <path>` | Spec doc + optional bead-specific design notes |
+| Design link | `--spec-id <path>` + `--design <string>` or `--design-file <path>` | `--spec-id` is the spec doc path. `--design` and `--design-file` are siblings (one inline string, one read-from-file) for bead-specific design notes — use `--design-file` for anything >1 line. |
 | Acceptance criteria | `--acceptance` | RFC2119 MUST/SHOULD checks |
 | Verification | `--notes` | Concrete commands (e.g. `lefthook run pre-commit --all-files`, `uv run --with pytest pytest tests/`) |
 | Dependencies | `--deps type:id` + `bd dep add` | Graph edges in bd, not duplicated in description |
@@ -148,7 +148,7 @@ A single bead tracks design work from brainstorming through plan materialization
 | plan-reviewer rounds | `bd note <id> "plan-review round N: <verdict> — <finding summary>"` | Same pattern |
 | capture-adrs files ADRs | `bd note <id> "ADRs: <bd-ids>"` | Decision-bead IDs recorded |
 | `plan-to-beads` runs (3+ tasks) | `bd update <id> --type=epic --title="<feature name>"` + create children with `--parent <id>` | Bead **promotes to epic**; design-phase notes persist as epic audit trail |
-| `plan-to-beads` runs (1-2 tasks) | `bd update <id> --title="<feature name>"` (stays `task`); optional second `bd create` with `--parent <none>` for the second task | Design bead becomes the first task bead; sibling task filed separately |
+| `plan-to-beads` runs (1-2 tasks) | `bd update <id> --title="<title of first plan task>"` (stays `task`); if a second plan task exists, `bd create --type=task` for it with no `--parent` (siblings, no epic) | Design bead inherits the title of the first plan task (top-to-bottom order in the plan's task table). The design-phase notes (review history, ADR IDs) travel with that first task bead. Second task is a separate bead with its own description; no parent epic since 1-2 tasks doesn't justify one. |
 | `plan-to-beads` runs (0 tasks, design-only) | `bd close <id> --reason="Design-only; no implementation tracked"` | Design bead closes |
 | Execution proceeds | (no design-bead changes; child beads carry the work) | |
 | `finishing-a-development-branch` | (no design-bead changes; pre-flight checks operate on the epic) | |
@@ -160,6 +160,7 @@ A single bead tracks design work from brainstorming through plan materialization
 - Title, labels, status preserved across type changes.
 - After promotion to epic, child beads attach normally via `--parent <id>`.
 - Bd's JSON field for type is `issue_type` (not `type`) — cosmetic but worth knowing for `--json | jq` queries.
+- **Untested in 2026-05-14 sandbox, must be re-verified during Phase 1:** does `bd update --type=<new>` preserve **dependency edges** (`bd dep add` relationships, `--waits-for` gates)? Rule 6 promotion depends on this being a no-op for edges. Add to Phase 1 verification checklist.
 
 ### Opt-out for ad-hoc work
 
@@ -395,12 +396,23 @@ Appended as the spec/plan file's last line:
 
 ### Watched paths (for `nudge-adr-capture` hook)
 
+**Repo-configurable.** Each repo adopting this skill sets its own watched-path globs at hook install time. fzymgc-house-skills defaults:
+
 ```text
 docs/superpowers/specs/*.md
 docs/superpowers/plans/*.md
 ```
 
-(holomush additionally watched `docs/specs/`, `docs/plans/`; we standardize on the superpowers/ prefix.)
+Holomush (per its layout) would watch:
+
+```text
+docs/specs/*.md
+docs/plans/*.md
+docs/superpowers/specs/*.md
+docs/superpowers/plans/*.md
+```
+
+Convention: paths are loaded from a config block at the top of the hook script (or from `dev-flow/AGENTS.md` if a centralized location is wanted). The hook ships with sensible defaults; repos override via config.
 
 ## Architecture & Interfaces
 
@@ -591,7 +603,7 @@ Phases 1, 2 can land in parallel. Phases 3, 4, 5 can land in parallel after Phas
 
 **Risk:** Low. Mechanical rename; CI catches missed references.
 
-**Verification:** `rg "superpowers/" -g '!docs/superpowers/specs/2026-03-16-*'` returns empty (the original fork-design spec is allowed to retain historical references). `uv run --with pytest pytest tests/test_codex_marketplace.py tests/test_agent_guidance_docs.py -v` passes. `bd create --help | grep -E "^[[:space:]]*--(type|parent|priority|labels|skills|spec-id|design|design-file|acceptance|notes|deps|waits-for|waits-for-gate|external-ref|validate|body-file|description|dry-run)\b"` returns all expected flags (re-verifies Rule 3's flag inventory against the installed bd).
+**Verification:** `rg "superpowers/" -g '!docs/superpowers/specs/2026-03-16-*'` returns empty (the original fork-design spec is allowed to retain historical references). `uv run --with pytest pytest tests/test_codex_marketplace.py tests/test_agent_guidance_docs.py -v` passes. `bd create --help | grep -E "^[[:space:]]*--(type|parent|priority|labels|skills|spec-id|design|design-file|acceptance|notes|deps|waits-for|waits-for-gate|external-ref|validate|body-file|description|dry-run)\b"` returns all expected flags (re-verifies Rule 3's flag inventory against the installed bd). **Bd edge-preservation sandbox test:** create two task beads, add a dep edge between them, promote the dependent bead to `type=epic`, confirm `bd dep list` still shows the edge (validates Rule 6's promotion is non-destructive to graph topology).
 
 ### Phase 2: AGENTS.md conventions (low-risk)
 

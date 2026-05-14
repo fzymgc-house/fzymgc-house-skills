@@ -1,0 +1,22 @@
+jj/hooks/guard-jj-mutating
+  s_cd3994bc444749::t_857601d21f0b56 52-70
+  s_cd3994bc444749::t_e2340e8f225447 22
+jj/hooks/tests/test_guard_jj_mutating.py
+  s_cd3994bc444749::t_fdc2e776f616ac 134-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "a2e87274504a032335770c18d68fd545a596b522",
+  "prompts": {},
+  "sessions": {
+    "s_cd3994bc444749": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c069964-1c1d-4a07-b2c0-aea87321aa4c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

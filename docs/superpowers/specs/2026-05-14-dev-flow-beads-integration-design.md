@@ -88,7 +88,7 @@ Tracked beads use `bd create`'s native flags. The `--description` field carries 
 
 `bd create --validate` checks descriptions against bd's built-in section requirements per issue type. `bd config set validation.on-create warn` (or `block`) elevates this to project-default.
 
-**Verification of bd flag inventory:** All flags listed in the table above were verified against `bd create --help` and `bd config --help` output on bd `v0.60.0` (the version installed at `~/.claude/plugins/marketplaces/beads-marketplace/plugins/beads/`) on 2026-05-14. Verified present: `--type`, `--parent`, `--priority`, `--labels`, `--skills`, `--spec-id`, `--design`, `--design-file`, `--acceptance`, `--notes`, `--deps`, `--waits-for`, `--waits-for-gate`, `--external-ref`, `--validate`, `--body-file`, `--description`, `--dry-run`. `bd config set validation.on-create warn|block` is mentioned in bd's `prime` workflow context output. Phase 1 (foundation rename) includes a re-verification step against the installed bd version at implementation time to catch any drift.
+**Verification of bd flag inventory:** All flags listed in the table above were verified on 2026-05-14 against `bd create --help`, `bd update --help`, `bd list --help`, and `bd config --help` output. The bd CLI version at the time of writing was `bd 1.0.4` (Homebrew); the bd plugin SKILL.md (`~/.claude/plugins/marketplaces/beads-marketplace/plugins/beads/skills/beads/SKILL.md`) declares `v0.60.0+` as the prerequisite floor, which `1.0.4` satisfies. Verified present on `bd create` / `bd update`: `--type`, `--parent`, `--priority`, `--labels`, `--skills`, `--spec-id`, `--design`, `--design-file`, `--acceptance`, `--notes`, `--deps`, `--waits-for`, `--waits-for-gate`, `--external-ref`, `--validate`, `--body-file`, `--description`, `--dry-run`. Verified on `bd list`: `--spec` (filter by spec_id prefix — note bd's inconsistent flag naming; `create`/`update` use `--spec-id` but `list` uses `--spec`). `bd config set validation.on-create warn|block` is mentioned in bd's `prime` workflow context output. Phase 1 (foundation rename) includes a re-verification step against the installed bd version at implementation time to catch any drift.
 
 ## Rule 4: No duplicate state
 
@@ -105,7 +105,7 @@ Tracked beads use `bd create`'s native flags. The `--description` field carries 
 
 **Plan task table semantics (Rule 4 sub-clause):** The plan's task table is a **one-shot input** to `plan-to-beads`. After materialization, bd is the source of truth for what work exists and how it depends. The plan task table becomes historical record of intent at the moment of materialization. To handle re-runs cleanly:
 
-- `plan-to-beads` detects already-materialized state via `bd list --spec-id <plan-path>` (or equivalent label match) and refuses to duplicate beads without explicit user opt-in (`--force-update`).
+- `plan-to-beads` detects already-materialized state via `bd list --spec <plan-path>` (the list filter is `--spec` for spec_id prefix match; bd's flag naming is inconsistent with `--spec-id` on `create`/`update`, but this is the verified-correct flag) and refuses to duplicate beads without explicit user opt-in (`--force-update`).
 - Editing the plan task table after materialization does not retroactively change beads. The user must either (a) file follow-up beads manually via `bead-create-smart`, or (b) re-invoke `plan-to-beads --force-update` and review the diff.
 - The plan markdown is not edited by `plan-to-beads`; bd state is the only thing that mutates. This preserves Rule 4 because the plan task table is read-once-at-materialization, not a living mirror of bd.
 
@@ -153,7 +153,7 @@ A single bead tracks design work from brainstorming through plan materialization
 | Execution proceeds | (no design-bead changes; child beads carry the work) | |
 | `finishing-a-development-branch` | (no design-bead changes; pre-flight checks operate on the epic) | |
 
-### Verified bd behavior (sandbox test 2026-05-14, bd v0.60.0)
+### Verified bd behavior (sandbox test 2026-05-14, bd CLI v1.0.4 / plugin v0.60.0+)
 
 - `bd update <id> --type=<new-type>` accepts arbitrary type mutations (task ↔ epic ↔ task ↔ feature ↔ chore ↔ decision). No "promote" command needed.
 - Notes added pre-promotion persist across type changes.
@@ -172,7 +172,7 @@ A single bead tracks design work from brainstorming through plan materialization
 - **`bd ready` surfaces in-flight design.** Without the design bead, mid-design work is invisible to bd until `plan-to-beads` fires. With it, "I'm designing X" is queryable like any other tracked work.
 - **Session-spanning context for review loops.** Plan-reviewer NOT READY round 1 → revise → round 2 NOT READY → revise → round 3 READY. Without a design bead, the round-1 and round-2 findings live only in transcripts that may compact away. With it, `bd show <id>` shows the full review history.
 - **No duplicate state.** Bd is the source of truth for design work-in-progress just like it's the source of truth for execution work-in-progress. Plan/spec files are the artifacts; the bead is the tracking record.
-- **Portable across repos.** Uses only bd CLI features (verified against v0.60.0). Both fzymgc-house-skills and holomush can adopt the same lifecycle.
+- **Portable across repos.** Uses only bd CLI features (verified against bd CLI v1.0.4 against plugin floor v0.60.0+). Both fzymgc-house-skills and holomush can adopt the same lifecycle.
 
 ## Rule 7: Grounding before design — codebase + dependencies first
 
@@ -369,7 +369,7 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 
 | Component | Required by | Failure mode if absent |
 |---|---|---|
-| `bd` CLI (Steve Yegge's `beads` plugin v0.60.0+) | Every workflow skill | Hard failure; degraded-mode logic returns clear error |
+| `bd` CLI (Steve Yegge's `beads` plugin; floor `v0.60.0+`, current at design time `bd CLI 1.0.4`) | Every workflow skill | Hard failure; degraded-mode logic returns clear error |
 | `mcp__probe__*` (probe MCP) | `brainstorming`, `writing-plans`, `design-reviewer`, `plan-reviewer`, `adr-extractor` | Soft failure — workflow skill warns and falls back to `Read`/`Grep`, but Rule 7 enforcement weakens; review-gate agents lose ability to verify file/symbol claims |
 | `mcp__context7__*` (context7 MCP) | `brainstorming`, `writing-plans`, `plan-reviewer` | Soft failure — library-grounded design step skipped; plan-reviewer flags affected plans as ungrounded |
 | `mcp__deepwiki__* (read_wiki_structure, read_wiki_contents, ask_question)` | `brainstorming`, `writing-plans` (occasional) | Soft failure — alternative grounding paths used |
@@ -708,7 +708,7 @@ Phases 1, 2 can land in parallel. Phases 3, 4, 5 can land in parallel after Phas
 
 **Risk:** Medium. Adapting `plan-to-beads` to use full bd flag set is non-trivial. Each skill needs path/convention substitution.
 
-**Verification:** Dry-run test on a sample plan with 1, 2, and 5 task buckets — confirm conditional behavior (skip / standalone / epic + children). `plan-to-beads --dry-run` outputs valid `bd create` shell commands with all expected flags. Spec-id lookup test: run twice in a row on the same plan — second run detects existing beads via `bd list --spec-id` and refuses without `--force-update`. `bead-create-smart` smoke test: create a bead with `--type=task --acceptance="..." --notes="..."`, confirm `bd show` reflects all fields. `handoff-prompt` smoke test: generate briefing for a real bead, confirm model recommendation matches the bead's `model:*` label (or sonnet default).
+**Verification:** Dry-run test on a sample plan with 1, 2, and 5 task buckets — confirm conditional behavior (skip / standalone / epic + children). `plan-to-beads --dry-run` outputs valid `bd create` shell commands with all expected flags. Spec-id lookup test: run twice in a row on the same plan — second run detects existing beads via `bd list --spec <plan-path>` and refuses without `--force-update`. `bead-create-smart` smoke test: create a bead with `--type=task --acceptance="..." --notes="..."`, confirm `bd show` reflects all fields. `handoff-prompt` smoke test: generate briefing for a real bead, confirm model recommendation matches the bead's `model:*` label (or sonnet default).
 
 ### Phase 4: ADR capture subsystem (medium-high risk)
 
@@ -795,6 +795,6 @@ This rebrand is a hard break (per user direction). Migration discipline:
 - Holomush PR #3833 — ADR Capture skill + hook + agent + bd-id migration (the foundational lift)
 - Holomush CLAUDE.md — Plan → Bead Chain convention, Pre-Push Review Gates
 - Holomush skills: `bead-chain-design`, `bead-chain-from-plan`, `bead-create-smart`, `handoff-prompt`
-- `bd` plugin (Steve Yegge v0.60.0) — installed in this repo's marketplace; provides the CLI surface this design builds on
+- `bd` plugin (Steve Yegge `beads`; SKILL.md floor `v0.60.0+`; CLI installed at design time `1.0.4` via Homebrew) — installed in this repo's marketplace; provides the CLI surface this design builds on
 - `obra/superpowers v5.0.7` — original ancestor of our `superpowers/` fork; soon to be rebranded as `dev-flow` with v5.0.7 as the cited origin point
 - This repo's PR #63 — superpowers v5.1.0 sync (last fork-tracked sync; future syncs become selective cherry-picks via `scan-upstream`)

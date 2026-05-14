@@ -10,7 +10,7 @@
 
 **Architecture:** Six sequenced phases. Phase 1 (rename) is foundational. Phases 2-5 fan out in parallel after Phase 1 merges. Phase 6 (modify existing skills to wire everything together) serializes after 3+4+5 merge. Each phase is one PR. The plan respects the spec's Rule 1: structural shapes go here (SKILL.md frontmatter, agent tools lists, JSON manifest edits, file paths, test code, command shapes); algorithmic function bodies are left to the implementer.
 
-**Tech Stack:** Python 3.11+ (uv-managed), bash 3.2+ (hook scripts), bd v0.60.0 CLI, lefthook (pre-commit), rumdl (markdown lint), conventional commits via cog.
+**Tech Stack:** Python 3.11+ (uv-managed), bash 3.2+ (hook scripts), bd CLI (plugin floor `v0.60.0+`, design-time install `v1.0.4` Homebrew), lefthook (pre-commit), rumdl (markdown lint), conventional commits via cog.
 
 ---
 
@@ -202,7 +202,7 @@ git commit -m "docs(agents): update path references for dev-flow rename"
 - [ ] **Step 1: Identify per-skill upstream references**
 
 Run: `grep -rn "^  upstream:" dev-flow/skills/`
-Expected: ~7 hits (the previously-modified forked skills).
+Expected: 3 hits as of 2026-05-14 (the previously-modified forked skills: `using-worktrees`, `finishing-a-development-branch`, `requesting-code-review`). Adjust expectations if the count differs at implementation time.
 
 - [ ] **Step 2: Remove from each frontmatter**
 
@@ -227,7 +227,7 @@ Future upstream changes are reviewed via `scripts/scan-upstream` (changelog read
 
 | Component | Purpose | Soft/Hard |
 |---|---|---|
-| `bd` CLI v0.60.0+ | Workflow tracking | Hard prerequisite |
+| `bd` CLI (plugin floor `v0.60.0+`; design-time install `v1.0.4`) | Workflow tracking | Hard prerequisite |
 | `mcp__probe__*` | Code grounding | Soft |
 | `mcp__context7__*` | Library docs grounding | Soft |
 | `mcp__deepwiki__*` | Repo conventions grounding | Soft |
@@ -294,10 +294,10 @@ git commit -m "refactor(dev-flow): rename sync-upstream to scan-upstream; refram
 Run:
 
 ```bash
-rg "superpowers/" -g '!docs/superpowers/specs/2026-03-16-*' -g '!docs/superpowers/plans/' -g '!docs/superpowers/specs/2026-05-14-*' -g '!docs/superpowers/specs/2026-04-03-*' -g '!docs/superpowers/specs/2026-05-02-*' -g '!docs/superpowers/specs/2026-03-11-*'
+rg "superpowers/" dev-flow/ plugins/ tests/ .claude-plugin/ .agents/ AGENTS.md README.md release-please-config.json .release-please-manifest.json lefthook.yml 2>/dev/null
 ```
 
-Expected: empty (historical-spec excludes the original fork-design doc and the new dev-flow design + plan).
+Expected: empty (scoping to the active code surface avoids matching historical spec/plan docs that legitimately mention `superpowers/` by name).
 
 - [ ] **Step 2: Test suite green**
 
@@ -314,18 +314,21 @@ Expected: every flag from Rule 3 appears at least once.
 
 - [ ] **Step 4: bd edge-preservation sandbox test**
 
-Run a quick sandbox check to confirm Rule 6's promotion preserves dep edges:
+Run a quick sandbox check to confirm Rule 6's promotion preserves dep edges. bd 1.0.4 requires a Dolt server for non-trivial ops; use `-C` against the sandbox dir so the global server resolution doesn't interfere:
 
 ```bash
-tmp=$(mktemp -d) && (cd "$tmp" && git init -q && bd init --prefix=t1 && \
+tmp=$(mktemp -d) && cd "$tmp" && git init -q && bd init --prefix=t1 && \
   A=$(bd create --title "A" --type task --silent) && \
   B=$(bd create --title "B" --type task --silent) && \
   bd dep add "$B" "$A" && \
   bd update "$B" --type epic && \
-  bd dep list "$B" | grep -q "$A" && echo "edges preserved" || echo "edges LOST")
+  bd dep list "$B" | grep -q "$A" && echo "edges preserved" || echo "edges LOST" && \
+  cd - >/dev/null && rm -rf "$tmp"
 ```
 
 Expected: `edges preserved`.
+
+If the sandbox errors with `Dolt server unreachable` or `no beads database found`, run `bd dolt start` in the sandbox dir first (or use `BEADS_DIR="$tmp/.beads"`). The bd plugin's `dolt.auto-start: false` config disables auto-start; honor that for the sandbox.
 
 - [ ] **Step 5: No commits needed (verification-only task)**
 
@@ -392,11 +395,15 @@ Expected: PASS.
 - [ ] **Step 5: Smoke test the bd config setting**
 
 ```bash
+# Run from a bd-initialized repo (this repo qualifies once bd init has been run).
+# bd 1.0.4 requires its Dolt server reachable for config ops; start it first if needed:
+bd dolt status 2>&1 | grep -q "running" || bd dolt start
+
 bd config set validation.on-create warn
 bd config get validation.on-create
 ```
 
-Expected: returns `warn`.
+Expected: returns `warn`. If `bd dolt start` is disabled by `dolt.auto-start: false`, the smoke test runs against whatever bd database the current repo resolves to.
 
 - [ ] **Step 6: Commit**
 
@@ -455,19 +462,34 @@ Repeat for 2-tasks and 0-tasks cases.
 Run: `uv run --with pytest pytest dev-flow/skills/plan-to-beads/tests/ -v`
 Expected: FAIL — SKILL.md doesn't exist yet.
 
-- [ ] **Step 3: Adapt SKILL.md from holomush**
+- [ ] **Step 3a: Copy + strip chain-section parsing**
 
-Copy `bead-chain-from-plan/SKILL.md` from holomush as starting point. Major adaptations per spec:
+Copy `bead-chain-from-plan/SKILL.md` from holomush. Remove all references to `## Bead chain structure` section parsing.
 
-- Drop all references to `## Bead chain structure` section parsing.
-- Read plan's task table directly (look for the standard plan's `### Task N:` headers + the "Files" sub-list).
-- Use the full bd flag set per Rule 3 (`--acceptance`, `--design-file`, `--spec-id`, `--notes`, `--deps`, `--labels`, `--skills`, `--parent`, `--type`, `--priority`).
-- Implement Rule 6 lifecycle (3+/1-2/0 task buckets; design bead promotion via `bd update --type=epic`).
-- Honor `--dry-run` by emitting `bd create ...` and `bd update ...` shell commands to stdout without executing.
-- Honor `--force-update` to override the "already-materialized" guard.
-- Detect already-materialized state via `bd list --spec-id <plan-path>`.
+- [ ] **Step 3b: Switch to direct plan task-table reading**
 
-Reference the spec sections in the SKILL.md preamble; do NOT inline implementation logic.
+Replace the chain-section parser with a plan-task-table reader: look for `### Task N:` headers + the "Files" sub-list pattern that this plan itself uses. Reference the spec §"Skill Inventory" → `plan-to-beads` row for the contract.
+
+- [ ] **Step 3c: Wire the full bd flag set per Rule 3**
+
+Emit `bd create` invocations using `--acceptance`, `--design-file`, `--spec-id`, `--notes`, `--deps`, `--labels`, `--skills`, `--parent`, `--type`, `--priority`. The description carries only narrative (Goal, Plan reference with verbatim-read directive, Files touched, Out of scope).
+
+- [ ] **Step 3d: Implement Rule 6 lifecycle**
+
+Three task-count buckets per spec §"Rule 6 → Lifecycle":
+
+- 3+: `bd update <design-bead-id> --type=epic --title="<feature name>"` + create children with `--parent`.
+- 1-2: `bd update <design-bead-id> --title="<title of first plan task>"` (stays `task`), file optional sibling `bd create` with no parent.
+- 0: `bd close <design-bead-id> --reason="Design-only; no implementation tracked"`.
+- [ ] **Step 3e: Honor `--dry-run` and `--force-update`**
+
+`--dry-run`: emit `bd create ...` and `bd update ...` shell commands to stdout without executing. `--force-update`: override the "already-materialized" guard from Step 3f.
+
+- [ ] **Step 3f: Detect already-materialized state**
+
+Before mutating bd: `bd list --spec <plan-path>`. If results exist and `--force-update` not given, refuse with a clear error message naming the existing bead IDs.
+
+Reference the spec sections in the SKILL.md preamble; do NOT inline implementation logic — let the implementer write the function bodies.
 
 - [ ] **Step 4: Run tests to verify pass**
 
@@ -756,16 +778,27 @@ Copy `.claude/hooks/nudge-adr-capture.sh` from holomush. Modifications:
 
 - Watched-paths config at top of script: load from a `WATCHED_GLOBS` env var or default to our paths (`docs/superpowers/specs/*.md`, `docs/superpowers/plans/*.md`). Document the override convention in a comment block per spec §"Watched paths".
 - Keep bash 3.2 compatibility (no `[[`-style bashisms beyond what 3.2 supports).
-- [ ] **Step 2: Lift 15-fixture test harness**
+- [ ] **Step 2a: Enumerate the fixture set from holomush**
 
-Copy the test fixture files + harness from holomush. Adapt path globs to match our watched paths. Test fixtures should cover:
+```bash
+ls -1 /Volumes/Code/github.com/holomush/holomush/.claude/hooks/tests/*nudge*adr* 2>/dev/null
+# also check for a tests/ subdirectory under nudge-adr-capture/
+find /Volumes/Code/github.com/holomush/holomush/.claude/hooks/ -type f -name "*.sh" -o -name "*.bats" -o -name "*.bash" 2>/dev/null | grep -i nudge
+```
+
+Record the actual fixture filename list before lifting. Holomush PR #3833 documented "15 fixtures" but the actual count and fixture names should be confirmed at lift time. Expected 5 documented conceptually below + ~10 more covering edge cases (path normalization, symlink handling, missing parent dirs, SHA collision after rotation, etc. — enumerate from the source).
+
+- [ ] **Step 2b: Lift the fixtures verbatim**
+
+Copy each fixture file from holomush's path identified in 2a into `dev-flow/hooks/tests/`. Adapt path globs to match our watched paths (`docs/superpowers/specs/`, `docs/superpowers/plans/`). The five conceptually-documented fixtures the harness MUST contain:
 
 1. New file in `docs/superpowers/specs/` → nudge fires
 2. Edit to existing file with current marker → silent no-op
 3. Edit to existing file with stale marker (SHA mismatch) → nudge fires
 4. Edit to file with `optout=true` marker → silent no-op
 5. New file outside watched paths → silent no-op
-6. ... (remaining 10 fixtures from holomush; lift verbatim and adjust path-globs only)
+
+Remaining fixtures: lift verbatim from holomush's source (per 2a inventory).
 
 - [ ] **Step 3: Wire hook into superpowers' hooks.json**
 
@@ -994,7 +1027,7 @@ You perform read-only adversarial review of plan documents...
 
 For each library or external API named in the plan:
 
-1. Look up the design bead ID (from the plan's metadata or by querying `bd list --spec-id <plan-path>`).
+1. Look up the design bead ID (from the plan's metadata or by querying `bd list --spec <plan-path>`).
 2. Run `bd show <design-bead-id> --notes` and grep for `grounding/context7:` lines mentioning the library.
 3. If absent: this is a NOT READY finding.
 
@@ -1162,7 +1195,7 @@ git commit -m "feat(writing-plans): integrate plan-reviewer + auto-fire capture-
 Before presenting the 4-option menu, add a step:
 
 ```text
-1. Determine the current epic ID (from the design bead if it was promoted, or by querying `bd list --spec-id <plan-path>`).
+1. Determine the current epic ID (from the design bead if it was promoted, or by querying `bd list --spec <plan-path>`).
 2. Run `bd list --status=open --parent <epic-id>`. If any open beads exist:
    a. Display them.
    b. Use AskUserQuestion: "Resolve open beads before finishing? Close all / File follow-ups / Defer / Continue anyway"
@@ -1206,7 +1239,7 @@ In the "Pick next task" section:
 2. Read its labels for `model:*` (default sonnet if absent) and `--skills` for routing.
 3. Atomically claim: `bd update <id> --claim`.
 4. Read the bead's full description + acceptance + notes (`bd show <id>`).
-5. Dispatch a fresh subagent with: subagent_type=appropriate-for-skills, model=<from-label>, prompt assembled from bead description + spec/plan paths from --spec-id.
+5. Dispatch a fresh subagent: subagent_type chosen by mapping the bead's `--skills` field to an available agent type (e.g. `general-purpose` if no specific match; `code-reviewer` if the bead's skill set includes `review`; etc. — implementer judgment), `model` parameter set from the bead's `model:*` label (default sonnet absent label), prompt assembled from bead description + spec/plan paths read from `--spec-id`.
 6. After subagent returns: review (spec then quality per existing process). On approval: `bd close <id> --reason="..."`. On rejection: bd update --status=open and revise instructions.
 ```
 

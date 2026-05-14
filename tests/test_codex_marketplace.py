@@ -6,12 +6,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MARKETPLACE_PATH = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
-EXPECTED_PLUGIN_ORDER = ["homelab", "pr-review", "jj", "superpowers"]
+EXPECTED_PLUGIN_ORDER = ["homelab", "pr-review", "jj", "dev-flow"]
 EXPECTED_EXTRA_PATHS = {
     "homelab": [".mcp.json"],
     "pr-review": ["agents", "references"],
     "jj": ["hooks", "commands"],
-    "superpowers": ["hooks", "references", "scripts"],
+    "dev-flow": ["hooks", "references", "scripts"],
 }
 
 

@@ -41,10 +41,10 @@
       "category": "Developer Tools"
     },
     {
-      "name": "superpowers",
+      "name": "dev-flow",
       "source": {
         "source": "local",
-        "path": "./plugins/superpowers"
+        "path": "./plugins/dev-flow"
       },
       "policy": {
         "installation": "AVAILABLE",

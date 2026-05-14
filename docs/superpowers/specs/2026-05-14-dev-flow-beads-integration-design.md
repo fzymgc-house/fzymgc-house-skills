@@ -188,7 +188,9 @@ Workflow skills MUST consult appropriate grounding sources BEFORE proposing desi
 | `mcp__probe__extract_code` | Pull a specific symbol or `path:line` range by name | All workflow skills — MUST use over `Read` when the target is a known symbol |
 | `mcp__probe__grep` | Structured ripgrep with file/line metadata, when probe's semantic search is too broad | All workflow skills as a fallback to `search_code` |
 | `mcp__context7__resolve-library-id` + `query-docs` | ANY mention of a library, framework, SDK, API, CLI, cloud service — even ones in training data | `brainstorming` (whenever an external dependency is named in proposed approaches), `writing-plans` (verifying API signatures, flag names, capabilities), `plan-reviewer` (re-verification before READY) |
-| `mcp__deepwiki__ask_question` / `read_wiki_contents` / `read_wiki_structure` | GitHub repo conventions, especially for upstream-tracked libraries | `brainstorming` (when the question is "how does this library handle X?"), `writing-plans` (cross-referencing repo conventions and prior art) |
+| `mcp__deepwiki__read_wiki_structure` | "What topics does this repo's docs cover?" — get an overview before diving in | `brainstorming` (exploring an unfamiliar library/repo for the first time, before drilling into specifics) |
+| `mcp__deepwiki__read_wiki_contents` | View the actual docs for a topic | `brainstorming`, `writing-plans` (after `read_wiki_structure` surfaces relevant sections, or when the section is already known) |
+| `mcp__deepwiki__ask_question` | Targeted Q&A against a repo's docs ("does X support Y?", "how does Z handle case W?") | `brainstorming` (when the question is specific and structure-exploration is unnecessary), `writing-plans` (verifying claimed library behavior) |
 | `mcp__exa__web_search_exa` | Current web search — news, comparison, real-world adoption signals, recent breaking changes | `brainstorming` (exploring approach trade-offs against real-world evidence); `writing-plans` only when grounding requires external context not in `context7` or `deepwiki` |
 | `mcp__firecrawl-mcp__firecrawl_scrape` (or `firecrawl` skill) | Page-content extraction once Exa surfaces a relevant URL | Chained from Exa in `brainstorming` and `writing-plans` |
 
@@ -207,19 +209,38 @@ Before proposing any approach, `brainstorming` MUST:
 
 1. **Probe the codebase** for prior art on the topic at hand. Even a quick `mcp__probe__search_code "<feature name>"` surfaces existing implementations the user may have forgotten.
 2. **Context7 every named external dependency.** If a user says "use library X", `brainstorming` MUST call `mcp__context7__resolve-library-id "X"` and then `mcp__context7__query-docs <id> "<user's question>"` to confirm the proposed integration matches current library reality. Skipping this is the #1 source of bad designs.
-3. **Deepwiki for upstream conventions** when the topic touches an upstream-tracked library where conventions matter (e.g., proto file layout, plugin API shape, migration discipline).
+3. **Deepwiki for upstream repo conventions** when the topic touches a GitHub-hosted library/repo where conventions matter (e.g., proto file layout, plugin API shape, migration discipline). Typical access pattern: `read_wiki_structure <org>/<repo>` to see what docs exist → `read_wiki_contents <org>/<repo>` for the relevant topic, OR `ask_question <org>/<repo> "<targeted question>"` when the question is specific enough to skip exploration.
 4. **Exa + firecrawl** when the design question is "what's the current state of the art for X" or "has Y changed recently" — surface real-world adoption signals before locking in a direction.
 
 ### Plan-reviewer enforcement
 
 `plan-reviewer` MUST flag plans where grounding looks thin. Indicators:
 
-- Named libraries with no apparent context7 lookup trace in the brainstorming transcript window.
+- Named libraries with no apparent context7 lookup trace in the **design bead's notes** (Rule 6 requires brainstorming to append `bd note <design-bead-id> "grounding: context7 resolved <lib-id>"` and similar lines for each grounding source consulted; plan-reviewer reads these via `bd show <design-bead-id>`).
 - File paths in "Files touched" that don't exist on disk (`mcp__probe__search_code` for the path component returns nothing).
 - Function signatures cited in plan code blocks that don't match probe's extract_code output for the same symbol.
-- Plans that reference upstream library behavior without a deepwiki or context7 anchor.
+- Plans that reference upstream library behavior without a deepwiki or context7 anchor in the design bead's notes.
 
 Flagged plans receive NOT READY verdict; user re-engages grounding before next pass.
+
+### Grounding-trace contract (links Rule 6 + Rule 7)
+
+The design bead (Rule 6) serves as the grounding audit trail. `brainstorming` MUST append a `bd note` for each grounding source consulted, using a stable prefix the reviewer can grep:
+
+- `bd note <id> "grounding/context7: <library-id> — <one-line summary>"`
+- `bd note <id> "grounding/deepwiki: <repo> — <one-line summary>"`
+- `bd note <id> "grounding/probe: <query> — <hit summary>"`
+- `bd note <id> "grounding/exa: <query> — <result summary>"`
+
+`plan-reviewer` reads these via `bd show <design-bead-id>` (its Bash tool covers this); absence of relevant grounding traces for libraries/concepts named in the plan is the signal to flag NOT READY.
+
+### MUST-attempt, MAY-fall-through
+
+Rule 7's "MUST follow this precedence" means **MUST attempt the higher-precedence tool first** (e.g., probe before Read for symbol lookups). It does NOT mean "must use probe even when Read is correct" — if the agent already knows the exact `path:line` range from prior context, `Read` is fine. The precedence governs first-attempt; fall-through is permitted when the higher tool is insufficient or inapplicable.
+
+### Soft-failure reconciliation
+
+Rule 7's "MUST use" language applies **when the tool is available**. If the tool is absent (per Plugin runtime requirements failure-mode table), the grounding step degrades — `brainstorming` proceeds with weaker grounding, and `plan-reviewer` surfaces the gap as a plan-level finding rather than treating the absence as a hard error. The hard prerequisite remains `bd`; everything else degrades gracefully.
 
 ## Identity: `superpowers` → `dev-flow`
 
@@ -351,7 +372,7 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 | `bd` CLI (Steve Yegge's `beads` plugin v0.60.0+) | Every workflow skill | Hard failure; degraded-mode logic returns clear error |
 | `mcp__probe__*` (probe MCP) | `brainstorming`, `writing-plans`, `design-reviewer`, `plan-reviewer`, `adr-extractor` | Soft failure — workflow skill warns and falls back to `Read`/`Grep`, but Rule 7 enforcement weakens; review-gate agents lose ability to verify file/symbol claims |
 | `mcp__context7__*` (context7 MCP) | `brainstorming`, `writing-plans`, `plan-reviewer` | Soft failure — library-grounded design step skipped; plan-reviewer flags affected plans as ungrounded |
-| `mcp__deepwiki__*` | `brainstorming`, `writing-plans` (occasional) | Soft failure — alternative grounding paths used |
+| `mcp__deepwiki__* (read_wiki_structure, read_wiki_contents, ask_question)` | `brainstorming`, `writing-plans` (occasional) | Soft failure — alternative grounding paths used |
 | `mcp__exa__*` | `brainstorming` (occasional) | Soft failure — web grounding skipped |
 | `mcp__firecrawl-mcp__*` or the `firecrawl` skill | `brainstorming`, `writing-plans` (chained from Exa) | Soft failure — same |
 
@@ -372,7 +393,7 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 
 | Skill / Agent | Role | Output contract | Tools |
 |---|---|---|---|
-| `design-reviewer` (agent) | Read-only adversarial review of spec; runs at end of `brainstorming`. Read-only sonnet. Authorized to flag ungrounded specs (Rule 7 enforcement). | READY \| NOT READY verdict (first non-empty line, regex `^VERDICT: (READY\|NOT READY)$`) + grounded findings (each finding cites `path:section` or `path:line`). | `Read, Grep, Glob, mcp__probe__search_code, mcp__probe__extract_code, mcp__probe__grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__deepwiki__ask_question, mcp__deepwiki__read_wiki_contents` |
+| `design-reviewer` (agent) | Read-only adversarial review of spec; runs at end of `brainstorming`. Read-only sonnet. Authorized to flag ungrounded specs (Rule 7 enforcement). | READY \| NOT READY verdict (first non-empty line, regex `^VERDICT: (READY\|NOT READY)$`) + grounded findings (each finding cites `path:section` or `path:line`). | `Read, Grep, Glob, mcp__probe__search_code, mcp__probe__extract_code, mcp__probe__grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__deepwiki__read_wiki_structure, mcp__deepwiki__read_wiki_contents, mcp__deepwiki__ask_question` |
 | `plan-reviewer` (agent) | Read-only adversarial review of plan; runs at end of `writing-plans`. Read-only sonnet. Authorized to flag ungrounded plans (Rule 7 enforcement). | Same contract. | Same tools as `design-reviewer` plus `Bash` (read-only, e.g. for `bd show <id>` lookups to verify referenced beads exist). |
 
 ### Lifted agents
@@ -397,7 +418,7 @@ If the verdict line is missing or unparseable, the calling skill treats it as NO
 
 | Skill | Change |
 |---|---|
-| `brainstorming` | At session start: open the design bead (`bd create --type=task --title="Design: <provisional>" --labels="phase:design"` with one-prompt opt-out for ad-hoc work). **Apply Rule 7 grounding checklist before proposing any approach**: probe codebase for prior art on the topic; context7 every named external dependency (no exceptions); deepwiki for upstream library conventions when relevant; exa+firecrawl for "current state of the art" questions. Append notes at each transition (spec drafted, reviewer rounds, grounding sources consulted). At end of skill body, after spec self-review: invoke `design-reviewer`. On READY, suggest `writing-plans`. SKILL.md `allowed-tools`: `Read, Edit, Write, Bash, AskUserQuestion, mcp__probe__*, mcp__context7__*, mcp__deepwiki__*, mcp__exa__*, mcp__firecrawl-mcp__firecrawl_scrape`. |
+| `brainstorming` | At session start: open the design bead (`bd create --type=task --title="Design: <provisional>" --labels="phase:design"` with one-prompt opt-out for ad-hoc work). **Apply Rule 7 grounding checklist before proposing any approach**: probe codebase for prior art on the topic; context7 every named external dependency (no exceptions); deepwiki for upstream library conventions when relevant; exa+firecrawl for "current state of the art" questions. Append notes at each transition (spec drafted, reviewer rounds, grounding sources consulted). At end of skill body, after spec self-review: invoke `design-reviewer`. On READY, suggest `writing-plans`. SKILL.md `allowed-tools`: `Read, Edit, Write, Bash, AskUserQuestion, mcp__probe__*, mcp__context7__*, mcp__deepwiki__* (read_wiki_structure, read_wiki_contents, ask_question), mcp__exa__*, mcp__firecrawl-mcp__firecrawl_scrape`. |
 | `writing-plans` | Append note to design bead: "Plan: <path>". **Apply Rule 7 grounding to plan content**: verify file paths in "Files touched" exist via `mcp__probe__search_code`; verify function signatures cited in plan code blocks match `mcp__probe__extract_code` output; re-verify library API claims via context7 if any were named in the spec. At end of skill body: invoke `plan-reviewer`. On READY: auto-fire `capture-adrs`; then conditional auto-fire `plan-to-beads`. SKILL.md `allowed-tools`: same grounding suite as `brainstorming`. |
 | `plan-to-beads` | Reads design bead ID from session context (or accepts as flag). Behavior per task count: 3+ → `bd update <design-bead-id> --type=epic --title="<feature name>"`, file children with `--parent <id>`. 1-2 → `bd update <id> --title="<feature name>"` (stays `task`), file optional sibling. 0 → `bd close <id> --reason="Design-only; no implementation tracked"`. |
 | `finishing-a-development-branch` | Add pre-flight check: `bd list --status=open` filtered to current epic (or task-with-siblings group). If any open: `AskUserQuestion` to resolve (close / file follow-up / defer). After merge succeeds (Options 1/2/4): prompt `bd close <ids>` for beads whose work merged. |

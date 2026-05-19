@@ -179,6 +179,16 @@ def main() -> None:
         "",
         "  If git is genuinely required, append '# jj-exempt' to the command.",
         "  This escalates to human approval (ask) — it is NOT a free pass.",
+        "",
+        "## CRITICAL: Pre-Push Rebase Truncation",
+        "",
+        "  `jj rebase -r @ -o main@origin` is single-revision scope and SILENTLY",
+        "  TRUNCATES multi-commit PR chains. Always use -s <root> instead:",
+        "",
+        "    jj rebase -s $(jj log -r 'roots(trunk()..@)' --no-graph \\",
+        "      -T 'change_id.short(12)') -o main@origin --skip-emptied",
+        "",
+        "  See SKILL.md 'Pre-Push Rebase' for details.",
     ]
     if has_git:
         lines.append("")

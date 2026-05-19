@@ -323,7 +323,12 @@ CHANGE_ID=$(jj log -r @ --no-graph -T 'change_id.short(8)')
 
 # Reference later (survives rewrites)
 jj show "$CHANGE_ID"
-jj rebase -r "$CHANGE_ID" -o main
+
+# Chain-safe pre-push rebase: -s brings descendants along.
+# Do NOT use `jj rebase -r <rev> -o main` here — it's single-revision
+# scope and truncates multi-commit PRs. See SKILL.md "Pre-Push Rebase".
+jj rebase -s "$(jj --no-pager log -r 'roots(trunk()..@)' --no-graph \
+  -T 'change_id.short(12)')" -o main@origin --skip-emptied
 ```
 
 ### Handling Divergence in Scripts

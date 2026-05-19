@@ -410,6 +410,31 @@ jj bookmark delete <a-bookmark>
 
 A becomes empty and is auto-abandoned. B, C, D rebase cleanly onto new `main`.
 
+### Pre-Push Rebase: Use `-s`, Not `-r` (Chain Truncation Hazard)
+
+`jj rebase -r <rev>` is single-revision scope: it moves only that one change
+and **leaves descendants behind**. Running `jj rebase -r @ -o main@origin` on a
+multi-commit PR silently truncates the chain — the bookmark ends up on a
+1-commit position, `jj git push` accepts the result as a fast-forward (no
+`--force`), and GitHub drops the rest of the PR.
+
+For any pre-push rebase, use `-s <root>` so descendants come along:
+
+```bash
+jj rebase -s "$(jj --no-pager log -r 'roots(trunk()..@)' --no-graph \
+  -T 'change_id.short(12)')" -o main@origin --skip-emptied
+```
+
+This recipe works for any chain length, so it stays correct as a PR grows
+from one commit to many between iterations.
+
+**Red flag:** about to type `jj rebase -r @ -o main@origin`. Stop. Use `-s`.
+
+A PreToolUse guard (`hooks/guard-jj-rebase-chain`) blocks the
+`jj rebase -r @ -o <trunk>` pattern in jj repos. To intentionally extract
+@ alone (e.g. a confirmed single-commit PR), append `# jj-exempt` to the
+command -- this escalates to ASK so a human can approve.
+
 ### Complete PR Lifecycle
 
 ```bash
@@ -551,8 +576,8 @@ C automatically inherits the resolution -- never resolve the same conflict twice
 | Redo after undo | `jj redo` |
 | Revert specific past op | `jj op revert <op-id>` |
 | Restore working copy | `jj restore` |
-| Rebase onto new parent | `jj rebase -s <src> -o <dest>` |
-| Rebase single rev (extract) | `jj rebase -r <rev> -o <dest>` |
+| Rebase chain (src + descendants) | `jj rebase -s <src> -o <dest>` |
+| Rebase single rev (no descendants) | `jj rebase -r <rev> -o <dest>` |
 | Insert rev after target | `jj rebase -r <rev> -A <target>` |
 | Rebase all branches | `jj rebase -s 'all:roots(trunk()..@)' -o trunk()` |
 | Create bookmark | `jj bookmark create <name>` |
@@ -568,6 +593,10 @@ C automatically inherits the resolution -- never resolve the same conflict twice
 | Add workspace | `jj workspace add <path> --name <name>` |
 | List workspaces | `jj workspace list` |
 | Remove workspace | `jj workspace forget <name>` + `rm -rf <path>` |
+
+> **Rebase warning:** `-r` moves a single revision only — descendants stay
+> behind. Using `-r @` on a multi-commit PR silently truncates the chain. See
+> "Pre-Push Rebase" above for the chain-safe `-s` recipe.
 
 ## See Also
 

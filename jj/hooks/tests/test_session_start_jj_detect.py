@@ -100,6 +100,16 @@ class TestOutputFormat:
         assert "-o D" in result.stdout or "--onto" in result.stdout
         assert "-d D" not in result.stdout
 
+    def test_pre_push_rebase_warning_present(self, jj_repo: Path) -> None:
+        """Session start MUST warn that jj rebase -r @ truncates PR chains."""
+        result = run_hook(str(jj_repo))
+        assert "Pre-Push Rebase Truncation" in result.stdout
+        assert "TRUNCATES" in result.stdout
+        assert "roots(trunk()..@)" in result.stdout
+        # Recipe must use modern -o flag, not deprecated -d
+        assert "-o main@origin" in result.stdout
+        assert "-d main@origin" not in result.stdout
+
     def test_no_double_dots_when_jj_info_missing(self, jj_repo: Path) -> None:
         """When jj version/workspace fails, no '. . .' artifacts."""
         # The hook will try to run jj commands which may fail in a fake .jj/ dir

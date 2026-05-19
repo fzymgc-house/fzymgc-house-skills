@@ -1,0 +1,132 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""PreToolUse hook: block chain-truncating `jj rebase -r @` against trunk.
+
+`jj rebase -r <rev>` is single-revision scope: it moves only that one
+change and leaves descendants behind. Running `jj rebase -r @ -o main`
+on a multi-commit PR silently truncates the chain — the bookmark ends
+up on a 1-commit position, `jj git push` accepts it as a fast-forward
+(no `--force`), and GitHub drops the rest of the PR.
+
+This hook detects the dangerous pattern and denies the command with a
+pointer to the chain-safe `-s roots(trunk()..@)` recipe. Bypass via the
+existing `# jj-exempt` convention (escalates to ASK).
+
+See jj/skills/jujutsu/SKILL.md "Pre-Push Rebase" and the holomush
+incident (PR #4049, jg9b.3) that motivated the guard.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+
+# Detect `jj rebase` somewhere in the command. Tolerates leading flags
+# like `jj --repo /tmp/r rebase`.
+JJ_REBASE_RE = re.compile(r"\bjj\b(?:\s+-\S+(?:\s+\S+)?)*\s+rebase\b")
+
+# `-r @` (also `--revisions=@`, `--revision @`, quoted variants).
+# Boundary on the right rejects `-r @-` (parent of @) and `-r @foo`.
+R_AT_RE = re.compile(
+    r"(?:-r|--revisions?)(?:\s+|=)"
+    r"""['"]?@['"]?(?=\s|$|;|&|\|)"""
+)
+
+# Destination flag pointing at a trunk-ish target. Covers `-o`, `--onto`,
+# and the deprecated `-d`/`--destination`. Trunks: main, master, trunk,
+# develop, with optional `@<remote>` suffix, or the `trunk()` revset.
+ONTO_TRUNK_RE = re.compile(
+    r"(?:-o|--onto|-d|--destination)(?:\s+|=)"
+    r"""['"]?(?:main|master|trunk|develop|trunk\(\))(?:@[\w.-]+)?['"]?"""
+    r"(?=\s|$|;|&|\|)"
+)
+
+
+def _is_rebase_chain_truncate(command: str) -> bool:
+    """True iff the command contains `jj rebase` with `-r @` to a trunk."""
+    if not JJ_REBASE_RE.search(command):
+        return False
+    return bool(R_AT_RE.search(command) and ONTO_TRUNK_RE.search(command))
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+        tool_input = data.get("tool_input") or {}
+        command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    except (json.JSONDecodeError, OSError, AttributeError):
+        sys.exit(0)
+
+    if not command or not _is_rebase_chain_truncate(command):
+        sys.exit(0)
+
+    # Bypass marker escalates to ASK so the human can confirm intent.
+    if "# jj-exempt" in command:
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": (
+                    "jj-exempt: agent is requesting `jj rebase -r @` against "
+                    "trunk, which truncates multi-commit PR chains. Confirm "
+                    "this is a single-commit PR or an intentional extract."
+                ),
+            }
+        }
+        json.dump(result, sys.stdout)
+        return
+
+    cwd = data.get("cwd", "")
+    if not cwd:
+        sys.exit(0)
+
+    jj_found = False
+    check_dir = cwd
+    for _ in range(50):
+        if os.path.isdir(os.path.join(check_dir, ".jj")):
+            jj_found = True
+            break
+        parent = os.path.dirname(check_dir)
+        if parent == check_dir:
+            break
+        check_dir = parent
+
+    if not jj_found:
+        sys.exit(0)
+
+    reason = (
+        "BLOCKED: `jj rebase -r @` is single-revision scope and silently "
+        "truncates multi-commit PR chains when targeting trunk. Use "
+        "`jj rebase -s \"$(jj log -r 'roots(trunk()..@)' --no-graph "
+        "-T 'change_id.short(12)')\" -o main@origin --skip-emptied` instead."
+    )
+    system_msg = (
+        "Chain-truncating rebase blocked. `jj rebase -r @ -o <trunk>` leaves "
+        "descendants behind; `jj git push` then accepts the truncated chain "
+        "as a fast-forward and GitHub silently drops the rest of the PR. "
+        "Use `-s <root>` to bring descendants along — see SKILL.md "
+        "'Pre-Push Rebase'. If you genuinely intend to extract @ alone, "
+        "append `# jj-exempt` (escalates to ASK)."
+    )
+
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "systemMessage": system_msg,
+    }
+    try:
+        json.dump(result, sys.stdout)
+    except OSError:
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

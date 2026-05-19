@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.8.0...fzymgc-house-skills-v1.8.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* **jj:** block chain-truncating `jj rebase -r @` pre-push ([#75](https://github.com/fzymgc-house/fzymgc-house-skills/issues/75)) ([0e44b53](https://github.com/fzymgc-house/fzymgc-house-skills/commit/0e44b5312d2d3c63124ada8241a2efe21e4560e1))
+
 ## [1.8.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.7.0...fzymgc-house-skills-v1.8.0) (2026-05-14)
 
 

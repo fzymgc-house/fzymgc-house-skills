@@ -1,0 +1,39 @@
+jj/hooks/tests/test_session_start_jj_detect.py
+  s_805739ac3cf68c::t_61b167032a1d76 104,109-111
+  s_805739ac3cf68c::t_f8cd346d1d0b9a 103,105-108,112
+jj/skills/jujutsu/SKILL.md
+  s_805739ac3cf68c::t_0d842da0f01911 413,415-419,421,424-425,428-429,431
+  s_805739ac3cf68c::t_5f86b82e2b3097 580
+  s_805739ac3cf68c::t_a782d18fab79e1 433-437
+  s_805739ac3cf68c::t_2c8cbf554899f8 414,420,422-423,426-427,430,432
+  s_805739ac3cf68c::t_77900a02172cc8 597-600
+  s_805739ac3cf68c::t_55ef32d5010dc8 579
+jj/hooks/tests/test_guard_jj_rebase_chain.py
+  s_805739ac3cf68c::t_ebb179897e979b 1-108,110-151,153-170,172,174-195
+jj/skills/jujutsu/references/workflows-reference.md
+  s_805739ac3cf68c::t_5e4a3240678617 327-331
+  s_805739ac3cf68c::t_833c8af30235c9 326
+jj/hooks/session-start-jj-detect
+  s_805739ac3cf68c::t_286f8c497a2432 185-186,188-189,191
+  s_805739ac3cf68c::t_9a1841c6ea76cf 182-184,187,190
+jj/hooks/guard-jj-rebase-chain
+  s_805739ac3cf68c::t_45c7cf7bfe2e53 1-132
+jj/plugin.json
+  s_805739ac3cf68c::t_88b765273cef17 30-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d910e40768ad804b850d30e907126856732f5ffd",
+  "prompts": {},
+  "sessions": {
+    "s_805739ac3cf68c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf7780ac-cd15-41ae-961c-930976ee5dfc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sean Brandt <4678+seanb4t@users.noreply.github.com>"
+    }
+  }
+}

@@ -193,7 +193,16 @@ After all operations succeed, print:
 - The list of new child bead IDs.
 - The first ready task (`bd ready` top entry).
 - If a Dolt remote is configured (`bd dolt remote list` is non-empty),
-  remind the user to run `bd dolt push` to publish.
+  remind the user to run `bd dolt push` to publish bd state.
+- **Remind the user to land the docs on `main` before executing
+  subagents** — the spec, plan, and any ADRs filed by `capture-adrs`
+  are still local-only at this point. The
+  `subagent-driven-development` skill expects them to be reachable
+  from `main` (fresh-worktree subagents pull from there). Suggest a
+  small docs-only PR covering `docs/superpowers/specs/`,
+  `docs/superpowers/plans/`, and `docs/adr/` before invoking the
+  execution sub-skill. See `writing-plans` step 4 for the full
+  rationale.
 
 ## Constraints
 

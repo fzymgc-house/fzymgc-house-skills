@@ -178,7 +178,15 @@ The chain runs in this strict order — capture-adrs BEFORE plan-to-beads, per t
    - **1-2 tasks:** Prompt the user via `AskUserQuestion`: "Plan has <N> task(s). Materialize beads with plan-to-beads, or skip? (Materialize / Skip)". On Materialize: invoke `plan-to-beads <plan-path>` — the design bead stays `type=task`, inherits the first task's title, and a sibling bead is filed if there's a second task.
    - **0 tasks:** Run `bd close <design-bead-id> --reason="Design-only; no implementation tracked"`. No epic, no children.
 
-4. **After plan-to-beads completes**, offer execution choice:
+4. **Land the docs on `main` before executing** (strongly recommended):
+
+   The spec, plan, and any ADRs filed by `capture-adrs` are sitting in your local working copy. `subagent-driven-development` will dispatch implementer subagents into fresh worktrees / sessions; those subagents read the spec / plan / ADRs from the worktree's `main` to get canonical context. If the docs haven't merged yet, every dispatch needs out-of-band briefing (the orchestrator must inline the spec text into each subagent prompt), which is fragile and prompt-bloating.
+
+   The clean pattern: open a small docs-only PR for the spec + plan + ADRs (paths under `docs/superpowers/specs/`, `docs/superpowers/plans/`, `docs/adr/`), get it merged to `main`, then start implementation. Pull `main` into your worktree, confirm the docs are reachable, then proceed to step 5.
+
+   Skip this step **only** when (a) you're iterating in a single session with no fresh-worktree dispatch, or (b) the docs are scoped to one PR alongside the implementation (small change, single PR). In all other cases, the docs-first PR pays for itself in subagent-prompt simplicity.
+
+5. **After the docs are on `main`** (or skipped per above), offer execution choice:
 
    **"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Beads materialized: <bd-id-list>. Two execution options:**
 
@@ -189,7 +197,7 @@ The chain runs in this strict order — capture-adrs BEFORE plan-to-beads, per t
    **Which approach?"**
 
    - **If Subagent-Driven chosen:**
-     - **REQUIRED SUB-SKILL:** Use `dev-flow:subagent-driven-development` (bd-driven task pickup; reads `model:*` labels for dispatch)
+     - **REQUIRED SUB-SKILL:** Use `dev-flow:subagent-driven-development` (bd-driven task pickup; reads `model:*` labels for dispatch). That skill's prerequisite check confirms the spec/plan are reachable from `main`.
    - **If Inline Execution chosen:**
      - **REQUIRED SUB-SKILL:** Use `dev-flow:executing-plans` (bd-driven serial execution; reads `model:*` labels as guidance)
 

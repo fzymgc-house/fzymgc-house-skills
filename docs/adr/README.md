@@ -6,7 +6,15 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 ## Index
 
 <!-- BEGIN INDEX -->
-*(empty — populated by `capture-adrs` skill on first ADR commit)*
+
+| Date | bd | Title | Status |
+|------|-----|-------|--------|
+| 2026-05-22 | [fhsk-thw](fhsk-thw-use-goal-over-loop-autonomous-bead-queue-drains.md) | Use /goal over /loop for autonomous bead-queue drains | Accepted |
+| 2026-05-22 | [fhsk-0o2](fhsk-0o2-split-drain-harness-into-formula-command-and-skill.md) | Split drain harness into formula, command, and skill | Accepted |
+| 2026-05-22 | [fhsk-rqh](fhsk-rqh-use-bd-mol-pour-versioned-formula-drain-bead-creation.md) | Use bd mol pour with versioned formula for drain bead creation | Accepted |
+| 2026-05-22 | [fhsk-ce3](fhsk-ce3-store-drain-lessons-bd-notes-rather-than-prompt-body.md) | Store drain lessons in bd notes rather than the prompt body | Accepted |
+| 2026-05-22 | [fhsk-0cd](fhsk-0cd-make-drain-init-explicit-rather-than-auto-bootstrap.md) | Make /drain init explicit rather than auto-bootstrapping on first run | Accepted |
+
 <!-- END INDEX -->
 
 ## Writing guidelines

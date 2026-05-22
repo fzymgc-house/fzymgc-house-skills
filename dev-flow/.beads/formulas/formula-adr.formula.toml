@@ -1,0 +1,66 @@
+formula = "formula-adr"
+version = 1
+description = """
+ADR (Architecture Decision Record). Built on bd's built-in `decision` type;
+bd's --validate enforces ## Decision / ## Rationale / ## Alternatives Considered.
+Project convention additionally requires ## Context and ## Consequences,
+enforced by adr-doctor (INV-A20, INV-A21) at lint time.
+
+Body authored at pour time via vars. Edit later via /adr update <id>;
+render to markdown via /adr render <id>.
+"""
+
+[vars.title]
+description = "ADR title (imperative — what the decision is)"
+required = true
+
+[vars.context]
+description = "## Context section prose"
+required = true
+
+[vars.decision]
+description = "## Decision section prose"
+required = true
+
+[vars.rationale]
+description = "## Rationale section prose"
+required = true
+
+[vars.alternatives]
+description = "## Alternatives Considered section prose"
+required = true
+
+[vars.consequences]
+description = "## Consequences section prose"
+required = true
+
+[vars.deciders]
+description = "Comma-separated decider names (stored as adr_deciders metadata)"
+required = true
+
+[[steps]]
+id = "adr-root"
+type = "decision"
+title = "{{title}}"
+description = """## Context
+
+{{context}}
+
+## Decision
+
+{{decision}}
+
+## Rationale
+
+{{rationale}}
+
+## Alternatives Considered
+
+{{alternatives}}
+
+## Consequences
+
+{{consequences}}
+"""
+labels = ["phase:design"]
+metadata = { adr_deciders = "{{deciders}}" }

@@ -17,4 +17,29 @@ Parse `$ARGUMENTS` as one of:
 - `resume <drain-id>` — Resume a halted drain run (recovers `mode`/`scope` from drain bead's metadata fields `drain_mode`, `drain_scope`, `drain_started_at`).
 - anything else / missing — Print this usage and exit.
 
+## Init mode (`/drain init`)
+
+Idempotent, per-repo bootstrap. Run once per repo before any drain mode.
+
+Execute these shell commands in order, surfacing errors plainly:
+
+```bash
+# 1. Register the custom drain type idempotently
+EXISTING=$(bd config get types.custom 2>/dev/null | sed -n 's/.*= "\(.*\)"$/\1/p')
+if ! echo "$EXISTING" | tr ',' '\n' | grep -qw drain; then
+  bd config set types.custom "${EXISTING:+$EXISTING,}drain"
+fi
+
+# 2. Copy formula into the active repo's .beads/formulas/ (bd searches there, not plugin dirs)
+mkdir -p .beads/formulas
+cp -n "${CLAUDE_PLUGIN_ROOT}/.beads/formulas/formula-drain.formula.toml" .beads/formulas/
+
+# 3. Sanity check: both assets present
+bd types | grep -q drain || { echo "drain type not registered" >&2; exit 1; }
+bd formula list | grep -q formula-drain || { echo "formula-drain not visible to bd" >&2; exit 1; }
+echo "drain init complete."
+```
+
+`${CLAUDE_PLUGIN_ROOT}` resolves via the `allowed-tools` declaration (matches the ralph-loop / hookify slash-command pattern).
+
 Remaining mode bodies are filled in by Tasks 3–8 of `docs/superpowers/plans/2026-05-22-drain-skill.md`. This stub MUST refuse all modes other than usage until those tasks land.

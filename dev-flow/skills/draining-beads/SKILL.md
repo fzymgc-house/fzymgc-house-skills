@@ -158,4 +158,7 @@ authoritative audit trail regardless of notification delivery.
 | ADR: `bd mol pour` | `fhsk-rqh` |
 | ADR: lessons in bd notes | `fhsk-ce3` |
 | ADR: `/drain init` explicit | `fhsk-0cd` |
-| Rules 1 / 5 / 6 / 7 | `dev-flow/AGENTS.md` |
+| Rule 1 (structure in specs/plans) | `dev-flow/AGENTS.md` |
+| Rule 5 (model selection on beads) | `dev-flow/AGENTS.md` |
+| Rule 6 (design-bead lifecycle) | `dev-flow/AGENTS.md` |
+| Rule 7 (grounding before design) | `dev-flow/AGENTS.md` |

@@ -75,9 +75,20 @@ fi
   || { echo "Working tree not clean ($DIRTY changes). Commit or discard before draining." >&2; exit 1; }
 
 # 5. Branch safety (refuse main / master)
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+# In jj-colocated and pure-jj repos, derive the branch from the working-copy
+# bookmark; fall back to git rev-parse for git-only repos. An undetermined
+# branch (pure-jj with no bookmarks set) skips the check explicitly.
+if jj root >/dev/null 2>&1; then
+  BRANCH=$(jj --no-pager log -r @ --no-graph -T 'bookmarks' 2>/dev/null \
+    | tr ' ,' '\n' | grep -v '^$' | grep -v '@origin$' | head -1)
+else
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+fi
 case "$BRANCH" in
-  main|master|HEAD) echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  main|master|HEAD)
+    echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  "")
+    : ;;  # No determinable branch (pure-jj repo with no bookmarks); skip check
 esac
 
 # 6. Trust + hooks check
@@ -108,6 +119,8 @@ STARTED_AT=$(date -u +%FT%TZ)
 DRAIN_ID=$(bd --json mol pour formula-drain \
   --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
   | jq -r '.id')
+[ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
+  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
 
 # Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
 ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
@@ -133,15 +146,13 @@ echo "Drain bead $DRAIN_ID created for epic $EPIC_ID."
 SENTINEL="All beads under epic $EPIC_ID are closed."
 ```
 
-The full `/goal` prompt body (referenced as `<PROMPT_BODY>` in Phase D) lands in Task 8; for now Phase D is a directive placeholder.
-
 **Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
 
 After the shell commands above complete successfully, invoke:
 
     /goal <PROMPT_BODY>
 
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$EPIC_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time.
+where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$EPIC_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
 
 ## Set mode (`/drain set <id1> <id2> ...`)
 
@@ -177,9 +188,20 @@ fi
   || { echo "Working tree not clean ($DIRTY changes). Commit or discard before draining." >&2; exit 1; }
 
 # 5. Branch safety (refuse main / master)
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+# In jj-colocated and pure-jj repos, derive the branch from the working-copy
+# bookmark; fall back to git rev-parse for git-only repos. An undetermined
+# branch (pure-jj with no bookmarks set) skips the check explicitly.
+if jj root >/dev/null 2>&1; then
+  BRANCH=$(jj --no-pager log -r @ --no-graph -T 'bookmarks' 2>/dev/null \
+    | tr ' ,' '\n' | grep -v '^$' | grep -v '@origin$' | head -1)
+else
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+fi
 case "$BRANCH" in
-  main|master|HEAD) echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  main|master|HEAD)
+    echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  "")
+    : ;;  # No determinable branch (pure-jj repo with no bookmarks); skip check
 esac
 
 # 6. Trust + hooks check
@@ -209,6 +231,8 @@ STARTED_AT=$(date -u +%FT%TZ)
 DRAIN_ID=$(bd --json mol pour formula-drain \
   --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
   | jq -r '.id')
+[ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
+  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
 
 # Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
 ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
@@ -233,15 +257,13 @@ echo "Drain bead $DRAIN_ID created for set: $SCOPE."
 SENTINEL="All of {$SCOPE} are closed."
 ```
 
-The full `/goal` prompt body (referenced as `<PROMPT_BODY>` in Phase D) lands in Task 8; for now Phase D is a directive placeholder.
-
 **Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
 
 After the shell commands above complete successfully, invoke:
 
     /goal <PROMPT_BODY>
 
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time.
+where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
 
 ## Cascade mode (`/drain cascade <id1> <id2> ...`)
 
@@ -277,9 +299,20 @@ fi
   || { echo "Working tree not clean ($DIRTY changes). Commit or discard before draining." >&2; exit 1; }
 
 # 5. Branch safety (refuse main / master)
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+# In jj-colocated and pure-jj repos, derive the branch from the working-copy
+# bookmark; fall back to git rev-parse for git-only repos. An undetermined
+# branch (pure-jj with no bookmarks set) skips the check explicitly.
+if jj root >/dev/null 2>&1; then
+  BRANCH=$(jj --no-pager log -r @ --no-graph -T 'bookmarks' 2>/dev/null \
+    | tr ' ,' '\n' | grep -v '^$' | grep -v '@origin$' | head -1)
+else
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+fi
 case "$BRANCH" in
-  main|master|HEAD) echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  main|master|HEAD)
+    echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+  "")
+    : ;;  # No determinable branch (pure-jj repo with no bookmarks); skip check
 esac
 
 # 6. Trust + hooks check
@@ -309,6 +342,8 @@ STARTED_AT=$(date -u +%FT%TZ)
 DRAIN_ID=$(bd --json mol pour formula-drain \
   --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
   | jq -r '.id')
+[ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
+  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
 
 # Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
 ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
@@ -330,13 +365,12 @@ echo "Drain bead $DRAIN_ID created for cascade seeds: $SCOPE."
 **Phase C — Compose the sentinel string**:
 
 ```bash
-SCOPE="$*"  # space-separated seeds
 SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed."
 ```
 
-**Working-set expansion**: cascade mode does not pre-compute the full reachable set. Instead, the per-iteration helper (defined in Task 8) maintains a stateful working set that starts as `{$SCOPE}` and grows as beads close. After each close, the helper calls `bd dep list <closed-id> --direction=up --json | jq -r '.[].id'` to surface newly-revealed dependents and adds any not-yet-seen ids to the working set. The helper terminates when (a) no open beads remain in the working set AND (b) the most recent close revealed no new dependents — both conditions must hold simultaneously to declare the sentinel satisfied.
+(`$SCOPE` was set to `"$*"` in Phase A; reusing here.)
 
-The full `/goal` prompt body (referenced as `<PROMPT_BODY>` in Phase D) lands in Task 8; for now Phase D is a directive placeholder.
+The iteration body (see "Iteration body" section below) maintains the working-set state in cascade mode: Step 4's cascade branch starts with the seeds from `$SCOPE`, expands via `bd dep list <closed-id> --direction=up` after each close, and terminates when both no open beads remain in the working set and the most recent close revealed no new dependents.
 
 **Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
 
@@ -344,7 +378,7 @@ After the shell commands above complete successfully, invoke:
 
     /goal <PROMPT_BODY>
 
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time. For cascade mode the iteration body must call the working-set helper described above so the cascade expands as dependents are revealed.
+where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
 
 ## Resume mode (`/drain resume <drain-id>`)
 
@@ -361,11 +395,19 @@ STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
 
 [ -n "$MODE" ] && [ "$MODE" != "null" ] \
   || { echo "Drain bead $DRAIN_ID has no drain_mode metadata; cannot resume." >&2; exit 1; }
+[ -n "$SCOPE" ] && [ "$SCOPE" != "null" ] \
+  || { echo "Drain bead $DRAIN_ID has no drain_scope metadata; cannot resume." >&2; exit 1; }
+[ -n "$STARTED_AT" ] && [ "$STARTED_AT" != "null" ] \
+  || { echo "Drain bead $DRAIN_ID has no drain_started_at metadata; cannot resume." >&2; exit 1; }
 
-# 2. Re-run pre-flight (Phase A from the original mode) against $SCOPE.
-#    For epic mode, re-run epic-mode Phase A (with $SCOPE as $EPIC_ID).
-#    For set/cascade modes, re-run their respective per-seed Phase A loops.
-#    The specific Phase A pre-flight is invoked from the corresponding mode's section above.
+# 2. Re-run the mode-specific Phase A pre-flight against the recovered $SCOPE.
+#    The pre-flight body is in the corresponding mode's section above — there is
+#    no shared function (slash-command Bash runs each block standalone). The
+#    invoking model MUST copy-paste the appropriate Phase A block here:
+#      - $MODE == epic     → copy Epic mode Phase A (with $SCOPE bound to $EPIC_ID)
+#      - $MODE == set      → copy Set mode Phase A (the per-seed loop over $SCOPE words)
+#      - $MODE == cascade  → copy Cascade mode Phase A (the per-seed loop over $SCOPE words)
+#    Then continue to step 3.
 
 # 3. Recompose the same SENTINEL string the original run used
 case "$MODE" in
@@ -406,10 +448,20 @@ Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in or
    filtered to prefix "lesson:" (epic-scoped). Concatenate into a $LESSONS variable
    for step 7.
 
-4. Pick next ready bead — `bd ready --json` filtered to in-scope (per mode).
-   Deterministic order: lowest priority number, then alphabetic id. If filter
-   empty but sentinel says not met → re-evaluate sentinel; if still not met,
-   halt with "stalled queue" reason.
+4. Pick next ready bead — `bd ready --json` filtered to in-scope per mode:
+     - epic mode: `bd ready --json | jq '[.[] | select(.parent == "'"$EPIC_ID"'")]'`
+       (children of the epic that are currently ready).
+     - set mode: `bd ready --json | jq '[.[] | select(.id == ("'"$SCOPE"' " | split(" ")[]))]'`
+       (only the explicit seed ids).
+     - cascade mode: maintain a working set in this session (initially the seeds
+       from `$SCOPE`). After each bead closes in step 9, expand the working set
+       via `bd dep list <closed-id> --direction=up --json | jq -r '.[].id'`
+       (newly-revealed dependents) and add any ids not already in the set.
+       Filter `bd ready` to ids currently in the working set.
+   Deterministic order across all modes: lowest priority number, then alphabetic id.
+   If filter empty but sentinel says not met → re-evaluate sentinel (in cascade
+   mode, this means the working set has no open beads AND the last close added
+   no new dependents); if still not met, halt with "stalled queue" reason.
 
 5. Atomic claim — `bd update <id> --claim`. On race (claim fails), skip step 6
    and restart iteration (re-fire of this prompt).
@@ -444,5 +496,3 @@ Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in or
 ```
 
 The Phase D directives in epic/set/cascade/resume modes substitute the run-time values and pass the assembled string as `/goal`'s condition. See `dev-flow:draining-beads` for the full canonical reference (sentinel design, halt conditions, lessons mechanism, edge cases).
-
-Remaining mode bodies are filled in by Tasks 3–8 of `docs/superpowers/plans/2026-05-22-drain-skill.md`. This stub MUST refuse all modes other than usage until those tasks land.

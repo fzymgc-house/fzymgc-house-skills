@@ -15,6 +15,8 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 
 **Autonomous epic drain:** For a long-running, hands-off drain of an epic or seed set, pair this skill with `dev-flow:draining-beads` (operator entry: `/drain epic <id>` / `/drain set <id...>` / `/drain cascade <id...>`). The drain skill harnesses this one with Claude Code's `/goal` Stop hook so the orchestrator stays running until the sentinel is met or a halt condition fires. Requires Claude Code 2.1.148+ with hooks enabled.
 
+**Prerequisite — docs reachable from `main`:** The spec, plan, and any ADRs that inform this work SHOULD be merged to `main` before dispatching subagents. Subagents work in fresh worktrees / sessions off `main`; if the docs aren't there yet, each dispatch needs the spec text inlined into the subagent prompt (out-of-band briefing), which bloats prompts and risks staleness. `writing-plans` step 4 recommends a docs-only PR for exactly this reason. On dispatch, briefly verify that the bead's `--spec-id` resolves to a file reachable from the worktree's `main`; if not, either (a) inline the spec excerpts the subagent needs, or (b) land the docs first and re-dispatch.
+
 ## When to Use
 
 ```dot

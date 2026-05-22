@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.9.0...fzymgc-house-skills-v1.10.0) (2026-05-22)
+
+
+### Features
+
+* **adr:** /adr harness + bd-as-truth ADR system + migrate legacy 5 ADRs ([#83](https://github.com/fzymgc-house/fzymgc-house-skills/issues/83)) ([45ae3b8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/45ae3b8fa0099fcedcb1b7683c256119637b73ef))
+
 ## [1.9.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.8.1...fzymgc-house-skills-v1.9.0) (2026-05-22)
 
 

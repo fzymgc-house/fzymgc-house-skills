@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.5.0...dev-flow-v0.6.0) (2026-05-22)
+
+
+### Features
+
+* **adr:** /adr harness + bd-as-truth ADR system + migrate legacy 5 ADRs ([#83](https://github.com/fzymgc-house/fzymgc-house-skills/issues/83)) ([45ae3b8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/45ae3b8fa0099fcedcb1b7683c256119637b73ef))
+
 ## [0.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.4.0...dev-flow-v0.5.0) (2026-05-22)
 
 

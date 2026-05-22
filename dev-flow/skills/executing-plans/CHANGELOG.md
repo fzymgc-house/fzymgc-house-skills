@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/executing-plans-v0.3.0...executing-plans-v0.4.0) (2026-05-22)
+
+
+### Features
+
+* **drain:** /drain harness — slash command + draining-beads skill + formula ([#79](https://github.com/fzymgc-house/fzymgc-house-skills/issues/79)) ([6d88744](https://github.com/fzymgc-house/fzymgc-house-skills/commit/6d88744fa49b6e9428daf26d6ebd8ff75485dcbb))
+
 ## [0.3.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/executing-plans-v0.2.0...executing-plans-v0.3.0) (2026-05-14)
 
 

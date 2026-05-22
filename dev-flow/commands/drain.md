@@ -380,4 +380,69 @@ echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
 
 After the shell commands above complete successfully, fall through to the same `/goal <PROMPT_BODY>` invocation as the original mode (Phase D directive). The iteration body in Task 8 handles all three modes via the `$MODE` substitution.
 
+## Iteration body (`/goal` Stop-hook prompt)
+
+The text below is the **canonical iteration body** referenced by the Phase D directives in epic/set/cascade/resume modes. Each Phase D substitutes `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL`, and `$EPIC_ID` (when in epic mode) into this body and fires `/goal` with the result. `/goal` re-fires this prompt as a user message on each Stop event; each firing runs ONE bead per the steps below.
+
+```text
+You are in an autonomous drain run. Drain bead: $DRAIN_ID (mode=$MODE, scope=$SCOPE).
+Sentinel: $SENTINEL
+
+Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in order:
+
+1. Check sentinel — run the mode-specific bd query (see dev-flow:draining-beads
+   "Sentinel design" for the exact predicate). If met: emit a completion summary
+   to the user, append `bd note $DRAIN_ID "result: complete; iterations=<N>, ..."`,
+   run `bd close $DRAIN_ID --reason="drain completed cleanly"`, invoke
+   dev-flow:finishing-a-development-branch, then exit (do NOT continue to step 2).
+
+2. Check halt conditions — scan `bd show $DRAIN_ID --json | jq '.notes'` for any
+   "rejection: <id> N=3+" line OR any prior "halt:" line. On match: append
+   `bd note $DRAIN_ID "halt: <reason>"`, run `/goal clear`, send PushNotification,
+   exit.
+
+3. Read lessons — collect `bd show $DRAIN_ID --json | jq '.notes'` filtered to
+   prefix "lesson:" (run-scoped). For epic mode, ALSO read `bd show $EPIC_ID --json | jq '.notes'`
+   filtered to prefix "lesson:" (epic-scoped). Concatenate into a $LESSONS variable
+   for step 7.
+
+4. Pick next ready bead — `bd ready --json` filtered to in-scope (per mode).
+   Deterministic order: lowest priority number, then alphabetic id. If filter
+   empty but sentinel says not met → re-evaluate sentinel; if still not met,
+   halt with "stalled queue" reason.
+
+5. Atomic claim — `bd update <id> --claim`. On race (claim fails), skip step 6
+   and restart iteration (re-fire of this prompt).
+
+6. Load context — `bd show <id> --json` for description / acceptance / spec-id;
+   if spec-id present, read the referenced spec/plan file for surrounding context.
+
+7. Dispatch implementer subagent — per dev-flow:subagent-driven-development:
+     subagent_type from bead's skills[] (heuristic; general-purpose fallback)
+     model       from bead's model:* label (default sonnet per Rule 5)
+     prompt      = bead description + acceptance criteria + spec excerpts + $LESSONS
+   In jj repos (jj root succeeds): brief the subagent to run `jj --no-pager new`
+   before any edits. In git repos: no-op.
+
+8. Two-stage review — spec compliance reviewer (./spec-reviewer-prompt.md), then
+   code quality reviewer (./code-quality-reviewer-prompt.md). On either failing,
+   the implementer fixes and re-reviews.
+
+9. On approval — `bd close <id> --reason="<one-line summary>"`. Append a bd note
+   for any deviations or follow-ups discovered.
+
+10. On rejection (review loops exhausted this iteration):
+      bd update <id> --status=open
+      bd note <id> "rejection round N: <reason>"
+      bd note $DRAIN_ID "rejection: <id> N=<count>"
+    Step 2 catches N>=3 on the NEXT iteration.
+
+11. VCS verify — `jj st` (or `git status --porcelain`); confirm clean tree.
+    If dirty: bd note $DRAIN_ID "halt: dirty-tree iter <N>"; halt.
+
+12. Iteration ends. The /goal Stop hook re-fires this prompt → step 1.
+```
+
+The Phase D directives in epic/set/cascade/resume modes substitute the run-time values and pass the assembled string as `/goal`'s condition. See `dev-flow:draining-beads` for the full canonical reference (sentinel design, halt conditions, lessons mechanism, edge cases).
+
 Remaining mode bodies are filled in by Tasks 3–8 of `docs/superpowers/plans/2026-05-22-drain-skill.md`. This stub MUST refuse all modes other than usage until those tasks land.

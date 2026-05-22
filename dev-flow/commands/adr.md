@@ -169,4 +169,83 @@ dev-flow/scripts/render-adr "$ID"
 echo "Addendum added to $ID and re-rendered."
 ```
 
-Remaining mode bodies are filled in by Tasks 6–7 of `docs/superpowers/plans/2026-05-22-adr-evolution.md`.
+## Accept mode (/adr accept <id>)
+
+Close a Proposed ADR (bd status=open → closed). Re-renders the file so Status flips to Accepted.
+
+```bash
+ID="$1"
+STATUS=$(bd show "$ID" --json | jq -r '.status')
+[ "$STATUS" = "open" ] \
+  || { echo "ADR $ID is not in Proposed state (bd status=$STATUS); cannot accept." >&2; exit 1; }
+bd close "$ID" --reason="Accepted"
+dev-flow/scripts/render-adr "$ID"
+echo "ADR $ID accepted."
+```
+
+## Deprecate mode (/adr deprecate <id> --reason "...")
+
+Mark an Accepted ADR as deprecated. Requires `--reason`; guards that the ADR is already Accepted
+(bd status=closed) before mutating.
+
+```bash
+ID="$1"; shift
+REASON=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --reason) REASON="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+[ -n "$REASON" ] || { echo "Usage: /adr deprecate <id> --reason \"<why>\"" >&2; exit 1; }
+
+STATUS=$(bd show "$ID" --json | jq -r '.status')
+[ "$STATUS" = "closed" ] \
+  || { echo "ADR $ID must be Accepted (bd status=closed) before Deprecation. Current: $STATUS." >&2; exit 1; }
+
+bd update "$ID" --add-label adr:deprecated
+bd note "$ID" "deprecated: $REASON"
+dev-flow/scripts/render-adr "$ID"
+echo "ADR $ID deprecated: $REASON"
+```
+
+## Supersede mode (/adr supersede <old-id>)
+
+Create a new ADR that supersedes `<old-id>`. Wires the dependency edge, closes the new ADR as
+Accepted, and re-renders both files so the old ADR shows "Superseded by NEW" and the new ADR shows
+"Supersedes: OLD".
+
+Operator steps (shell + interactive):
+
+1. `OLD="$1"`
+2. Verify `<old-id>` exists and is closed (Accepted):
+   ```bash
+   STATUS=$(bd show "$OLD" --json | jq -r '.status')
+   ```
+   If `$STATUS != "closed"`, error: `"Cannot supersede a Proposed ADR; /adr accept $OLD first."`
+3. Run the `/adr new` flow interactively (gather title + 5 sections + deciders) to create NEW:
+   ```bash
+   NEW=$(bd --json mol pour formula-adr \
+         --var title="$title" \
+         --var context="$context" \
+         --var decision="$decision" \
+         --var rationale="$rationale" \
+         --var alternatives="$alternatives" \
+         --var consequences="$consequences" \
+         --var deciders="$deciders" \
+       | jq -r '.id')
+   ```
+4. Wire the supersession edge:
+   ```bash
+   bd dep add "$NEW" "$OLD" --type=supersedes
+   ```
+5. Close the new ADR (Accepted):
+   ```bash
+   bd close "$NEW" --reason="Accepted (supersedes $OLD)"
+   ```
+6. Re-render BOTH markdown files:
+   ```bash
+   dev-flow/scripts/render-adr "$OLD"   # status flips to Superseded by NEW
+   dev-flow/scripts/render-adr "$NEW"   # References shows Supersedes: OLD
+   ```
+7. Print: `"Superseded $OLD with $NEW. Both ADRs re-rendered."`

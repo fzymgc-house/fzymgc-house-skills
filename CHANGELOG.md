@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.8.1...fzymgc-house-skills-v1.9.0) (2026-05-22)
+
+
+### Features
+
+* **drain:** /drain harness — slash command + draining-beads skill + formula ([#79](https://github.com/fzymgc-house/fzymgc-house-skills/issues/79)) ([6d88744](https://github.com/fzymgc-house/fzymgc-house-skills/commit/6d88744fa49b6e9428daf26d6ebd8ff75485dcbb))
+
 ## [1.8.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.8.0...fzymgc-house-skills-v1.8.1) (2026-05-19)
 
 

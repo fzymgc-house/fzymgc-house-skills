@@ -91,4 +91,82 @@ Forward-looking ADR. Same flow as New EXCEPT skip Step 3 (no `bd close`). The be
    ```
 5. Print: `Proposed ADR $ID → docs/adr/<rendered>.md (run /adr accept $ID to finalize)`
 
-Remaining mode bodies are filled in by Tasks 5–7 of `docs/superpowers/plans/2026-05-22-adr-evolution.md`.
+## Render mode (/adr render <id>)
+
+Re-render the ADR file from bd state. No bd mutation.
+
+```bash
+ID="$1"
+bd show "$ID" --json >/dev/null 2>&1 \
+  || { echo "Decision bead $ID not found." >&2; exit 1; }
+dev-flow/scripts/render-adr "$ID"
+```
+
+## Update mode (/adr update <id>)
+
+Edit an ADR's body or individual sections, then re-render.
+
+1. `ID="$1"`; show current state for context:
+   ```bash
+   bd show "$ID" --json | jq '{title, description, metadata, status}'
+   ```
+
+2. Interactive: AskUserQuestion which section to edit:
+   - `## Context`
+   - `## Decision`
+   - `## Rationale`
+   - `## Alternatives Considered`
+   - `## Consequences`
+   - `WHOLE BODY` (replace entire description)
+
+3. Prompt for new prose for that section (or whole body).
+
+4. Re-compose the description body. Read current body via:
+   ```bash
+   CURRENT=$(bd show "$ID" --json | jq -r '.description')
+   ```
+   Then use awk anchored on `## <section>` headings to slice/replace cleanly:
+   - Match the chosen `## <section>` heading.
+   - Replace its content (lines until the next `## ` heading or EOF) with the new prose.
+   - Preserve all OTHER sections verbatim.
+   The whole-body case just uses the new prose directly (overwrites).
+
+   ```bash
+   # Replace the ## Context section content with $NEW_PROSE, preserving others:
+   echo "$CURRENT" | awk -v new="$NEW_PROSE" '
+     /^## Context$/ { print; print ""; print new; print ""; in_section=1; next }
+     /^## / { in_section=0 }
+     !in_section { print }
+   '
+   ```
+
+5. Pipe the recomposed body to bd update:
+   ```bash
+   printf '%s' "$NEW_BODY" | bd update "$ID" --body-file -
+   ```
+
+6. Render:
+   ```bash
+   dev-flow/scripts/render-adr "$ID"
+   ```
+
+## Addendum mode (/adr addendum <id> --text "...")
+
+Append a clarification note to an existing ADR and re-render.
+
+```bash
+ID="$1"; shift
+TEXT=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --text) TEXT="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+[ -n "$TEXT" ] || { echo "Usage: /adr addendum <id> --text \"<text>\"" >&2; exit 1; }
+bd note "$ID" "addendum: $TEXT"
+dev-flow/scripts/render-adr "$ID"
+echo "Addendum added to $ID and re-rendered."
+```
+
+Remaining mode bodies are filled in by Tasks 6–7 of `docs/superpowers/plans/2026-05-22-adr-evolution.md`.

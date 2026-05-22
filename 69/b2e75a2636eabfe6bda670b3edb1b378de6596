@@ -1,0 +1,9 @@
+.beads/config.yaml
+  ai_agent 57,59-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "69b2e75a2636eabfe6bda670b3edb1b378de6596",
+  "prompts": {}
+}

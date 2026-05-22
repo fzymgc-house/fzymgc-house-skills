@@ -1,0 +1,19 @@
+AGENTS.md
+  ai_agent 283,303-304
+.beads/README.md
+  ai_agent 1-81
+.beads/.gitignore
+  ai_agent 1-71
+.gitignore
+  ai_agent 33-35
+.beads/config.yaml
+  ai_agent 1-59
+.beads/metadata.json
+  ai_agent 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "3d476c94519530fa58d8f2b9fd3cfc7af534dd73",
+  "prompts": {}
+}

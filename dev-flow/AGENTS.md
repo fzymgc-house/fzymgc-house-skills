@@ -2,11 +2,13 @@
 
 # Dev-Flow Conventions
 
-Conventions for the `dev-flow` workflow plugin. Every workflow skill (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `finishing-a-development-branch`, `plan-to-beads`, `bead-create-smart`, `handoff-prompt`, `capture-adrs`, `draining-beads`) and review-gate agent (`design-reviewer`, `plan-reviewer`, `adr-extractor`) MUST follow these rules.
+Conventions for the `dev-flow` workflow plugin. Every workflow skill (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `finishing-a-development-branch`, `plan-to-beads`, `bead-create-smart`, `handoff-prompt`, `capture-adrs`, `evolve-adr`, `draining-beads`) and review-gate agent (`design-reviewer`, `plan-reviewer`, `adr-extractor`) MUST follow these rules.
 
 **Design source:** [`docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md`](../docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md). When this document and the spec disagree, the spec wins; file an issue against this AGENTS.md.
 
 **Autonomous epic drain (`/drain`):** For long-running, hands-off epic / set / cascade drains, use the `/drain` slash command (operator entry) + `draining-beads` skill (canonical reference). The harness wraps `subagent-driven-development` in Claude Code's `/goal` Stop hook; lessons and rejection counts accumulate on a per-run drain bead. Requires Claude Code 2.1.148+ with hooks enabled. See [`docs/superpowers/specs/2026-05-22-drain-skill-design.md`](../docs/superpowers/specs/2026-05-22-drain-skill-design.md) for the spec and `dev-flow/skills/draining-beads/SKILL.md` for the runtime reference.
+
+**ADR lifecycle (`/adr`):** ADRs are stored as bd `decision` beads with the description body as canonical content; markdown under `docs/adr/` is a derived view rendered by `dev-flow/scripts/render-adr`. Lifecycle operations (`/adr new` / `propose` / `update` / `supersede` / `addendum` / `accept` / `deprecate` / `render` / `migrate`) live in the `/adr` slash command; `evolve-adr` is the canonical reference. See [`docs/superpowers/specs/2026-05-22-adr-evolution-design.md`](../docs/superpowers/specs/2026-05-22-adr-evolution-design.md). Drift between bd state and committed markdown is a lint failure (INV-A22 in adr-doctor).
 
 ## Rule 1: Structure in specs/plans, implementation in code
 

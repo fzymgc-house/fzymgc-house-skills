@@ -165,6 +165,77 @@ for f in "${ADR_FILES[@]:-}"; do
   done
 done
 
+# --- description_has_context_section (INV-A20) ---
+note "description_has_context_section (INV-A20)"
+if command -v bd >/dev/null 2>&1; then
+  for ID in $(bd list --all --type=decision --json 2>/dev/null | jq -r '.[].id'); do
+    DESC=$(bd show "$ID" --json 2>/dev/null | jq -r '.[0].description // empty')
+    [ -z "$DESC" ] && continue
+    echo "$DESC" | grep -q '^## Context' \
+      || check_fail "$ID: bd description missing '## Context' heading (INV-A20)"
+  done
+fi
+
+# --- description_has_consequences_section (INV-A21) ---
+note "description_has_consequences_section (INV-A21)"
+if command -v bd >/dev/null 2>&1; then
+  for ID in $(bd list --all --type=decision --json 2>/dev/null | jq -r '.[].id'); do
+    DESC=$(bd show "$ID" --json 2>/dev/null | jq -r '.[0].description // empty')
+    [ -z "$DESC" ] && continue
+    echo "$DESC" | grep -q '^## Consequences' \
+      || check_fail "$ID: bd description missing '## Consequences' heading (INV-A21)"
+  done
+fi
+
+# --- markdown_matches_render (INV-A22) ---
+note "markdown_matches_render (INV-A22)"
+if command -v bd >/dev/null 2>&1 && [ -x "$REPO_ROOT/dev-flow/scripts/render-adr" ]; then
+  for f in "${ADR_FILES[@]:-}"; do
+    [ -z "${f:-}" ] && continue
+    [ -f "$f" ] || continue
+    bn=$(basename "$f")
+    case "$bn" in README.md) continue ;; esac
+    bd_id=$(printf '%s' "$bn" | grep -oE "^${BD_ID_RE}")
+    [ -n "$bd_id" ] || continue
+    # Skip if bd doesn't know about this id
+    bd show "$bd_id" --json >/dev/null 2>&1 || continue
+
+    # Capture current committed content
+    EXPECTED_BYTES=$(cat "$f")
+    # Re-render in place (destructive but we restore after)
+    "$REPO_ROOT/dev-flow/scripts/render-adr" "$bd_id" >/dev/null 2>&1 || continue
+    ACTUAL_BYTES=$(cat "$ADR_DIR/$bn" 2>/dev/null)
+    # Restore committed file via git/jj
+    git -C "$REPO_ROOT" checkout HEAD -- "$f" 2>/dev/null \
+      || jj -R "$REPO_ROOT" restore "$f" 2>/dev/null \
+      || true
+
+    if [ "$EXPECTED_BYTES" != "$ACTUAL_BYTES" ]; then
+      check_fail "$f: drift between rendered output and committed file. Run: /adr render $bd_id (INV-A22)"
+    fi
+  done
+fi
+
+# --- status_label_coherent (INV-A23) ---
+note "status_label_coherent (INV-A23)"
+if command -v bd >/dev/null 2>&1; then
+  for ID in $(bd list --all --type=decision --label adr:deprecated --json 2>/dev/null | jq -r '.[].id'); do
+    STATUS=$(bd show "$ID" --json 2>/dev/null | jq -r '.[0].status')
+    [ "$STATUS" = "closed" ] \
+      || check_fail "$ID: has adr:deprecated label but bd status=$STATUS (must be closed) (INV-A23)"
+  done
+fi
+
+# --- adr_deciders_present (INV-A24) ---
+note "adr_deciders_present (INV-A24)"
+if command -v bd >/dev/null 2>&1; then
+  for ID in $(bd list --all --type=decision --status=closed --json 2>/dev/null | jq -r '.[].id'); do
+    DECIDERS=$(bd show "$ID" --json 2>/dev/null | jq -r '.[0].metadata.adr_deciders // empty')
+    [ -n "$DECIDERS" ] \
+      || check_fail "$ID: closed decision bead lacks adr_deciders metadata. Run: /adr migrate --apply (INV-A24)"
+  done
+fi
+
 # Full-pass-only checks (skip when --changed-only is set, since they look
 # at fixtures outside the staged file set).
 if [ "$changed_only" = "0" ]; then

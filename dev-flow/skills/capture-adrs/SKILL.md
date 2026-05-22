@@ -141,25 +141,35 @@ INV-A1: skill MUST NOT write files until all triage is complete.)
 
 For each accepted candidate, in order:
 
-1. Render the ADR markdown body following the spec — Context,
-   Decision, Rationale, Alternatives Considered, Consequences,
-   References — with the `**Date:**`, `**Status:**`, `**Deciders:**`
-   header.
-2. Run, piping the body via stdin (avoids shell-quoting fragility for
-   titles containing apostrophes, double-quotes, or other characters):
+1. Pour via `formula-adr` (validation and metadata are handled inside
+   the pour; no separate `bd create` call needed):
 
    ```bash
-   printf '%s' "$body" | bd create -t decision --validate --title "<title>" --stdin
+   # Pour via formula-adr (bd validate runs in pour; metadata pre-set from var)
+   ID=$(bd --json mol pour formula-adr \
+         --var title="$title" \
+         --var context="$context" \
+         --var decision="$decision" \
+         --var rationale="$rationale" \
+         --var alternatives="$alternatives" \
+         --var consequences="$consequences" \
+         --var deciders="$deciders" \
+       | jq -r '.id')
+   [ -n "$ID" ] && [ "$ID" != "null" ] \
+     || { echo "capture-adrs: bd mol pour formula-adr failed for '$title'" >&2; exit 1; }
+
+   # Close immediately — capture-adrs is the retrospective path (Accepted on creation)
+   bd close "$ID" --reason="Accepted ADR filed via capture-adrs"
+
+   # Render markdown from bd state (replaces the old inline render + write step)
+   dev-flow/scripts/render-adr "$ID"
    ```
 
-   Capture the `bd-id` from stdout. On validate failure, abort this
-   candidate (other candidates continue); report at end.
-3. Compute slug: kebab-case of title, drop stop-words (a, an, the,
-   for, of, to, in, on, with), cap 60 chars.
-4. Prepend `**Decision:** <bd-id>` line below the `**Status:**` line
-   in the body.
-5. Write `docs/adr/<bd-id>-<slug>.md` with the full body.
-6. If candidate has `supersedes: <existing-bd-id>`:
+   Capture `$ID` from the pour output. On pour failure the guard exits
+   and aborts this candidate (other candidates continue); report at end.
+   `render-adr` writes `docs/adr/<bd-id>-<slug>.md` and the slug is
+   derived inside that script — no manual slug computation needed here.
+2. If candidate has `supersedes: <existing-bd-id>`:
 
    ```bash
    bd dep add <new-bd-id> <existing-bd-id> --type supersedes
@@ -220,5 +230,6 @@ Skill MUST NOT commit. User does that.
 - DO NOT write files before all triage decisions are collected.
   (INV-A1)
 - DO NOT overwrite opt-out markers. (INV-A10)
-- DO NOT call `bd create` without `--validate`. (INV-A3 + INV-A4)
+- DO NOT call `bd mol pour` without checking the guard (`$ID` non-empty
+  and non-null). (INV-A3 + INV-A4)
 - DO NOT use a model floor below sonnet for the adr-extractor dispatch.

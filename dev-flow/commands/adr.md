@@ -249,3 +249,94 @@ Operator steps (shell + interactive):
    dev-flow/scripts/render-adr "$NEW"   # References shows Supersedes: OLD
    ```
 7. Print: `"Superseded $OLD with $NEW. Both ADRs re-rendered."`
+
+## Migrate mode (/adr migrate [--apply])
+
+Backfill `adr_deciders` metadata on legacy decision beads and re-render their `.md` files.
+Defaults to **dry-run** — surveys legacy ADRs and reports what would change without mutating bd
+state. Pass `--apply` to actually perform the migrations.
+
+Three legacy paths are handled:
+
+- **(a) Already migrated** — bead's `metadata.adr_deciders` is set → skip.
+- **(b) Legacy with .md file** — bead lacks `adr_deciders` metadata but a `docs/adr/<id>-*.md`
+  exists. Extract the value from the `**Deciders:**` header line in the rendered file, backfill
+  the metadata, and re-render so the file is sourced from bd going forward.
+- **(c) Orphan (bd record, no .md)** — bead has no rendered file. `--apply` requires interactive
+  `AskUserQuestion` to ask the operator for deciders. Per INV-A19, `AskUserQuestion` is only
+  available in the **main session context**, so orphan-recovery under `--apply` **fails fast**
+  in non-main contexts (Codex / subagent dispatch / autonomous loops). Re-run from a primary
+  Claude Code session to recover orphans. This is v1-stub behavior; a follow-up will wire the
+  interactive prompt path so orphan recovery completes end-to-end from a main session.
+
+```bash
+APPLY=0
+for arg in "$@"; do
+  [ "$arg" = "--apply" ] && APPLY=1
+done
+
+echo "/adr migrate: --apply=$APPLY"
+
+ALREADY=0; MIGRATED=0; RECOVERED=0; FAILED=0
+FAILED_IDS=""
+
+# Iterate all decision beads (include closed via --all; accepted ADRs are closed beads).
+for ID in $(bd list --all --type=decision --json | jq -r '.[].id'); do
+  DECIDERS=$(bd show "$ID" --json | jq -r '.[0].metadata.adr_deciders // empty')
+  if [ -n "$DECIDERS" ]; then
+    ALREADY=$((ALREADY+1))
+    continue
+  fi
+
+  # Legacy bead — look for corresponding .md
+  MD=$(ls docs/adr/${ID}-*.md 2>/dev/null | head -1)
+  if [ -n "$MD" ]; then
+    EXTRACTED=$(grep '^\*\*Deciders:\*\*' "$MD" | head -1 | sed 's/^\*\*Deciders:\*\*[[:space:]]*//')
+    if [ -n "$EXTRACTED" ]; then
+      if [ "$APPLY" = "1" ]; then
+        bd update "$ID" --set-metadata "adr_deciders=$EXTRACTED"
+        dev-flow/scripts/render-adr "$ID"
+        MIGRATED=$((MIGRATED+1))
+        echo "MIGRATED: $ID (deciders='$EXTRACTED') + re-rendered"
+      else
+        echo "WOULD MIGRATE: $ID (deciders='$EXTRACTED') + would re-render"
+        MIGRATED=$((MIGRATED+1))
+      fi
+    else
+      FAILED=$((FAILED+1))
+      FAILED_IDS="$FAILED_IDS $ID"
+      echo "FAILED: $ID has .md but no extractable **Deciders:** line" >&2
+    fi
+  else
+    # Orphan: bd record but no .md
+    if [ "$APPLY" = "1" ]; then
+      # Orphan-recovery requires AskUserQuestion (main session context per INV-A19).
+      # Fail fast in non-main contexts (Codex / subagent dispatch).
+      echo "ORPHAN: $ID — operator-prompt path needs main session context (AskUserQuestion). Skipping in this run; re-run from primary session to recover." >&2
+      FAILED=$((FAILED+1))
+      FAILED_IDS="$FAILED_IDS $ID"
+    else
+      echo "WOULD RECOVER: $ID (orphan; would prompt for deciders + render new .md)"
+      RECOVERED=$((RECOVERED+1))
+    fi
+  fi
+done
+
+echo
+echo "Migration report:"
+echo "  Already migrated:    $ALREADY"
+if [ "$APPLY" = "1" ]; then
+  echo "  Newly migrated:      $MIGRATED"
+  echo "  Newly recovered:     $RECOVERED"
+else
+  echo "  Will migrate:        $MIGRATED"
+  echo "  Will recover:        $RECOVERED"
+fi
+echo "  Failed:              $FAILED"
+[ -n "$FAILED_IDS" ] && echo "  Failed IDs:         $FAILED_IDS"
+
+if [ "$APPLY" = "0" ] && [ $((MIGRATED + RECOVERED)) -gt 0 ]; then
+  echo
+  echo "Dry-run only. Re-run with --apply to perform the migrations."
+fi
+```

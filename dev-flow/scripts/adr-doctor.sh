@@ -117,17 +117,27 @@ for f in "${ADR_FILES[@]:-}"; do
   if ! printf '%s' "$bn" | grep -qE "^${BD_ID_RE}-[a-z0-9-]+\.md$"; then
     continue
   fi
-  bd_id_from_filename=$(printf '%s' "$bn" | grep -oE "^${BD_ID_RE}")
+  # Extract bd-id from the unambiguous **Decision:** line, then verify the
+  # filename starts with `<bd-id>-`. (Extracting bd-id from the filename
+  # via greedy regex is unreliable because BD_ID_RE allows hyphens in the
+  # prefix segment — see fzymgc-skills-001 in the BD_ID_RE comment above —
+  # so a filename like `<bd-id>-<long-slug>.md` lets the greedy match swallow
+  # the slug. The **Decision:** line has no slug to confuse the match.)
   decision_line=$(grep -E "^\*\*Decision:\*\*\s+${BD_ID_RE}" "$f" | head -1)
   if [ -z "$decision_line" ]; then
     check_fail "$f: missing **Decision:** <bd-id> header"
     continue
   fi
-  decision_id=$(printf '%s' "$decision_line" | grep -oE "${BD_ID_RE}" | head -1)
-  if [ "$decision_id" != "$bd_id_from_filename" ]; then
-    check_fail "$f: **Decision:** $decision_id does not match filename bd-id $bd_id_from_filename"
-    continue
-  fi
+  # awk-extract the bd-id (second whitespace token after `**Decision:**`)
+  decision_id=$(printf '%s' "$decision_line" | awk '{print $2}')
+  # Verify filename basename starts with `<decision_id>-`
+  case "$bn" in
+    "$decision_id"-*) ;;
+    *)
+      check_fail "$f: filename does not start with **Decision:** id ($decision_id-)"
+      continue
+      ;;
+  esac
   # If bd is available, verify the record exists.
   if command -v bd >/dev/null 2>&1; then
     if ! bd show "$decision_id" >/dev/null 2>&1; then

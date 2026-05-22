@@ -243,4 +243,107 @@ After the shell commands above complete successfully, invoke:
 
 where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time.
 
+## Cascade mode (`/drain cascade <id1> <id2> ...`)
+
+Drains the listed seed beads plus their transitive dependents (via `bd dep list --direction=up`). Runs four phases:
+**(A) pre-flight** refuses on bad state, **(B) pour** creates the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+
+**Phase A — Pre-flight checks** (refuse early on bad state):
+
+```bash
+# 1. Bootstrap verified
+bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
+  || { echo "Run /drain init first." >&2; exit 1; }
+
+# (Spec pre-flight #2 — mode arg valid — is handled by the dispatch stub above.)
+
+# 3. Scope validation: each seed exists and is not already closed
+for id in "$@"; do
+  bd show "$id" --json >/dev/null 2>&1 \
+    || { echo "Bead $id not found." >&2; exit 1; }
+  STATUS=$(bd show "$id" --json | jq -r '.status')
+  [ "$STATUS" != "closed" ] \
+    || { echo "Bead $id is already closed; remove from cascade seeds." >&2; exit 1; }
+done
+SCOPE="$*"
+
+# 4. Working tree clean (jj first if jj root succeeds; git status as fallback)
+if jj root >/dev/null 2>&1; then
+  DIRTY=$(jj --no-pager st | grep -E "^(M|A|D|R)" | wc -l | tr -d ' ')
+else
+  DIRTY=$(git status --porcelain | wc -l | tr -d ' ')
+fi
+[ "$DIRTY" = "0" ] \
+  || { echo "Working tree not clean ($DIRTY changes). Commit or discard before draining." >&2; exit 1; }
+
+# 5. Branch safety (refuse main / master)
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+case "$BRANCH" in
+  main|master|HEAD) echo "Refuse to drain on $BRANCH. Switch to a feature branch first." >&2; exit 1 ;;
+esac
+
+# 6. Trust + hooks check
+for settings_file in .claude/settings.json "$HOME/.claude/settings.json"; do
+  if [ -f "$settings_file" ]; then
+    if jq -e '.disableAllHooks == true or .allowManagedHooksOnly == true' "$settings_file" >/dev/null 2>&1; then
+      echo "Refusing: $settings_file has hooks disabled (disableAllHooks or allowManagedHooksOnly). /goal requires hooks enabled." >&2
+      exit 1
+    fi
+  fi
+done
+
+# 7. No overlapping drain (label-based; --type fallback per spec)
+OVERLAP=$(bd list --label-pattern 'drain:*' --status=in_progress --json | jq -r '.[] | .id' | tr '\n' ' ')
+[ -z "$OVERLAP" ] \
+  || { echo "Refusing: drain(s) already in_progress: $OVERLAP" >&2; exit 1; }
+```
+
+Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
+
+**Phase B — Pour the drain bead + stash structured metadata**:
+
+```bash
+MODE=cascade
+STARTED_AT=$(date -u +%FT%TZ)
+
+DRAIN_ID=$(bd --json mol pour formula-drain \
+  --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
+  | jq -r '.id')
+
+# Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
+ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
+[ "$ACTUAL_TYPE" = "drain" ] \
+  || { echo "Drain bead $DRAIN_ID landed as type=$ACTUAL_TYPE (expected drain); aborting." >&2; exit 1; }
+
+# Structured metadata for resume
+bd update "$DRAIN_ID" \
+  --set-metadata "drain_mode=$MODE" \
+  --set-metadata "drain_scope=$SCOPE" \
+  --set-metadata "drain_started_at=$STARTED_AT"
+
+# Status transition (no parent linkage for cascade mode — no single parent)
+bd update "$DRAIN_ID" --status=in_progress
+
+echo "Drain bead $DRAIN_ID created for cascade seeds: $SCOPE."
+```
+
+**Phase C — Compose the sentinel string**:
+
+```bash
+SCOPE="$*"  # space-separated seeds
+SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed."
+```
+
+**Working-set expansion**: cascade mode does not pre-compute the full reachable set. Instead, the per-iteration helper (defined in Task 8) maintains a stateful working set that starts as `{$SCOPE}` and grows as beads close. After each close, the helper calls `bd dep list <closed-id> --direction=up --json | jq -r '.[].id'` to surface newly-revealed dependents and adds any not-yet-seen ids to the working set. The helper terminates when (a) no open beads remain in the working set AND (b) the most recent close revealed no new dependents — both conditions must hold simultaneously to declare the sentinel satisfied.
+
+The full `/goal` prompt body (referenced as `<PROMPT_BODY>` in Phase D) lands in Task 8; for now Phase D is a directive placeholder.
+
+**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+
+After the shell commands above complete successfully, invoke:
+
+    /goal <PROMPT_BODY>
+
+where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time. For cascade mode the iteration body must call the working-set helper described above so the cascade expands as dependents are revealed.
+
 Remaining mode bodies are filled in by Tasks 3–8 of `docs/superpowers/plans/2026-05-22-drain-skill.md`. This stub MUST refuse all modes other than usage until those tasks land.

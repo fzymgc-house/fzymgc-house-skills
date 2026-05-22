@@ -1,10 +1,15 @@
 <!-- markdownlint-disable MD013 -->
+<!-- adr-render: source=bd:fhsk-thw; do not edit manually; use `/adr update fhsk-thw` -->
 
 # Use /goal over /loop for autonomous bead-queue drains
 
 **Date:** 2026-05-22
 **Status:** Accepted
 **Decision:** fhsk-thw
+**Deciders:** Sean Brandt (@seanb4t)
+
+**Date:** 2026-05-22
+**Status:** Accepted
 **Deciders:** Sean Brandt (@seanb4t)
 
 ## Context

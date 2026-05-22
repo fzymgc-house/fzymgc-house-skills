@@ -1,10 +1,15 @@
 <!-- markdownlint-disable MD013 -->
+<!-- adr-render: source=bd:fhsk-rqh; do not edit manually; use `/adr update fhsk-rqh` -->
 
 # Use bd mol pour with versioned formula for drain bead creation
 
 **Date:** 2026-05-22
 **Status:** Accepted
 **Decision:** fhsk-rqh
+**Deciders:** Sean Brandt (@seanb4t)
+
+**Date:** 2026-05-22
+**Status:** Accepted
 **Deciders:** Sean Brandt (@seanb4t)
 
 ## Context

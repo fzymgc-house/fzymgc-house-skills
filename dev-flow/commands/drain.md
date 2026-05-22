@@ -346,4 +346,38 @@ After the shell commands above complete successfully, invoke:
 
 where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below (filled in by Task 8). Substitute `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` at fire time. For cascade mode the iteration body must call the working-set helper described above so the cascade expands as dependents are revealed.
 
+## Resume mode (`/drain resume <drain-id>`)
+
+Resumes a halted drain run by recovering structured metadata from the drain bead and re-firing `/goal` with the same sentinel. The drain bead's existing notes (lessons, rejection counts, halt reasons) carry forward unchanged — the iteration body's halt-check on iteration 1 will see prior `rejection:` notes and trip immediately if any task is already past N=3.
+
+```bash
+DRAIN_ID="$1"
+
+# 1. Recover structured fields from drain bead metadata
+META=$(bd show "$DRAIN_ID" --json | jq '.metadata')
+MODE=$(echo "$META" | jq -r '.drain_mode')
+SCOPE=$(echo "$META" | jq -r '.drain_scope')
+STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
+
+[ -n "$MODE" ] && [ "$MODE" != "null" ] \
+  || { echo "Drain bead $DRAIN_ID has no drain_mode metadata; cannot resume." >&2; exit 1; }
+
+# 2. Re-run pre-flight (Phase A from the original mode) against $SCOPE.
+#    For epic mode, re-run epic-mode Phase A (with $SCOPE as $EPIC_ID).
+#    For set/cascade modes, re-run their respective per-seed Phase A loops.
+#    The specific Phase A pre-flight is invoked from the corresponding mode's section above.
+
+# 3. Recompose the same SENTINEL string the original run used
+case "$MODE" in
+  epic)    SENTINEL="All beads under epic $SCOPE are closed." ;;
+  set)     SENTINEL="All of {$SCOPE} are closed." ;;
+  cascade) SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed." ;;
+  *)       echo "Unknown drain_mode '$MODE' on $DRAIN_ID; cannot resume." >&2; exit 1 ;;
+esac
+
+echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
+```
+
+After the shell commands above complete successfully, fall through to the same `/goal <PROMPT_BODY>` invocation as the original mode (Phase D directive). The iteration body in Task 8 handles all three modes via the `$MODE` substitution.
+
 Remaining mode bodies are filled in by Tasks 3–8 of `docs/superpowers/plans/2026-05-22-drain-skill.md`. This stub MUST refuse all modes other than usage until those tasks land.

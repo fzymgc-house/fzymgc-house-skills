@@ -130,6 +130,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 MODE=epic
 SCOPE="$EPIC_ID"
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly. `bd create --type drain`
 # honors types.custom (pre-flight #1 guarantees `drain` is registered), stamps
@@ -151,7 +152,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Parent linkage (epic mode only) and status transition
 bd update "$DRAIN_ID" --parent "$EPIC_ID"
@@ -164,6 +166,7 @@ echo "Drain bead $DRAIN_ID created for epic $EPIC_ID."
 
 ```bash
 SENTINEL="All beads under epic $EPIC_ID are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
 **Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
@@ -263,6 +266,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 ```bash
 MODE=set
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for
 # why `bd create --type drain` is used instead of `bd mol pour`).
@@ -279,7 +283,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Status transition (no parent linkage for set mode)
 bd update "$DRAIN_ID" --status=in_progress
@@ -291,6 +296,7 @@ echo "Drain bead $DRAIN_ID created for set: $SCOPE."
 
 ```bash
 SENTINEL="All of {$SCOPE} are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
 **Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
@@ -390,6 +396,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 ```bash
 MODE=cascade
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for
 # why `bd create --type drain` is used instead of `bd mol pour`).
@@ -406,7 +413,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Status transition (no parent linkage for cascade mode — no single parent)
 bd update "$DRAIN_ID" --status=in_progress
@@ -418,6 +426,7 @@ echo "Drain bead $DRAIN_ID created for cascade seeds: $SCOPE."
 
 ```bash
 SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
 (`$SCOPE` was set to `"$*"` in Phase A; reusing here.)
@@ -444,6 +453,8 @@ META=$(bd show "$DRAIN_ID" --json | jq '.[0].metadata')
 MODE=$(echo "$META" | jq -r '.drain_mode')
 SCOPE=$(echo "$META" | jq -r '.drain_scope')
 STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
+WORKSPACE=$(echo "$META" | jq -r '.drain_workspace // empty')
+SENTINEL=$(echo "$META" | jq -r '.drain_sentinel // empty')
 
 [ -n "$MODE" ] && [ "$MODE" != "null" ] \
   || { echo "Drain bead $DRAIN_ID has no drain_mode metadata; cannot resume." >&2; exit 1; }
@@ -461,13 +472,15 @@ STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
 #      - $MODE == cascade  → copy Cascade mode Phase A (the per-seed loop over $SCOPE words)
 #    Then continue to step 3.
 
-# 3. Recompose the same SENTINEL string the original run used
-case "$MODE" in
-  epic)    SENTINEL="All beads under epic $SCOPE are closed." ;;
-  set)     SENTINEL="All of {$SCOPE} are closed." ;;
-  cascade) SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed." ;;
-  *)       echo "Unknown drain_mode '$MODE' on $DRAIN_ID; cannot resume." >&2; exit 1 ;;
-esac
+# 3. Sentinel: prefer the stamped drain_sentinel; recompose only if absent (older beads)
+if [ -z "$SENTINEL" ]; then
+  case "$MODE" in
+    epic)    SENTINEL="All beads under epic $SCOPE are closed." ;;
+    set)     SENTINEL="All of {$SCOPE} are closed." ;;
+    cascade) SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed." ;;
+    *)       echo "Unknown drain_mode '$MODE' on $DRAIN_ID; cannot resume." >&2; exit 1 ;;
+  esac
+fi
 
 echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
 ```

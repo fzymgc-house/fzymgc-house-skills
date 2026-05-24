@@ -44,7 +44,7 @@ echo "drain init complete."
 ## Epic mode (`/drain epic <epic-id>`)
 
 Drains all open beads under the specified epic. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -166,18 +166,18 @@ echo "Drain bead $DRAIN_ID created for epic $EPIC_ID."
 SENTINEL="All beads under epic $EPIC_ID are closed."
 ```
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
-
-    /goal <PROMPT_BODY>
-
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$EPIC_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
 ## Set mode (`/drain set <id1> <id2> ...`)
 
 Drains an explicit set of beads by id. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -293,18 +293,18 @@ echo "Drain bead $DRAIN_ID created for set: $SCOPE."
 SENTINEL="All of {$SCOPE} are closed."
 ```
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
-
-    /goal <PROMPT_BODY>
-
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
 ## Cascade mode (`/drain cascade <id1> <id2> ...`)
 
 Drains the listed seed beads plus their transitive dependents (via `bd dep list --direction=up`). Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -424,13 +424,13 @@ SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed."
 
 The iteration body (see "Iteration body" section below) maintains the working-set state in cascade mode: Step 4's cascade branch starts with the seeds from `$SCOPE`, expands via `bd dep list <closed-id> --direction=up` after each close, and terminates when both no open beads remain in the working set and the most recent close revealed no new dependents.
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
-
-    /goal <PROMPT_BODY>
-
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
 ## Resume mode (`/drain resume <drain-id>`)
 
@@ -472,7 +472,7 @@ esac
 echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
 ```
 
-After the shell commands above complete successfully, fall through to the same `/goal <PROMPT_BODY>` invocation as the original mode (Phase D directive). The iteration body in Task 8 handles all three modes via the `$MODE` substitution.
+After the shell commands above complete successfully, fall through to **Phase D — Emit the `/goal` condition**, which emits the Worker condition for the recovered `$MODE`/`$SCOPE`/`$SENTINEL` (the operator/driver submits it to a worker).
 
 ## Worker condition (the `/goal` payload)
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.6.0...dev-flow-v0.6.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* **drain:** scope pre-flight [#7](https://github.com/fzymgc-house/fzymgc-house-skills/issues/7) to overlapping chains, drop no-op label query ([#85](https://github.com/fzymgc-house/fzymgc-house-skills/issues/85)) ([ece8611](https://github.com/fzymgc-house/fzymgc-house-skills/commit/ece86117f45a2fbf7f62bbd017c21cfc2239f8f1))
+
 ## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.5.0...dev-flow-v0.6.0) (2026-05-22)
 
 

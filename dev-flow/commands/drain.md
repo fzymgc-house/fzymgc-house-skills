@@ -1,7 +1,7 @@
 ---
 description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, resume.
 argument-hint: "init | epic <id> | set <id...> | cascade <id...> | resume <drain-id>"
-allowed-tools: ["Read", "Grep", "Glob", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd formula list:*)", "Bash(bd formula show:*)", "Bash(bd --json mol pour:*)", "Bash(bd mol pour:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(mkdir -p .beads/formulas:*)", "Bash(cp -n \"${CLAUDE_PLUGIN_ROOT}/.beads/formulas/formula-drain.formula.toml\" .beads/formulas/:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)"]
 ---
 
 # /drain
@@ -10,7 +10,7 @@ Autonomous bead-iteration harness. Drives `subagent-driven-development` across a
 
 Parse `$ARGUMENTS` as one of:
 
-- `init` — Bootstrap this repo: register `drain` custom type; copy formula into `.beads/formulas/`.
+- `init` — Bootstrap this repo: register the `drain` custom type.
 - `epic <epic-id>` — Drain all open beads under `<epic-id>`.
 - `set <id1> <id2> ...` — Drain only the listed beads.
 - `cascade <id1> <id2> ...` — Drain seeds + transitive dependents (via `bd dep list --direction=up`).
@@ -21,6 +21,12 @@ Parse `$ARGUMENTS` as one of:
 
 Idempotent, per-repo bootstrap. Run once per repo before any drain mode.
 
+Registering the `drain` custom type is the only bootstrap step: Phase B creates
+the drain bead with `bd create --type drain`, which requires `drain` to be in
+`types.custom` (an unregistered type makes `bd create` fail with
+`invalid issue type: drain`). No formula file is needed — see ADR `fhsk-rqh`
+(superseded) for why `bd mol pour` is not used.
+
 Execute these shell commands in order, surfacing errors plainly:
 
 ```bash
@@ -30,30 +36,23 @@ if ! echo "$EXISTING" | tr ',' '\n' | grep -qw drain; then
   bd config set types.custom "${EXISTING:+$EXISTING,}drain"
 fi
 
-# 2. Copy formula into the active repo's .beads/formulas/ (bd searches there, not plugin dirs)
-mkdir -p .beads/formulas
-cp -n "${CLAUDE_PLUGIN_ROOT}/.beads/formulas/formula-drain.formula.toml" .beads/formulas/
-
-# 3. Sanity check: both assets present
+# 2. Sanity check: drain type registered
 bd types | grep -q drain || { echo "drain type not registered" >&2; exit 1; }
-bd formula list | grep -q formula-drain || { echo "formula-drain not visible to bd" >&2; exit 1; }
 echo "drain init complete."
 ```
-
-`${CLAUDE_PLUGIN_ROOT}` resolves via the `allowed-tools` declaration (matches the ralph-loop / hookify slash-command pattern).
 
 ## Epic mode (`/drain epic <epic-id>`)
 
 Drains all open beads under the specified epic. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) pour** creates the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
 ```bash
 EPIC_ID="$1"  # the bead id passed to `/drain epic <id>`
 
-# 1. Bootstrap verified
-bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
+# 1. Bootstrap verified (drain type registered; Phase B's bd create needs it)
+bd types | grep -q drain \
   || { echo "Run /drain init first." >&2; exit 1; }
 
 # (Spec pre-flight #2 — mode arg valid — is handled by the dispatch stub above.)
@@ -111,7 +110,7 @@ NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
 OVERLAP=""
 for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
   [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
-  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  DSCOPE=$(bd show "$did" --json | jq -r '.[0].metadata.drain_scope // empty')
   for have in $DSCOPE; do
     for want in $NEW_SCOPE; do
       [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
@@ -125,23 +124,28 @@ OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
 
-**Phase B — Pour the drain bead + stash structured metadata**:
+**Phase B — Create the drain bead + stash structured metadata**:
 
 ```bash
 MODE=epic
 SCOPE="$EPIC_ID"
 STARTED_AT=$(date -u +%FT%TZ)
 
-DRAIN_ID=$(bd --json mol pour formula-drain \
-  --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
-  | jq -r '.id')
+# Create the typed audit-trail drain bead directly. `bd create --type drain`
+# honors types.custom (pre-flight #1 guarantees `drain` is registered), stamps
+# the real label, creates exactly one bead, and returns a flat top-level `.id`.
+# `bd mol pour` is NOT used: bd's cook step downgrades custom step types to
+# `task` (cmd/bd/cook.go stepTypeToIssueType) and never substitutes vars in
+# labels, so a poured drain bead lands as type=task with a literal
+# `drain:{{mode}}` label and an orphan wrapper epic. See ADR fhsk-rqh (superseded).
+DRAIN_ID=$(bd create \
+  --title "Drain: $MODE $SCOPE" \
+  --description "Audit-trail root for the $MODE-mode drain over $SCOPE started $STARTED_AT." \
+  --type drain \
+  --label phase:run --label "drain:$MODE" \
+  --json | jq -r '.id')
 [ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
-  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
-
-# Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
-ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
-[ "$ACTUAL_TYPE" = "drain" ] \
-  || { echo "Drain bead $DRAIN_ID landed as type=$ACTUAL_TYPE (expected drain); aborting." >&2; exit 1; }
+  || { echo "bd create --type drain failed (drain type unregistered or create error)." >&2; exit 1; }
 
 # Structured metadata for resume
 bd update "$DRAIN_ID" \
@@ -173,13 +177,13 @@ where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" sectio
 ## Set mode (`/drain set <id1> <id2> ...`)
 
 Drains an explicit set of beads by id. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) pour** creates the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
 ```bash
-# 1. Bootstrap verified
-bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
+# 1. Bootstrap verified (drain type registered; Phase B's bd create needs it)
+bd types | grep -q drain \
   || { echo "Run /drain init first." >&2; exit 1; }
 
 # (Spec pre-flight #2 — mode arg valid — is handled by the dispatch stub above.)
@@ -188,7 +192,7 @@ bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
 for id in "$@"; do
   bd show "$id" --json >/dev/null 2>&1 \
     || { echo "Bead $id not found." >&2; exit 1; }
-  STATUS=$(bd show "$id" --json | jq -r '.status')
+  STATUS=$(bd show "$id" --json | jq -r '.[0].status')
   [ "$STATUS" != "closed" ] \
     || { echo "Bead $id is already closed; remove from set." >&2; exit 1; }
 done
@@ -240,7 +244,7 @@ NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
 OVERLAP=""
 for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
   [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
-  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  DSCOPE=$(bd show "$did" --json | jq -r '.[0].metadata.drain_scope // empty')
   for have in $DSCOPE; do
     for want in $NEW_SCOPE; do
       [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
@@ -254,22 +258,22 @@ OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
 
-**Phase B — Pour the drain bead + stash structured metadata**:
+**Phase B — Create the drain bead + stash structured metadata**:
 
 ```bash
 MODE=set
 STARTED_AT=$(date -u +%FT%TZ)
 
-DRAIN_ID=$(bd --json mol pour formula-drain \
-  --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
-  | jq -r '.id')
+# Create the typed audit-trail drain bead directly (see epic-mode Phase B for
+# why `bd create --type drain` is used instead of `bd mol pour`).
+DRAIN_ID=$(bd create \
+  --title "Drain: $MODE $SCOPE" \
+  --description "Audit-trail root for the $MODE-mode drain over $SCOPE started $STARTED_AT." \
+  --type drain \
+  --label phase:run --label "drain:$MODE" \
+  --json | jq -r '.id')
 [ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
-  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
-
-# Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
-ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
-[ "$ACTUAL_TYPE" = "drain" ] \
-  || { echo "Drain bead $DRAIN_ID landed as type=$ACTUAL_TYPE (expected drain); aborting." >&2; exit 1; }
+  || { echo "bd create --type drain failed (drain type unregistered or create error)." >&2; exit 1; }
 
 # Structured metadata for resume
 bd update "$DRAIN_ID" \
@@ -300,13 +304,13 @@ where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" sectio
 ## Cascade mode (`/drain cascade <id1> <id2> ...`)
 
 Drains the listed seed beads plus their transitive dependents (via `bd dep list --direction=up`). Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) pour** creates the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
 ```bash
-# 1. Bootstrap verified
-bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
+# 1. Bootstrap verified (drain type registered; Phase B's bd create needs it)
+bd types | grep -q drain \
   || { echo "Run /drain init first." >&2; exit 1; }
 
 # (Spec pre-flight #2 — mode arg valid — is handled by the dispatch stub above.)
@@ -315,7 +319,7 @@ bd types | grep -q drain && [ -f .beads/formulas/formula-drain.formula.toml ] \
 for id in "$@"; do
   bd show "$id" --json >/dev/null 2>&1 \
     || { echo "Bead $id not found." >&2; exit 1; }
-  STATUS=$(bd show "$id" --json | jq -r '.status')
+  STATUS=$(bd show "$id" --json | jq -r '.[0].status')
   [ "$STATUS" != "closed" ] \
     || { echo "Bead $id is already closed; remove from cascade seeds." >&2; exit 1; }
 done
@@ -367,7 +371,7 @@ NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
 OVERLAP=""
 for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
   [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
-  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  DSCOPE=$(bd show "$did" --json | jq -r '.[0].metadata.drain_scope // empty')
   for have in $DSCOPE; do
     for want in $NEW_SCOPE; do
       [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
@@ -381,22 +385,22 @@ OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
 
-**Phase B — Pour the drain bead + stash structured metadata**:
+**Phase B — Create the drain bead + stash structured metadata**:
 
 ```bash
 MODE=cascade
 STARTED_AT=$(date -u +%FT%TZ)
 
-DRAIN_ID=$(bd --json mol pour formula-drain \
-  --var mode="$MODE" --var scope="$SCOPE" --var started_at="$STARTED_AT" \
-  | jq -r '.id')
+# Create the typed audit-trail drain bead directly (see epic-mode Phase B for
+# why `bd create --type drain` is used instead of `bd mol pour`).
+DRAIN_ID=$(bd create \
+  --title "Drain: $MODE $SCOPE" \
+  --description "Audit-trail root for the $MODE-mode drain over $SCOPE started $STARTED_AT." \
+  --type drain \
+  --label phase:run --label "drain:$MODE" \
+  --json | jq -r '.id')
 [ -n "$DRAIN_ID" ] && [ "$DRAIN_ID" != "null" ] \
-  || { echo "bd mol pour formula-drain returned no id (pour failed or jq parse failed)." >&2; exit 1; }
-
-# Defense-in-depth: confirm the bead landed as type=drain (auto-registration is invisible)
-ACTUAL_TYPE=$(bd show "$DRAIN_ID" --json | jq -r '.type')
-[ "$ACTUAL_TYPE" = "drain" ] \
-  || { echo "Drain bead $DRAIN_ID landed as type=$ACTUAL_TYPE (expected drain); aborting." >&2; exit 1; }
+  || { echo "bd create --type drain failed (drain type unregistered or create error)." >&2; exit 1; }
 
 # Structured metadata for resume
 bd update "$DRAIN_ID" \
@@ -436,7 +440,7 @@ Resumes a halted drain run by recovering structured metadata from the drain bead
 DRAIN_ID="$1"
 
 # 1. Recover structured fields from drain bead metadata
-META=$(bd show "$DRAIN_ID" --json | jq '.metadata')
+META=$(bd show "$DRAIN_ID" --json | jq '.[0].metadata')
 MODE=$(echo "$META" | jq -r '.drain_mode')
 SCOPE=$(echo "$META" | jq -r '.drain_scope')
 STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
@@ -486,13 +490,13 @@ Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in or
    run `bd close $DRAIN_ID --reason="drain completed cleanly"`, invoke
    dev-flow:finishing-a-development-branch, then exit (do NOT continue to step 2).
 
-2. Check halt conditions — scan `bd show $DRAIN_ID --json | jq '.notes'` for any
+2. Check halt conditions — scan `bd show $DRAIN_ID --json | jq -r '.[0].notes'` for any
    "rejection: <id> N=3+" line OR any prior "halt:" line. On match: append
    `bd note $DRAIN_ID "halt: <reason>"`, run `/goal clear`, send PushNotification,
    exit.
 
-3. Read lessons — collect `bd show $DRAIN_ID --json | jq '.notes'` filtered to
-   prefix "lesson:" (run-scoped). For epic mode, ALSO read `bd show $EPIC_ID --json | jq '.notes'`
+3. Read lessons — collect `bd show $DRAIN_ID --json | jq -r '.[0].notes'` filtered to
+   prefix "lesson:" (run-scoped). For epic mode, ALSO read `bd show $EPIC_ID --json | jq -r '.[0].notes'`
    filtered to prefix "lesson:" (epic-scoped). Concatenate into a $LESSONS variable
    for step 7.
 

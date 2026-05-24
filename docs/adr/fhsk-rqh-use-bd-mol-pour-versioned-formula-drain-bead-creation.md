@@ -4,12 +4,8 @@
 # Use bd mol pour with versioned formula for drain bead creation
 
 **Date:** 2026-05-22
-**Status:** Accepted
+**Status:** Superseded by fhsk-buu
 **Decision:** fhsk-rqh
-**Deciders:** Sean Brandt (@seanb4t)
-
-**Date:** 2026-05-22
-**Status:** Accepted
 **Deciders:** Sean Brandt (@seanb4t)
 
 ## Context
@@ -43,6 +39,4 @@ Use `bd mol pour formula-drain` with a versioned TOML formula at `dev-flow/.bead
 
 ## References
 
-- Spec: `docs/superpowers/specs/2026-05-22-drain-skill-design.md` §Architecture — Drain bead + formula-drain.toml
-- Design bead: `fhsk-a67`
-- Reference formula: `/Users/sean/gascity/.beads/formulas/mol-witness-patrol.formula.toml` (exemplar)
+- Superseded by: fhsk-buu

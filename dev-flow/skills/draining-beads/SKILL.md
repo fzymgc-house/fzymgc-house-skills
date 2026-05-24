@@ -6,7 +6,7 @@ description: Use when you have an epic / set / cascade of beads to drain autonom
 # Draining beads
 
 Autonomous, hands-off bead iteration driven by Claude Code's `/goal` Stop-hook
-primitive. One `/drain` invocation pours a per-run drain bead, fires `/goal`,
+primitive. One `/drain` invocation creates a per-run drain bead, fires `/goal`,
 and then iterates until a clean sentinel or a structural halt — without operator
 input between tasks.
 
@@ -16,13 +16,17 @@ discoverable reference; cite the spec for any contract change.
 
 ## Overview
 
-The harness is three pieces:
+The harness is two pieces:
 
 | Piece | Role |
 |---|---|
-| `/drain` slash command | Operator entry point: pre-flight, pour drain bead, fire `/goal` |
+| `/drain` slash command | Operator entry point: pre-flight, create drain bead (`bd create --type drain`), fire `/goal` |
 | `draining-beads` skill | This file — sentinel design, halt conditions, lessons, edge cases |
-| `formula-drain.formula.toml` | bd formula scaffolding the per-run drain bead |
+
+The drain bead is created with `bd create --type drain` (not `bd mol pour`).
+ADR `fhsk-rqh` (superseded) records why the formula/pour approach was abandoned:
+bd's cook step downgrades custom step types to `task` and does not substitute
+template vars in labels, so a poured drain bead cannot carry type `drain`.
 
 `/goal` (not `/loop`) is the iteration primitive. `/goal` is Claude Code's
 native Stop-hook mechanism (verified in binary `2.1.148`): it re-fires a
@@ -71,7 +75,7 @@ can verify with one `bd` query:
 | Mode | Sentinel | Verification query |
 |---|---|---|
 | `epic <id>` | `All beads under epic <id> are closed.` | `bd list --status=open --parent <id> --json \| jq 'length == 0'` |
-| `set <ids…>` | `All of {<id1>, …} are closed.` | `for id in $SEEDS; do bd show $id --json \| jq -e '.status == "closed"'; done` |
+| `set <ids…>` | `All of {<id1>, …} are closed.` | `for id in $SEEDS; do bd show $id --json \| jq -e '.[0].status == "closed"'; done` |
 | `cascade <ids…>` | `All beads in the cascade-reachable set from {seeds} are closed.` | Maintain working set; expand via `bd dep list <id> --direction=up` after each close; query: any open bead in working set? |
 
 See the spec for canonical predicate strings.
@@ -152,10 +156,9 @@ authoritative audit trail regardless of notification delivery.
 |---|---|
 | Spec (source of truth) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
-| Formula | `dev-flow/.beads/formulas/formula-drain.formula.toml` |
 | ADR: `/goal` over `/loop` | `fhsk-thw` |
-| ADR: 3-piece split | `fhsk-0o2` |
-| ADR: `bd mol pour` | `fhsk-rqh` |
+| ADR: harness split | `fhsk-0o2` |
+| ADR: `bd mol pour` (superseded) | `fhsk-rqh` |
 | ADR: lessons in bd notes | `fhsk-ce3` |
 | ADR: `/drain init` explicit | `fhsk-0cd` |
 | Rule 1 (structure in specs/plans) | `dev-flow/AGENTS.md` |

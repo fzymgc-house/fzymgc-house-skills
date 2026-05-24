@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.11.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.10.2...fzymgc-house-skills-v1.11.0) (2026-05-24)
+
+
+### Features
+
+* **drain:** /goal cold-boot handoff — condition as pointer, protocol in skill, bead as carrier (fhsk-a49) ([#94](https://github.com/fzymgc-house/fzymgc-house-skills/issues/94)) ([b13a962](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b13a9626668c7bab0fcd93d43da96b498ddc0394))
+
+
+### Bug Fixes
+
+* **adr:** de-duplicate fhsk-0o2 header + references after supersede render ([#92](https://github.com/fzymgc-house/fzymgc-house-skills/issues/92)) ([b681453](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b68145350686fdf1323d475051ad7749cf881609))
+* **drain:** scope epic-mode ready query with bd ready --parent flag ([#90](https://github.com/fzymgc-house/fzymgc-house-skills/issues/90)) ([50810c7](https://github.com/fzymgc-house/fzymgc-house-skills/commit/50810c7d82e8d19dc6890ed470c267fa27901fb8))
+
 ## [1.10.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.10.1...fzymgc-house-skills-v1.10.2) (2026-05-24)
 
 

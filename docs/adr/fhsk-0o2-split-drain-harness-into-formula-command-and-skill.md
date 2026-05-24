@@ -3,13 +3,9 @@
 
 # Split drain harness into formula, command, and skill
 
-**Date:** 2026-05-22
+**Date:** 2026-05-24
 **Status:** Superseded by fhsk-eqt
 **Decision:** fhsk-0o2
-**Deciders:** Sean Brandt (@seanb4t)
-
-**Date:** 2026-05-22
-**Status:** Accepted
 **Deciders:** Sean Brandt (@seanb4t)
 
 ## Context
@@ -43,6 +39,4 @@ Three-piece split: `dev-flow/.beads/formulas/formula-drain.toml` (bead scaffoldi
 
 ## References
 
-- Spec: `docs/superpowers/specs/2026-05-22-drain-skill-design.md` §Architecture — Three-piece structure
-- Design bead: `fhsk-a67`
 - Superseded by: fhsk-eqt

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.6.2...dev-flow-v0.7.0) (2026-05-24)
+
+
+### Features
+
+* **drain:** /goal cold-boot handoff — condition as pointer, protocol in skill, bead as carrier (fhsk-a49) ([#94](https://github.com/fzymgc-house/fzymgc-house-skills/issues/94)) ([b13a962](https://github.com/fzymgc-house/fzymgc-house-skills/commit/b13a9626668c7bab0fcd93d43da96b498ddc0394))
+
+
+### Bug Fixes
+
+* **drain:** scope epic-mode ready query with bd ready --parent flag ([#90](https://github.com/fzymgc-house/fzymgc-house-skills/issues/90)) ([50810c7](https://github.com/fzymgc-house/fzymgc-house-skills/commit/50810c7d82e8d19dc6890ed470c267fa27901fb8))
+
 ## [0.6.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.6.1...dev-flow-v0.6.2) (2026-05-24)
 
 

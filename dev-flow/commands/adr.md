@@ -1,7 +1,7 @@
 ---
 description: ADR lifecycle operations. Modes: init, new, propose, update, supersede, addendum, accept, deprecate, render, migrate.
 argument-hint: "init | new | propose | update <id> | supersede <old-id> | addendum <id> --text \"...\" | accept <id> | deprecate <id> --reason \"...\" | render <id> | migrate [--apply]"
-allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "Bash(bd:*)", "Bash(jq:*)", "Bash(mkdir -p .beads/formulas:*)", "Bash(cp -n \"${CLAUDE_PLUGIN_ROOT}/.beads/formulas/formula-adr.formula.toml\" .beads/formulas/:*)", "Bash(dev-flow/scripts/render-adr:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(date:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "Bash(bd:*)", "Bash(jq:*)", "Bash(printf:*)", "Bash(dev-flow/scripts/render-adr:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(date:*)"]
 ---
 
 # /adr
@@ -10,7 +10,7 @@ ADR lifecycle operations. bd is the source of truth; this command mutates bd sta
 
 Parse `$ARGUMENTS` as one of:
 
-- `init` — Bootstrap this repo: copy `formula-adr.formula.toml` into `.beads/formulas/`. Idempotent.
+- `init` — No-op (retained for compatibility): `decision` is a built-in bd type and ADR bodies are composed inline, so no formula or type registration is needed.
 - `new` — Retrospective documentation. Creates ADR + auto-closes (Accepted).
 - `propose` — Forward-looking. Creates ADR (Proposed; bd status=open).
 - `update <id>` — Edit an ADR's body or sections; re-render.
@@ -23,14 +23,15 @@ Parse `$ARGUMENTS` as one of:
 
 ## Init mode (/adr init)
 
-Idempotent per-repo bootstrap. Run this once before any other `/adr` mode.
+No-op, retained for backward compatibility. `decision` is a built-in bd type
+and `/adr new|propose|supersede` compose the ADR body inline with `bd create`,
+so there is no formula file to copy and no custom type to register. See ADR
+`fhsk-buu` for why `bd mol pour` is not used.
 
 ```bash
-mkdir -p .beads/formulas
-cp -n "${CLAUDE_PLUGIN_ROOT}/.beads/formulas/formula-adr.formula.toml" .beads/formulas/
-bd formula list | grep -q formula-adr \
-  || { echo "formula-adr not visible to bd after copy" >&2; exit 1; }
-echo "/adr init complete."
+bd types | grep -qw decision \
+  || { echo "bd 'decision' type unavailable; upgrade bd." >&2; exit 1; }
+echo "/adr init: no bootstrap required (decision is a built-in type)."
 ```
 
 ## New mode (/adr new)
@@ -39,19 +40,25 @@ Retrospective ADR documentation. Creates a bead via the formula and immediately 
 
 1. Prompt operator (interactively via AskUserQuestion, or accept values from stdin/heredoc) for:
    title, context, decision, rationale, alternatives, consequences, deciders.
-2. Pour the bead via formula:
+2. Create the decision bead, composing the 5-section body inline. `decision` is
+   a built-in bd type, so `bd create --type decision` stamps it correctly,
+   returns a flat top-level `.id`, and sets `adr_deciders` metadata directly.
+   `bd mol pour` is NOT used: bd's cook step downgrades the formula's
+   `type = "decision"` step to `task`, leaves `adr_deciders` as a literal
+   `{{deciders}}` (vars are not substituted in metadata), and emits a wrapper
+   epic. See ADR `fhsk-buu`.
    ```bash
-   ID=$(bd --json mol pour formula-adr \
-         --var title="$title" \
-         --var context="$context" \
-         --var decision="$decision" \
-         --var rationale="$rationale" \
-         --var alternatives="$alternatives" \
-         --var consequences="$consequences" \
-         --var deciders="$deciders" \
-       | jq -r '.id')
+   ID=$(printf '## Context\n\n%s\n\n## Decision\n\n%s\n\n## Rationale\n\n%s\n\n## Alternatives Considered\n\n%s\n\n## Consequences\n\n%s\n' \
+          "$context" "$decision" "$rationale" "$alternatives" "$consequences" \
+        | bd create \
+            --title "$title" \
+            --type decision \
+            --label phase:design \
+            --metadata "$(jq -n --arg d "$deciders" '{adr_deciders:$d}')" \
+            --stdin --json \
+        | jq -r '.id')
    [ -n "$ID" ] && [ "$ID" != "null" ] \
-     || { echo "/adr new: bd mol pour failed" >&2; exit 1; }
+     || { echo "/adr new: bd create -t decision failed" >&2; exit 1; }
    ```
 3. Close immediately (retrospective → Accepted):
    ```bash
@@ -70,19 +77,20 @@ Forward-looking ADR. Same flow as New EXCEPT skip Step 3 (no `bd close`). The be
 
 1. Prompt operator (interactively via AskUserQuestion, or accept values from stdin/heredoc) for:
    title, context, decision, rationale, alternatives, consequences, deciders.
-2. Pour the bead via formula:
+2. Create the decision bead, composing the 5-section body inline (see New mode
+   for why `bd create --type decision` is used instead of `bd mol pour`):
    ```bash
-   ID=$(bd --json mol pour formula-adr \
-         --var title="$title" \
-         --var context="$context" \
-         --var decision="$decision" \
-         --var rationale="$rationale" \
-         --var alternatives="$alternatives" \
-         --var consequences="$consequences" \
-         --var deciders="$deciders" \
-       | jq -r '.id')
+   ID=$(printf '## Context\n\n%s\n\n## Decision\n\n%s\n\n## Rationale\n\n%s\n\n## Alternatives Considered\n\n%s\n\n## Consequences\n\n%s\n' \
+          "$context" "$decision" "$rationale" "$alternatives" "$consequences" \
+        | bd create \
+            --title "$title" \
+            --type decision \
+            --label phase:design \
+            --metadata "$(jq -n --arg d "$deciders" '{adr_deciders:$d}')" \
+            --stdin --json \
+        | jq -r '.id')
    [ -n "$ID" ] && [ "$ID" != "null" ] \
-     || { echo "/adr propose: bd mol pour failed" >&2; exit 1; }
+     || { echo "/adr propose: bd create -t decision failed" >&2; exit 1; }
    ```
 3. Do NOT close the bead — leave it open (Proposed status).
 4. Render:
@@ -108,7 +116,7 @@ Edit an ADR's body or individual sections, then re-render.
 
 1. `ID="$1"`; show current state for context:
    ```bash
-   bd show "$ID" --json | jq '{title, description, metadata, status}'
+   bd show "$ID" --json | jq '.[0] | {title, description, metadata, status}'
    ```
 
 2. Interactive: AskUserQuestion which section to edit:
@@ -123,7 +131,7 @@ Edit an ADR's body or individual sections, then re-render.
 
 4. Re-compose the description body. Read current body via:
    ```bash
-   CURRENT=$(bd show "$ID" --json | jq -r '.description')
+   CURRENT=$(bd show "$ID" --json | jq -r '.[0].description')
    ```
    Then use awk anchored on `## <section>` headings to slice/replace cleanly:
    - Match the chosen `## <section>` heading.
@@ -175,7 +183,7 @@ Close a Proposed ADR (bd status=open → closed). Re-renders the file so Status 
 
 ```bash
 ID="$1"
-STATUS=$(bd show "$ID" --json | jq -r '.status')
+STATUS=$(bd show "$ID" --json | jq -r '.[0].status')
 [ "$STATUS" = "open" ] \
   || { echo "ADR $ID is not in Proposed state (bd status=$STATUS); cannot accept." >&2; exit 1; }
 bd close "$ID" --reason="Accepted"
@@ -199,7 +207,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$REASON" ] || { echo "Usage: /adr deprecate <id> --reason \"<why>\"" >&2; exit 1; }
 
-STATUS=$(bd show "$ID" --json | jq -r '.status')
+STATUS=$(bd show "$ID" --json | jq -r '.[0].status')
 [ "$STATUS" = "closed" ] \
   || { echo "ADR $ID must be Accepted (bd status=closed) before Deprecation. Current: $STATUS." >&2; exit 1; }
 
@@ -220,20 +228,23 @@ Operator steps (shell + interactive):
 1. `OLD="$1"`
 2. Verify `<old-id>` exists and is closed (Accepted):
    ```bash
-   STATUS=$(bd show "$OLD" --json | jq -r '.status')
+   STATUS=$(bd show "$OLD" --json | jq -r '.[0].status')
    ```
    If `$STATUS != "closed"`, error: `"Cannot supersede a Proposed ADR; /adr accept $OLD first."`
-3. Run the `/adr new` flow interactively (gather title + 5 sections + deciders) to create NEW:
+3. Run the `/adr new` flow interactively (gather title + 5 sections + deciders) to create NEW
+   (see New mode for why `bd create --type decision` is used instead of `bd mol pour`):
    ```bash
-   NEW=$(bd --json mol pour formula-adr \
-         --var title="$title" \
-         --var context="$context" \
-         --var decision="$decision" \
-         --var rationale="$rationale" \
-         --var alternatives="$alternatives" \
-         --var consequences="$consequences" \
-         --var deciders="$deciders" \
-       | jq -r '.id')
+   NEW=$(printf '## Context\n\n%s\n\n## Decision\n\n%s\n\n## Rationale\n\n%s\n\n## Alternatives Considered\n\n%s\n\n## Consequences\n\n%s\n' \
+          "$context" "$decision" "$rationale" "$alternatives" "$consequences" \
+        | bd create \
+            --title "$title" \
+            --type decision \
+            --label phase:design \
+            --metadata "$(jq -n --arg d "$deciders" '{adr_deciders:$d}')" \
+            --stdin --json \
+        | jq -r '.id')
+   [ -n "$NEW" ] && [ "$NEW" != "null" ] \
+     || { echo "/adr supersede: bd create -t decision failed" >&2; exit 1; }
    ```
 4. Wire the supersession edge:
    ```bash

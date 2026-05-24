@@ -141,22 +141,25 @@ INV-A1: skill MUST NOT write files until all triage is complete.)
 
 For each accepted candidate, in order:
 
-1. Pour via `formula-adr` (validation and metadata are handled inside
-   the pour; no separate `bd create` call needed):
+1. Create the decision bead, composing the 5-section body inline. `decision` is
+   a built-in bd type, so `bd create --type decision` stamps the type, returns a
+   flat top-level `.id`, and sets `adr_deciders` metadata directly. `bd mol pour`
+   is NOT used: bd 1.0.4's cook step downgrades the formula's `type = "decision"`
+   step to `task`, leaves `adr_deciders` a literal `{{deciders}}`, and emits a
+   wrapper epic (see ADR `fhsk-buu`):
 
    ```bash
-   # Pour via formula-adr (bd validate runs in pour; metadata pre-set from var)
-   ID=$(bd --json mol pour formula-adr \
-         --var title="$title" \
-         --var context="$context" \
-         --var decision="$decision" \
-         --var rationale="$rationale" \
-         --var alternatives="$alternatives" \
-         --var consequences="$consequences" \
-         --var deciders="$deciders" \
-       | jq -r '.id')
+   ID=$(printf '## Context\n\n%s\n\n## Decision\n\n%s\n\n## Rationale\n\n%s\n\n## Alternatives Considered\n\n%s\n\n## Consequences\n\n%s\n' \
+          "$context" "$decision" "$rationale" "$alternatives" "$consequences" \
+        | bd create \
+            --title "$title" \
+            --type decision \
+            --label phase:design \
+            --metadata "$(jq -n --arg d "$deciders" '{adr_deciders:$d}')" \
+            --stdin --json \
+        | jq -r '.id')
    [ -n "$ID" ] && [ "$ID" != "null" ] \
-     || { echo "capture-adrs: bd mol pour formula-adr failed for '$title'" >&2; exit 1; }
+     || { echo "capture-adrs: bd create -t decision failed for '$title'" >&2; exit 1; }
 
    # Close immediately — capture-adrs is the retrospective path (Accepted on creation)
    bd close "$ID" --reason="Accepted ADR filed via capture-adrs"
@@ -165,7 +168,7 @@ For each accepted candidate, in order:
    dev-flow/scripts/render-adr "$ID"
    ```
 
-   Capture `$ID` from the pour output. On pour failure the guard exits
+   Capture `$ID` from the create output. On failure the guard exits
    and aborts this candidate (other candidates continue); report at end.
    `render-adr` writes `docs/adr/<bd-id>-<slug>.md` and the slug is
    derived inside that script — no manual slug computation needed here.
@@ -230,6 +233,6 @@ Skill MUST NOT commit. User does that.
 - DO NOT write files before all triage decisions are collected.
   (INV-A1)
 - DO NOT overwrite opt-out markers. (INV-A10)
-- DO NOT call `bd mol pour` without checking the guard (`$ID` non-empty
+- DO NOT call `bd create` without checking the guard (`$ID` non-empty
   and non-null). (INV-A3 + INV-A4)
 - DO NOT use a model floor below sonnet for the adr-extractor dispatch.

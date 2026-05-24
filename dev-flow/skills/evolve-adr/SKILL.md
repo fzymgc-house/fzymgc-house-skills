@@ -49,9 +49,10 @@ Three ways to create an ADR exist; pick based on timing and context:
 Use after `writing-plans` finishes (the `nudge-adr-capture` hook fires a
 reminder). The decision is already final — the brainstorming session concluded
 and the spec records it. `capture-adrs` extracts candidates, walks you through
-per-candidate approval via `AskUserQuestion`, pours each via `bd mol pour
-formula-adr`, closes the bead immediately (auto-Accepted), then calls
-`render-adr`. Output: one or more Accepted ADRs from a single spec pass.
+per-candidate approval via `AskUserQuestion`, creates each via `bd create
+--type decision` (composing the body inline), closes the bead immediately
+(auto-Accepted), then calls `render-adr`. Output: one or more Accepted ADRs
+from a single spec pass.
 
 Requires main session context (`AskUserQuestion` must be in scope; per INV-A19).
 
@@ -199,10 +200,10 @@ The dry-run path has no such constraint and runs in any context.
 **Run order for a consumer repo:**
 
 1. Upgrade dev-flow plugin.
-2. Run `/adr init` (per-repo bootstrap; copies `formula-adr.formula.toml`).
-3. Run `/adr migrate` (dry-run).
-4. Review preview; run `/adr migrate --apply` when satisfied.
-5. Commit resulting `.md` updates + bd state; push.
+2. Run `/adr migrate` (dry-run). (`/adr init` is a no-op — `decision` is a
+   built-in bd type and ADR bodies are composed inline; no formula to copy.)
+3. Review preview; run `/adr migrate --apply` when satisfied.
+4. Commit resulting `.md` updates + bd state; push.
 
 ## Edge Cases
 

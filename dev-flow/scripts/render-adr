@@ -61,8 +61,10 @@ if [[ -z "$TITLE" ]]; then
   exit 1
 fi
 
-# Date: closed_at preferred, else created_at; format YYYY-MM-DD.
-DATE_RAW="${CLOSED_AT:-$CREATED_AT}"
+# Date: the decision date (created_at), NOT closed_at — for a superseded ADR,
+# closed_at is the supersede date, which would wrongly rewrite the ADR's Date on
+# re-render. Fall back to closed_at only if created_at is absent. Format YYYY-MM-DD.
+DATE_RAW="${CREATED_AT:-$CLOSED_AT}"
 DATE="${DATE_RAW%%T*}"
 if [[ -z "$DATE" ]]; then
   DATE="—"
@@ -131,6 +133,18 @@ if [[ -n "$NOTES" ]]; then
   ADDENDA_LINES="$(grep '^addendum: ' <<<"$NOTES" || true)"
 fi
 
+# Separate any "## References" section already embedded in the body from the rest,
+# so the rendered file has exactly ONE References section (body refs + supersession
+# refs merged). Older ADR bodies embed a References section; capture-adrs bodies do
+# not. Without this, render-adr's own "## References" would duplicate the body's
+# (MD024). Assumes "## References" runs to the next "## " heading or end of body.
+BODY_MAIN="$DESCRIPTION"
+BODY_REF_BULLETS=""
+if grep -q '^## References' <<<"$DESCRIPTION"; then
+  BODY_MAIN="$(awk '/^## References/{skip=1; next} skip && /^## /{skip=0} !skip{print}' <<<"$DESCRIPTION")"
+  BODY_REF_BULLETS="$(awk '/^## References/{f=1; next} f && /^## /{f=0} f && /^- /{print}' <<<"$DESCRIPTION")"
+fi
+
 # Output path. Ensure docs/adr/ exists.
 mkdir -p docs/adr
 OUTFILE="docs/adr/${ID}-${SLUG}.md"
@@ -147,8 +161,8 @@ OUTFILE="docs/adr/${ID}-${SLUG}.md"
   printf '**Decision:** %s\n' "$ID"
   printf '**Deciders:** %s\n' "$DECIDERS_OUT"
   echo
-  if [[ -n "$DESCRIPTION" ]]; then
-    printf '%s\n' "$DESCRIPTION"
+  if [[ -n "$BODY_MAIN" ]]; then
+    printf '%s\n' "$BODY_MAIN"
   fi
 
   # Addenda section (if any).
@@ -163,12 +177,16 @@ OUTFILE="docs/adr/${ID}-${SLUG}.md"
     done <<<"$ADDENDA_LINES"
   fi
 
-  # References section: outgoing supersedes + incoming superseded-by.
+  # References section: merge any body-embedded refs with supersession refs into a
+  # SINGLE section (avoids a duplicate "## References" heading — MD024).
   refs_count="$(jq -r 'length' <<<"$SUPERSEDES_JSON")"
-  if [[ "$refs_count" != "0" ]] || [[ -n "$SUPERSEDED_BY" ]]; then
+  if [[ -n "$BODY_REF_BULLETS" ]] || [[ "$refs_count" != "0" ]] || [[ -n "$SUPERSEDED_BY" ]]; then
     echo
     echo '## References'
     echo
+    if [[ -n "$BODY_REF_BULLETS" ]]; then
+      printf '%s\n' "$BODY_REF_BULLETS"
+    fi
     if [[ "$refs_count" != "0" ]]; then
       while IFS= read -r old_id; do
         [[ -z "$old_id" ]] && continue

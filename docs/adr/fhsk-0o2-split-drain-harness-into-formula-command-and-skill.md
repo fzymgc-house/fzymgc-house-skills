@@ -3,7 +3,7 @@
 
 # Split drain harness into formula, command, and skill
 
-**Date:** 2026-05-24
+**Date:** 2026-05-22
 **Status:** Superseded by fhsk-eqt
 **Decision:** fhsk-0o2
 **Deciders:** Sean Brandt (@seanb4t)

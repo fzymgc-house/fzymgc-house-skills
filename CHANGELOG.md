@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.11.0...fzymgc-house-skills-v1.11.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* **adr:** render-adr Date from created_at + merge body References (fhsk-1w9) ([#95](https://github.com/fzymgc-house/fzymgc-house-skills/issues/95)) ([d758bd8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/d758bd883d836506c96b7a7cc1f8fdc6547af5c1))
+
 ## [1.11.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.10.2...fzymgc-house-skills-v1.11.0) (2026-05-24)
 
 

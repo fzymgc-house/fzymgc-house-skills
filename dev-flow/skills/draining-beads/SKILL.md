@@ -66,6 +66,87 @@ orchestrator-in-the-loop between tasks.
 Use `executing-plans` as the lightweight alternative when autonomy is not
 required or when the session must stay in-context.
 
+## Using `/goal` correctly
+
+`/goal` is a **user-only** Claude Code built-in: there is no `SlashCommand` tool
+for it, so an agent **cannot self-invoke it** mid-turn. It executes only from a
+submitted turn — interactively by a human, or programmatically via the Agent SDK
+(`query({prompt: "/goal …"})`), Remote Control, or a cmux/tmux driver. Therefore:
+
+- **The skill and `/drain` never fire `/goal`.** `/drain` (setup) and
+  `/drain worker <id>` only *emit* the Worker condition; a user or driver submits it.
+- **Controller / worker split.** The session that sets up the drain (creates and
+  stamps the drain bead) and the session that runs `/goal` may be different cold
+  Claude sessions in the same jj workspace. The worker inherits no controller context.
+- **The `/goal` condition is a self-contained cold-boot pointer** (see the command's
+  "Worker condition" section): it names the drain bead, tells the worker to invoke
+  this skill for the protocol, and inlines the sentinel predicate. The `/goal`
+  evaluator judges the predicate from the transcript, so the predicate must be in
+  the condition and the worker must report its sentinel-check result each turn.
+- **Cold-boot sequence:** invoke this skill → `bd show <drain-id> --json` (mode,
+  scope, workspace, lessons, rejections) → `cd` to `drain_workspace` → run exactly
+  one ready bead per the protocol → report the sentinel → stop. The Stop hook
+  re-fires the condition for the next bead.
+- **Post-`/compact` recovery is automatic:** the active goal survives `/compact`,
+  and the re-fired condition always re-points at the skill + bead, so a compacted
+  worker re-bootstraps from durable state.
+- **Keep the condition small.** `/goal`'s condition is capped (~4,000 chars); the
+  pointer form stays well under it. Never inline the 12-step protocol into the condition.
+
+## Iteration protocol (worker)
+
+You are the drain worker. On cold boot you have invoked this skill and read your
+assignment from `bd show <drain-id> --json` (mode, scope, `drain_workspace`,
+lessons, rejections) and `cd`'d to `drain_workspace`. Each `/goal` Stop-hook
+re-fire runs **ONE** bead via the 12 steps below. `<drain-id>` / `<epic-id>` /
+`<scope>` / `<sentinel>` come from the drain bead.
+
+1. **Check sentinel** — run the mode-specific bd query (see "Sentinel design"). If
+   met: emit a completion summary, append
+   `bd note <drain-id> "result: complete; iterations=<N>, ..."`, run
+   `bd close <drain-id> --reason="drain completed cleanly"`, invoke
+   `dev-flow:finishing-a-development-branch`, then exit (do NOT continue to step 2).
+2. **Check halt conditions** — scan `bd show <drain-id> --json | jq -r '.[0].notes'`
+   for any "rejection: <id> N=3+" line OR any prior "halt:" line. On match: append
+   `bd note <drain-id> "halt: <reason>"`, run `/goal clear`, send PushNotification, exit.
+3. **Read lessons** — collect `bd show <drain-id> --json | jq -r '.[0].notes'`
+   filtered to prefix "lesson:" (run-scoped). For epic mode, ALSO read the epic's
+   notes filtered to "lesson:" (epic-scoped). Concatenate into a lessons variable
+   for step 7.
+4. **Pick next ready bead** — `bd ready` filtered to in-scope per mode:
+   - epic mode: `bd ready --parent "<epic-id>" --json` (descendants of the epic
+     currently ready). Use the native `--parent` flag, NOT a jq filter on
+     `.parent`: `bd ready` JSON has no `.parent` field (it is always null), so
+     `select(.parent == ...)` matches nothing and the queue looks permanently
+     empty. The flag matches the sentinel's `bd list --parent` idiom.
+   - set mode: filter `bd ready --json` to the explicit seed ids in `<scope>`.
+   - cascade mode: maintain a session working set (initially the seeds); after each
+     close in step 9, expand via
+     `bd dep list <closed-id> --direction=up --json | jq -r '.[].id'`.
+
+   Deterministic order across modes: lowest priority number, then alphabetic id. If
+   the filter is empty but the sentinel is unmet → re-evaluate; if still unmet, halt
+   with "stalled queue".
+5. **Atomic claim** — `bd update <id> --claim`. On race (claim fails), skip step 6
+   and restart the iteration.
+6. **Load context** — `bd show <id> --json` for description / acceptance / spec-id;
+   if a spec-id is present, read the referenced spec/plan file.
+7. **Dispatch implementer subagent** — per `dev-flow:subagent-driven-development`:
+   subagent_type from the bead's `skills[]` (general-purpose fallback); model from
+   the bead's `model:*` label (default sonnet); prompt = description + acceptance +
+   spec excerpts + lessons. In jj repos, brief the subagent to run
+   `jj --no-pager new` before edits.
+8. **Two-stage review** — spec compliance reviewer, then code quality reviewer. On
+   either failing, the implementer fixes and re-reviews.
+9. **On approval** — `bd close <id> --reason="<one-line summary>"`. Append a bd note
+   for any deviations or follow-ups.
+10. **On rejection** (review loops exhausted this iteration): `bd update <id>
+    --status=open`; `bd note <id> "rejection round N: <reason>"`;
+    `bd note <drain-id> "rejection: <id> N=<count>"`. Step 2 catches N>=3 next iteration.
+11. **VCS verify** — `jj st` (or `git status --porcelain`); confirm a clean tree. If
+    dirty: `bd note <drain-id> "halt: dirty-tree iter <N>"`; halt.
+12. **Iteration ends.** The `/goal` Stop hook re-fires the condition → step 1.
+
 ## Sentinel design
 
 `/goal`'s `condition` is natural-language evaluated by the model each Stop-hook

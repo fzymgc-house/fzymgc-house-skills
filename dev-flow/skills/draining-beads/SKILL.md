@@ -34,8 +34,8 @@ curated prompt body on every Stop hook until the model sets `goal_status.met`.
 Per ADR `fhsk-thw`, `/loop`'s real purpose is timer-based external-state
 polling — it has no legitimate niche for bead iteration.
 
-Each iteration runs the 12-step body embedded in `commands/drain.md`. Step 3
-of that body reads lessons from `bd` notes. Lessons replace the "self-evolving
+Each iteration runs the 12-step protocol in this skill's *Iteration protocol
+(worker)* section. Step 3 of that protocol reads lessons from `bd` notes. Lessons replace the "self-evolving
 prompt" anti-pattern: they route through `bd` instead of mutating the prompt
 body each round.
 
@@ -235,10 +235,12 @@ authoritative audit trail regardless of notification delivery.
 
 | Resource | Path |
 |---|---|
-| Spec (source of truth) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
+| Spec (original design) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
+| Spec (cold-boot handoff redesign) | `docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
 | ADR: `/goal` over `/loop` | `fhsk-thw` |
-| ADR: harness split | `fhsk-0o2` |
+| ADR: harness split (superseded by `fhsk-eqt`) | `fhsk-0o2` |
+| ADR: protocol in skill / cold-boot condition / bead carrier | `fhsk-eqt`, `fhsk-zds`, `fhsk-e4i` |
 | ADR: `bd mol pour` (superseded) | `fhsk-rqh` |
 | ADR: lessons in bd notes | `fhsk-ce3` |
 | ADR: `/drain init` explicit | `fhsk-0cd` |

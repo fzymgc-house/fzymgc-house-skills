@@ -474,6 +474,21 @@ echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
 
 After the shell commands above complete successfully, fall through to the same `/goal <PROMPT_BODY>` invocation as the original mode (Phase D directive). The iteration body in Task 8 handles all three modes via the `$MODE` substitution.
 
+## Worker condition (the `/goal` payload)
+
+Phases D above **emit** this condition for an operator (or a cmux/tmux / Agent
+SDK driver) to submit as a worker's `/goal` turn. The skill never fires `/goal`
+— see `dev-flow:draining-beads` "Using `/goal` correctly". Substitute
+`<DRAIN_ID>` and `<SENTINEL>`; submit the result verbatim:
+
+```text
+Drain worker for bead <DRAIN_ID>. Invoke the dev-flow:draining-beads skill for
+the iteration protocol, then run `bd show <DRAIN_ID> --json` for your assignment
+(workspace, mode, scope, lessons, rejection counts). cd to the workspace named in
+that bead before any bd/jj/file operation. Execute exactly ONE ready bead this
+turn following the protocol, then stop. Goal met when: <SENTINEL>.
+```
+
 ## Iteration body (`/goal` Stop-hook prompt)
 
 The text below is the **canonical iteration body** referenced by the Phase D directives in epic/set/cascade/resume modes. Each Phase D substitutes `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL`, and `$EPIC_ID` (when in epic mode) into this body and fires `/goal` with the result. `/goal` re-fires this prompt as a user message on each Stop event; each firing runs ONE bead per the steps below.

@@ -1,6 +1,6 @@
 ---
-description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, resume.
-argument-hint: "init | epic <id> | set <id...> | cascade <id...> | resume <drain-id>"
+description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, worker, resume.
+argument-hint: "init | epic <id> | set <id...> | cascade <id...> | worker <drain-id> | resume <drain-id>"
 allowed-tools: ["Read", "Grep", "Glob", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)"]
 ---
 
@@ -14,6 +14,7 @@ Parse `$ARGUMENTS` as one of:
 - `epic <epic-id>` — Drain all open beads under `<epic-id>`.
 - `set <id1> <id2> ...` — Drain only the listed beads.
 - `cascade <id1> <id2> ...` — Drain seeds + transitive dependents (via `bd dep list --direction=up`).
+- `worker <drain-id>` — Emit the `/goal` condition for a fresh worker to attach to a live drain (regenerates from the bead; does not create or re-stamp).
 - `resume <drain-id>` — Resume a halted drain run (recovers `mode`/`scope` from drain bead's metadata fields `drain_mode`, `drain_scope`, `drain_started_at`).
 - anything else / missing — Print this usage and exit.
 
@@ -44,7 +45,7 @@ echo "drain init complete."
 ## Epic mode (`/drain epic <epic-id>`)
 
 Drains all open beads under the specified epic. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -130,6 +131,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 MODE=epic
 SCOPE="$EPIC_ID"
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly. `bd create --type drain`
 # honors types.custom (pre-flight #1 guarantees `drain` is registered), stamps
@@ -151,7 +153,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Parent linkage (epic mode only) and status transition
 bd update "$DRAIN_ID" --parent "$EPIC_ID"
@@ -164,20 +167,21 @@ echo "Drain bead $DRAIN_ID created for epic $EPIC_ID."
 
 ```bash
 SENTINEL="All beads under epic $EPIC_ID are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
-
-    /goal <PROMPT_BODY>
-
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$EPIC_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
 ## Set mode (`/drain set <id1> <id2> ...`)
 
 Drains an explicit set of beads by id. Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -263,6 +267,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 ```bash
 MODE=set
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for
 # why `bd create --type drain` is used instead of `bd mol pour`).
@@ -279,7 +284,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Status transition (no parent linkage for set mode)
 bd update "$DRAIN_ID" --status=in_progress
@@ -291,20 +297,21 @@ echo "Drain bead $DRAIN_ID created for set: $SCOPE."
 
 ```bash
 SENTINEL="All of {$SCOPE} are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
-
-    /goal <PROMPT_BODY>
-
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
 ## Cascade mode (`/drain cascade <id1> <id2> ...`)
 
 Drains the listed seed beads plus their transitive dependents (via `bd dep list --direction=up`). Runs four phases:
-**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** fires `/goal` with the iteration body from `dev-flow:draining-beads`.
+**(A) pre-flight** refuses on bad state, **(B) create** makes the audit-trail drain bead, **(C) sentinel** composes the natural-language condition + describes the working-set expansion, **(D)** emits the `/goal` worker condition for an operator/driver to submit.
 
 **Phase A — Pre-flight checks** (refuse early on bad state):
 
@@ -390,6 +397,7 @@ Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap
 ```bash
 MODE=cascade
 STARTED_AT=$(date -u +%FT%TZ)
+WORKSPACE=$(jj root 2>/dev/null || git rev-parse --show-toplevel)  # absolute jj workspace root
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for
 # why `bd create --type drain` is used instead of `bd mol pour`).
@@ -406,7 +414,8 @@ DRAIN_ID=$(bd create \
 bd update "$DRAIN_ID" \
   --set-metadata "drain_mode=$MODE" \
   --set-metadata "drain_scope=$SCOPE" \
-  --set-metadata "drain_started_at=$STARTED_AT"
+  --set-metadata "drain_started_at=$STARTED_AT" \
+  --set-metadata "drain_workspace=$WORKSPACE"
 
 # Status transition (no parent linkage for cascade mode — no single parent)
 bd update "$DRAIN_ID" --status=in_progress
@@ -418,19 +427,39 @@ echo "Drain bead $DRAIN_ID created for cascade seeds: $SCOPE."
 
 ```bash
 SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed."
+bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 ```
 
 (`$SCOPE` was set to `"$*"` in Phase A; reusing here.)
 
 The iteration body (see "Iteration body" section below) maintains the working-set state in cascade mode: Step 4's cascade branch starts with the seeds from `$SCOPE`, expands via `bd dep list <closed-id> --direction=up` after each close, and terminates when both no open beads remain in the working set and the most recent close revealed no new dependents.
 
-**Phase D — Fire `/goal`** (literal slash-command invocation, NOT a Bash command):
+**Phase D — Emit the `/goal` condition** (the command does NOT run `/goal`;
+`/goal` is a user-only built-in):
 
-After the shell commands above complete successfully, invoke:
+Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
+`<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
+workspace and submit the following as its first input (do not run it here):".
+Then stop — do not attempt to invoke `/goal`.
 
-    /goal <PROMPT_BODY>
+## Worker mode (`/drain worker <drain-id>`)
 
-where `<PROMPT_BODY>` is the per-iteration text from the "Iteration body" section below, with `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL` substituted at fire time.
+Attaches a fresh worker to an existing (live) drain. Reduced pre-flight only — it
+regenerates the `/goal` condition from the drain bead and emits it; it does NOT
+create or re-stamp the bead, and (unlike `resume`) does NOT inspect `halt:` notes.
+
+```bash
+DRAIN_ID="$1"
+bd types | grep -q drain || { echo "Run /drain init first." >&2; exit 1; }
+META=$(bd show "$DRAIN_ID" --json | jq '.[0].metadata')
+SENTINEL=$(echo "$META" | jq -r '.drain_sentinel // empty')
+[ -n "$SENTINEL" ] && [ "$SENTINEL" != "null" ] \
+  || { echo "$DRAIN_ID has no drain_sentinel; was it created by /drain?" >&2; exit 1; }
+echo "Attaching worker to drain $DRAIN_ID."
+```
+
+Then fall through to **Phase D — Emit the `/goal` condition** (the Worker condition
+with `$DRAIN_ID`/`$SENTINEL` substituted, for the operator/driver to submit).
 
 ## Resume mode (`/drain resume <drain-id>`)
 
@@ -444,6 +473,8 @@ META=$(bd show "$DRAIN_ID" --json | jq '.[0].metadata')
 MODE=$(echo "$META" | jq -r '.drain_mode')
 SCOPE=$(echo "$META" | jq -r '.drain_scope')
 STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
+WORKSPACE=$(echo "$META" | jq -r '.drain_workspace // empty')
+SENTINEL=$(echo "$META" | jq -r '.drain_sentinel // empty')
 
 [ -n "$MODE" ] && [ "$MODE" != "null" ] \
   || { echo "Drain bead $DRAIN_ID has no drain_mode metadata; cannot resume." >&2; exit 1; }
@@ -461,95 +492,32 @@ STARTED_AT=$(echo "$META" | jq -r '.drain_started_at')
 #      - $MODE == cascade  → copy Cascade mode Phase A (the per-seed loop over $SCOPE words)
 #    Then continue to step 3.
 
-# 3. Recompose the same SENTINEL string the original run used
-case "$MODE" in
-  epic)    SENTINEL="All beads under epic $SCOPE are closed." ;;
-  set)     SENTINEL="All of {$SCOPE} are closed." ;;
-  cascade) SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed." ;;
-  *)       echo "Unknown drain_mode '$MODE' on $DRAIN_ID; cannot resume." >&2; exit 1 ;;
-esac
+# 3. Sentinel: prefer the stamped drain_sentinel; recompose only if absent (older beads)
+if [ -z "$SENTINEL" ]; then
+  case "$MODE" in
+    epic)    SENTINEL="All beads under epic $SCOPE are closed." ;;
+    set)     SENTINEL="All of {$SCOPE} are closed." ;;
+    cascade) SENTINEL="All beads in the cascade-reachable set from {$SCOPE} are closed." ;;
+    *)       echo "Unknown drain_mode '$MODE' on $DRAIN_ID; cannot resume." >&2; exit 1 ;;
+  esac
+fi
 
 echo "Resuming drain $DRAIN_ID (mode=$MODE, scope=$SCOPE, started=$STARTED_AT)."
 ```
 
-After the shell commands above complete successfully, fall through to the same `/goal <PROMPT_BODY>` invocation as the original mode (Phase D directive). The iteration body in Task 8 handles all three modes via the `$MODE` substitution.
+After the shell commands above complete successfully, fall through to **Phase D — Emit the `/goal` condition**, which emits the Worker condition for the recovered `$MODE`/`$SCOPE`/`$SENTINEL` (the operator/driver submits it to a worker).
 
-## Iteration body (`/goal` Stop-hook prompt)
+## Worker condition (the `/goal` payload)
 
-The text below is the **canonical iteration body** referenced by the Phase D directives in epic/set/cascade/resume modes. Each Phase D substitutes `$DRAIN_ID`, `$MODE`, `$SCOPE`, `$SENTINEL`, and `$EPIC_ID` (when in epic mode) into this body and fires `/goal` with the result. `/goal` re-fires this prompt as a user message on each Stop event; each firing runs ONE bead per the steps below.
+Phases D above **emit** this condition for an operator (or a cmux/tmux / Agent
+SDK driver) to submit as a worker's `/goal` turn. The skill never fires `/goal`
+— see `dev-flow:draining-beads` "Using `/goal` correctly". Substitute
+`<DRAIN_ID>` and `<SENTINEL>`; submit the result verbatim:
 
 ```text
-You are in an autonomous drain run. Drain bead: $DRAIN_ID (mode=$MODE, scope=$SCOPE).
-Sentinel: $SENTINEL
-
-Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in order:
-
-1. Check sentinel — run the mode-specific bd query (see dev-flow:draining-beads
-   "Sentinel design" for the exact predicate). If met: emit a completion summary
-   to the user, append `bd note $DRAIN_ID "result: complete; iterations=<N>, ..."`,
-   run `bd close $DRAIN_ID --reason="drain completed cleanly"`, invoke
-   dev-flow:finishing-a-development-branch, then exit (do NOT continue to step 2).
-
-2. Check halt conditions — scan `bd show $DRAIN_ID --json | jq -r '.[0].notes'` for any
-   "rejection: <id> N=3+" line OR any prior "halt:" line. On match: append
-   `bd note $DRAIN_ID "halt: <reason>"`, run `/goal clear`, send PushNotification,
-   exit.
-
-3. Read lessons — collect `bd show $DRAIN_ID --json | jq -r '.[0].notes'` filtered to
-   prefix "lesson:" (run-scoped). For epic mode, ALSO read `bd show $EPIC_ID --json | jq -r '.[0].notes'`
-   filtered to prefix "lesson:" (epic-scoped). Concatenate into a $LESSONS variable
-   for step 7.
-
-4. Pick next ready bead — `bd ready --json` filtered to in-scope per mode:
-     - epic mode: `bd ready --parent "$EPIC_ID" --json`
-       (descendants of the epic that are currently ready). Use the native
-       `--parent` flag, NOT a jq filter on `.parent`: `bd ready` JSON has no
-       `.parent` field (it is always null), so `select(.parent == ...)` matches
-       nothing and the queue looks permanently empty. The flag matches the
-       sentinel's `bd list --parent` idiom and is verified to filter (a
-       nonexistent parent returns zero rows, not all).
-     - set mode: `bd ready --json | jq '[.[] | select(.id == ("'"$SCOPE"' " | split(" ")[]))]'`
-       (only the explicit seed ids).
-     - cascade mode: maintain a working set in this session (initially the seeds
-       from `$SCOPE`). After each bead closes in step 9, expand the working set
-       via `bd dep list <closed-id> --direction=up --json | jq -r '.[].id'`
-       (newly-revealed dependents) and add any ids not already in the set.
-       Filter `bd ready` to ids currently in the working set.
-   Deterministic order across all modes: lowest priority number, then alphabetic id.
-   If filter empty but sentinel says not met → re-evaluate sentinel (in cascade
-   mode, this means the working set has no open beads AND the last close added
-   no new dependents); if still not met, halt with "stalled queue" reason.
-
-5. Atomic claim — `bd update <id> --claim`. On race (claim fails), skip step 6
-   and restart iteration (re-fire of this prompt).
-
-6. Load context — `bd show <id> --json` for description / acceptance / spec-id;
-   if spec-id present, read the referenced spec/plan file for surrounding context.
-
-7. Dispatch implementer subagent — per dev-flow:subagent-driven-development:
-     subagent_type from bead's skills[] (heuristic; general-purpose fallback)
-     model       from bead's model:* label (default sonnet per Rule 5)
-     prompt      = bead description + acceptance criteria + spec excerpts + $LESSONS
-   In jj repos (jj root succeeds): brief the subagent to run `jj --no-pager new`
-   before any edits. In git repos: no-op.
-
-8. Two-stage review — spec compliance reviewer (./spec-reviewer-prompt.md), then
-   code quality reviewer (./code-quality-reviewer-prompt.md). On either failing,
-   the implementer fixes and re-reviews.
-
-9. On approval — `bd close <id> --reason="<one-line summary>"`. Append a bd note
-   for any deviations or follow-ups discovered.
-
-10. On rejection (review loops exhausted this iteration):
-      bd update <id> --status=open
-      bd note <id> "rejection round N: <reason>"
-      bd note $DRAIN_ID "rejection: <id> N=<count>"
-    Step 2 catches N>=3 on the NEXT iteration.
-
-11. VCS verify — `jj st` (or `git status --porcelain`); confirm clean tree.
-    If dirty: bd note $DRAIN_ID "halt: dirty-tree iter <N>"; halt.
-
-12. Iteration ends. The /goal Stop hook re-fires this prompt → step 1.
+Drain worker for bead <DRAIN_ID>. Invoke the dev-flow:draining-beads skill for
+the iteration protocol, then run `bd show <DRAIN_ID> --json` for your assignment
+(workspace, mode, scope, lessons, rejection counts). cd to the workspace named in
+that bead before any bd/jj/file operation. Execute exactly ONE ready bead this
+turn following the protocol, then stop. Goal met when: <SENTINEL>.
 ```
-
-The Phase D directives in epic/set/cascade/resume modes substitute the run-time values and pass the assembled string as `/goal`'s condition. See `dev-flow:draining-beads` for the full canonical reference (sentinel design, halt conditions, lessons mechanism, edge cases).

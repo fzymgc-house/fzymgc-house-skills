@@ -501,8 +501,13 @@ Each iteration of this Stop-hook prompt runs ONE bead. Execute these steps in or
    for step 7.
 
 4. Pick next ready bead — `bd ready --json` filtered to in-scope per mode:
-     - epic mode: `bd ready --json | jq '[.[] | select(.parent == "'"$EPIC_ID"'")]'`
-       (children of the epic that are currently ready).
+     - epic mode: `bd ready --parent "$EPIC_ID" --json`
+       (descendants of the epic that are currently ready). Use the native
+       `--parent` flag, NOT a jq filter on `.parent`: `bd ready` JSON has no
+       `.parent` field (it is always null), so `select(.parent == ...)` matches
+       nothing and the queue looks permanently empty. The flag matches the
+       sentinel's `bd list --parent` idiom and is verified to filter (a
+       nonexistent parent returns zero rows, not all).
      - set mode: `bd ready --json | jq '[.[] | select(.id == ("'"$SCOPE"' " | split(" ")[]))]'`
        (only the explicit seed ids).
      - cascade mode: maintain a working set in this session (initially the seeds

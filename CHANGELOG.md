@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.10.1...fzymgc-house-skills-v1.10.2) (2026-05-24)
+
+
+### Bug Fixes
+
+* **adr:** replace bd mol pour formula-adr with bd create -t decision (bd 1.0.4 fixes) ([#89](https://github.com/fzymgc-house/fzymgc-house-skills/issues/89)) ([00d3f3f](https://github.com/fzymgc-house/fzymgc-house-skills/commit/00d3f3fd392e96ce63be1e0a9879443aeb6b1076))
+* **drain:** replace bd mol pour with bd create -t drain (bd 1.0.4 fixes) ([#87](https://github.com/fzymgc-house/fzymgc-house-skills/issues/87)) ([a539bed](https://github.com/fzymgc-house/fzymgc-house-skills/commit/a539bedb8b657c4616c77d04d210213fc7c3f766))
+
 ## [1.10.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.10.0...fzymgc-house-skills-v1.10.1) (2026-05-24)
 
 

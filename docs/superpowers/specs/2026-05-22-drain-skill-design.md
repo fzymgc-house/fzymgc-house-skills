@@ -288,13 +288,13 @@ Subsequent `/drain` invocations call into a read-only version of `/drain init`'s
 4. Working tree clean — jj st (or git status --porcelain) empty.
 5. Branch safety — refuse main/master.
 6. Trust + hooks — both required for /goal. Fail with clear message if absent.
-7. No overlapping drain — implementer should **default to label-based filtering** since the formula reliably sets the `drain:{{mode}}` label:
+7. No overlapping drain — refuse **only when an in_progress drain's scope intersects this run's scope**, so drains of disjoint chains run concurrently. Enumerate active drains by type, then compare each one's `drain_scope` metadata token-by-token against this run's scope:
 
    ```bash
-   bd list --label-pattern 'drain:*' --status=in_progress --json
+   bd list --type=drain --status=in_progress --json
    ```
 
-   `bd list --help` confirms `--label-pattern` exists and supports glob syntax. The `--type` filter (`-t, --type string` per the same help output) ostensibly accepts custom types via `IssueType.IsValidWithCustom`, but deepwiki was inconclusive on this specifically for `bd list`'s code path — so use label-based filtering as the primary mechanism and reserve `--type=drain` as a defense-in-depth secondary check if needed.
+   `--type=drain` filters reliably once the custom type is registered (guaranteed by pre-flight #1; verified against bd v1.0.4 — `bd list --type=drain` returns only drain beads, not the full list). Do **not** use `--label-pattern` or `--label-regex`: both are silently ignored by `bd list` in bd ≤1.0.4 (a pattern matching nothing returns *every* issue), so the original `--label-pattern 'drain:*'` query false-positived on any unrelated in_progress bead and refused every drain (see fhsk-4ut). Scope tokens are the epic id (epic mode) or the space-separated bead ids (set/cascade mode); two drains overlap iff they share a token. The per-iteration atomic `bd update <id> --claim` (step 5) is the backstop for the rare epic-parent-vs-child-in-a-set case that token intersection does not catch. Resume excludes the drain bead being resumed from this scan (it is already in_progress).
 
 ```text
 

@@ -101,10 +101,26 @@ for settings_file in .claude/settings.json "$HOME/.claude/settings.json"; do
   fi
 done
 
-# 7. No overlapping drain (label-based; --type fallback per spec)
-OVERLAP=$(bd list --label-pattern 'drain:*' --status=in_progress --json | jq -r '.[] | .id' | tr '\n' ' ')
+# 7. No overlapping drain — refuse only when an in_progress drain's scope
+#    intersects THIS run's scope, so drains of disjoint chains run concurrently.
+#    Filter with --type=drain: pre-flight #1 guarantees the type is registered,
+#    and --type filters reliably. Do NOT use --label-pattern / --label-regex —
+#    both are silently ignored by `bd list` (bd <=1.0.4) and return every
+#    in_progress bead, false-positiving on unrelated work (see fhsk-4ut).
+NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
+OVERLAP=""
+for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
+  [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
+  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  for have in $DSCOPE; do
+    for want in $NEW_SCOPE; do
+      [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
+    done
+  done
+done
+OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
 [ -z "$OVERLAP" ] \
-  || { echo "Refusing: drain(s) already in_progress: $OVERLAP" >&2; exit 1; }
+  || { echo "Refusing: in_progress drain(s) overlap this scope: $OVERLAP" >&2; exit 1; }
 ```
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
@@ -214,10 +230,26 @@ for settings_file in .claude/settings.json "$HOME/.claude/settings.json"; do
   fi
 done
 
-# 7. No overlapping drain (label-based; --type fallback per spec)
-OVERLAP=$(bd list --label-pattern 'drain:*' --status=in_progress --json | jq -r '.[] | .id' | tr '\n' ' ')
+# 7. No overlapping drain — refuse only when an in_progress drain's scope
+#    intersects THIS run's scope, so drains of disjoint chains run concurrently.
+#    Filter with --type=drain: pre-flight #1 guarantees the type is registered,
+#    and --type filters reliably. Do NOT use --label-pattern / --label-regex —
+#    both are silently ignored by `bd list` (bd <=1.0.4) and return every
+#    in_progress bead, false-positiving on unrelated work (see fhsk-4ut).
+NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
+OVERLAP=""
+for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
+  [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
+  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  for have in $DSCOPE; do
+    for want in $NEW_SCOPE; do
+      [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
+    done
+  done
+done
+OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
 [ -z "$OVERLAP" ] \
-  || { echo "Refusing: drain(s) already in_progress: $OVERLAP" >&2; exit 1; }
+  || { echo "Refusing: in_progress drain(s) overlap this scope: $OVERLAP" >&2; exit 1; }
 ```
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.
@@ -325,10 +357,26 @@ for settings_file in .claude/settings.json "$HOME/.claude/settings.json"; do
   fi
 done
 
-# 7. No overlapping drain (label-based; --type fallback per spec)
-OVERLAP=$(bd list --label-pattern 'drain:*' --status=in_progress --json | jq -r '.[] | .id' | tr '\n' ' ')
+# 7. No overlapping drain — refuse only when an in_progress drain's scope
+#    intersects THIS run's scope, so drains of disjoint chains run concurrently.
+#    Filter with --type=drain: pre-flight #1 guarantees the type is registered,
+#    and --type filters reliably. Do NOT use --label-pattern / --label-regex —
+#    both are silently ignored by `bd list` (bd <=1.0.4) and return every
+#    in_progress bead, false-positiving on unrelated work (see fhsk-4ut).
+NEW_SCOPE="${SCOPE:-$EPIC_ID}"  # set/cascade: $SCOPE ("$*"); epic: $EPIC_ID
+OVERLAP=""
+for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
+  [ "$did" = "${DRAIN_ID:-}" ] && continue  # resume: skip the drain being resumed (unset in fresh runs)
+  DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+  for have in $DSCOPE; do
+    for want in $NEW_SCOPE; do
+      [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
+    done
+  done
+done
+OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
 [ -z "$OVERLAP" ] \
-  || { echo "Refusing: drain(s) already in_progress: $OVERLAP" >&2; exit 1; }
+  || { echo "Refusing: in_progress drain(s) overlap this scope: $OVERLAP" >&2; exit 1; }
 ```
 
 Pre-flight numbering matches the spec's canonical 7-check sequence: #1 bootstrap, #2 mode-arg (handled in the dispatch stub above), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.

@@ -336,10 +336,22 @@ This is the most complex task in the plan — it implements pre-flight, pour, se
     fi
   done
 
-  # 7. No overlapping drain (label-based; --type fallback per spec)
-  OVERLAP=$(bd list --label-pattern 'drain:*' --status=in_progress --json | jq -r '.[] | .id' | tr '\n' ' ')
+  # 7. No overlapping drain — scope-token intersection (see fhsk-4ut).
+  #    --label-pattern/--label-regex are silently ignored by bd <=1.0.4; use
+  #    --type=drain and compare drain_scope metadata so disjoint chains run
+  #    concurrently. Canonical block lives in dev-flow/commands/drain.md.
+  NEW_SCOPE="${SCOPE:-$EPIC_ID}"
+  OVERLAP=""
+  for did in $(bd list --type=drain --status=in_progress --json | jq -r '.[].id'); do
+    [ "$did" = "${DRAIN_ID:-}" ] && continue
+    DSCOPE=$(bd show "$did" --json | jq -r '.metadata.drain_scope // empty')
+    for have in $DSCOPE; do for want in $NEW_SCOPE; do
+      [ "$have" = "$want" ] && OVERLAP="$OVERLAP $did"
+    done; done
+  done
+  OVERLAP=$(printf '%s' "$OVERLAP" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
   [ -z "$OVERLAP" ] \
-    || { echo "Refusing: drain(s) already in_progress: $OVERLAP" >&2; exit 1; }
+    || { echo "Refusing: in_progress drain(s) overlap this scope: $OVERLAP" >&2; exit 1; }
   ```
 
   Numbering matches the spec's 7-check pre-flight: #1 bootstrap, #2 mode arg (handled by Task 2's dispatch stub, not re-checked here), #3 scope, #4 working tree, #5 branch, #6 trust+hooks, #7 no overlap.

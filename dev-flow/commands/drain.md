@@ -1,6 +1,6 @@
 ---
-description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, resume.
-argument-hint: "init | epic <id> | set <id...> | cascade <id...> | resume <drain-id>"
+description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, worker, resume.
+argument-hint: "init | epic <id> | set <id...> | cascade <id...> | worker <drain-id> | resume <drain-id>"
 allowed-tools: ["Read", "Grep", "Glob", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)"]
 ---
 
@@ -14,6 +14,7 @@ Parse `$ARGUMENTS` as one of:
 - `epic <epic-id>` — Drain all open beads under `<epic-id>`.
 - `set <id1> <id2> ...` — Drain only the listed beads.
 - `cascade <id1> <id2> ...` — Drain seeds + transitive dependents (via `bd dep list --direction=up`).
+- `worker <drain-id>` — Emit the `/goal` condition for a fresh worker to attach to a live drain (regenerates from the bead; does not create or re-stamp).
 - `resume <drain-id>` — Resume a halted drain run (recovers `mode`/`scope` from drain bead's metadata fields `drain_mode`, `drain_scope`, `drain_started_at`).
 - anything else / missing — Print this usage and exit.
 
@@ -440,6 +441,25 @@ Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
 `<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
 workspace and submit the following as its first input (do not run it here):".
 Then stop — do not attempt to invoke `/goal`.
+
+## Worker mode (`/drain worker <drain-id>`)
+
+Attaches a fresh worker to an existing (live) drain. Reduced pre-flight only — it
+regenerates the `/goal` condition from the drain bead and emits it; it does NOT
+create or re-stamp the bead, and (unlike `resume`) does NOT inspect `halt:` notes.
+
+```bash
+DRAIN_ID="$1"
+bd types | grep -q drain || { echo "Run /drain init first." >&2; exit 1; }
+META=$(bd show "$DRAIN_ID" --json | jq '.[0].metadata')
+SENTINEL=$(echo "$META" | jq -r '.drain_sentinel // empty')
+[ -n "$SENTINEL" ] && [ "$SENTINEL" != "null" ] \
+  || { echo "$DRAIN_ID has no drain_sentinel; was it created by /drain?" >&2; exit 1; }
+echo "Attaching worker to drain $DRAIN_ID."
+```
+
+Then fall through to **Phase D — Emit the `/goal` condition** (the Worker condition
+with `$DRAIN_ID`/`$SENTINEL` substituted, for the operator/driver to submit).
 
 ## Resume mode (`/drain resume <drain-id>`)
 

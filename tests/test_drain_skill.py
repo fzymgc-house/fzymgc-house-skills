@@ -142,3 +142,15 @@ def test_drain_with_worker_command_body() -> None:
     assert "references/drain-with-worker.md" in text, "must delegate to the reference"
     assert "AskUserQuestion" in text, "must confirm before launch"
     assert "epic" in text, "must state epic-mode-only"
+
+
+def test_drain_allowed_tools_gained_launch_toolset() -> None:
+    fm = _frontmatter(DRAIN_CMD.read_text())
+    assert "AskUserQuestion" in fm, "inline launch offer needs AskUserQuestion"
+    assert "Bash(cmux:*)" in fm, "inline launch needs cmux"
+
+
+def test_drain_epic_phase_d_offers_worker() -> None:
+    text = DRAIN_CMD.read_text()
+    assert "command -v cmux" in text, "Phase D must probe for cmux"
+    assert "/drain-with-worker" in text, "Phase D must hand off to /drain-with-worker"

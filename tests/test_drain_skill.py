@@ -6,6 +6,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DRAIN_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain.md"
 DRAIN_SKILL = REPO_ROOT / "dev-flow" / "skills" / "draining-beads" / "SKILL.md"
+DRAIN_WITH_WORKER_REF = REPO_ROOT / "dev-flow" / "references" / "drain-with-worker.md"
+DRAIN_WITH_WORKER_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain-with-worker.md"
 
 CONDITION_MAX = 1500
 
@@ -82,4 +84,31 @@ def test_worker_condition_has_jj_clause() -> None:
     assert "jj:jujutsu" in tpl, (
         "canonical worker condition must tell the worker to invoke jj:jujutsu "
         "before commit/rebase/topology surgery"
+    )
+
+
+def test_reference_uses_issue_type_not_type() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert ".[0].issue_type" in text, "must read the array element's issue_type field"
+    assert ".type //" not in text, "the buggy '.type //' object-fallback must be gone"
+    assert "// .metadata" not in text, "drop the '// .metadata' object-fallback"
+    assert "// .status" not in text, "drop the '// .status' object-fallback"
+
+
+def test_reference_prereqs_refuse_early() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert "issue_type // empty" in text or ".[0].issue_type" in text
+    assert '"in_progress"' in text
+    assert '"epic"' in text
+    for meta in ("drain_workspace", "drain_scope", "drain_sentinel"):
+        assert meta in text, f"prereq must guard {meta}"
+    assert "command -v cmux" in text, "must refuse when cmux is not on PATH"
+
+
+def test_reference_watchdog_completion_keys_on_bead_closed() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert '"closed"' in text, "watchdog completion = drain bead status closed"
+    assert "startswith(" in text, "epic child probe filters by '<scope>.' prefix"
+    assert ".status // .status" not in text, (
+        "cleaned status read has no object-fallback"
     )

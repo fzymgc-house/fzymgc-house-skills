@@ -112,3 +112,13 @@ def test_reference_watchdog_completion_keys_on_bead_closed() -> None:
     assert ".status // .status" not in text, (
         "cleaned status read has no object-fallback"
     )
+
+
+def test_worker_condition_byte_identical() -> None:
+    cmd_tpl = _condition_template(DRAIN_CMD.read_text())
+    ref_tpl = _condition_template(DRAIN_WITH_WORKER_REF.read_text())
+    assert cmd_tpl == ref_tpl, (
+        "the worker condition embedded in the reference must be byte-identical to "
+        "drain.md's canonical condition"
+    )
+    assert "jj:jujutsu" in ref_tpl

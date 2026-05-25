@@ -9,6 +9,7 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-05-25 | [fhsk-dtk](fhsk-dtk-gate-drain-worker-launch-behind-askuserquestion-never-auto-f.md) | Gate drain worker launch behind AskUserQuestion, never auto-fire | Accepted |
 | 2026-05-24 | [fhsk-zds](fhsk-zds-use-drain-bead-as-cross-session-handoff-carrier-not-temp-fil.md) | Use the drain bead as the cross-session handoff carrier, not a temp file | Accepted |
 | 2026-05-24 | [fhsk-eqt](fhsk-eqt-store-drain-iteration-protocol-skill-not-goal-condition.md) | Store the drain iteration protocol in the skill, not the /goal condition | Accepted |
 | 2026-05-24 | [fhsk-e4i](fhsk-e4i-never-invoke-goal-from-skill-emit-condition-user-or-driver-s.md) | Never invoke /goal from a skill; emit the condition for a user or driver to submit | Accepted |

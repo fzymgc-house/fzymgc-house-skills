@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.11.1...fzymgc-house-skills-v1.12.0) (2026-05-25)
+
+
+### Features
+
+* **drain:** /drain-with-worker autonomous worker-pane launcher ([#97](https://github.com/fzymgc-house/fzymgc-house-skills/issues/97)) ([feb7d15](https://github.com/fzymgc-house/fzymgc-house-skills/commit/feb7d1564a1a54bb8cc9ef71af8aa444b6f7d755))
+
 ## [1.11.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.11.0...fzymgc-house-skills-v1.11.1) (2026-05-24)
 
 

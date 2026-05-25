@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.7.1...dev-flow-v0.8.0) (2026-05-25)
+
+
+### Features
+
+* **drain:** /drain-with-worker autonomous worker-pane launcher ([#97](https://github.com/fzymgc-house/fzymgc-house-skills/issues/97)) ([feb7d15](https://github.com/fzymgc-house/fzymgc-house-skills/commit/feb7d1564a1a54bb8cc9ef71af8aa444b6f7d755))
+
 ## [0.7.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.7.0...dev-flow-v0.7.1) (2026-05-24)
 
 

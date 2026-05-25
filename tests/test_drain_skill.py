@@ -6,6 +6,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DRAIN_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain.md"
 DRAIN_SKILL = REPO_ROOT / "dev-flow" / "skills" / "draining-beads" / "SKILL.md"
+DRAIN_WITH_WORKER_REF = REPO_ROOT / "dev-flow" / "references" / "drain-with-worker.md"
+DRAIN_WITH_WORKER_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain-with-worker.md"
 
 CONDITION_MAX = 1500
 
@@ -75,3 +77,85 @@ def test_worker_mode_present() -> None:
     text = DRAIN_CMD.read_text()
     assert "worker <drain-id>" in text, "argument-hint/dispatch must list worker mode"
     assert "## Worker mode" in text
+
+
+def test_worker_condition_has_jj_clause() -> None:
+    tpl = _condition_template(DRAIN_CMD.read_text())
+    assert "jj:jujutsu" in tpl, (
+        "canonical worker condition must tell the worker to invoke jj:jujutsu "
+        "before commit/rebase/topology surgery"
+    )
+
+
+def test_reference_uses_issue_type_not_type() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert ".[0].issue_type" in text, "must read the array element's issue_type field"
+    assert ".type //" not in text, "the buggy '.type //' object-fallback must be gone"
+    assert "// .metadata" not in text, "drop the '// .metadata' object-fallback"
+    assert "// .status" not in text, "drop the '// .status' object-fallback"
+
+
+def test_reference_prereqs_refuse_early() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert "issue_type // empty" in text or ".[0].issue_type" in text
+    assert '"in_progress"' in text
+    assert '"epic"' in text
+    for meta in ("drain_workspace", "drain_scope", "drain_sentinel"):
+        assert meta in text, f"prereq must guard {meta}"
+    assert "command -v cmux" in text, "must refuse when cmux is not on PATH"
+
+
+def test_reference_watchdog_completion_keys_on_bead_closed() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert '"closed"' in text, "watchdog completion = drain bead status closed"
+    assert "startswith(" in text, "epic child probe filters by '<scope>.' prefix"
+    assert ".status // .status" not in text, (
+        "cleaned status read has no object-fallback"
+    )
+
+
+def test_worker_condition_byte_identical() -> None:
+    cmd_tpl = _condition_template(DRAIN_CMD.read_text())
+    ref_tpl = _condition_template(DRAIN_WITH_WORKER_REF.read_text())
+    assert cmd_tpl == ref_tpl, (
+        "the worker condition embedded in the reference must be byte-identical to "
+        "drain.md's canonical condition"
+    )
+    assert "jj:jujutsu" in ref_tpl
+
+
+def _frontmatter(text: str) -> str:
+    m = re.match(r"^---\n(.*?)\n---", text, re.S)
+    assert m, "command must start with YAML frontmatter"
+    return m.group(1)
+
+
+def test_drain_with_worker_command_frontmatter() -> None:
+    fm = _frontmatter(DRAIN_WITH_WORKER_CMD.read_text())
+    assert "AskUserQuestion" in fm, "confirm gate needs AskUserQuestion"
+    assert "Bash(cmux:*)" in fm, "launch needs cmux"
+    assert "PushNotification" in fm, "watchdog completion needs PushNotification"
+
+
+def test_drain_with_worker_command_body() -> None:
+    text = DRAIN_WITH_WORKER_CMD.read_text()
+    assert "references/drain-with-worker.md" in text, "must delegate to the reference"
+    assert "AskUserQuestion" in text, "must confirm before launch"
+    assert "epic" in text, "must state epic-mode-only"
+
+
+def test_drain_allowed_tools_gained_launch_toolset() -> None:
+    fm = _frontmatter(DRAIN_CMD.read_text())
+    assert "AskUserQuestion" in fm, "inline launch offer needs AskUserQuestion"
+    assert "Bash(cmux:*)" in fm, "inline launch needs cmux"
+
+
+def test_drain_epic_phase_d_offers_worker() -> None:
+    text = DRAIN_CMD.read_text()
+    assert "command -v cmux" in text, "Phase D must probe for cmux"
+    assert "/drain-with-worker" in text, "Phase D must hand off to /drain-with-worker"
+
+
+def test_agents_doc_mentions_drain_with_worker() -> None:
+    agents = (REPO_ROOT / "dev-flow" / "AGENTS.md").read_text()
+    assert "/drain-with-worker" in agents, "AGENTS.md must document the new command"

@@ -1,7 +1,7 @@
 ---
 description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, worker, resume.
 argument-hint: "init | epic <id> | set <id...> | cascade <id...> | worker <drain-id> | resume <drain-id>"
-allowed-tools: ["Read", "Grep", "Glob", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "PushNotification", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)", "Bash(command -v cmux:*)", "Bash(cmux:*)", "Bash(direnv:*)", "Bash(sleep:*)", "Bash(jq:*)"]
 ---
 
 # /drain
@@ -176,7 +176,23 @@ bd update "$DRAIN_ID" --set-metadata "drain_sentinel=$SENTINEL"
 Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
 `<SENTINEL>` substituted, prefixed with: "Launch a fresh `claude` worker in this
 workspace and submit the following as its first input (do not run it here):".
-Then stop — do not attempt to invoke `/goal`.
+Do not attempt to invoke `/goal` (it is a user-only built-in).
+
+**Then probe for an autonomous launcher:** run `command -v cmux`.
+
+- **cmux present** → ask via **AskUserQuestion**: "Launch the autonomous worker
+  for `$DRAIN_ID` now?" with options **Launch now** / **Just give me the command** /
+  **Not now**.
+  - *Launch now* → this prompt IS the confirm gate; follow
+    `references/drain-with-worker.md` for `$DRAIN_ID` inline (skip that command's
+    own gate — already confirmed here).
+  - *Just give me the command* → print `/drain-with-worker $DRAIN_ID`.
+  - *Not now* → print `/drain-with-worker $DRAIN_ID` for later, plus the emitted
+    `/goal` condition above as the manual fallback.
+- **cmux absent** → the emitted `/goal` condition above is the handoff; stop.
+
+(This cmux-aware launch offer is **epic-mode only** — set/cascade Phase D below
+emit the condition without it, since the worker-pane watchdog is epic-specific.)
 
 ## Set mode (`/drain set <id1> <id2> ...`)
 
@@ -518,6 +534,7 @@ SDK driver) to submit as a worker's `/goal` turn. The skill never fires `/goal`
 Drain worker for bead <DRAIN_ID>. Invoke the dev-flow:draining-beads skill for
 the iteration protocol, then run `bd show <DRAIN_ID> --json` for your assignment
 (workspace, mode, scope, lessons, rejection counts). cd to the workspace named in
-that bead before any bd/jj/file operation. Execute exactly ONE ready bead this
-turn following the protocol, then stop. Goal met when: <SENTINEL>.
+that bead before any bd/jj/file operation. Also invoke the jj:jujutsu skill before
+any commit/rebase/topology surgery. Execute exactly ONE ready bead this turn
+following the protocol, then stop. Goal met when: <SENTINEL>.
 ```

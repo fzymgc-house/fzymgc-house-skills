@@ -518,6 +518,7 @@ SDK driver) to submit as a worker's `/goal` turn. The skill never fires `/goal`
 Drain worker for bead <DRAIN_ID>. Invoke the dev-flow:draining-beads skill for
 the iteration protocol, then run `bd show <DRAIN_ID> --json` for your assignment
 (workspace, mode, scope, lessons, rejection counts). cd to the workspace named in
-that bead before any bd/jj/file operation. Execute exactly ONE ready bead this
-turn following the protocol, then stop. Goal met when: <SENTINEL>.
+that bead before any bd/jj/file operation. Also invoke the jj:jujutsu skill before
+any commit/rebase/topology surgery. Execute exactly ONE ready bead this turn
+following the protocol, then stop. Goal met when: <SENTINEL>.
 ```

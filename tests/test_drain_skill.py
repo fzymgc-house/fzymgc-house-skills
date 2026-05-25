@@ -75,3 +75,11 @@ def test_worker_mode_present() -> None:
     text = DRAIN_CMD.read_text()
     assert "worker <drain-id>" in text, "argument-hint/dispatch must list worker mode"
     assert "## Worker mode" in text
+
+
+def test_worker_condition_has_jj_clause() -> None:
+    tpl = _condition_template(DRAIN_CMD.read_text())
+    assert "jj:jujutsu" in tpl, (
+        "canonical worker condition must tell the worker to invoke jj:jujutsu "
+        "before commit/rebase/topology surgery"
+    )

@@ -122,3 +122,23 @@ def test_worker_condition_byte_identical() -> None:
         "drain.md's canonical condition"
     )
     assert "jj:jujutsu" in ref_tpl
+
+
+def _frontmatter(text: str) -> str:
+    m = re.match(r"^---\n(.*?)\n---", text, re.S)
+    assert m, "command must start with YAML frontmatter"
+    return m.group(1)
+
+
+def test_drain_with_worker_command_frontmatter() -> None:
+    fm = _frontmatter(DRAIN_WITH_WORKER_CMD.read_text())
+    assert "AskUserQuestion" in fm, "confirm gate needs AskUserQuestion"
+    assert "Bash(cmux:*)" in fm, "launch needs cmux"
+    assert "PushNotification" in fm, "watchdog completion needs PushNotification"
+
+
+def test_drain_with_worker_command_body() -> None:
+    text = DRAIN_WITH_WORKER_CMD.read_text()
+    assert "references/drain-with-worker.md" in text, "must delegate to the reference"
+    assert "AskUserQuestion" in text, "must confirm before launch"
+    assert "epic" in text, "must state epic-mode-only"

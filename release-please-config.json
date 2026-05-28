@@ -58,52 +58,6 @@
         }
       ]
     },
-    "pr-review": {
-      "release-type": "simple",
-      "package-name": "pr-review",
-      "extra-files": [
-        {
-          "type": "json",
-          "path": "pr-review/plugin.json",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "json",
-          "path": "plugins/pr-review/.codex-plugin/plugin.json",
-          "jsonpath": "$.version"
-        }
-      ]
-    },
-    "pr-review/skills/review-pr": {
-      "release-type": "simple",
-      "package-name": "review-pr",
-      "extra-files": [
-        {
-          "type": "generic",
-          "path": "pr-review/skills/review-pr/SKILL.md"
-        }
-      ]
-    },
-    "pr-review/skills/address-findings": {
-      "release-type": "simple",
-      "package-name": "address-findings",
-      "extra-files": [
-        {
-          "type": "generic",
-          "path": "pr-review/skills/address-findings/SKILL.md"
-        }
-      ]
-    },
-    "pr-review/skills/respond-to-comments": {
-      "release-type": "simple",
-      "package-name": "respond-to-comments",
-      "extra-files": [
-        {
-          "type": "generic",
-          "path": "pr-review/skills/respond-to-comments/SKILL.md"
-        }
-      ]
-    },
     "jj": {
       "release-type": "simple",
       "package-name": "jj",

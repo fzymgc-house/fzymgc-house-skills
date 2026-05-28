@@ -6,7 +6,7 @@ description: >-
   "analyze this pull request", or invokes /review-pr. Launches targeted review
   agents for code quality, error handling, test coverage, type design, comments,
   security, API compatibility, spec compliance, and code simplification.
-argument-hint: "PR# [aspects: all|code|errors|tests|types|comments|security|api|spec|simplify]"
+argument-hint: "PR# [aspects: all|code|errors|tests|types|comments|security|api|spec|simplify|slop]"
 allowed-tools:
   - Task
   - Grep
@@ -79,6 +79,7 @@ isolation. Results are aggregated into a prioritized action plan.
 | `api` | api-contract-checker | Breaking changes, backward compat, schemas |
 | `spec` | spec-compliance | Design doc/ADR/requirements alignment |
 | `simplify` | code-simplifier | Clarity, redundancy, maintainability |
+| `slop` | slop-hunter | AI-authorship tells in code and prose |
 
 Default: `all` (run every applicable aspect).
 
@@ -141,6 +142,7 @@ gh api repos/{owner}/{repo}/pulls/<number>/comments
 | Public interfaces changed OR `api` requested | `api` |
 | Spec/design docs exist OR `spec` requested | `spec` |
 | After other reviews OR `simplify` requested | `simplify` |
+| Code or prose added OR `slop` requested | `slop` |
 
 When `all` is requested, run every agent regardless of file heuristics.
 
@@ -163,6 +165,7 @@ Default: `sonnet`. Escalate to `opus` only when:
 | api-contract-checker | sonnet | Rarely |
 | spec-compliance | sonnet | Vague spec with significant arch changes |
 | code-simplifier | sonnet | Rarely |
+| slop-hunter | sonnet | Rarely |
 
 ### 6. Create or Reuse Parent Bead
 
@@ -190,11 +193,16 @@ Each Task call:
 - `subagent_type`: the agent name (e.g., `code-reviewer`, `security-auditor`)
 - `model`: `sonnet` or `opus` per step 5
 - `prompt`: Include the PR diff, plus these variables:
-  `PARENT_BEAD_ID`, `TURN`, `PR_URL`, `ASPECT`
+  `PARENT_BEAD_ID`, `TURN`, `PR_URL`, `ASPECT`. For the `slop-hunter` agent
+  also pass `ACTIVE_ASPECTS`: the comma-separated aspect keys of all selected
+  agents for this run (the left-column keys from step 4, e.g.
+  `code,errors,comments,simplify`), excluding `slop` itself. It drives the
+  agent's Rule B deferral.
 
 **Batching**: Launch at most 3 concurrent Task calls per message.
 Run `security` + `code` in the first batch. Wait for each batch to
-complete before launching the next.
+complete before launching the next. `slop` depends on no other agent's
+output; run it in the second batch.
 
 **Sequential mode**: When a single aspect is requested, launch one
 agent at a time for interactive review.

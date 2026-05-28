@@ -59,7 +59,8 @@ materializing a multi-task plan (use `plan-to-beads` instead).
 | Verification | `--notes` | no | Concrete shell commands. |
 | Dependencies | `--deps blocks:<id>` / `--deps blocked-by:<id>` | no | Or `bd dep add` after creation. |
 | Labels | `--labels` | no | Namespaced tags. `model:<tier>` is set via the `--model` arg below. |
-| Required skills | `--skills` | no | Dispatch routing hints (e.g. `jj,proto`). |
+| Required skills | `--skills` | no | Appends a `## Required Skills` block to the description (capability hint, not routing). |
+| Agent routing | `--labels agent:<type>` | no | Selects `subagent_type` (documented lookup; `general-purpose` fallback). |
 | Model | `--model haiku\|sonnet\|opus` | no (default `sonnet`) | Translated to `--labels model:<value>` per Rule 5. |
 | External ref | `--external-ref <url>` | no | PR / issue / Linear URL. |
 | Description body | `--description` or `--body-file` | no | Narrative only (see below). |
@@ -114,7 +115,7 @@ bd create \
   --type task \
   --priority 2 \
   --parent <epic-id> \
-  --labels "model:sonnet,aspect:<x>,area:<y>" \
+  --labels "model:sonnet,agent:<type>,aspect:<x>,area:<y>" \
   --skills "<comma-separated>" \
   --spec-id "<plan-or-spec-path>" \
   --acceptance "<RFC2119 MUST/SHOULD checks>" \

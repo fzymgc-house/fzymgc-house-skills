@@ -19,35 +19,6 @@ Infrastructure skills for interacting with the homelab cluster.
 | **terraform** | Terraform Cloud operations — runs, workspaces, state management, registry documentation |
 | **skill-qa** | Validates SKILL.md files against Claude Code best practices |
 
-### pr-review
-
-Automated PR review workflow using 12 specialized agents with git worktree isolation for parallel execution.
-
-**Skills** (orchestrators):
-
-| Skill | Description |
-|-------|-------------|
-| **review-pr** | Dispatches up to 9 review agents in parallel, persists findings as beads |
-| **address-findings** | Fix loop with worktree-isolated fix-workers, merge protocol, and review gates |
-| **respond-to-comments** | GitHub PR comment management with bead-aware context |
-
-**Agents** (dispatched by orchestrator skills):
-
-| Agent | Role |
-|-------|------|
-| code-reviewer | Project guideline compliance and bug detection |
-| silent-failure-hunter | Error handling and silent failure auditing |
-| pr-test-analyzer | Test coverage quality and gap analysis |
-| type-design-analyzer | Type invariant strength and encapsulation |
-| comment-analyzer | Code comment accuracy and maintainability |
-| security-auditor | OWASP-based security vulnerability detection |
-| api-contract-checker | Breaking changes and backward compatibility |
-| spec-compliance | Alignment with design docs and ADRs |
-| code-simplifier | Clarity and maintainability improvements |
-| fix-worker | Implements fixes in isolated worktrees |
-| review-gate | Validates fixes address their findings |
-| verification-runner | Runs quality gates after fixes are applied |
-
 ### jj
 
 Jujutsu workflow guidance for colocated and standalone repositories.
@@ -77,6 +48,23 @@ See [`dev-flow/skills/`](dev-flow/skills/) for the complete skill
 list — additional skills cover worktrees, parallel agents, code review,
 TDD, and skill authoring.
 
+#### PR review workflow
+
+dev-flow also includes an automated PR review workflow using specialized
+agents with worktree isolation for parallel execution.
+
+| Skill | Description |
+|-------|-------------|
+| **review-pr** | Dispatches up to 10 review agents in parallel, persists findings as beads |
+| **address-findings** | Fix loop with worktree-isolated fix-workers, merge protocol, and review gates |
+| **respond-to-comments** | GitHub PR comment management with bead-aware context |
+
+Review/fix agents (dispatched by the orchestrators): `code-reviewer`,
+`silent-failure-hunter`, `pr-test-analyzer`, `type-design-analyzer`,
+`comment-analyzer`, `security-auditor`, `api-contract-checker`,
+`spec-compliance`, `code-simplifier`, `slop-hunter`, `fix-worker`,
+`review-gate`, `verification-runner`.
+
 ## Installation
 
 ### Claude Code
@@ -86,7 +74,6 @@ Add the marketplace, then install plugins by name:
 ```bash
 claude plugin marketplace add fzymgc-house/fzymgc-house-skills
 claude plugin install homelab@fzymgc-house-skills
-claude plugin install pr-review@fzymgc-house-skills
 claude plugin install jj@fzymgc-house-skills
 claude plugin install dev-flow@fzymgc-house-skills
 ```
@@ -95,12 +82,12 @@ claude plugin install dev-flow@fzymgc-house-skills
 
 Use the repo-local Codex marketplace at
 `.agents/plugins/marketplace.json`. The `plugins/` directory contains thin
-Codex wrappers that symlink back to the existing `homelab/`, `pr-review/`,
-`jj/`, and `dev-flow/` directories so the underlying SKILL.md content
-remains single-source.
+Codex wrappers that symlink back to the existing `homelab/`, `jj/`, and
+`dev-flow/` directories so the underlying SKILL.md content remains
+single-source.
 
 Current Codex limitation: named Claude plugin agents are not installed
-natively. `pr-review` and some `dev-flow` workflows still work in Codex,
+natively. The `dev-flow` review workflows still work in Codex,
 but agent-dispatch steps must follow the compatibility guidance in
 `dev-flow/skills/using-superpowers/references/codex-tools.md`.
 
@@ -145,20 +132,17 @@ homelab/
     grafana/            # Grafana/Loki/Prometheus operations
     terraform/          # Terraform Cloud operations
     skill-qa/           # SKILL.md validation
-pr-review/
-  plugin.json           # Plugin manifest
-  agents/               # 12 agent definitions (YAML frontmatter + system prompt)
-  skills/
-    review-pr/          # Review orchestrator
-    address-findings/   # Fix loop orchestrator
-    respond-to-comments/  # PR comment management
 jj/
   plugin.json           # Plugin manifest
   skills/
     jujutsu/            # Jujutsu workflow guidance
 dev-flow/
   plugin.json           # Plugin manifest
+  agents/               # workflow + review/fix/verification agents
   skills/
+    review-pr/          # Review orchestrator
+    address-findings/   # Fix loop orchestrator
+    respond-to-comments/  # PR comment management
     ...                 # Workflow skills (originally from obra/superpowers v5.0.7)
 ```
 

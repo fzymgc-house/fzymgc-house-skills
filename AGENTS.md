@@ -6,13 +6,14 @@ cross-platform rules and Claude-specific notes.
 
 ## Repository Purpose
 
-This repository publishes four source plugins for the fzymgc-house skills
+This repository publishes three source plugins for the fzymgc-house skills
 marketplace:
 
 - `homelab` - infrastructure skills for Grafana, Terraform, and skill QA
-- `pr-review` - PR review orchestrators plus review/fix/verification agents
 - `jj` - Jujutsu workflow guidance
-- `dev-flow` - development workflow skills forked from obra/superpowers
+- `dev-flow` - development workflow skills forked from obra/superpowers, plus
+  the PR review orchestrators (`review-pr`, `address-findings`,
+  `respond-to-comments`) and review/fix/verification agents
 
 It also publishes a repo-local Codex compatibility layer:
 
@@ -20,7 +21,7 @@ It also publishes a repo-local Codex compatibility layer:
 - `plugins/<name>/` - thin Codex wrapper plugins
 
 Keep the real skill content in the source plugin directories (`homelab/`,
-`pr-review/`, `jj/`, `dev-flow/`). The `plugins/` wrappers should point
+`jj/`, `dev-flow/`). The `plugins/` wrappers should point
 back to those sources instead of copying them.
 
 ## Quick Start
@@ -52,11 +53,6 @@ plugins/
 homelab/
   plugin.json
   skills/
-pr-review/
-  plugin.json
-  agents/
-  references/
-  skills/
 jj/
   plugin.json
   commands/
@@ -64,12 +60,13 @@ jj/
   skills/
 dev-flow/
   plugin.json
-  agents/
+  agents/         # incl. review/fix/verification agents
   commands/
+  evals/
   hooks/
-  references/
+  references/     # incl. code-slop, prose-slop, vcs preambles
   scripts/
-  skills/
+  skills/         # incl. review-pr, address-findings, respond-to-comments
 ```
 
 ## Issue Tracking With bd
@@ -189,8 +186,8 @@ source configuration remains repo-rooted.
 
 ### Agent Dispatch
 
-Some workflows, especially in `pr-review` and `dev-flow`, were authored for
-Claude-style named subagents. In Codex, use the compatibility guidance in:
+Some workflows, especially the `dev-flow` review orchestrators, were authored
+for Claude-style named subagents. In Codex, use the compatibility guidance in:
 
 `dev-flow/skills/using-superpowers/references/codex-tools.md`
 
@@ -258,7 +255,6 @@ Claude installs the source plugins from the repository marketplace rooted at:
 The source plugin manifests live in:
 
 - `homelab/plugin.json`
-- `pr-review/plugin.json`
 - `jj/plugin.json`
 - `dev-flow/plugin.json`
 
@@ -300,7 +296,7 @@ bd close <id>         # Complete work
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
+**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See <https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md> for details and anti-patterns.
 
 ## Session Completion
 
@@ -312,16 +308,19 @@ bd close <id>         # Complete work
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
 4. **PUSH TO REMOTE** - This is MANDATORY:
+
    ```bash
    git pull --rebase
    git push
    git status  # MUST show "up to date with origin"
    ```
+
 5. **Clean up** - Clear stashes, prune remote branches
 6. **Verify** - All changes committed AND pushed
 7. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
+
 - Work is NOT complete until `git push` succeeds
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push

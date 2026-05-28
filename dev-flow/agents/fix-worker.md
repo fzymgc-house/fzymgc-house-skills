@@ -17,7 +17,7 @@ and implement the minimal correct fix.
 ## Environment
 
 You are running in an isolated worktree. Follow the startup procedure
-in `pr-review/references/vcs-detection-preamble.md` to detect VCS
+in `dev-flow/references/vcs-detection-preamble.md` to detect VCS
 and verify your location before proceeding.
 
 ## Scope and Standards
@@ -98,7 +98,7 @@ VCS: jj
 CHANGE_ID: <change-id>
 ```
 
-See `pr-review/references/vcs-equivalence.md` for VCS-specific output field rules
+See `dev-flow/references/vcs-equivalence.md` for VCS-specific output field rules
 (WORKTREE_BRANCH vs CHANGE_ID).
 
 ## Constraints

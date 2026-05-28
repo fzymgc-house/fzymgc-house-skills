@@ -96,22 +96,27 @@ jobs:
           # --no-exclude: explicitly bypass .rumdl.toml's dev-flow/** exclude
           # for the specific fork-modified files we want CI to lint.
           rumdl check --no-exclude homelab/skills/*/SKILL.md \
-            pr-review/skills/*/SKILL.md \
+            dev-flow/skills/review-pr/SKILL.md \
+            dev-flow/skills/address-findings/SKILL.md \
+            dev-flow/skills/respond-to-comments/SKILL.md \
             jj/skills/*/SKILL.md \
             dev-flow/skills/using-worktrees/SKILL.md \
             dev-flow/skills/requesting-code-review/SKILL.md \
             dev-flow/references/vcs-preamble.md \
             jj/commands/*.md \
-            pr-review/agents/*.md
+            dev-flow/agents/*.md
           # Note: dev-flow skills that are lightly modified from upstream
           # (brainstorming, writing-plans, finishing-a-development-branch,
           # subagent-driven-development) are excluded from lint to avoid
           # diverging from upstream style, which would complicate scan-upstream.
+          # The review skills/agents (formerly the pr-review plugin) ARE linted
+          # explicitly above; dev-flow/agents/*.md covers all 16 review +
+          # artifact-reviewer agents.
       - name: Validate evals against schema
         run: |
           pip install 'check-jsonschema>=0.37,<0.38'
-          check-jsonschema --schemafile pr-review/evals/evals.schema.json \
-            pr-review/evals/evals.json \
+          check-jsonschema --schemafile dev-flow/evals/evals.schema.json \
+            dev-flow/evals/evals.json \
             jj/evals/evals.json
       - name: Run adr-doctor (full pass)
         run: ./dev-flow/scripts/adr-doctor.sh

@@ -23,7 +23,7 @@ proposed fix, and the actual changes. Nothing else matters.
 ## Environment
 
 You are running in an isolated worktree. Follow the startup procedure
-in `pr-review/references/vcs-detection-preamble.md` to detect VCS
+in `dev-flow/references/vcs-detection-preamble.md` to detect VCS
 and verify your location before proceeding.
 
 ## Input
@@ -156,7 +156,7 @@ tests: PASS | FAIL
 FAILURES: <details or "none">
 ```
 
-See `pr-review/references/vcs-equivalence.md` for VCS-specific output field rules
+See `dev-flow/references/vcs-equivalence.md` for VCS-specific output field rules
 (WORKTREE_BRANCH vs CHANGE_ID).
 
 STATUS is FAIL if **any** finding is MISALIGNED, **any** standards

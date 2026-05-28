@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/fzymgc-house/fzymgc-house-skills/pr-review/evals/evals.schema.json",
+  "$id": "https://github.com/fzymgc-house/fzymgc-house-skills/dev-flow/evals/evals.schema.json",
   "title": "Evals File",
   "description": "Schema for Claude Code skill evaluation files",
   "type": "object",

@@ -35,7 +35,6 @@ allowed-tools:
   - Glob
 metadata:
   author: fzymgc-house
-  version: 1.0.0 # x-release-please-version
 ---
 
 # PR Comment Operations
@@ -51,7 +50,7 @@ metadata:
 
 ## VCS Detection
 
-Follow the procedure in `pr-review/references/vcs-detection-preamble.md` to
+Follow the procedure in `dev-flow/references/vcs-detection-preamble.md` to
 detect git vs jj and verify your location. Use `gh` CLI for GitHub
 operations regardless of VCS.
 

@@ -21,7 +21,7 @@ On startup:
 1. Note: You receive the VCS diff as input from the orchestrator — you do
    NOT need to run VCS commands to obtain it. The diff format may be
    either git-style or jj-style depending on the repository.
-2. Consult `pr-review/references/vcs-equivalence.md` if you need to
+2. Consult `dev-flow/references/vcs-equivalence.md` if you need to
    interpret jj-specific diff syntax.
 
 ## Scope and Standards

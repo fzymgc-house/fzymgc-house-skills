@@ -446,16 +446,22 @@ Lifted from holomush PR #3833 (~2,000 lines, 5 artifacts). High-level shape:
 | `nudge-adr-capture.sh` | `PostToolUse` hook | ~111 | Emits `additionalContext` reminder when watched spec/plan edited without current marker |
 | `adr-doctor.sh` | Lint script | ~235 | Durable health check (12+ named checks); pre-commit runs **on changed `docs/adr/**` files only** for perf; CI runs full pass on all of `docs/adr/`. |
 
-### Worthiness criteria (verbatim from holomush; codified in dev-flow's AGENTS.md)
+### Worthiness criteria (codified in dev-flow's adr-extractor + AGENTS.md)
 
-A candidate is ADR-worthy iff ALL four hold:
+A candidate is ADR-worthy iff it passes ALL four (score == 4); borderline
+(< 4) candidates are dropped, not surfaced:
 
-1. **Architectural** — not implementation detail.
-2. **Has rejected alternatives** with real trade-off.
-3. **Load-bearing** for future decisions or contributors.
-4. **Not already captured** — must grep `docs/adr/` and `bd list --type decision` before proposing.
+1. **Architecturally load-bearing** — constrains future code (structure,
+   interfaces, data model, cross-component contracts, trust/dependency
+   boundaries); not process/file churn.
+2. **Has rejected alternatives** with a real trade-off — necessary but not
+   sufficient; brainstorming-prompt alternatives do not by themselves qualify.
+3. **Load-bearing** for future contributors.
+4. **Not already captured** (else `supersedes`).
 
-Score 0-4 by criteria-passed. Score < 4 is borderline (surfaced anyway, flagged).
+Auto-drop (never surface): process/sequencing, packaging/versioning/release
+mechanics, file-org/refactor mechanics, naming conventions, doc/wording
+choices, runtime-inert tooling config. Only score == 4 is surfaced.
 
 ### File-to-bead linkage discipline
 

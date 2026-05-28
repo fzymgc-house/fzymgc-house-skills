@@ -24,23 +24,33 @@ Record (ADR) candidates.
 
 ## Worthiness criteria
 
-A candidate is ADR-worthy iff ALL of the following are true:
+A candidate is ADR-worthy iff it passes ALL of the following. **Surface only
+candidates that pass all four (score == 4).** Anything that fails one or more
+goes in `dropped` with a reason — do NOT surface borderline candidates.
 
-1. **Architectural** — not implementation detail (e.g., not "use
-   kebab-case for slugs").
-2. **Has rejected alternatives** with a real trade-off — the presence
-   of a credible alternative that was considered AND rejected is the
-   signal.
-3. **Load-bearing** for future decisions or contributors — six months
-   from now someone asking "why is X this way" should be able to find
-   the answer here.
+1. **Architecturally load-bearing** — the decision constrains *future code*:
+   system structure, public interfaces / APIs, data model, cross-component
+   contracts, or trust / dependency boundaries. If reversing it would only
+   churn process or files (not code behavior or structure), it is NOT
+   architectural.
+2. **Has rejected alternatives with a real trade-off** — necessary but NOT
+   sufficient. Alternatives listed by a `brainstorming` `AskUserQuestion`
+   prompt do not make a routine choice architectural; the fork must be
+   genuinely structural.
+3. **Load-bearing for future contributors** — six months from now someone
+   asking "why is X this way" should be able to find the answer here.
 4. **Not already captured** in `docs/adr/` — you MUST grep / probe the
    directory and run `bd list --type decision` before proposing a new
-   candidate. If a related ADR exists, propose `supersedes` rather than
-   "new."
+   candidate. If a related ADR exists, propose `supersedes` rather than "new."
 
-Score each candidate 0–4 by how many criteria it passes. Score < 4 is
-borderline — surface it anyway, but flag in your output.
+**Exclusion list (auto-drop, never surface):** process / workflow sequencing
+("do X before Y"); packaging, versioning, or release-tooling mechanics; file
+organization, moves, or refactor mechanics; naming / slug conventions;
+documentation or wording choices; tooling / config changes that do not alter
+runtime behavior.
+
+Score each candidate 0–4 by criteria passed. Only score == 4 (and not matching
+the exclusion list) is surfaced; all else is dropped.
 
 ## Transcript scan strategies (priority order)
 
@@ -109,5 +119,6 @@ needing one, return `{"error": "..."}` instead.
 
 Total response length (all candidates + dropped) MUST fit within the
 caller's `OUTPUT_LIMIT` parameter (default 800 words). If you cannot
-fit everything, prioritize candidates by `worthiness_score` descending
+fit everything, prioritize candidates by `worthiness_score` descending (note:
+only score == 4 candidates are surfaced; lower scores belong in `dropped`)
 and include a `"truncated": true` field at the top level.

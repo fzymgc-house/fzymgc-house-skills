@@ -17,16 +17,16 @@
 # downstream repo can override the regex via the WATCHED_GLOBS environment
 # variable (extended regex, applied with `[[ ... =~ ... ]]`).
 #
-# Defaults shipped here cover the dev-flow / fzymgc-house-skills layout:
-#   docs/superpowers/specs/*.md
+# Defaults shipped here watch PLAN files only (ADR capture runs after
+# writing-plans, never during brainstorming on specs):
 #   docs/superpowers/plans/*.md
+#   docs/plans/*.md   (flat layout, e.g. holomush forks)
 #
-# Holomush (kept here as a reference for forks) additionally watches
-# docs/specs/*.md and docs/plans/*.md; the bundled default regex below is
-# permissive enough to accept both shapes.
+# Specs are intentionally NOT watched — the nudge must not fire during the
+# spec/brainstorming phase.
 #
 # To override, export WATCHED_GLOBS before this hook runs, e.g.:
-#   export WATCHED_GLOBS='^(.*/)?docs/(superpowers/)?(specs|plans)/.+\.md$'
+#   export WATCHED_GLOBS='^(.*/)?docs/(superpowers/)?plans/.+\.md$'
 # ---------------------------------------------------------------------------
 
 set -uo pipefail
@@ -44,7 +44,7 @@ esac
 [ -n "$file_path" ] || exit 0
 
 # Watched-path regex. Override via WATCHED_GLOBS env var.
-WATCHED_REGEX="${WATCHED_GLOBS:-^(.*/)?docs/(superpowers/)?(specs|plans)/.+\.md$}"
+WATCHED_REGEX="${WATCHED_GLOBS:-^(.*/)?docs/(superpowers/)?plans/.+\.md$}"
 if ! [[ "$file_path" =~ $WATCHED_REGEX ]]; then
   exit 0
 fi

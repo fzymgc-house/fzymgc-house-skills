@@ -4,7 +4,7 @@ description: >-
   Generate a self-contained briefing prompt that a fresh Claude (or other
   agent) session uses to pick up a bead's work without inheriting the
   current session's context. Pulls model hint from the bead's `model:*`
-  label (default sonnet), routes via the bead's `--skills`, and defers
+  label (default sonnet), routes via the bead's `agent:*` label, and defers
   workspace setup to `dev-flow:using-worktrees`. Use when the user asks
   for a handoff, kickoff prompt, session starter, or wants to spin up a
   fresh session for a specific bead.
@@ -70,7 +70,7 @@ From the JSON output, extract:
   `model:`-prefixed entry; default to `sonnet` if absent (Rule 5: no
   fallback to "highest available"; explicit default keeps cost
   predictable).
-- `--skills` list — the dispatch routing hint.
+- `agent:*` label — the dispatch routing signal (documented lookup; general-purpose fallback). `--skills` is a capability hint only (appended as `## Required Skills` in the description).
 - `--spec-id` — the spec doc path.
 - Description body, acceptance, notes.
 
@@ -234,7 +234,7 @@ adaptations:
   (per Rule 5); default sonnet if absent.
 - Added `bd prime` + `bd show <id>` as explicit session-bootstrap
   instructions in the briefing.
-- Routed dispatch via the bead's `--skills` field.
+- Routed dispatch via the bead's `agent:*` label.
 - Updated the workflow block to reference `dev-flow:` skill paths and
   the design-bead lifecycle (brainstorming opens, plan-to-beads
   promotes / retitles / closes).

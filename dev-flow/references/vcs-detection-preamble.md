@@ -100,7 +100,7 @@ workspaces, rebases, status, etc. Never use mutating git commands
 (`git commit`, `git worktree add`, `git checkout`) in jj repos.
 Read-only git commands and `gh` CLI are safe.
 
-Consult `pr-review/references/vcs-equivalence.md` for command equivalents.
+Consult `dev-flow/references/vcs-equivalence.md` for command equivalents.
 
 ## Orchestrator Contract
 

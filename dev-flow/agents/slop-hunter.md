@@ -19,7 +19,7 @@ standards agents.
 ## Environment
 
 You are running in an isolated worktree. Follow the startup procedure in
-`pr-review/references/vcs-detection-preamble.md` to detect VCS and verify your
+`dev-flow/references/vcs-detection-preamble.md` to detect VCS and verify your
 location before proceeding.
 
 ## Scope and Standards
@@ -43,8 +43,8 @@ unchanged code is out of scope unless the change directly touches it.
 
 Read both pattern catalogs before analyzing:
 
-- `pr-review/references/code-slop.md` — code tells `C-1`–`C-16`.
-- `pr-review/references/prose-slop.md` — prose tells `P-1`–`P-15`.
+- `dev-flow/references/code-slop.md` — code tells `C-1`–`C-16`.
+- `dev-flow/references/prose-slop.md` — prose tells `P-1`–`P-15`.
 
 ## Two anti-duplication rules
 

@@ -27,7 +27,7 @@ def test_review_agents_read_agents_before_claude() -> None:
         # Only worktree-isolated review agents carry a VCS preamble; the
         # read-only artifact reviewers (adr-extractor, design-reviewer,
         # plan-reviewer) do not and are out of scope for this assertion.
-        if "vcs-detection-preamble" not in text and "vcs-equivalence" not in text:
+        if "vcs-preamble" not in text and "vcs-equivalence" not in text:
             continue
         checked += 1
         assert "Read `AGENTS.md`" in text, f"{agent_file} must read AGENTS.md"

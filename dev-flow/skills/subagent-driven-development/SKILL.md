@@ -53,11 +53,11 @@ This skill reads tasks from `bd`, not from a markdown plan. The plan has already
 1. **Query `bd ready --json | jq '.[0]'`** to get the next unblocked bead. Skip claimed (`in_progress`) and blocked beads — `bd ready` does this filtering already. If the queue is empty, jump to "all tasks complete" (dispatch final reviewer, then `finishing-a-development-branch`).
 2. **Read the bead's routing hints** from the JSON:
    - `labels[]` — look for `model:haiku`, `model:sonnet`, or `model:opus`. **Default to `sonnet` if no `model:*` label is present.** No fallback to "highest available"; explicit default keeps cost predictable (per Rule 5).
-   - `skills[]` — the bd `--skills` field is a routing hint for which subagent type to dispatch (e.g. `review`, `test`, `debug`, `infra`).
+   - `agent:*` label — look for an `agent:<subagent_type>` label. This is the only signal that selects `subagent_type` (see step 5). Absent → `general-purpose`. NOTE: the `--skills` field does NOT route; it only appends a `## Required Skills` capability hint to the bead description (read it for context, not dispatch).
 3. **Atomically claim the bead:** `bd update <id> --claim`. Atomic claim prevents double-dispatch when multiple controllers race. If the claim fails (bead was claimed by another actor since `bd ready`), loop back to step 1.
 4. **Load the bead's full context:** `bd show <id>`. Read description, acceptance criteria, notes, `--spec-id`, dependency edges. The bead's `--spec-id` points to the originating spec/plan path; read those for surrounding context if the description references them.
 5. **Dispatch a fresh subagent:**
-   - **`subagent_type`** — map the bead's `skills[]` to an available agent type. Heuristic: `general-purpose` if no match; specific types (e.g. `test-author`) if available and matching. Do NOT map `skills[]` containing `review` to the `code-reviewer` agent — that agent is the `review-pr` orchestrator's bd-finding agent and requires the orchestrator contract (`PARENT_BEAD_ID`, `PR_URL`, `ASPECT`). In-session review is handled by the two-stage review below (spec then quality) using the `requesting-code-review` template via `general-purpose`. Implementer judgment governs the mapping when multiple skills overlap.
+   - **`subagent_type`** — resolved by documented lookup, NOT a runtime probe (the Agent tool errors on an unregistered `subagent_type`). Carry the known-registered set; today it is `{ general-purpose }`. Read the bead's `agent:*` label: if its value is in the known set, dispatch that type; otherwise (no label, or a value not yet registered) dispatch `general-purpose`. Today every value resolves to `general-purpose`; `agent:*` is a forward-looking annotation. Never dispatch the `code-reviewer` agent here — it is the `review-pr` orchestrator's bd-finding agent and requires the orchestrator contract (`PARENT_BEAD_ID`, `PR_URL`, `ASPECT`). In-session review is the two-stage review below (spec then quality) via the `requesting-code-review` template + `general-purpose`.
    - **`model`** — set from the bead's `model:*` label (default `sonnet` when absent).
    - **prompt** — assembled from bead description + acceptance criteria + relevant spec/plan excerpts read in step 4. Do NOT make the subagent read the bead itself — provide the text directly per the "Make subagent read plan file" red flag.
 6. **Two-stage review after the subagent returns** (existing process: spec compliance first, then code quality).
@@ -72,7 +72,7 @@ digraph process {
     subgraph cluster_per_task {
         label="Per Bead";
         "bd ready --json | jq '.[0]'" [shape=box];
-        "Read labels (model:*) + skills[]" [shape=box];
+        "Read labels (model:*, agent:*)" [shape=box];
         "bd update <id> --claim" [shape=box];
         "bd show <id> (read full context)" [shape=box];
         "Dispatch implementer subagent\n(model from label; subagent_type from skills)" [shape=box];
@@ -92,8 +92,8 @@ digraph process {
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "Use dev-flow:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "bd ready --json | jq '.[0]'" -> "Read labels (model:*) + skills[]";
-    "Read labels (model:*) + skills[]" -> "bd update <id> --claim";
+    "bd ready --json | jq '.[0]'" -> "Read labels (model:*, agent:*)";
+    "Read labels (model:*, agent:*)" -> "bd update <id> --claim";
     "bd update <id> --claim" -> "bd show <id> (read full context)";
     "bd show <id> (read full context)" -> "Dispatch implementer subagent\n(model from label; subagent_type from skills)";
     "Dispatch implementer subagent\n(model from label; subagent_type from skills)" -> "Implementer subagent asks questions?";
@@ -168,7 +168,7 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [bd ready --json | jq '.[0]']
-Bead: bd-42 — "Implement hook installation script" (labels: model:sonnet, skills: infra,test)
+Bead: bd-42 — "Implement hook installation script" (labels: model:sonnet, agent:infra; Required Skills: infra,test)
 
 [bd update bd-42 --claim]
 [bd show bd-42 — read description + acceptance + spec-id (docs/superpowers/specs/...)]
@@ -198,7 +198,7 @@ Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
 [bd close bd-42 --reason="Hook installation script + tests landed; all reviews passed"]
 
 [bd ready --json | jq '.[0]']
-Bead: bd-43 — "Recovery modes" (labels: model:opus, skills: infra,debug)
+Bead: bd-43 — "Recovery modes" (labels: model:opus, agent:debugger; Required Skills: infra,debug)
 
 [bd update bd-43 --claim]
 [bd show bd-43]

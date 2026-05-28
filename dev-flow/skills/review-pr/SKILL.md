@@ -57,7 +57,7 @@ metadata:
 
 ## VCS Detection
 
-Follow the procedure in `dev-flow/references/vcs-detection-preamble.md` to
+Follow the procedure in `dev-flow/references/vcs-preamble.md` to
 detect git vs jj and verify your location. Use `gh` CLI for GitHub
 operations regardless of VCS.
 
@@ -270,3 +270,18 @@ Summary.
 **Finding title** `<finding-bead-id>`
 Summary.
 ````
+
+### 11. Suggest the Fix Loop
+
+After presenting (and optionally posting) findings, check whether any findings
+were filed:
+
+```bash
+bd list --parent <parent-bead-id> --status open --json | jq 'length'
+```
+
+- **If > 0**: suggest (do NOT run automatically): "N findings filed. Run
+  `/address-findings <number>` to work through them with isolated fix-workers
+  and review gates."
+- **If 0**: report "No findings — the PR looks clean for the reviewed aspects."
+  and stop.

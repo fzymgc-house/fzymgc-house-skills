@@ -57,7 +57,7 @@ This skill reads tasks from `bd`, not from a markdown plan. The plan has already
 3. **Atomically claim the bead:** `bd update <id> --claim`. Atomic claim prevents double-dispatch when multiple controllers race. If the claim fails (bead was claimed by another actor since `bd ready`), loop back to step 1.
 4. **Load the bead's full context:** `bd show <id>`. Read description, acceptance criteria, notes, `--spec-id`, dependency edges. The bead's `--spec-id` points to the originating spec/plan path; read those for surrounding context if the description references them.
 5. **Dispatch a fresh subagent:**
-   - **`subagent_type`** — map the bead's `skills[]` to an available agent type. Heuristic: `general-purpose` if no match; `code-reviewer` if `skills[]` includes `review`; specific types (e.g. `test-author`) if available and matching. Implementer judgment governs the mapping when multiple skills overlap.
+   - **`subagent_type`** — map the bead's `skills[]` to an available agent type. Heuristic: `general-purpose` if no match; specific types (e.g. `test-author`) if available and matching. Do NOT map `skills[]` containing `review` to the `code-reviewer` agent — that agent is the `review-pr` orchestrator's bd-finding agent and requires the orchestrator contract (`PARENT_BEAD_ID`, `PR_URL`, `ASPECT`). In-session review is handled by the two-stage review below (spec then quality) using the `requesting-code-review` template via `general-purpose`. Implementer judgment governs the mapping when multiple skills overlap.
    - **`model`** — set from the bead's `model:*` label (default `sonnet` when absent).
    - **prompt** — assembled from bead description + acceptance criteria + relevant spec/plan excerpts read in step 4. Do NOT make the subagent read the bead itself — provide the text directly per the "Make subagent read plan file" red flag.
 6. **Two-stage review after the subagent returns** (existing process: spec compliance first, then code quality).
@@ -240,7 +240,7 @@ Code reviewer: ✅ Approved
 ...
 
 [bd ready returns empty — all beads in epic closed]
-[Dispatch final code-reviewer (opus) for entire implementation]
+[Dispatch final code-quality review (opus) for the entire implementation, using the requesting-code-review template via general-purpose]
 Final reviewer: All requirements met, ready to merge
 
 [Hand off to dev-flow:finishing-a-development-branch — its Step 0 pre-flight

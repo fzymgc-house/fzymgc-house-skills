@@ -386,7 +386,7 @@
       "skill": "address-findings",
       "prompt": "Dispatch a fix-worker agent to fix finding fzymgc-house-skills-qsh.1 in file src/main.py line 42",
       "context": "Repo root contains .jj/ directory. Agent is running in a worktree workspace under *_worktrees/.",
-      "expected_output": "fix-worker should detect jj via vcs-detection-preamble, use jj commit (not git commit), and report VCS: jj with CHANGE_ID (not WORKTREE_BRANCH)",
+      "expected_output": "fix-worker should detect jj via vcs-preamble, use jj commit (not git commit), and report VCS: jj with CHANGE_ID (not WORKTREE_BRANCH)",
       "assertions": [
         {
           "name": "detects-jj-repo",

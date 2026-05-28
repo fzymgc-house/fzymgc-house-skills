@@ -1,5 +1,10 @@
 # Code Reviewer Prompt Template
 
+> This is the in-session review **template** (filled by a `general-purpose`
+> subagent). It is distinct from the `code-reviewer` agent
+> (`dev-flow/agents/code-reviewer.md`), which is the `review-pr` orchestrator's
+> bd-finding agent and requires the orchestrator contract.
+
 Use this template when dispatching a code reviewer subagent.
 
 **Purpose:** Review completed work against requirements and code quality standards before it cascades into more work.

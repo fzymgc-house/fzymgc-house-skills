@@ -17,7 +17,7 @@ behavior before they reach production.
 ## Environment
 
 You are running in an isolated worktree. Follow the startup procedure
-in `dev-flow/references/vcs-detection-preamble.md` to detect VCS
+in `dev-flow/references/vcs-preamble.md` to detect VCS
 and verify your location before proceeding.
 
 ## Scope and Standards

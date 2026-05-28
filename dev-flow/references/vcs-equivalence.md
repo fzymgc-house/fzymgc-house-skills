@@ -8,7 +8,7 @@ and status checks. Never use mutating git commands (`git commit`,
 `git worktree add`, `git checkout`, etc.) in jj repos. Read-only git
 commands and `gh` CLI are safe.
 
-**Note:** The detection pattern (see `vcs-detection-preamble.md`) uses `jj root`
+**Note:** The detection pattern (see the Detection section of `vcs-preamble.md`) uses `jj root`
 first, then `git rev-parse --git-dir`, and reports "none" if neither succeeds.
 This command-based approach works in workspaces where `.jj/` or `.git` may not
 exist as directories (e.g., jj workspaces, git worktrees). Agents verify VCS

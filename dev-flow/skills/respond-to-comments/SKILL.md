@@ -50,7 +50,7 @@ metadata:
 
 ## VCS Detection
 
-Follow the procedure in `dev-flow/references/vcs-detection-preamble.md` to
+Follow the procedure in `dev-flow/references/vcs-preamble.md` to
 detect git vs jj and verify your location. Use `gh` CLI for GitHub
 operations regardless of VCS.
 

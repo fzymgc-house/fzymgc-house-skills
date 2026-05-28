@@ -55,7 +55,8 @@ Tracked beads use `bd create`'s native flags for structured data. The `--descrip
 | Parent epic | `--parent <epic-id>` |
 | Priority | `--priority 0-4` |
 | Labels | `--labels` (e.g. `area:jj,aspect:security,model:opus`) |
-| Required skills | `--skills` (dispatch routing hint) |
+| Required skills | `--skills` (capability hint; appends `## Required Skills` to the description) |
+| Agent routing | `--labels agent:<type>` (selects subagent_type; documented lookup, `general-purpose` fallback) |
 | Design link | `--spec-id <path>` + `--design <string>` or `--design-file <path>` |
 | Acceptance criteria | `--acceptance` (RFC2119 MUST/SHOULD) |
 | Verification steps | `--notes` (concrete commands) |

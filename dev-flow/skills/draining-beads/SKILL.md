@@ -132,7 +132,7 @@ re-fire runs **ONE** bead via the 12 steps below. `<drain-id>` / `<epic-id>` /
 6. **Load context** — `bd show <id> --json` for description / acceptance / spec-id;
    if a spec-id is present, read the referenced spec/plan file.
 7. **Dispatch implementer subagent** — per `dev-flow:subagent-driven-development`:
-   subagent_type from the bead's `skills[]` (general-purpose fallback); model from
+   subagent_type from the bead's `agent:*` label (documented lookup; general-purpose fallback); model from
    the bead's `model:*` label (default sonnet); prompt = description + acceptance +
    spec excerpts + lessons. In jj repos, brief the subagent to run
    `jj --no-pager new` before edits.

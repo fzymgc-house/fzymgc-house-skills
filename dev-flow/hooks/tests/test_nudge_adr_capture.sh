@@ -45,7 +45,7 @@ expect_case "non-spec-path" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/internal/foo.go"}}' \
   0 ""
 
-# --- Case 2: docs/specs flat → reaches marker logic (currently still silent stub) ---
+# --- Case 2: docs/specs flat → no longer watched (plans-only) → silent ---
 expect_case "docs-specs-flat" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/docs/specs/foo.md"}}' \
   0 ""
@@ -55,7 +55,7 @@ expect_case "docs-plans-flat" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/docs/plans/bar.md"}}' \
   0 ""
 
-# --- Case 4: docs/superpowers/specs nested ---
+# --- Case 4: docs/superpowers/specs nested → no longer watched (plans-only) → silent ---
 expect_case "docs-superpowers-specs-nested" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/docs/superpowers/specs/2026/baz.md"}}' \
   0 ""
@@ -70,7 +70,7 @@ expect_case "docs-adr-not-watched" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/docs/adr/0001-foo.md"}}' \
   0 ""
 
-# --- Case 7: workspace path (.worktrees/foo/docs/specs/...) — should match ---
+# --- Case 7: worktree docs/specs path → no longer watched (plans-only) → silent ---
 expect_case "worktree-path-matches" \
   '{"tool_name":"Edit","tool_input":{"file_path":"/repo/.worktrees/foo/docs/specs/bar.md"}}' \
   0 ""
@@ -83,7 +83,7 @@ expect_case "non-edit-tool-bail" \
 # Helper: write content + marker to a file under tmpdir; return path.
 make_spec() {
   local name="$1" content="$2"
-  local p="$tmpdir/docs/specs/$name.md"
+  local p="$tmpdir/docs/plans/$name.md"
   mkdir -p "$(dirname "$p")"
   printf '%s' "$content" > "$p"
   printf '%s' "$p"
@@ -134,6 +134,14 @@ printf '\n<!-- adr-capture: foo=bar -->\n' >> "$mal_path"
 expect_case "malformed-nudges" \
   "$(printf '{"tool_name":"Edit","tool_input":{"file_path":"%s"}}' "$mal_path")" \
   0 'hookSpecificOutput.*PostToolUse'
+
+# --- Case 13b: real spec file, no marker → silent (specs not watched) ---
+real_spec="$tmpdir/docs/specs/real-no-marker.md"
+mkdir -p "$(dirname "$real_spec")"
+printf 'spec body without marker\n' > "$real_spec"
+expect_case "real-spec-silent" \
+  "$(printf '{"tool_name":"Edit","tool_input":{"file_path":"%s"}}' "$real_spec")" \
+  0 ""
 
 # --- Case 14: file_path missing entirely → silent ---
 expect_case "missing-file-path" \

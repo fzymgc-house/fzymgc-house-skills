@@ -134,7 +134,11 @@ Compose, but do not execute, the ordered list of bd operations:
 4. **Inter-task dependency edges**, encoded via `--deps` on `bd create`
    where possible, otherwise as `bd dep add` after creation.
 5. **Skills and labels** per Rule 5 (model selection) and the plan
-   author's hints: `--labels model:<tier>`, `--skills <comma-separated>`.
+   author's hints: `--labels model:<tier>` and `--labels agent:<type>` (the
+   routing signal). `--skills <comma-separated>` appends a `## Required Skills`
+   capability hint to the description; it does NOT route. Never set
+   `agent:code-reviewer` on an implementer bead (that agent needs the review-pr
+   orchestrator contract).
 
 Each child bead's `--description` is **narrative only** per Rule 3: Goal
 (one paragraph), Plan reference (`<plan-path>#task-<N>` plus
@@ -256,7 +260,8 @@ adaptations:
 - Dropped `## Bead chain structure` section parsing (Rule 4).
 - Read the plan's task table (`### Task N:` headers) directly.
 - Wired full bd flag set per Rule 3 (`--acceptance`, `--design-file`,
-  `--spec-id`, `--notes`, `--deps`, `--labels`, `--skills`, `--parent`,
+  `--spec-id`, `--notes`, `--deps`, `--labels` (incl. `model:*` and `agent:*`),
+  `--skills` (Required-Skills hint, not routing), `--parent`,
   `--type`, `--priority`); description is narrative only.
 - Implemented Rule 6 design-bead lifecycle (promote / retitle / close
   by task count).

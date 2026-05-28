@@ -30,4 +30,4 @@ def test_nudge_adr_capture_bash_harness() -> None:
         f"harness exit={result.returncode}\n"
         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
-    assert "passed=15 failed=0" in result.stdout, result.stdout
+    assert "passed=16 failed=0" in result.stdout, result.stdout

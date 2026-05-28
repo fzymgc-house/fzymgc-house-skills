@@ -255,6 +255,11 @@ EOF
 
 **Do NOT clean up workspace** — user needs it alive to iterate on PR feedback.
 
+After the PR is created, suggest (do NOT run automatically):
+
+> "PR #<n> created. Consider running `/review-pr <n>` to get a structured
+> multi-aspect review before requesting human review."
+
 #### Option 3: Keep As-Is
 
 Report: "Keeping branch/bookmark <name>. Workspace preserved at <path>."

@@ -45,12 +45,27 @@ ONTO_TRUNK_RE = re.compile(
     r"(?=\s|$|;|&|\|)"
 )
 
+# Shell statement separators that terminate one simple command. A bare pipe
+# `|` is intentionally NOT included: jj revsets legitimately contain `|`
+# (e.g. `-r '@ | @-'`), so splitting on it would fragment a quoted revset.
+SEGMENT_SEP_RE = re.compile(r"&&|\|\||;|\n")
+
 
 def _is_rebase_chain_truncate(command: str) -> bool:
-    """True iff the command contains `jj rebase` with `-r @` to a trunk."""
-    if not JJ_REBASE_RE.search(command):
-        return False
-    return bool(R_AT_RE.search(command) and ONTO_TRUNK_RE.search(command))
+    """True iff a single command segment is `jj rebase` with `-r @` to a trunk.
+
+    The three sub-patterns are required within ONE shell segment, not anywhere
+    across the whole command line. Without this scoping, an unrelated
+    `jj log -r '@ | @-'` state-display sharing a Bash block with a chain-safe
+    `jj rebase -s ... -o main` false-positives: the `-r @` comes from the log
+    and the `-o main` from the rebase, yet neither belongs to a `-r @` rebase.
+    """
+    for segment in SEGMENT_SEP_RE.split(command):
+        if not JJ_REBASE_RE.search(segment):
+            continue
+        if R_AT_RE.search(segment) and ONTO_TRUNK_RE.search(segment):
+            return True
+    return False
 
 
 def main() -> None:

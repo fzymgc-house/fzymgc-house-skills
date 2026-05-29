@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.7.1...jujutsu-v0.7.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **jj:** register plugin hooks via hooks.json and force git-style diffs ([#105](https://github.com/fzymgc-house/fzymgc-house-skills/issues/105)) ([3ffedab](https://github.com/fzymgc-house/fzymgc-house-skills/commit/3ffedab5fd66863e79acea746d491d67eec27341))
+
 ## [0.7.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jujutsu-v0.7.0...jujutsu-v0.7.1) (2026-05-19)
 
 

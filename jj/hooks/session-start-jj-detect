@@ -133,16 +133,21 @@ def main() -> None:
         "You SHOULD prefer jj equivalents over read-only git commands (log, diff, status, etc.).",
         "You MAY use git plumbing commands (rev-parse, ls-files) and gh CLI.",
         "You MUST pass --no-pager on every jj command in agent environments.",
+        "You MUST pass --git when reading diffs (jj diff --git, jj show --git)."
+        " jj's default color-words format relies on ANSI color to tell old from"
+        " new; with color stripped it collapses a change into one garbled token"
+        " (e.g. s.pool -> tx renders as 'stx.pool'). --git emits unambiguous"
+        " -/+ lines. Or set ui.diff-formatter=':git' in jj config.",
         "",
         "## Quick Reference: git → jj",
         "",
         "Everyday workflow:",
         "  git status        → jj status (or jj st)",
-        "  git diff           → jj diff (working copy) / jj diff -r REV",
+        "  git diff           → jj diff --git (working copy) / jj diff --git -r REV",
         "  git add + commit   → jj commit -m 'msg' (auto-tracks all files)",
         "  git commit --amend → jj describe -m 'msg' (edit current change description)",
         "  git log            → jj log (shows change IDs, conflicts, divergence)",
-        "  git show COMMIT    → jj show REV (or jj diff -r REV)",
+        "  git show COMMIT    → jj show --git REV (or jj diff --git -r REV)",
         "",
         "Branching & navigation:",
         "  git checkout BRANCH → jj new BOOKMARK (new change on top) / jj edit REV (edit in-place)",

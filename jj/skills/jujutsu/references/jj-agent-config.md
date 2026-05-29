@@ -16,6 +16,13 @@ email = "your-email@example.com"
 # Disable pager -- agents can't interact with less/more
 paginate = "never"
 
+# Git-style diffs -- the default formatter (":color-words") relies on ANSI
+# color to tell removed from added text; with color stripped (agent output) a
+# change collapses into one garbled token (e.g. s.pool -> tx reads as
+# "stx.pool"). ":git" emits unambiguous -/+ lines. Without this, pass --git
+# per command.
+diff-formatter = ":git"
+
 # No-op diff editor -- prevents jj split from opening an editor
 diff-editor = ":"
 

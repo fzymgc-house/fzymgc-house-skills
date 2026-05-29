@@ -492,11 +492,18 @@ jj log -r 'mutable()'
 
 ## Diff Formats
 
+> **Agents: use `--git`.** The default formatter is `:color-words`, which
+> relies on ANSI color to distinguish removed from added text. With color
+> stripped (as in agent output) a change collapses into one garbled token --
+> `s.pool` → `tx` renders as `result := stx.pool.Query()`, which looks like
+> broken source that is actually correct on disk. `--git` emits unambiguous
+> `-`/`+` lines. Persist it with `ui.diff-formatter = ":git"`.
+
 ```bash
-# Default diff
+# Default diff (color-words -- garbles without color; avoid in agents)
 jj diff
 
-# Git-style diff
+# Git-style diff (agent-safe)
 jj diff --git
 
 # Summary only (files changed)

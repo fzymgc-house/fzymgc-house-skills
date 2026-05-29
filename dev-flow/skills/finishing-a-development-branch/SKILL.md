@@ -253,12 +253,37 @@ EOF
 )"
 ```
 
-**Do NOT clean up workspace** — user needs it alive to iterate on PR feedback.
+**Do NOT clean up workspace** — user needs it alive to iterate on PR feedback
+and to run the review gate below.
 
-After the PR is created, suggest (do NOT run automatically):
+##### Option 2 Review Gate (required — do not skip)
 
-> "PR #<n> created. Consider running `/review-pr <n>` to get a structured
-> multi-aspect review before requesting human review."
+After the PR is created, run the PR review gate. The work is **not complete**
+until the gate reaches a PASS verdict.
+
+1. **Run `/review-pr <n>`** on the new PR. This invokes the multi-aspect review
+   orchestrator skill (`dev-flow:review-pr`) — NOT a single code-review agent.
+   It dispatches the full aspect agent set and files findings as beads under a
+   review epic, then reports a verdict.
+
+2. **Read the verdict** `/review-pr` reports:
+
+   - **✅ PASS** — zero open `critical` and zero open `important` findings.
+     `suggestion`-severity findings MAY remain open. The gate is satisfied.
+   - **❌ CHANGES REQUESTED** — one or more open `critical`/`important`
+     findings.
+
+3. **On CHANGES REQUESTED:** run `/address-findings <n>` to resolve the open
+   critical/important findings with isolated fix-workers and review gates, then
+   **re-run `/review-pr <n>`**. Repeat review → address → re-review until the
+   verdict is PASS.
+
+4. **Do not report the work complete until the verdict is PASS.** A PR with open
+   critical or important findings is not done, regardless of test status. If the
+   user explicitly chooses to stop before PASS, record the open findings and the
+   decision loudly rather than implying the work is finished.
+
+**Do NOT clean up the workspace during this loop** — fix-workers need it alive.
 
 #### Option 3: Keep As-Is
 
@@ -383,6 +408,10 @@ REPO_ROOT=$(jj root 2>/dev/null)
 | 3. Keep as-is | - | - | yes | - |
 | 4. Discard | - | - | - | yes (force) |
 
+Option 2 additionally requires the **PR review gate**: run `/review-pr <n>`,
+loop `/address-findings <n>` → re-review until the verdict is **PASS** (zero
+open critical/important findings) before the work counts as complete.
+
 ## Common Mistakes
 
 ## Skipping test verification
@@ -399,6 +428,21 @@ REPO_ROOT=$(jj root 2>/dev/null)
 
 - **Problem:** Remove worktree user needs for PR iteration
 - **Fix:** Only cleanup for Options 1 and 4
+
+## Treating PR creation as "done" (Option 2)
+
+- **Problem:** Reporting the work complete the moment the PR is pushed, skipping
+  review or stopping while critical/important findings are still open
+- **Fix:** Option 2 isn't complete until the `/review-pr` gate reaches PASS.
+  Loop `/review-pr` → `/address-findings` → re-review until zero open
+  critical/important findings
+
+## Dispatching a single code-review agent instead of `/review-pr`
+
+- **Problem:** Hand-dispatching the `code-reviewer` agent (or one ad-hoc
+  reviewer) in place of the gate — partial coverage, no verdict, no fix loop
+- **Fix:** Run the `/review-pr` orchestrator skill; it dispatches the full
+  aspect agent set, files findings as beads, and reports the PASS verdict
 
 ## Deleting branch before removing worktree (git)
 
@@ -437,6 +481,9 @@ REPO_ROOT=$(jj root 2>/dev/null)
 - Remove a worktree/workspace before confirming merge success
 - Clean up workspaces you didn't create (provenance check)
 - Run `git worktree remove` / `jj workspace forget` from inside the workspace
+- Report Option 2 complete while the `/review-pr` gate is not PASS (open
+  critical/important findings remain)
+- Substitute a single code-review agent for the `/review-pr` orchestrator gate
 
 **Always:**
 
@@ -447,6 +494,8 @@ REPO_ROOT=$(jj root 2>/dev/null)
 - Present exactly 4 options (or 3 for detached HEAD / bookmark-less workspace)
 - Get typed confirmation for Option 4
 - Run the post-merge interactive close (Step 5.5) after Options 1 and 2
+- Run the `/review-pr` gate to a PASS verdict after Option 2 before declaring
+  the work complete
 - Clean up workspace for Options 1 and 4 only
 - `cd` to main repo root before workspace removal
 - Run `git worktree prune` after removal (git)

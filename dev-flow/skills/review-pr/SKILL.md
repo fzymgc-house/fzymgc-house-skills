@@ -212,11 +212,27 @@ agent at a time for interactive review.
 bd list --parent <parent-bead-id> --status open --json
 ```
 
-Group findings by their `severity:*` label.
+Group findings by their `severity:*` label. Then compute the **review verdict**
+from the open must-fix count (critical + important):
+
+```bash
+bd list --parent <parent-bead-id> --status open --json \
+  | jq '[.[] | select(.labels[]? == "severity:critical"
+                   or .labels[]? == "severity:important")] | length'
+```
+
+- **0** → verdict is **✅ PASS** (`suggestion`-severity findings MAY remain open).
+- **> 0** → verdict is **❌ CHANGES REQUESTED**.
 
 ### 9. Present Summary
 
+Lead with the verdict line, then the findings grouped by severity:
+
 ```markdown
+## Verdict: ✅ PASS   <!-- or: ❌ CHANGES REQUESTED -->
+
+N critical · N important · N suggestions
+
 ## Critical Issues (must fix before merge)
 
 - [aspect]: description [location]
@@ -271,17 +287,18 @@ Summary.
 Summary.
 ````
 
-### 11. Suggest the Fix Loop
+### 11. Report Verdict and Next Step
 
-After presenting (and optionally posting) findings, check whether any findings
-were filed:
+Report the verdict computed in Step 8 (open critical + important count):
 
-```bash
-bd list --parent <parent-bead-id> --status open --json | jq 'length'
-```
+- **❌ CHANGES REQUESTED** (count > 0): "❌ CHANGES REQUESTED — N must-fix
+  finding(s). Run `/address-findings <number>` to resolve them with isolated
+  fix-workers and review gates, then re-run `/review-pr <number>`."
+- **✅ PASS** (count == 0): "✅ PASS — no open critical or important findings."
+  If `suggestion`-severity findings remain, add "N suggestion(s) remain
+  (optional)."
 
-- **If > 0**: suggest (do NOT run automatically): "N findings filed. Run
-  `/address-findings <number>` to work through them with isolated fix-workers
-  and review gates."
-- **If 0**: report "No findings — the PR looks clean for the reviewed aspects."
-  and stop.
+This verdict is the gate consumed by `finishing-a-development-branch` Option 2:
+that skill loops review → `/address-findings` → re-review until the verdict is
+PASS before treating the PR as complete. Do not run `/address-findings`
+automatically from here — report the verdict and let the caller drive the loop.

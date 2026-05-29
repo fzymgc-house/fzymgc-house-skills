@@ -25,6 +25,14 @@ Task tool (general-purpose):
 
     {PLAN_OR_REQUIREMENTS}
 
+    ## Review Focus
+
+    {FOCUS}
+
+    (If blank, review for general code quality across all the areas below.
+    If set, weight that lens most heavily while still flagging anything
+    clearly broken elsewhere.)
+
     ## Git Range to Review
 
     **Base:** {BASE_SHA}
@@ -69,7 +77,8 @@ Task tool (general-purpose):
 
     ## Calibration
 
-    Categorize issues by actual severity. Not everything is Critical.
+    Categorize issues by actual severity using the shared rubric:
+    `critical` / `important` / `suggestion`. Not everything is critical.
     Acknowledge what was done well before listing issues — accurate praise
     helps the implementer trust the rest of the feedback.
 
@@ -91,7 +100,7 @@ Task tool (general-purpose):
     #### Important (Should Fix)
     [Architecture problems, missing features, poor error handling, test gaps]
 
-    #### Minor (Nice to Have)
+    #### Suggestion (Nice to Have)
     [Code style, optimization opportunities, documentation polish]
 
     For each issue:
@@ -120,7 +129,7 @@ Task tool (general-purpose):
 
     **DON'T:**
     - Say "looks good" without checking
-    - Mark nitpicks as Critical
+    - Mark nitpicks as critical
     - Give feedback on code you didn't actually read
     - Be vague ("improve error handling")
     - Avoid giving a clear verdict
@@ -130,10 +139,11 @@ Task tool (general-purpose):
 
 - `{DESCRIPTION}` — brief summary of what was built
 - `{PLAN_OR_REQUIREMENTS}` — what it should do (plan file path, task text, or requirements)
+- `{FOCUS}` — optional lens to emphasize (e.g. `security`, `tests`, `types`); leave blank for general review
 - `{BASE_SHA}` — starting commit
 - `{HEAD_SHA}` — ending commit
 
-**Reviewer returns:** Strengths, Issues (Critical / Important / Minor), Recommendations, Assessment
+**Reviewer returns:** Strengths, Issues (critical / important / suggestion), Recommendations, Assessment
 
 ## Example Output
 
@@ -156,7 +166,7 @@ Task tool (general-purpose):
    - Issue: Invalid dates silently return no results
    - Fix: Validate ISO format, throw error with example
 
-#### Minor
+#### Suggestion
 1. **Progress indicators**
    - File: indexer.ts:130
    - Issue: No "X of Y" counter for long operations

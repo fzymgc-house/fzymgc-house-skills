@@ -21,6 +21,21 @@ continued work.
 
 **Core principle:** Review early, review often.
 
+## This vs `/review-pr`
+
+These are two tiers of review, not alternatives:
+
+| | `requesting-code-review` (this skill) | `/review-pr` (`dev-flow:review-pr`) |
+|---|---|---|
+| When | In the task loop, **before** a PR exists | **After** the PR is opened |
+| Reviewer | One `general-purpose` subagent, one lens | Full aspect agent set (code, security, tests, types, …) |
+| Output | Inline verdict you act on now | Findings filed as beads + a PASS verdict |
+| Role | Catch issues early so they don't compound | The merge gate (`finishing-a-development-branch` loops it to PASS) |
+
+Use this skill at task checkpoints. It does **not** replace the post-PR
+`/review-pr` gate, and it does **not** file beads. For multi-aspect coverage,
+open the PR and run `/review-pr`.
+
 ## VCS Detection
 
 ```bash
@@ -76,12 +91,19 @@ Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`
 - `{PLAN_OR_REQUIREMENTS}` - What it should do
 - `{BASE_SHA}` - Starting commit
 - `{HEAD_SHA}` - Ending commit
+- `{FOCUS}` - Optional lens to emphasize for this task (e.g. `security`,
+  `tests`, `types`, `error handling`). Default: general code quality. This is
+  a single-reviewer hint, not multi-aspect fan-out — for full coverage use
+  `/review-pr` after the PR is open.
 
 **3. Act on feedback:**
 
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
+Severity vocabulary matches the shared rubric (`dev-flow/references/review-stance.md`):
+`critical` / `important` / `suggestion`.
+
+- Fix `critical` issues immediately
+- Fix `important` issues before proceeding
+- Note `suggestion` issues for later
 - Push back if reviewer is wrong (with reasoning)
 
 ## Example
@@ -99,6 +121,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 [Dispatch code reviewer subagent]
   DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
+  FOCUS: (none — general review)
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
 ```
@@ -116,6 +139,7 @@ HEAD_SHA=$(jj log -r '@-' --no-graph -T 'commit_id.short(12)')
 [Dispatch code reviewer subagent]
   DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
+  FOCUS: error handling
   BASE_SHA: a7981ec3d2f1
   HEAD_SHA: 3df7661b8a04
 ```
@@ -143,9 +167,11 @@ HEAD_SHA=$(jj log -r '@-' --no-graph -T 'commit_id.short(12)')
 **Never:**
 
 - Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
+- Ignore `critical` issues
+- Proceed with unfixed `important` issues
 - Argue with valid technical feedback
+- Treat this in-session pass as the merge gate — `/review-pr` (post-PR) is the
+  gate `finishing-a-development-branch` loops to PASS
 
 **If reviewer wrong:**
 

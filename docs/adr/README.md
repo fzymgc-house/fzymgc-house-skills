@@ -9,6 +9,9 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-05-29 | [fhsk-s15](fhsk-s15-use-custom-bd-type-handoffs-not-label-or-note.md) | Use a custom bd type for handoffs, not a label or note | Accepted |
+| 2026-05-29 | [fhsk-8xn](fhsk-8xn-carry-session-state-delta-handoff-body-not-full-re-snapshot.md) | Carry session-state delta in the handoff body, not a full re-snapshot | Accepted |
+| 2026-05-29 | [fhsk-57f](fhsk-57f-package-handoff-create-and-resume-as-one-conditional-workflo.md) | Package handoff create and resume as one conditional-workflow skill | Accepted |
 | 2026-05-29 | [fhsk-7y4](fhsk-7y4-adopt-single-repo-wide-version-replacing-per-package-streams.md) | Adopt single repo-wide version replacing per-package streams | Accepted |
 | 2026-05-29 | [fhsk-toy](fhsk-toy-use-tag-only-cog-releases-no-commit-main.md) | Use tag-only cog releases with no commit to main | Accepted |
 | 2026-05-29 | [fhsk-h3z](fhsk-h3z-validate-conventional-commits-at-pr-title-boundary-ci.md) | Validate conventional commits at the PR-title boundary in CI | Accepted |

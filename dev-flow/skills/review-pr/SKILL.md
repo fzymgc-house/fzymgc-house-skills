@@ -98,17 +98,24 @@ bd list --label "pr-review,pr:<number>" --json
 ```
 
 - **No bead found**: This is a first review (turn 1).
-- **Bead found**: This is turn N+1. Read the existing bead ID and
+- **Open bead found**: This is turn N+1. Read the existing bead ID and
   increment the turn label.
+- **Bead found but closed**: a prior review already reached PASS (or the PR
+  merged) and the epic was reconciled. Start a fresh review — treat as turn 1
+  and create a new epic in Step 6.
 
 ### 3. Gather PR Context
 
 ```bash
-gh pr view <number> --json title,body
+gh pr view <number> --json state,title,body
 ```
 
 If this fails with a 404 or "not found" error, stop and tell the user:
 "PR #N not found. Verify the number and try again."
+
+If `state` is `MERGED` or `CLOSED`, do not review. Reconcile any open review
+epic for this PR (close it per Step 12) and stop — there is nothing to gate on
+a PR that has already left the review stage.
 
 Then fetch the diff and changed file list:
 
@@ -213,21 +220,19 @@ bd list --parent <parent-bead-id> --status open --json
 ```
 
 Group findings by their `severity:*` label. Then compute the **review verdict**
-from the count of open, **non-deferred** must-fix findings (critical +
-important). A finding labelled `deferred` (set by `/address-findings` when work
-is intentionally postponed) is tracked as a linked follow-up and does NOT block
-the gate:
+from the count of open must-fix findings (critical + important):
 
 ```bash
 bd list --parent <parent-bead-id> --status open --json \
-  | jq '[.[] | select(
-          (any(.labels[]?; . == "severity:critical" or . == "severity:important"))
-          and (any(.labels[]?; . == "deferred") | not)
-        )] | length'
+  | jq '[.[] | select(.labels[]? == "severity:critical"
+                   or .labels[]? == "severity:important")] | length'
 ```
 
-- **0** → verdict is **✅ PASS** (`suggestion`-severity and `deferred` findings
-  MAY remain open).
+Deferred findings never appear in this count: when `/address-findings` defers a
+finding it **closes** the finding in favour of an out-of-epic follow-up bead, so
+it leaves the open set entirely.
+
+- **0** → verdict is **✅ PASS** (`suggestion`-severity findings MAY remain open).
 - **> 0** → verdict is **❌ CHANGES REQUESTED**.
 
 ### 9. Present Summary
@@ -295,17 +300,47 @@ Summary.
 
 ### 11. Report Verdict and Next Step
 
-Report the verdict computed in Step 8 (open, non-deferred critical + important
-count):
+Report the verdict computed in Step 8 (open critical + important count):
 
 - **❌ CHANGES REQUESTED** (count > 0): "❌ CHANGES REQUESTED — N must-fix
   finding(s). Run `/address-findings <number>` to resolve them with isolated
   fix-workers and review gates, then re-run `/review-pr <number>`."
-- **✅ PASS** (count == 0): "✅ PASS — no open, non-deferred critical or
-  important findings." If `suggestion`-severity or `deferred` findings remain,
-  add "N suggestion(s) / N deferred remain (tracked separately)."
+- **✅ PASS** (count == 0): "✅ PASS — no open critical or important findings."
+  If `suggestion`-severity findings remain, add "N suggestion(s) remain
+  (optional)." Then **close the review epic** per Step 12.
 
 This verdict is the gate consumed by `finishing-a-development-branch` Option 2:
 that skill loops review → `/address-findings` → re-review until the verdict is
 PASS before treating the PR as complete. Do not run `/address-findings`
 automatically from here — report the verdict and let the caller drive the loop.
+
+### 12. Close the Review Epic (on PASS or merged/closed PR)
+
+The review epic is a transient tracker. Once the review is complete it MUST be
+closed, or it orphans open in bd after the work is done. "Complete" means
+either: the Step 11 verdict is ✅ PASS, or Step 3 found the PR already
+`MERGED`/`CLOSED`.
+
+1. Confirm the epic has no open children (deferred findings were already closed
+   into out-of-epic follow-up beads by `/address-findings`, so they do not
+   appear):
+
+   ```bash
+   bd list --parent <parent-bead-id> --status open --json | jq 'length'   # expect 0
+   ```
+
+   If this is > 0, the verdict is not PASS — do NOT close the epic; return to
+   the fix loop instead.
+
+2. Close the epic:
+
+   ```bash
+   # On PASS:
+   bd close <parent-bead-id> --reason="Review complete — PASS (turn <N>)"
+   # On a merged/closed PR (Step 3):
+   bd close <parent-bead-id> --reason="PR #<number> merged/closed; review epic reconciled"
+   ```
+
+`finishing-a-development-branch` Step 5.5 also reconciles this epic at
+integration time; both paths are idempotent — closing an already-closed epic is
+a no-op.

@@ -527,3 +527,4 @@ Expected: the new release appears with conventional-commit-grouped notes; the co
 - This is a jj repo: use `jj commit`/`jj describe` and `jj git push` (never `git commit`). The release **workflow** runs in CI on a plain git checkout, so the git commands inside the YAML are correct there.
 - `cog`, `jq`, `rumdl`, `uv` are expected locally (used by existing gates). `task` (go-task) is new — `brew install go-task` if absent. `actionlint` is optional locally; CI lints workflows.
 - Tasks 1–7 are one PR. Task 8 is the post-merge cutover and is intentionally separate.
+<!-- adr-capture: sha256=34d62ed09e1a5947; session=cli; ts=2026-05-29T12:43:19Z; adrs=fhsk-7y4,fhsk-toy,fhsk-h3z -->

@@ -227,3 +227,4 @@ consumer can observe. The repo's release identity going forward is the single
   repo ships source plugins consumed by git ref).
 - Changing plugin **update cadence** (remains SHA-based / every-commit under
   autoUpdate).
+<!-- adr-capture: sha256=00fc568cff35c8b1; session=cli; ts=2026-05-29T12:43:19Z; adrs=fhsk-7y4,fhsk-toy,fhsk-h3z -->

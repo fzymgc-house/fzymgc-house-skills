@@ -1,6 +1,6 @@
 # Drain with worker — launch sequence & watchdog
 
-Launch a `/drain` worker in a **detached cmux pane** and arm a **stall-watchdog**, so an
+Launch a `/drain` worker in a **detached cmux pane** and arm a **surface-aware watchdog**, so an
 autonomous bead-drain runs without occupying — or stalling — your orchestrating session.
 This reference is followed by `/drain-with-worker <drain-id>` and by `/drain`'s
 `--with-worker` handoff offer. It does the two things `/drain` itself can't: the cmux pane
@@ -56,38 +56,48 @@ any commit/rebase/topology surgery. Execute exactly ONE ready bead this turn
 following the protocol, then stop. Goal met when: <SENTINEL>.
 ```
 
-## Watchdog (arm after the worker is iterating)
+## Surface-aware watchdog (arm after the worker is iterating)
 
-Run as a **background** bash loop in your orchestrating session (`run_in_background: true`).
-It nudges the worker when the `/goal` Stop hook drops a re-fire, and self-completes when the
-drain bead closes.
+Arm `dev-flow/scripts/drain-watchdog` as a **background** task in your orchestrating session
+(`run_in_background: true`):
 
 ```bash
-DRAIN_ID="<drain-id>"; SCOPE="<epic-scope>"; SURFACE="<surface-ref>"
-NUDGE="Continue the drain: run the next ready iteration now per your active /goal."
-prev=-1; strikes=0
-while true; do
-  st=$(bd show "$DRAIN_ID" --json 2>/dev/null | jq -r '.[0].status // "unknown"')
-  if [ "$st" = "closed" ]; then echo "DRAIN COMPLETE: $DRAIN_ID closed"; break; fi   # completion = DRAIN BEAD CLOSED, never a count
-  # task-children only — EXCLUDE the drain bead itself (it is an epic child, in_progress for the whole run) [Gotcha #6]
-  inprog=$(bd list --parent "$SCOPE" --status in_progress --json 2>/dev/null | jq 'if type=="array" then ([.[]|select(.id|startswith("'"$SCOPE"'."))]|length) else -1 end')
-  closed=$(bd list --parent "$SCOPE" --status closed --json 2>/dev/null | jq 'if type=="array" then ([.[]|select(.id|startswith("'"$SCOPE"'."))]|length) else -1 end')
-  [ "$inprog" -lt 0 ] || [ "$closed" -lt 0 ] && { sleep 180; continue; }             # dolt 500 — never nudge on an unreadable poll
-  if [ "$inprog" -eq 0 ] && [ "$closed" -eq "$prev" ]; then
-    strikes=$((strikes+1))
-    if [ "$strikes" -ge 2 ]; then                                                     # ~6min debounce
-      cmux send --surface "$SURFACE" "$NUDGE"; sleep 2; cmux send-key --surface "$SURFACE" Enter   # SHORT nudge + 2s so it SUBMITS
-      strikes=0
-    fi
-  else strikes=0; fi
-  prev=$closed; sleep 180
-done
+dev-flow/scripts/drain-watchdog \
+  --drain-id <drain-id> --scope <epic-scope> --surface <surface-ref>
 ```
 
-On `DRAIN COMPLETE`: send a **PushNotification** ("drain complete — landing needs you") and
-keep a lightweight idle-poll through the interactive `finishing-a-development-branch` landing.
-The worker closes the drain bead **before** that landing, so the landing runs unmonitored and
-can stall on a rate-limit or the merge/PR menu.
+It is a self-contained `uv` script (extensionless, `#!/usr/bin/env -S uv run --script`, stdlib
+only) that does two jobs — and the second is why a bare count-stall probe was never enough:
+
+- **Self-heals count-stalls** — when the `/goal` Stop hook drops a re-fire (worker idle
+  mid-drain, no open child), it nudges the worker directly via cmux and keeps watching.
+  Completion keys on the drain bead `status == closed`, never a child count; child counts
+  filter `startswith("<scope>.")` to exclude the drain bead itself. [Gotcha #6]
+- **Wakes you on input-blocked / API-error states** — a question, a permission prompt the
+  bypass guard still catches (e.g. the `rm -rf` confirmation), or an API / rate-limit error
+  stalls the worker **without moving the closed-count**, so the count-probe is blind to it.
+  It scans the cmux surface every ~75s and **exits** on these (`api-error` → rc 10,
+  `blocked-input` → rc 11), firing the background-task completion notification so you hear
+  about it in seconds — not 20–30 min later.
+
+A "Continue the drain" nudge is the *wrong* answer to a question or an API error, so the script
+never nudges in those states: it exits and hands the decision back to you. It **exits to wake**
+rather than echoing in place because a background task notifies the orchestrator on exit, not
+on stdout — an infinite echo-only loop would block silently forever. [Gotcha #8, #9]
+
+The classification regexes (`classify()`) and the bd-array / dolt-500 guards live in the script
+and are unit-tested in `tests/test_drain_skill.py`; do not re-derive them inline. `--poll` and
+`--strikes` are tunable (defaults 75s / 5 strikes ≈ 6 min debounce).
+
+The script exits with a tagged `EXIT=<reason>` marker on its first stdout line. When the
+background task finishes, read its tail and react per reason — then **re-arm** it (relaunch the
+same command) to keep watching, except on `complete`:
+
+| `EXIT=` | What happened | React |
+|---|---|---|
+| `complete` | Drain bead closed | **PushNotification** ("drain complete — landing needs you"); idle-poll through the interactive `finishing-a-development-branch` landing. The worker closes the drain bead **before** that landing, so it runs unmonitored and can stall on a rate-limit or the merge/PR menu. Do **not** re-arm. |
+| `blocked-input` | Worker waiting on a question or a permission prompt the bypass guard still catches | **PushNotification** + surface the prompt text to the operator. Do **not** auto-answer — the safe response is unknowable generically. [Gotcha #10] After the human answers (or you approve a prompt you can verify is safe), re-arm. |
+| `api-error` | Worker hit an API / rate-limit / overloaded error | **PushNotification**. Rate-limit/overload usually self-clears: wait a backoff, confirm recovery via `read-screen`, then re-arm. A hard failure needs a worker restart. |
 
 ## Gotchas (each cost a live mistake)
 
@@ -102,3 +112,6 @@ can stall on a rate-limit or the merge/PR menu.
 | — | Long multi-line nudge races the TUI submit (types but doesn't send) | SHORT single-line nudge + 2s before Enter; `Escape` clears a stuck box |
 | — | Watchdog completion via closed-count is wrong (review-finding beads inflate it) | completion = **drain bead status==closed**, never a count |
 | — | Worker closes the drain bead BEFORE the interactive landing | PushNotification + idle-poll through landing |
+| 8 | Count-stall probe is blind to questions / permission prompts / API errors — closed-count doesn't move, so it never strikes (or nudges "Continue" into a prompt) | scan `cmux read-screen` every ~75s; classify api-error / blocked-input; nudge only in the healthy branch |
+| 9 | An infinite echo-only loop never wakes the orchestrator (background tasks notify on **exit**, not on stdout) | the surface-watcher **exits** with `EXIT=<reason>`; the orchestrator reacts to the tail + re-arms |
+| 10 | Auto-answering a worker question / permission prompt can fire a destructive or wrong action | never auto-answer; PushNotification + hand the decision to the operator |

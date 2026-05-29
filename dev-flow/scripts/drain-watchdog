@@ -1,0 +1,201 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+# SPDX-License-Identifier: Apache-2.0
+#
+# drain-watchdog — surface-aware watchdog for a detached /drain worker.
+#
+# Usage:
+#   dev-flow/scripts/drain-watchdog --drain-id <id> --scope <epic> --surface <ref> &
+#
+# Polls the drain bead + the worker's cmux surface every --poll seconds and
+# does two jobs the closed-bead count alone cannot:
+#
+#   * Self-heals count-stalls in place — when the /goal Stop hook drops a
+#     re-fire (worker idle, no open child) it nudges the worker via cmux and
+#     keeps watching. This is autonomous; no orchestrator involvement.
+#   * Wakes the orchestrator on states the count is blind to — a question, a
+#     permission prompt the bypass guard still catches, or an API/rate-limit
+#     error all stall the worker WITHOUT moving the closed-count. The loop
+#     EXITS on these with a tagged `EXIT=<reason>` first line, because a
+#     background task notifies the orchestrator on exit, not on stdout — an
+#     infinite echo-only loop would block silently forever.
+#
+# Exit codes (also the `EXIT=<reason>` marker on the first stdout line):
+#   0  EXIT=complete       drain bead status == closed
+#   10 EXIT=api-error      API / rate-limit / overloaded error on the surface
+#   11 EXIT=blocked-input  question / permission prompt waiting on the surface
+#
+# The orchestrator reacts per the reaction table in
+# dev-flow/references/drain-with-worker.md, then re-arms (except on complete).
+# It NEVER auto-answers a question/permission prompt — the safe response is
+# unknowable generically; it PushNotifies and hands the decision to the operator.
+"""Surface-aware watchdog for a detached /drain worker."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from re import IGNORECASE, compile as re_compile
+
+# States the closed-count probe is blind to. Order matters: an API error can
+# co-occur with a retry prompt, so the error (the more urgent signal) wins.
+ERR_RE = re_compile(
+    r"API Error|overloaded|rate.?limit|\b429\b|\b529\b|"
+    r"Internal server error|Connection error|fetch failed",
+    IGNORECASE,
+)
+ASK_RE = re_compile(
+    r"Do you want to|Would you like|❯ ?[0-9]+\.|[0-9]+\. (?:Yes|No|Allow)|"
+    r"trust .*folder|proceed\?",
+    IGNORECASE,
+)
+
+NUDGE = "Continue the drain: run the next ready iteration now per your active /goal."
+
+
+def classify(screen: str) -> str:
+    """Classify the tail of a worker surface read into a watchdog state.
+
+    Returns ``"api-error"``, ``"blocked-input"``, or ``"working"``. Pure and
+    side-effect-free so it can be unit-tested directly.
+    """
+    if ERR_RE.search(screen):
+        return "api-error"
+    if ASK_RE.search(screen):
+        return "blocked-input"
+    return "working"
+
+
+def _run(cmd: list[str]) -> str:
+    """Run a command, returning stdout. Empty string on any failure — a bad
+    poll must never be mistaken for a real signal."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=30, check=False
+        ).stdout
+    except (subprocess.SubprocessError, OSError):
+        return ""
+
+
+def bead_status(drain_id: str) -> str:
+    """Drain-bead status, or ``"unknown"`` on an unreadable poll (dolt 500).
+    `bd show --json` returns a single-element array; status lives at .[0]."""
+    try:
+        data = json.loads(_run(["bd", "show", drain_id, "--json"]))
+    except json.JSONDecodeError:
+        return "unknown"
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0].get("status") or "unknown"
+    return "unknown"
+
+
+def child_counts(scope: str) -> tuple[int, int]:
+    """``(in_progress, closed)`` counts of the epic's task-children, EXCLUDING
+    the drain bead itself (it is an in_progress epic child for the whole run).
+    Returns a ``-1`` for either count that cannot be read, so callers can skip
+    the stall check on a bad poll rather than nudge blindly."""
+
+    def count(status: str) -> int:
+        try:
+            data = json.loads(
+                _run(["bd", "list", "--parent", scope, "--status", status, "--json"])
+            )
+        except json.JSONDecodeError:
+            return -1
+        if not isinstance(data, list):
+            return -1
+        return sum(1 for b in data if str(b.get("id", "")).startswith(scope + "."))
+
+    return count("in_progress"), count("closed")
+
+
+def read_surface(surface: str) -> str:
+    """Last 40 lines of the worker's cmux surface."""
+    return "\n".join(
+        _run(["cmux", "read-screen", "--surface", surface]).splitlines()[-40:]
+    )
+
+
+def nudge(surface: str) -> None:
+    """Send a SHORT single-line nudge, then submit — a 2s gap lets the TUI
+    register the text before Enter (long/fast sends race the submit)."""
+    subprocess.run(["cmux", "send", "--surface", surface, NUDGE], check=False)
+    time.sleep(2)
+    subprocess.run(["cmux", "send-key", "--surface", surface, "Enter"], check=False)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(
+        description="Surface-aware watchdog for a detached /drain worker."
+    )
+    ap.add_argument(
+        "--drain-id",
+        required=True,
+        help="drain bead id (completion = its status==closed)",
+    )
+    ap.add_argument(
+        "--scope",
+        required=True,
+        help="epic id; task-children counted via '<scope>.' prefix",
+    )
+    ap.add_argument(
+        "--surface",
+        required=True,
+        help="cmux surface ref of the worker pane, e.g. surface:100",
+    )
+    ap.add_argument(
+        "--poll", type=int, default=75, help="seconds between polls (default 75)"
+    )
+    ap.add_argument(
+        "--strikes",
+        type=int,
+        default=5,
+        help="count-stall debounce ticks (default 5 ≈ 6min at 75s)",
+    )
+    a = ap.parse_args(argv)
+
+    prev, strikes = -1, 0
+    while True:
+        if bead_status(a.drain_id) == "closed":
+            print(f"EXIT=complete DRAIN COMPLETE: {a.drain_id} closed")
+            return 0
+
+        # Surface scan: states the closed-count can't see; EXIT to wake the orchestrator.
+        screen = read_surface(a.surface)
+        state = classify(screen)
+        if state == "api-error":
+            print(f"EXIT=api-error WORKER API-ERROR on {a.surface}:")
+            hits = [line for line in screen.splitlines() if ERR_RE.search(line)]
+            print("\n".join(hits[-3:]))
+            return 10
+        if state == "blocked-input":
+            print(
+                f"EXIT=blocked-input WORKER BLOCKED (question/permission) on {a.surface}:"
+            )
+            print("\n".join(screen.splitlines()[-15:]))
+            return 11
+
+        # Count-stall probe — only reached when the surface looks healthy.
+        inprog, closed = child_counts(a.scope)
+        if inprog < 0 or closed < 0:
+            time.sleep(a.poll)  # unreadable poll — never nudge on a bad read
+            continue
+        if inprog == 0 and closed == prev:
+            strikes += 1
+            if strikes >= a.strikes:
+                nudge(a.surface)
+                strikes = 0
+        else:
+            strikes = 0
+        prev = closed
+        time.sleep(a.poll)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -135,7 +135,9 @@ fix(review-pr): correct agent dispatch for security aspect
 docs: update agent instructions
 ```
 
-Validation is enforced by `cog verify` in the commit-msg hook.
+Conventional-commit validation runs in CI on the PR title
+(`.github/workflows/commit-lint.yaml`); there is no local commit-msg hook
+(jj does not fire git hooks reliably).
 
 ### Testing and Linting
 
@@ -152,17 +154,18 @@ relevant surface before claiming completion.
 
 ### Release Versioning
 
-Versions are managed by release-please. Do not manually bump versions in:
+Releases are cut with cocogitto (`cog`), tag-only. There are **no in-file
+version numbers** — plugins are versioned by git commit SHA (how Claude Code
+and Codex actually resolve installs) and each release is a single repo-wide
+`vX.Y.Z` git tag (the human-facing marker). Do not add `version` fields back to
+`marketplace.json`, `plugin.json`, `.codex-plugin/plugin.json`, or `SKILL.md`.
 
-- `.claude-plugin/marketplace.json`
-- `plugin.json`
-- `.codex-plugin/plugin.json`
-- `SKILL.md` metadata version markers
-
-When adding or removing a skill or plugin package, keep these in sync:
-
-- `release-please-config.json`
-- `.release-please-manifest.json`
+To cut a release: `task release:cut` (optionally `increment=major|minor|patch`
+to guard the computed bump). This dispatches `.github/workflows/release.yaml`,
+which runs `cog bump --auto` to create the tag and a GitHub Release with notes
+from `cog changelog`. `cog` never commits to `main`
+(`disable_bump_commit`/`disable_changelog`). Conventional-commit validation
+runs in CI on the PR title (`.github/workflows/commit-lint.yaml`).
 
 ### MCP Servers
 

@@ -160,8 +160,24 @@ These thoughts mean STOP — you are about to treat a hypothesis as an instructi
     **Leave the bead `in_progress`.** Closure happens at merge, not here — do not
     close it and do not open a PR automatically. See ADR `fhsk-hj3`.
 
-14. Suggest `dev-flow:finishing-a-development-branch`, which presents
-    merge / PR / cleanup options. The operator decides integration.
+14. **Ask the operator whether to finish the branch now** via
+    `AskUserQuestion` — do not stop at a passive text suggestion. The bead
+    stays `in_progress` either way; this only decides whether to integrate now.
+
+    > "Bead solved and left `in_progress`. Finish the development branch now,
+    > or keep working on it?"
+
+    - **Finish now** — **REQUIRED SUB-SKILL:** Use
+      `dev-flow:finishing-a-development-branch` (Step 0 pre-flight reconciles
+      bead state; tests → merge / PR / cleanup options → execute; Step 5.5
+      closes the epic at merge). Announce: "I'm using the
+      finishing-a-development-branch skill to complete this work."
+    - **Keep working** — stop here. The bead remains `in_progress`; finish
+      later when the branch's remaining beads are solved (closure still
+      happens at merge, per ADR `fhsk-hj3`).
+
+    If `AskUserQuestion` is unavailable (non-interactive context), default to
+    **Finish now** and invoke the sub-skill directly.
 
 ## Quick Reference
 
@@ -171,4 +187,4 @@ These thoughts mean STOP — you are about to treat a hypothesis as an instructi
 | 1 Claim & isolate | `bd update --claim`, then `using-worktrees` | — |
 | 2 Triage | split problem vs candidate fix; route by type | — |
 | 3 TDD | failing test → minimal code → refactor → gates | — |
-| 4 Verify & hand off | evidence, `bd note`, leave `in_progress` | — |
+| 4 Verify & hand off | evidence, `bd note`, leave `in_progress`, `AskUserQuestion` → finish now or keep working | — |

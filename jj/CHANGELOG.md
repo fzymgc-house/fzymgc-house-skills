@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.6.1...jj-v0.6.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **jj:** register plugin hooks via hooks.json and force git-style diffs ([#105](https://github.com/fzymgc-house/fzymgc-house-skills/issues/105)) ([3ffedab](https://github.com/fzymgc-house/fzymgc-house-skills/commit/3ffedab5fd66863e79acea746d491d67eec27341))
+
 ## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/jj-v0.6.0...jj-v0.6.1) (2026-05-19)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.13.0...fzymgc-house-skills-v1.13.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **jj:** register plugin hooks via hooks.json and force git-style diffs ([#105](https://github.com/fzymgc-house/fzymgc-house-skills/issues/105)) ([3ffedab](https://github.com/fzymgc-house/fzymgc-house-skills/commit/3ffedab5fd66863e79acea746d491d67eec27341))
+
 ## [1.13.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.12.0...fzymgc-house-skills-v1.13.0) (2026-05-29)
 
 

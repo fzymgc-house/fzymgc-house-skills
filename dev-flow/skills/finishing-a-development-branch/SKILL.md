@@ -268,15 +268,22 @@ until the gate reaches a PASS verdict.
 
 2. **Read the verdict** `/review-pr` reports:
 
-   - **✅ PASS** — zero open `critical` and zero open `important` findings.
-     `suggestion`-severity findings MAY remain open. The gate is satisfied.
-   - **❌ CHANGES REQUESTED** — one or more open `critical`/`important`
-     findings.
+   - **✅ PASS** — zero open, non-deferred `critical`/`important` findings.
+     `suggestion`-severity findings — and any finding you intentionally
+     `deferred` via `/address-findings` — MAY remain open. The gate is
+     satisfied.
+   - **❌ CHANGES REQUESTED** — one or more open, non-deferred
+     `critical`/`important` findings.
 
 3. **On CHANGES REQUESTED:** run `/address-findings <n>` to resolve the open
    critical/important findings with isolated fix-workers and review gates, then
    **re-run `/review-pr <n>`**. Repeat review → address → re-review until the
-   verdict is PASS.
+   verdict is PASS. If a critical/important finding is genuinely mis-triaged or
+   can safely wait, `/address-findings`' **Defer** option labels it `deferred`
+   and files a linked follow-up bead; deferred findings drop out of the gate
+   count, so this is the sanctioned way to reach PASS without fixing every
+   finding immediately — never merge over a finding that is still both open and
+   un-deferred.
 
 4. **Do not report the work complete until the verdict is PASS.** A PR with open
    critical or important findings is not done, regardless of test status. If the
@@ -410,7 +417,8 @@ REPO_ROOT=$(jj root 2>/dev/null)
 
 Option 2 additionally requires the **PR review gate**: run `/review-pr <n>`,
 loop `/address-findings <n>` → re-review until the verdict is **PASS** (zero
-open critical/important findings) before the work counts as complete.
+open, non-deferred critical/important findings) before the work counts as
+complete.
 
 ## Common Mistakes
 
@@ -434,8 +442,9 @@ open critical/important findings) before the work counts as complete.
 - **Problem:** Reporting the work complete the moment the PR is pushed, skipping
   review or stopping while critical/important findings are still open
 - **Fix:** Option 2 isn't complete until the `/review-pr` gate reaches PASS.
-  Loop `/review-pr` → `/address-findings` → re-review until zero open
-  critical/important findings
+  Loop `/review-pr` → `/address-findings` → re-review until zero open,
+  non-deferred critical/important findings (deferred findings drop out of the
+  count)
 
 ## Dispatching a single code-review agent instead of `/review-pr`
 
@@ -481,8 +490,8 @@ open critical/important findings) before the work counts as complete.
 - Remove a worktree/workspace before confirming merge success
 - Clean up workspaces you didn't create (provenance check)
 - Run `git worktree remove` / `jj workspace forget` from inside the workspace
-- Report Option 2 complete while the `/review-pr` gate is not PASS (open
-  critical/important findings remain)
+- Report Option 2 complete while the `/review-pr` gate is not PASS (open,
+  non-deferred critical/important findings remain)
 - Substitute a single code-review agent for the `/review-pr` orchestrator gate
 
 **Always:**

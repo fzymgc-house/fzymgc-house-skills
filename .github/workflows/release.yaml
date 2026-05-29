@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_increment:
+        description: "Guard: fail if cog computes a different bump (auto = no guard)"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the tag + GitHub Release
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0 # full history + tags so cog can compute the bump
+
+      - name: Install cog
+        uses: ./.github/actions/install-cog
+
+      - name: Configure git identity for tagging
+        run: |
+          git config user.name "fzymgc-release[bot]"
+          git config user.email "fzymgc-release[bot]@users.noreply.github.com"
+
+      - name: Preview and guard the computed bump
+        env:
+          EXPECTED: ${{ inputs.expected_increment }}
+        run: |
+          set -euo pipefail
+          echo "Computed next version (dry-run):"
+          cog bump --auto --dry-run
+          if [ "$EXPECTED" != "auto" ]; then
+            CUR="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo '0.0.0')"
+            NEXT="$(cog bump --auto --dry-run 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -n1)"
+            [ -n "$NEXT" ] || { echo "::error::could not compute next version"; exit 1; }
+            IFS=. read -r cmaj cmin _ <<< "$CUR"
+            IFS=. read -r nmaj nmin _ <<< "$NEXT"
+            if   [ "$nmaj" -gt "$cmaj" ]; then KIND=major
+            elif [ "$nmin" -gt "$cmin" ]; then KIND=minor
+            else KIND=patch; fi
+            if [ "$KIND" != "$EXPECTED" ]; then
+              echo "::error::expected '$EXPECTED' bump but cog computed '$KIND' ($CUR -> $NEXT)"
+              exit 1
+            fi
+            echo "Guard OK: $KIND bump ($CUR -> $NEXT)"
+          fi
+
+      - name: Bump (create tag only) and push the tag
+        run: |
+          set -euo pipefail
+          cog bump --auto
+          TAG="$(git describe --tags --abbrev=0)"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release with cog changelog notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
+          if [ -n "$PREV" ]; then RANGE="${PREV}..${TAG}"; else RANGE="$TAG"; fi
+          cog changelog "$RANGE" > /tmp/release-notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md

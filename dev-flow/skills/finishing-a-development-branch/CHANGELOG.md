@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.5.0...finishing-a-development-branch-v0.6.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** require /review-pr PASS gate after PR open ([#107](https://github.com/fzymgc-house/fzymgc-house-skills/issues/107)) ([4b37e4b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/4b37e4bd6bfe8e3b3305a50ba88d789f4e9276ec))
+
 ## [0.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.4.0...finishing-a-development-branch-v0.5.0) (2026-05-29)
 
 

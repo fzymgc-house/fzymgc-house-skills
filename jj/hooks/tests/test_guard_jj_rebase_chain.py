@@ -149,6 +149,18 @@ class TestAllowed:
             # Non-jj commands
             "git status",
             "ls -la",
+            # The canonical chain-safe recipe must pass even though its $()
+            # substitution contains `roots(trunk()..@)` and `-o main@origin`.
+            "jj rebase -s \"$(jj --no-pager log -r 'roots(trunk()..@)' "
+            "--no-graph -T 'change_id.short(12)')\" -o main@origin --skip-emptied",
+            # FALSE-POSITIVE REGRESSION: a chain-safe `-s` rebase sharing a
+            # Bash block with an unrelated `jj log -r '@ | @-'` state-display.
+            # The `-r @` belongs to the log, not the rebase; the rebase uses
+            # `-s`, so this must NOT block. (Cross-command leakage bug.)
+            "jj rebase -s \"$ROOT\" -o main@origin --skip-emptied\n"
+            "jj --no-pager log -r '@ | @-' -T x",
+            "jj rebase -s xyz -o main ; jj log -r @ -T x",
+            "jj log -r @ && jj rebase -s xyz -o main",
         ],
     )
     def test_allowed_command_passes(self, jj_repo: Path, command: str) -> None:

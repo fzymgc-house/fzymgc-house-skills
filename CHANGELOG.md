@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.13.1...fzymgc-house-skills-v1.14.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** require /review-pr PASS gate after PR open ([#107](https://github.com/fzymgc-house/fzymgc-house-skills/issues/107)) ([4b37e4b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/4b37e4bd6bfe8e3b3305a50ba88d789f4e9276ec))
+
 ## [1.13.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.13.0...fzymgc-house-skills-v1.13.1) (2026-05-29)
 
 

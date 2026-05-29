@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.10.1...dev-flow-v0.11.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** surface-aware drain watchdog as a uv script ([#114](https://github.com/fzymgc-house/fzymgc-house-skills/issues/114)) ([6ab41ac](https://github.com/fzymgc-house/fzymgc-house-skills/commit/6ab41ac250073e620ca1759bd567ad6cbf750ec9))
+
+
+### Bug Fixes
+
+* **dev-flow:** close review epic on PASS/merge; Defer re-homes findings out of epic ([#111](https://github.com/fzymgc-house/fzymgc-house-skills/issues/111)) ([29a4111](https://github.com/fzymgc-house/fzymgc-house-skills/commit/29a4111e49acaa8bad65f52ea1084d534032d878))
+
 ## [0.10.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.10.0...dev-flow-v0.10.1) (2026-05-29)
 
 

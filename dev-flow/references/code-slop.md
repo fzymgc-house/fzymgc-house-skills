@@ -23,9 +23,13 @@ does.
 
 ### C-2 — Vestigial edit narration
 
-Comments that describe the editing history rather than the code.
+Co-owned with `comments`. Comments that describe the editing history, the
+generation session, or the task — rather than the code. Includes assistant
+bookmarks (`# I was here`, `// as requested`) and PR/ticket back-references in
+source.
 
-- Before: `# removed old logic; previously we looped here` / `// NEW:`
+- Before: `# removed old logic; previously we looped here` / `// NEW:` /
+  `# Here's the function you asked for`
 - After: (delete the comment)
 
 ### C-3 — Defensive validation for impossible cases
@@ -62,7 +66,8 @@ trivial functions.
 
 ### C-7 — Test asserts the mock, not the outcome
 
-A test whose only assertion is that a mock/framework method was called.
+Co-owned with `tests`. A test whose only assertion is that a mock/framework
+method was called.
 
 - Before: `service.save(x)\nassert mock_db.save.called`
 - After: assert the observable result: `assert repo.get(x.id) == x`

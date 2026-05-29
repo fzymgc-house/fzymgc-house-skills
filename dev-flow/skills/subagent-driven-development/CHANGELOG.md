@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/subagent-driven-development-v0.5.0...subagent-driven-development-v0.6.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** wire review pipeline seams ([#102](https://github.com/fzymgc-house/fzymgc-house-skills/issues/102)) ([8d517f8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/8d517f8df21646d4ef55129ed1acf35d87b812d5))
+
+
+### Bug Fixes
+
+* **dev-flow:** correct --skills routing + tighten/retime capture-adrs ([#103](https://github.com/fzymgc-house/fzymgc-house-skills/issues/103)) ([e3c66b6](https://github.com/fzymgc-house/fzymgc-house-skills/commit/e3c66b6de2d2632fbbe3dc1e31abff118b3a1fe9))
+
 ## [0.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/subagent-driven-development-v0.4.0...subagent-driven-development-v0.5.0) (2026-05-22)
 
 

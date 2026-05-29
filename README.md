@@ -158,7 +158,11 @@ docs: update README
 
 ### Versioning
 
-Versions are managed by [release-please](https://github.com/googleapis/release-please). Do not manually bump versions in `marketplace.json`, `plugin.json`, or SKILL.md files.
+Releases are cut with [cocogitto](https://docs.cocogitto.io/) (`cog`),
+tag-only: a single repo-wide `vX.Y.Z` git tag plus a GitHub Release, derived
+from conventional commits. There are no in-file version numbers — plugins are
+versioned by git commit SHA. Cut a release with `task release:cut`. See the
+"Release Versioning" section in `AGENTS.md`.
 
 ## License
 

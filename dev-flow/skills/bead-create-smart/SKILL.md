@@ -10,7 +10,6 @@ description: >-
 allowed-tools: Read, Bash, AskUserQuestion
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
   origin: holomush bead-create-smart, shrunk to structured-flag helper
 ---
 

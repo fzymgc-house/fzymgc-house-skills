@@ -16,7 +16,6 @@ description: |
   Invokes Grafana MCP server on-demand without requiring MCP configuration or loading tool definitions into context.
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
 ---
 
 # Grafana Operations

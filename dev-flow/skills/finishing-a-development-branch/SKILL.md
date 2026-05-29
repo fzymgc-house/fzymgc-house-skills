@@ -6,7 +6,6 @@ description: >-
   development work by presenting structured options for merge, PR, or cleanup
 metadata:
   author: fzymgc-house
-  version: 0.2.0 # x-release-please-version
 ---
 
 # Finishing a Development Branch

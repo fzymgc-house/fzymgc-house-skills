@@ -47,7 +47,6 @@ allowed-tools:
   - "Bash(jj landed)"
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
 ---
 
 # Jujutsu (jj) VCS Workflow

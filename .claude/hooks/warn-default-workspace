@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+#
+# SessionStart hook: warns when the Claude Code session is operating in the
+# shared `default` jj workspace. Stays silent in any additional workspace or
+# when the repo is not jj.
+#
+# Why: jj snapshots the working copy on EVERY jj command. When you edit in the
+# shared default workspace, any other jj command boundary in the same
+# workspace — including those run by dispatched subagents (which fetch + `jj
+# new`) or by hooks — can move `@` off your in-flight change. If that change
+# is unnamed, it is effectively orphaned. Isolating into a per-task workspace
+# removes the collision surface.
+#
+# Detection: in the main checkout (default workspace) `.jj/repo` is a
+# DIRECTORY; in an additional workspace it is a FILE (a pointer back to the
+# main `.jj`). Ported from holomush's scripts/jj-main-repo.sh.
+#
+# Output contract: SessionStart hooks concatenate stdout into the session's
+# additional context. Emit the warning to stdout; stay silent (exit 0, no
+# output) when no warning is needed. This hook is purely informational and
+# MUST NEVER block session start.
+
+set -euo pipefail
+
+# Consume the JSON event from stdin (no field needed; honor the contract).
+cat >/dev/null 2>&1 || true
+
+# Resolve the current workspace root. If jj is unavailable or this is not a
+# jj repo, stay silent — the hook is a no-op outside jj.
+ws_root="$(jj workspace root 2>/dev/null || true)"
+[ -n "$ws_root" ] || exit 0
+
+if [ -d "$ws_root/.jj/repo" ]; then
+  : # default workspace — fall through to warn
+elif [ -f "$ws_root/.jj/repo" ]; then
+  exit 0 # additional workspace — already isolated, stay silent
+else
+  exit 0 # not resolvable as a jj workspace — stay silent
+fi
+
+cat <<'EOF'
+**You are in the shared `default` jj workspace.** jj snapshots the working copy on every `jj` command, so a dispatched subagent or hook running a `jj` command in this same workspace can move `@` off your in-flight change and orphan it (this is how uncommitted/unbookmarked work gets lost here). Before editing files for a task, isolate this session:
+
+- **Agents / Claude Code:** use the `EnterWorktree` tool (it triggers this repo's `WorktreeCreate` hook → a sibling jj workspace under `<repo>_worktrees/<name>`, registered with the harness so the working directory persists).
+- **Manual fallback:** `jj workspace add ../<repo>_worktrees/<name> --name <name>` then `cd` in and `jj bookmark create <name> -r @`.
+- See the `dev-flow:using-worktrees` and `jj:jujutsu` skills for the full pattern.
+
+If you are only reading/answering (no file edits), you can ignore this warning.
+EOF

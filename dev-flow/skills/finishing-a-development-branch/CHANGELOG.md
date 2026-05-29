@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.6.0...finishing-a-development-branch-v0.6.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **dev-flow:** exclude deferred findings from review-pr PASS gate ([#109](https://github.com/fzymgc-house/fzymgc-house-skills/issues/109)) ([f2f6e75](https://github.com/fzymgc-house/fzymgc-house-skills/commit/f2f6e7520e9cf5c7045589f1f53a36536477b8d2))
+
 ## [0.6.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.5.0...finishing-a-development-branch-v0.6.0) (2026-05-29)
 
 

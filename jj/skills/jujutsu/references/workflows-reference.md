@@ -321,8 +321,8 @@ You MUST use change IDs for stability:
 # Get change ID for scripting
 CHANGE_ID=$(jj log -r @ --no-graph -T 'change_id.short(8)')
 
-# Reference later (survives rewrites)
-jj show "$CHANGE_ID"
+# Reference later (survives rewrites; --git keeps the diff agent-readable)
+jj show --git "$CHANGE_ID"
 
 # Chain-safe pre-push rebase: -s brings descendants along.
 # Do NOT use `jj rebase -r <rev> -o main` here — it's single-revision

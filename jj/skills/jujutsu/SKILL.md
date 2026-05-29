@@ -100,6 +100,13 @@ Agents run non-interactively. These rules prevent common failures:
 - You MUST pass `--no-pager` on every `jj` command (e.g., `jj --no-pager log`).
   Agent environments cannot interact with pagers. Alternatively, pass
   `--config ui.paginate=never` as a flag.
+- You MUST pass `--git` when reading diffs (`jj diff --git`, `jj show --git`).
+  jj's **default `color-words` format relies on ANSI color** to distinguish
+  removed from added text; with color stripped (as in agent output) a change
+  collapses into a single garbled token -- e.g. `s.pool` → `tx` renders as
+  `result := stx.pool.Query()`, which reads as broken source that is actually
+  fine on disk. `--git` emits unambiguous `-`/`+` lines. Persist it for the
+  session with `ui.diff-formatter = ":git"` (see `references/jj-agent-config.md`).
 - You MUST NOT redirect stderr to `/dev/null` (`2>/dev/null`) on jj commands.
   jj reports errors and important warnings on stderr. Suppressing it hides
   failures silently (e.g., `jj workspace add` appears to succeed but creates
@@ -174,11 +181,11 @@ jj log
 # View log with all revisions
 jj log -r '::'  # all() also works but :: is canonical
 
-# Show diff of current working copy
-jj diff
+# Show diff of current working copy (--git: agent-safe; see Agent Environment Rules)
+jj diff --git
 
 # Show diff of a specific revision
-jj show <rev>
+jj show --git <rev>
 
 # Status of working copy
 jj st
@@ -511,7 +518,7 @@ produces conflicts -- gives this exact recipe. Follow it:
 ```bash
 jj new <lowest-conflicted-commit>   # 1. Resolution commit on top of it
 $EDITOR <conflicted-file>           # 2. Edit markers (or jj resolve; see below)
-jj diff                             # 3. Verify ONLY the resolution shows
+jj diff --git                       # 3. Verify ONLY the resolution shows
 jj squash                           # 4. Fold into the conflicted ancestor
 ```
 
@@ -546,7 +553,7 @@ jj rebase -s B2 -o A                 # → conflicts in B2 and C; rebase complet
 jj log -r 'conflicts()'              # → B2, C
 jj new B2                            # resolution commit on lowest ancestor
 $EDITOR file1                        # apply each %%%%%%% diff to the +++++++ snapshot
-jj diff                              # verify only the resolution shows
+jj diff --git                        # verify only the resolution shows
 jj squash                            # → "conflicts resolved from 2 commits"
 jj log -r 'conflicts()'              # → empty
 ```
@@ -564,8 +571,8 @@ C automatically inherits the resolution -- never resolve the same conflict twice
 | New merge change | `jj new <rev1> <rev2>` |
 | Insert change mid-chain | `jj new -A <after> -B <before>` |
 | View log | `jj log` |
-| View diff | `jj diff` |
-| Show revision | `jj show <rev>` |
+| View diff (agent-safe) | `jj diff --git` |
+| Show revision (agent-safe) | `jj show --git <rev>` |
 | Status | `jj st` |
 | Squash into parent | `jj squash` |
 | Squash into specific rev | `jj squash --into <rev>` |

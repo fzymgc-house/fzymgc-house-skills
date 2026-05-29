@@ -226,6 +226,19 @@ Falls under halt condition #3 (VCS / harness failure). The drain bead stays
 rejection counts in the drain bead's notes carry forward; circuit-breakers see
 them on iteration 1.
 
+### Worker surface monitoring (controller side)
+
+When the worker runs detached in a cmux pane (`/drain-with-worker`), the controller
+arms a **surface-aware watchdog**, not a bare count-stall probe. A worker question,
+a permission prompt the bypass guard still catches, or an API / rate-limit error
+stalls the worker **without moving the closed-count**, so a count-only probe is blind
+to it — and its "Continue the drain" nudge is the wrong answer to a question anyway.
+The watchdog scans `cmux read-screen` every ~75s and **exits to wake the controller**
+on these states (a background loop notifies on exit, not on stdout), so a blocked
+worker is surfaced in seconds rather than after a 20–30 min idle gap. It never
+auto-answers — the controller (or operator) decides. See the reaction table in
+`dev-flow/references/drain-with-worker.md`.
+
 ### PushNotification unavailable
 
 Fall back to final-turn message text. The drain bead's `bd note` record is the
@@ -238,6 +251,8 @@ authoritative audit trail regardless of notification delivery.
 | Spec (original design) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
 | Spec (cold-boot handoff redesign) | `docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
+| Detached worker launch + surface-aware watchdog | `dev-flow/commands/drain-with-worker.md`, `dev-flow/references/drain-with-worker.md` |
+| Watchdog script (surface scan + `classify()`) | `dev-flow/scripts/drain-watchdog` |
 | ADR: `/goal` over `/loop` | `fhsk-thw` |
 | ADR: harness split (superseded by `fhsk-eqt`) | `fhsk-0o2` |
 | ADR: protocol in skill / cold-boot condition / bead carrier | `fhsk-eqt`, `fhsk-zds`, `fhsk-e4i` |

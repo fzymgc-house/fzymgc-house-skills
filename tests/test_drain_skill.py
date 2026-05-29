@@ -1,15 +1,31 @@
 from __future__ import annotations
 
+import importlib.util
 import re
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
+from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DRAIN_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain.md"
 DRAIN_SKILL = REPO_ROOT / "dev-flow" / "skills" / "draining-beads" / "SKILL.md"
 DRAIN_WITH_WORKER_REF = REPO_ROOT / "dev-flow" / "references" / "drain-with-worker.md"
 DRAIN_WITH_WORKER_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain-with-worker.md"
+DRAIN_WATCHDOG = REPO_ROOT / "dev-flow" / "scripts" / "drain-watchdog"
 
 CONDITION_MAX = 1500
+
+
+def _load_watchdog() -> ModuleType:
+    """Import the extensionless `drain-watchdog` uv script as a module so its
+    pure helpers (classify) can be unit-tested. The PEP 723 header and shebang
+    are comments, and the run loop is `__main__`-guarded, so import is inert."""
+    loader = SourceFileLoader("drain_watchdog", str(DRAIN_WATCHDOG))
+    spec = importlib.util.spec_from_loader("drain_watchdog", loader)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
 
 
 def _condition_template(text: str) -> str:
@@ -105,13 +121,72 @@ def test_reference_prereqs_refuse_early() -> None:
     assert "command -v cmux" in text, "must refuse when cmux is not on PATH"
 
 
-def test_reference_watchdog_completion_keys_on_bead_closed() -> None:
-    text = DRAIN_WITH_WORKER_REF.read_text()
-    assert '"closed"' in text, "watchdog completion = drain bead status closed"
-    assert "startswith(" in text, "epic child probe filters by '<scope>.' prefix"
-    assert ".status // .status" not in text, (
-        "cleaned status read has no object-fallback"
+def test_watchdog_completion_keys_on_bead_closed() -> None:
+    text = DRAIN_WATCHDOG.read_text()
+    assert '== "closed"' in text, "watchdog completion = drain bead status closed"
+    assert 'startswith(scope + ".")' in text, (
+        "epic child probe filters by '<scope>.' prefix"
     )
+
+
+def test_reference_arms_the_watchdog_script() -> None:
+    text = DRAIN_WITH_WORKER_REF.read_text()
+    assert "dev-flow/scripts/drain-watchdog" in text, (
+        "reference must arm the script, not inline bash"
+    )
+    assert "--drain-id" in text and "--scope" in text and "--surface" in text, (
+        "reference must show the script's required arguments"
+    )
+    cmd_fm = _frontmatter(DRAIN_WITH_WORKER_CMD.read_text())
+    assert "Bash(dev-flow/scripts/drain-watchdog:*)" in cmd_fm, (
+        "command must gate the watchdog script in allowed-tools"
+    )
+
+
+def test_watchdog_classifies_blocked_input() -> None:
+    classify = _load_watchdog().classify
+    # permission prompt the bypass guard still catches
+    assert classify("Do you want to proceed?\n❯ 1. Yes\n  2. No") == "blocked-input"
+    # AskUserQuestion-style numbered menu
+    assert (
+        classify("  1. Yes, and don't ask again\n  2. No, suggest changes")
+        == "blocked-input"
+    )
+    # trust-folder prompt ("...trust the files in this folder?")
+    assert classify("Do you trust the files in this folder?") == "blocked-input"
+
+
+def test_watchdog_classifies_api_error() -> None:
+    classify = _load_watchdog().classify
+    assert (
+        classify("API Error: 429 rate_limit_exceeded, retrying in 12s") == "api-error"
+    )
+    assert classify("API Error (Overloaded) 529") == "api-error"
+    assert classify("Connection error: fetch failed") == "api-error"
+
+
+def test_watchdog_classifies_healthy_surface_as_working() -> None:
+    classify = _load_watchdog().classify
+    assert (
+        classify("· Crunching (esc to interrupt) 12.3k tokens\nBash(jj st)")
+        == "working"
+    )
+    assert classify("Implementing Task 3 of 12. Running tests now.") == "working"
+    assert classify("") == "working"
+
+
+def test_watchdog_api_error_wins_over_a_co_occurring_prompt() -> None:
+    # an error and a retry prompt can co-occur; the error is the more urgent signal
+    classify = _load_watchdog().classify
+    assert classify("API Error: overloaded\nDo you want to retry?") == "api-error"
+
+
+def test_surface_monitoring_documented_in_skill() -> None:
+    text = DRAIN_SKILL.read_text()
+    assert "surface-aware watchdog" in text, (
+        "skill must document the surface-aware watchdog"
+    )
+    assert "read-screen" in text, "skill must mention scanning the worker surface"
 
 
 def test_worker_condition_byte_identical() -> None:

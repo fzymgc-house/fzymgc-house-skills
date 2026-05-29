@@ -201,12 +201,58 @@ emit byte-identical conditions for the same bead.
 - Dolt-500 tolerance: on an unreadable poll (`-1` sentinel) sleep and continue;
   never nudge on a bad read.
 - Nudge: SHORT single-line message + 2s gap before `send-key Enter` (long
-  multi-line nudges race the TUI submit). ~2-strike (~6 min) debounce.
+  multi-line nudges race the TUI submit). ~6 min debounce (5 strikes at 75s poll).
 - On `DRAIN COMPLETE`: `PushNotification` + lightweight idle-poll through the
   interactive `finishing-a-development-branch` landing (the worker closes the
   drain bead *before* that landing, which then runs unmonitored).
 
-## Bug fix
+### Addendum 2026-05-29 — surface-aware watchdog
+
+The original count-stall probe is **blind to input-blocked and API-error states**:
+a worker question, a permission prompt the bypass guard still catches (e.g. the
+`rm -rf` confirmation), or an API / rate-limit / overloaded error stalls the worker
+**without moving the closed-count**. The probe never strikes (no count change is
+*expected* while blocked), and even if it did, its "Continue the drain" nudge is the
+wrong response to a question. Operators were discovering blocked workers only after a
+20–30 min idle gap. The watchdog is upgraded to scan the worker surface each tick:
+
+- **Extracted to a script.** The watchdog is no longer inline bash in the reference —
+  it is a self-contained `uv` script, `dev-flow/scripts/drain-watchdog` (extensionless,
+  `#!/usr/bin/env -S uv run --script`, stdlib only). Python over bash because the
+  classification regexes and the `bd show` array / dolt-500 guards become directly
+  **unit-testable** (`classify()` is a pure function imported in the test suite),
+  rather than asserted as strings in markdown. It takes `--drain-id` / `--scope` /
+  `--surface` plus tunable `--poll` (75s) / `--strikes` (5). Follows the repo's
+  established `dev-flow/scripts/<name>` invocation + `Bash(...:*)` allowed-tools
+  convention (cf. `render-adr`).
+- **Cadence**: base poll tightened to ~75s (was 180s) so a blocked prompt is caught
+  fast; the count-stall debounce moves to 5 strikes to preserve the ~6 min window.
+- **Surface scan** each tick: `cmux read-screen --surface <s>` (last 40 lines),
+  classified by `classify()` into `api-error` (`API Error|overloaded|rate.?limit|429|
+  529|Internal server error|Connection error|fetch failed`) and `blocked-input`
+  (`Do you want to|Would you like|❯ N.|N. Yes/No/Allow|trust .*folder|proceed?`).
+  Error wins over a co-occurring retry prompt (more urgent signal).
+- **Exit-to-wake, not nudge.** On `api-error` (rc 10) / `blocked-input` (rc 11) the
+  script **exits** with a tagged `EXIT=<reason>` first line. A background task notifies
+  the orchestrator on **exit**, not on stdout, so exiting is what actually wakes the
+  controller; an infinite echo-only loop would block silently. The count-stall
+  self-nudge stays in the loop and is only reached on a healthy surface, so it can never
+  nudge "Continue" into a permission prompt.
+- **Reaction table** (orchestrator, on task finish): `complete` → PushNotification +
+  landing idle-poll, do not re-arm; `blocked-input` → PushNotification + surface the
+  prompt, **never auto-answer** (safe response unknowable generically), re-arm after
+  the human/controller resolves it; `api-error` → PushNotification, wait a backoff,
+  confirm recovery via `read-screen`, re-arm (hard failure → restart worker).
+
+Reflected in `dev-flow/scripts/drain-watchdog` (the watchdog itself + `classify()`),
+`dev-flow/references/drain-with-worker.md` (Surface-aware watchdog section + Gotchas
+
+## 8–#10), `dev-flow/commands/drain-with-worker.md`, the `draining-beads` skill's
+
+*Worker surface monitoring* edge case, and `tests/test_drain_skill.py` (classify unit
+tests + completion/child-probe invariants moved from the reference to the script).
+
+### Bug fix
 
 Root cause confirmed against live bd: `bd show --json` returns a single-element
 **array**, and the type field is **`issue_type`**, not `type`
@@ -228,7 +274,7 @@ Fix throughout the lifted reference:
 - Replace the misleading source comment (line 41) that claims the fallback
   "also accept[s] an object payload".
 
-## Files added / changed
+### Files added / changed
 
 - **Add** `dev-flow/references/drain-with-worker.md` (lifted + bug-fixed; fires
   but does not redefine the canonical worker condition).
@@ -246,7 +292,7 @@ Fix throughout the lifted reference:
   and `references/` is already symlinked in `plugins/dev-flow/`. Normal
   release-please bumps the `dev-flow` plugin.
 
-## Testing strategy
+### Testing strategy
 
 Extend `tests/test_drain_skill.py` (string/structure assertions, the existing
 pattern). Add a path constant `DRAIN_WITH_WORKER_REF =
@@ -273,7 +319,7 @@ making an assertion vacuously pass).
 Quality gates: `rumdl` on the new/edited markdown; `uv run pytest
 tests/test_drain_skill.py`; `lefthook run pre-commit`.
 
-## Open questions / future work
+### Open questions / future work
 
 - **holomush cleanup** (separate bead, that repo): delete local
   `.claude/skills/drain-pane/`, redirect to `/drain-with-worker` once published.
@@ -285,7 +331,7 @@ tests/test_drain_skill.py`; `lefthook run pre-commit`.
 - **`/drain --with-worker` sugar**: thin wrapper that points the user at
   `/drain-with-worker <bead>` — only if one-shot ergonomics prove necessary.
 
-## References
+### References
 
 - Source skill: `holomush/.claude/skills/drain-pane/SKILL.md` (137 lines).
 - `dev-flow/commands/drain.md`, `dev-flow/skills/draining-beads/SKILL.md`.

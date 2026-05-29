@@ -203,10 +203,14 @@ provided automatically.
 | Vague, under-specified, no clear precedent | opus |
 | Design changes requiring architectural judgment | opus |
 
-**Deferral handling:** When the user chooses "Defer":
+**Deferral handling:** When the user chooses "Defer", the finding is moved
+**out of the review epic**: it is closed in favour of a new standalone
+follow-up bead that carries the work forward. This keeps the review epic
+drainable — a deferred finding must not linger open under the epic, or the
+epic can never reach a clean close.
 
-1. Add label: `bd update <finding-id> --add-label deferred`
-2. Create deferred work bead with full context:
+1. Create the out-of-epic follow-up bead with full context (no `--parent`, so
+   it lives outside the review epic):
 
    ```bash
    bd create "<description>" --type task \
@@ -215,7 +219,13 @@ provided automatically.
      --description "<context, file location, reason>" --silent
    ```
 
-3. Link: `bd dep add <deferred-bead> --depends-on <finding-id> --type discovered-from`
+2. Link provenance: `bd dep add <deferred-bead> --depends-on <finding-id> --type discovered-from`
+3. Close the finding in favour of the follow-up bead:
+
+   ```bash
+   bd update <finding-id> --add-label deferred
+   bd close <finding-id> --reason="Deferred to <deferred-bead-id> (moved out of review epic)"
+   ```
 
 ## Phase 4: Fix Loop
 
@@ -232,7 +242,8 @@ If on `main`, stop — you skipped step 3. If there are uncommitted changes,
 commit them first. A clean working tree on the correct PR branch is required
 before dispatching worktree-isolated agents.
 
-Loop while open, non-deferred findings remain:
+Loop while open findings remain (deferred findings are already closed into
+out-of-epic follow-up beads, so they never appear here):
 
 1. **Query ready findings** (deps all closed):
 
@@ -584,7 +595,8 @@ informational — the primary result field is `STATUS`.
 
 | Constraint | Reason |
 |--------------------------------------|---------------------------|
-| **MUST NOT** close the review epic | PR merge triggers closure |
+| **MUST NOT** close the review epic | `/review-pr` closes it at PASS; `finishing-a-development-branch` reconciles it at merge |
+| **MUST** close a deferred finding | Deferral re-homes work to an out-of-epic follow-up bead; the finding must not stay open under the epic |
 | **MUST NOT** merge the PR | Reviewer's decision |
 | **MUST** use `AskUserQuestion` for human judgment | Structured input |
 | **MUST** filter `--status open` in all bead queries | Skip handled findings |

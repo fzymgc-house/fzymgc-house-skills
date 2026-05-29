@@ -268,22 +268,20 @@ until the gate reaches a PASS verdict.
 
 2. **Read the verdict** `/review-pr` reports:
 
-   - **✅ PASS** — zero open, non-deferred `critical`/`important` findings.
-     `suggestion`-severity findings — and any finding you intentionally
-     `deferred` via `/address-findings` — MAY remain open. The gate is
-     satisfied.
-   - **❌ CHANGES REQUESTED** — one or more open, non-deferred
-     `critical`/`important` findings.
+   - **✅ PASS** — zero open `critical`/`important` findings.
+     `suggestion`-severity findings MAY remain open. The gate is satisfied, and
+     `/review-pr` closes the review epic (its Step 12).
+   - **❌ CHANGES REQUESTED** — one or more open `critical`/`important`
+     findings.
 
 3. **On CHANGES REQUESTED:** run `/address-findings <n>` to resolve the open
    critical/important findings with isolated fix-workers and review gates, then
    **re-run `/review-pr <n>`**. Repeat review → address → re-review until the
    verdict is PASS. If a critical/important finding is genuinely mis-triaged or
-   can safely wait, `/address-findings`' **Defer** option labels it `deferred`
-   and files a linked follow-up bead; deferred findings drop out of the gate
-   count, so this is the sanctioned way to reach PASS without fixing every
-   finding immediately — never merge over a finding that is still both open and
-   un-deferred.
+   can safely wait, `/address-findings`' **Defer** option closes it in favour of
+   a standalone out-of-epic follow-up bead — that removes it from the open set,
+   so this is the sanctioned way to reach PASS without fixing every finding
+   immediately. Never merge over a finding that is still open under the epic.
 
 4. **Do not report the work complete until the verdict is PASS.** A PR with open
    critical or important findings is not done, regardless of test status. If the
@@ -350,7 +348,17 @@ After **Option 1 (merge)** or **Option 2 (PR)** succeeds, reconcile bd state by 
 
 4. **Epic auto-close:** after closing children, check `bd list --parent <epic-id> --status=open --status=in_progress`. If zero remain, run `bd close <epic-id> --reason="Epic complete; all children closed"`. The design bead's full audit trail (grounding notes, reviewer rounds, ADR IDs, materialization) is preserved on the closed epic.
 
-5. **For un-selected open beads:** leave them open. They represent work that did NOT merge with this branch — likely candidates for the next branch or for follow-up beads.
+5. **Reconcile the PR review epic.** If this branch was reviewed via `/review-pr` (Option 2, or any branch with a PR number), close the review epic so it does not orphan open. `/review-pr` already closes it at PASS, so this is an idempotent backstop for the case where the PR merged without a final PASS-turn close:
+
+   ```bash
+   bd list --label "pr-review,pr:<number>" --status=open --json
+   # For each open review epic with zero open children:
+   bd close <review-epic-id> --reason="PR #<number> finished; review complete"
+   ```
+
+   If a review epic still has open children, those are unresolved findings — do NOT close it; the gate was not actually PASS. (Deferred findings were already closed into out-of-epic follow-up beads by `/address-findings`, so they never count here.) Skip this step entirely for Option 1 merges with no PR.
+
+6. **For un-selected open beads:** leave them open. They represent work that did NOT merge with this branch — likely candidates for the next branch or for follow-up beads.
 
 **Degraded mode:** If `bd` is unavailable, print a warning and skip. The user is responsible for closing beads manually later.
 
@@ -417,8 +425,8 @@ REPO_ROOT=$(jj root 2>/dev/null)
 
 Option 2 additionally requires the **PR review gate**: run `/review-pr <n>`,
 loop `/address-findings <n>` → re-review until the verdict is **PASS** (zero
-open, non-deferred critical/important findings) before the work counts as
-complete.
+open critical/important findings) before the work counts as complete. At PASS
+the review epic is closed (by `/review-pr`, backstopped by Step 5.5).
 
 ## Common Mistakes
 
@@ -442,9 +450,9 @@ complete.
 - **Problem:** Reporting the work complete the moment the PR is pushed, skipping
   review or stopping while critical/important findings are still open
 - **Fix:** Option 2 isn't complete until the `/review-pr` gate reaches PASS.
-  Loop `/review-pr` → `/address-findings` → re-review until zero open,
-  non-deferred critical/important findings (deferred findings drop out of the
-  count)
+  Loop `/review-pr` → `/address-findings` → re-review until zero open
+  critical/important findings (Defer closes a finding into an out-of-epic
+  follow-up bead, so deferring also clears it from the gate)
 
 ## Dispatching a single code-review agent instead of `/review-pr`
 
@@ -490,8 +498,9 @@ complete.
 - Remove a worktree/workspace before confirming merge success
 - Clean up workspaces you didn't create (provenance check)
 - Run `git worktree remove` / `jj workspace forget` from inside the workspace
-- Report Option 2 complete while the `/review-pr` gate is not PASS (open,
-  non-deferred critical/important findings remain)
+- Report Option 2 complete while the `/review-pr` gate is not PASS (open
+  critical/important findings remain)
+- Leave the review epic open after the gate reaches PASS or the PR merges
 - Substitute a single code-review agent for the `/review-pr` orchestrator gate
 
 **Always:**

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.6.1...finishing-a-development-branch-v0.6.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **dev-flow:** close review epic on PASS/merge; Defer re-homes findings out of epic ([#111](https://github.com/fzymgc-house/fzymgc-house-skills/issues/111)) ([29a4111](https://github.com/fzymgc-house/fzymgc-house-skills/commit/29a4111e49acaa8bad65f52ea1084d534032d878))
+
 ## [0.6.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/finishing-a-development-branch-v0.6.0...finishing-a-development-branch-v0.6.1) (2026-05-29)
 
 

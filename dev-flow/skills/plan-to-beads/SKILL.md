@@ -13,7 +13,6 @@ allowed-tools: >-
   mcp__context7__resolve-library-id, mcp__context7__query-docs
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
   origin: holomush bead-chain-from-plan, adapted per dev-flow Rules 3/4/6
 ---
 

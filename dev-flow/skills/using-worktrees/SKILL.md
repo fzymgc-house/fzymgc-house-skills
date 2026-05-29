@@ -3,7 +3,6 @@ name: using-worktrees
 description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace exists via native tools or git/jj fallback
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
 ---
 
 # Using Worktrees

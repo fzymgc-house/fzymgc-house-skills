@@ -1,6 +1,5 @@
 {
   "name": "dev-flow",
-  "version": "0.1.0",
   "description": "Development workflow skills with git and jj VCS support, plus beads + ADR integration (originally derived from obra/superpowers v5.0.7, now evolved independently)",
   "author": {
     "name": "Sean Brandt",

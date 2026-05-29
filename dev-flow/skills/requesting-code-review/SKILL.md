@@ -5,7 +5,6 @@ description: >-
   to verify work meets requirements (supports git and jj)
 metadata:
   author: fzymgc-house
-  version: 0.1.0 # x-release-please-version
 ---
 
 # Requesting Code Review

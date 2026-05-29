@@ -1,0 +1,29 @@
+name: Commit Lint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Install cog
+        uses: ./.github/actions/install-cog
+      - name: Configure git identity
+        # cog verify builds a verification commit and reads user.name/user.email;
+        # a fresh CI checkout has neither, so set them or cog panics.
+        run: |
+          git config user.name "fzymgc-ci[bot]"
+          git config user.email "fzymgc-ci[bot]@users.noreply.github.com"
+      - name: Verify PR title is a conventional commit
+        env:
+          # Pass the (untrusted) PR title via env, never interpolated into the
+          # shell command, to avoid command injection.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: cog verify "$PR_TITLE"

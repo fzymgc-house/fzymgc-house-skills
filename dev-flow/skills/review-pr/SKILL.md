@@ -213,15 +213,21 @@ bd list --parent <parent-bead-id> --status open --json
 ```
 
 Group findings by their `severity:*` label. Then compute the **review verdict**
-from the open must-fix count (critical + important):
+from the count of open, **non-deferred** must-fix findings (critical +
+important). A finding labelled `deferred` (set by `/address-findings` when work
+is intentionally postponed) is tracked as a linked follow-up and does NOT block
+the gate:
 
 ```bash
 bd list --parent <parent-bead-id> --status open --json \
-  | jq '[.[] | select(.labels[]? == "severity:critical"
-                   or .labels[]? == "severity:important")] | length'
+  | jq '[.[] | select(
+          (any(.labels[]?; . == "severity:critical" or . == "severity:important"))
+          and (any(.labels[]?; . == "deferred") | not)
+        )] | length'
 ```
 
-- **0** → verdict is **✅ PASS** (`suggestion`-severity findings MAY remain open).
+- **0** → verdict is **✅ PASS** (`suggestion`-severity and `deferred` findings
+  MAY remain open).
 - **> 0** → verdict is **❌ CHANGES REQUESTED**.
 
 ### 9. Present Summary
@@ -289,14 +295,15 @@ Summary.
 
 ### 11. Report Verdict and Next Step
 
-Report the verdict computed in Step 8 (open critical + important count):
+Report the verdict computed in Step 8 (open, non-deferred critical + important
+count):
 
 - **❌ CHANGES REQUESTED** (count > 0): "❌ CHANGES REQUESTED — N must-fix
   finding(s). Run `/address-findings <number>` to resolve them with isolated
   fix-workers and review gates, then re-run `/review-pr <number>`."
-- **✅ PASS** (count == 0): "✅ PASS — no open critical or important findings."
-  If `suggestion`-severity findings remain, add "N suggestion(s) remain
-  (optional)."
+- **✅ PASS** (count == 0): "✅ PASS — no open, non-deferred critical or
+  important findings." If `suggestion`-severity or `deferred` findings remain,
+  add "N suggestion(s) / N deferred remain (tracked separately)."
 
 This verdict is the gate consumed by `finishing-a-development-branch` Option 2:
 that skill loops review → `/address-findings` → re-review until the verdict is

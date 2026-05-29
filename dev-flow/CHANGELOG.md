@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.8.0...dev-flow-v0.9.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** wire review pipeline seams ([#102](https://github.com/fzymgc-house/fzymgc-house-skills/issues/102)) ([8d517f8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/8d517f8df21646d4ef55129ed1acf35d87b812d5))
+
+
+### Bug Fixes
+
+* **dev-flow:** correct --skills routing + tighten/retime capture-adrs ([#103](https://github.com/fzymgc-house/fzymgc-house-skills/issues/103)) ([e3c66b6](https://github.com/fzymgc-house/fzymgc-house-skills/commit/e3c66b6de2d2632fbbe3dc1e31abff118b3a1fe9))
+
 ## [0.8.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/dev-flow-v0.7.1...dev-flow-v0.8.0) (2026-05-25)
 
 

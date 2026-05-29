@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.13.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.12.0...fzymgc-house-skills-v1.13.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** wire review pipeline seams ([#102](https://github.com/fzymgc-house/fzymgc-house-skills/issues/102)) ([8d517f8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/8d517f8df21646d4ef55129ed1acf35d87b812d5))
+* **pr-review:** anti-AI-slop review aspect (slop-hunter) ([#99](https://github.com/fzymgc-house/fzymgc-house-skills/issues/99)) ([a8f0769](https://github.com/fzymgc-house/fzymgc-house-skills/commit/a8f07699eaa3f3f1661f4f87ca309c2fadbf6d36))
+
+
+### Bug Fixes
+
+* **dev-flow:** correct --skills routing + tighten/retime capture-adrs ([#103](https://github.com/fzymgc-house/fzymgc-house-skills/issues/103)) ([e3c66b6](https://github.com/fzymgc-house/fzymgc-house-skills/commit/e3c66b6de2d2632fbbe3dc1e31abff118b3a1fe9))
+
 ## [1.12.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/fzymgc-house-skills-v1.11.1...fzymgc-house-skills-v1.12.0) (2026-05-25)
 
 

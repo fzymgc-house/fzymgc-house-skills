@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/requesting-code-review-v0.4.0...requesting-code-review-v0.5.0) (2026-05-29)
+
+
+### Features
+
+* **dev-flow:** wire review pipeline seams ([#102](https://github.com/fzymgc-house/fzymgc-house-skills/issues/102)) ([8d517f8](https://github.com/fzymgc-house/fzymgc-house-skills/commit/8d517f8df21646d4ef55129ed1acf35d87b812d5))
+
 ## [0.4.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/requesting-code-review-v0.3.0...requesting-code-review-v0.4.0) (2026-05-14)
 
 

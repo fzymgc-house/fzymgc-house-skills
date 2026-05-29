@@ -2,7 +2,7 @@
 
 # Dev-Flow Conventions
 
-Conventions for the `dev-flow` workflow plugin. Every workflow skill (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `finishing-a-development-branch`, `plan-to-beads`, `bead-create-smart`, `handoff-prompt`, `capture-adrs`, `evolve-adr`, `draining-beads`) and review-gate agent (`design-reviewer`, `plan-reviewer`, `adr-extractor`) MUST follow these rules.
+Conventions for the `dev-flow` workflow plugin. Every workflow skill (`brainstorming`, `writing-plans`, `subagent-driven-development`, `executing-plans`, `finishing-a-development-branch`, `plan-to-beads`, `bead-create-smart`, `handoff-prompt`, `capture-adrs`, `evolve-adr`, `draining-beads`, `solving-a-bead`) and review-gate agent (`design-reviewer`, `plan-reviewer`, `adr-extractor`) MUST follow these rules.
 
 **Design source:** [`docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md`](../docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md). When this document and the spec disagree, the spec wins; file an issue against this AGENTS.md.
 

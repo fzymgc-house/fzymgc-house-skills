@@ -12,6 +12,9 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 | 2026-05-29 | [fhsk-7y4](fhsk-7y4-adopt-single-repo-wide-version-replacing-per-package-streams.md) | Adopt single repo-wide version replacing per-package streams | Accepted |
 | 2026-05-29 | [fhsk-toy](fhsk-toy-use-tag-only-cog-releases-no-commit-main.md) | Use tag-only cog releases with no commit to main | Accepted |
 | 2026-05-29 | [fhsk-h3z](fhsk-h3z-validate-conventional-commits-at-pr-title-boundary-ci.md) | Validate conventional commits at the PR-title boundary in CI | Accepted |
+| 2026-05-29 | [fhsk-ypt](fhsk-ypt-treat-bug-bead-suggested-fixes-as-non-authoritative-hypothes.md) | Treat bug bead suggested fixes as non-authoritative hypotheses | Accepted |
+| 2026-05-29 | [fhsk-3xn](fhsk-3xn-hard-block-skill-entry-unmet-bead-blocker-dependencies.md) | Hard-block skill entry on unmet bead blocker dependencies | Accepted |
+| 2026-05-29 | [fhsk-hj3](fhsk-hj3-leave-bead-progress-at-hand-off-delegate-closure-merge.md) | Leave bead in_progress at hand-off; delegate closure to merge | Accepted |
 | 2026-05-28 | [fhsk-bj8](fhsk-bj8-use-agent-label-as-sole-subagent-dispatch-signal.md) | Use agent:* label as the sole subagent dispatch signal | Accepted |
 | 2026-05-28 | [fhsk-2us](fhsk-2us-use-active-aspects-deferral-cross-aspect-deduplication-slop.md) | Use ACTIVE_ASPECTS deferral for cross-aspect deduplication in slop-hunter | Accepted |
 | 2026-05-25 | [fhsk-dtk](fhsk-dtk-gate-drain-worker-launch-behind-askuserquestion-never-auto-f.md) | Gate drain worker launch behind AskUserQuestion, never auto-fire | Accepted |

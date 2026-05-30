@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -13,10 +14,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from worktree_helpers import (
     cleanup_empty_parent,
     detect_repo_root,
+    fetch_origin,
+    git_fresh_base_ref,
+    jj_fresh_base_args,
     run_cmd,
     sanitize_for_output,
     validate_safe_name,
 )
+
+
+def _cp(returncode: int = 0, stdout: str = "", stderr: str = ""):
+    """Build a fake CompletedProcess for stubbing the `run` dependency."""
+    return subprocess.CompletedProcess(
+        args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -250,3 +261,97 @@ class TestCleanupEmptyParent:
         empty_dir.mkdir()
         cleanup_empty_parent(str(empty_dir))
         assert not empty_dir.exists()
+
+
+# ---------------------------------------------------------------------------
+# fetch_origin — refresh upstream before worktree creation (best-effort)
+# ---------------------------------------------------------------------------
+
+
+class TestFetchOrigin:
+    def test_jj_issues_jj_git_fetch_and_succeeds(self):
+        calls = []
+
+        def fake_run(args, *, cwd):
+            calls.append(args)
+            return _cp(0)
+
+        assert fetch_origin("/repo", is_jj=True, run=fake_run) is True
+        assert calls == [["jj", "--no-pager", "git", "fetch"]]
+
+    def test_git_issues_git_fetch_origin(self):
+        calls = []
+
+        def fake_run(args, *, cwd):
+            calls.append(args)
+            return _cp(0)
+
+        fetch_origin("/repo", is_jj=False, run=fake_run)
+        assert calls == [["git", "fetch", "origin"]]
+
+    def test_failure_warns_and_returns_false_not_raises(self, capsys):
+        # A failed fetch (offline / no remote) must NOT abort worktree creation.
+        def fake_run(args, *, cwd):
+            return _cp(1, stderr="fatal: no remote")
+
+        assert fetch_origin("/repo", is_jj=True, run=fake_run) is False
+        assert "WARNING" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# jj_fresh_base_args — base a jj workspace on current remote trunk
+# ---------------------------------------------------------------------------
+
+
+class TestJjFreshBaseArgs:
+    def test_remote_trunk_present_bases_on_trunk(self):
+        def fake_run(args, *, cwd):
+            return _cp(0, stdout="abcdef012345\n")
+
+        assert jj_fresh_base_args("/repo", run=fake_run) == ["-r", "trunk()"]
+
+    def test_no_remote_trunk_falls_back_to_default_and_warns(self, capsys):
+        # trunk() collapses to root() in a local-only repo -> empty result.
+        def fake_run(args, *, cwd):
+            return _cp(0, stdout="\n")
+
+        assert jj_fresh_base_args("/repo", run=fake_run) == []
+        assert "WARNING" in capsys.readouterr().err
+
+    def test_command_error_falls_back_to_default(self):
+        def fake_run(args, *, cwd):
+            return _cp(1, stderr="boom")
+
+        assert jj_fresh_base_args("/repo", run=fake_run) == []
+
+
+# ---------------------------------------------------------------------------
+# git_fresh_base_ref — base a git worktree on origin's default branch
+# ---------------------------------------------------------------------------
+
+
+class TestGitFreshBaseRef:
+    def test_symbolic_ref_resolves_origin_default(self):
+        def fake_run(args, *, cwd):
+            if "symbolic-ref" in args:
+                return _cp(0, stdout="origin/main\n")
+            return _cp(1)
+
+        assert git_fresh_base_ref("/repo", run=fake_run) == "origin/main"
+
+    def test_falls_back_to_origin_main_when_no_symbolic_ref(self):
+        def fake_run(args, *, cwd):
+            if "symbolic-ref" in args:
+                return _cp(1)
+            if args[-1] == "origin/main":  # rev-parse --verify origin/main
+                return _cp(0, stdout="deadbeef\n")
+            return _cp(1)
+
+        assert git_fresh_base_ref("/repo", run=fake_run) == "origin/main"
+
+    def test_falls_back_to_head_and_warns_when_no_remote(self, capsys):
+        def fake_run(args, *, cwd):
+            return _cp(1)
+
+        assert git_fresh_base_ref("/repo", run=fake_run) == "HEAD"
+        assert "WARNING" in capsys.readouterr().err

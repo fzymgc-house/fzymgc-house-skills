@@ -48,6 +48,35 @@ fi
 | Current location | `git branch --show-current` | `jj log -r @ --no-graph -T 'change_id.short(8)'` |
 | Status | `git status` | `jj st` |
 
+## Ensure Current Before You Work
+
+Stale state is a silent failure: triaging a bug, brainstorming, or basing a
+worktree on an out-of-date checkout produces confident conclusions about code
+that no longer exists. Before you analyze code or create a workspace, make your
+base current against the right target.
+
+**Pick the currency target from context** — do not assume `main`:
+
+- New work (a fresh bead / feature) → origin's default branch (`origin/main` / `main@origin`).
+- Continuing an existing branch → that branch's upstream (`origin/<branch>` / `<branch>@origin`).
+- Reviewing a PR → the PR branch's tip.
+
+**Fetch, then base/verify against that target:**
+
+| | git | jj |
+|---|---|---|
+| Refresh | `git fetch origin` | `jj git fetch` |
+| Current target rev | `origin/main` (post-fetch) | `trunk()` (post-fetch; resolves to the remote trunk) |
+| Worktree off it | `git worktree add <path> -b <name> origin/main` | `jj workspace add <path> --name <name> -r 'trunk()'` |
+
+**The jj trap (the most common cause of stale work):** `jj git fetch` advances
+`main@origin` but **not** the local `main` bookmark. So `jj new main` or
+`jj workspace add` with no `-r` silently bases off the *stale* local `main`.
+Base off `trunk()` (or `main@origin`), never bare `main` — `jj new 'trunk()'`,
+`jj workspace add … -r 'trunk()'`. The native worktree tool (`EnterWorktree`) and
+`dev-flow:using-worktrees` now do this for you; when you create a workspace or
+move `@` by hand, do it explicitly.
+
 ## Workspace Path Convention
 
 All workspaces use the **sibling directory** pattern to avoid confusing LSP servers:

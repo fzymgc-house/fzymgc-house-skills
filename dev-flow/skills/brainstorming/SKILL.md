@@ -102,7 +102,12 @@ digraph brainstorming {
 
 **Understanding the idea:**
 
-- Check out the current project state first (files, docs, recent commits)
+- Check out the current project state first (files, docs, recent commits) —
+  and make sure it is actually *current*: fetch and verify against origin/main
+  (or the relevant branch) before exploring, so you design against code that
+  exists today, not a stale local checkout. See `references/vcs-preamble.md`
+  § "Ensure Current Before You Work" (in jj, `jj git fetch` leaves the local
+  `main` bookmark stale — compare against `trunk()` / `main@origin`).
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea

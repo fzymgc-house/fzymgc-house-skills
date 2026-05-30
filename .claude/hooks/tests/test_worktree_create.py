@@ -295,6 +295,85 @@ class TestJjIntegration:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
+    def test_jj_workspace_bases_on_remote_trunk_not_stale_local(
+        self, tmp_path: Path
+    ) -> None:
+        """Regression guard (the stale-worktree bug): with a remote whose trunk
+        is ahead of the local working-copy position, the new workspace is based
+        on trunk() (current origin main), not the stale local @."""
+
+        def jj(*args: str, cwd: Path) -> subprocess.CompletedProcess:
+            return subprocess.run(
+                ["jj", "--no-pager", *args],
+                cwd=str(cwd),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        origin = tmp_path / "origin.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(origin)], check=True, capture_output=True
+        )
+        repo = tmp_path / "repo"
+        subprocess.run(
+            ["jj", "git", "init", str(repo)], check=True, capture_output=True
+        )
+        jj("config", "set", "--repo", "user.email", "test@example.com", cwd=repo)
+        jj("config", "set", "--repo", "user.name", "Test User", cwd=repo)
+
+        # c1, push as origin main
+        (repo / "a.txt").write_text("c1\n")
+        jj("commit", "-m", "c1", cwd=repo)
+        jj("git", "remote", "add", "origin", str(origin), cwd=repo)
+        jj("bookmark", "create", "main", "-r", "@-", cwd=repo)
+        jj("git", "push", "--allow-new", "--bookmark", "main", cwd=repo)
+
+        # c2 advances trunk
+        (repo / "a.txt").write_text("c2\n")
+        jj("commit", "-m", "c2", cwd=repo)
+        jj("bookmark", "set", "main", "-r", "@-", cwd=repo)
+        jj("git", "push", "--bookmark", "main", cwd=repo)
+        trunk_id = jj(
+            "log", "-r", "trunk()", "--no-graph", "-T", "change_id.short(12)", cwd=repo
+        ).stdout.strip()
+
+        # Move local @ to a STALE position (on top of c1, not trunk).
+        c1_id = jj(
+            "log", "-r", "trunk()-", "--no-graph", "-T", "change_id.short(12)", cwd=repo
+        ).stdout.strip()
+        jj("new", c1_id, cwd=repo)
+
+        worktree_parent = repo.parent / f"{repo.name}_worktrees"
+        worktree_path = worktree_parent / "feat"
+        try:
+            result = run_hook({"name": "feat"}, cwd=repo)
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            # New workspace's parent must be trunk() (c2), not the stale local @ (c1).
+            base = jj(
+                "log",
+                "-r",
+                "@-",
+                "--no-graph",
+                "-T",
+                "change_id.short(12)",
+                cwd=worktree_path,
+            ).stdout.strip()
+            assert base == trunk_id, (
+                f"workspace based on {base}, expected current trunk {trunk_id} "
+                f"(stale local was {c1_id})"
+            )
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-feat"],
+                    cwd=str(repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
     def test_jj_not_installed_exits_1(
         self, colocated_jj_repo: Path, tmp_path: Path
     ) -> None:

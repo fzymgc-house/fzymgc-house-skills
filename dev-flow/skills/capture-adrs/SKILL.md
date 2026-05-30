@@ -166,7 +166,9 @@ For each accepted candidate, in order:
    bd close "$ID" --reason="Accepted ADR filed via capture-adrs"
 
    # Render markdown from bd state (replaces the old inline render + write step)
-   dev-flow/scripts/render-adr "$ID"
+   # ${CLAUDE_PLUGIN_ROOT} resolves to the plugin install dir, so render-adr is
+   # found regardless of cwd (you run this from the consumer's repo).
+   "${CLAUDE_PLUGIN_ROOT}/scripts/render-adr" "$ID"
    ```
 
    Capture `$ID` from the create output. On failure the guard exits

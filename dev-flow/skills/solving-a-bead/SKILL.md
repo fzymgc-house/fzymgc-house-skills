@@ -47,8 +47,12 @@ Run from the **main checkout**, before any workspace exists.
    (exists → not `phase:design` → status workable → no unmet blockers):
 
    ```bash
-   dev-flow/skills/solving-a-bead/scripts/validate-bead "$BEAD_ID"
+   "${CLAUDE_PLUGIN_ROOT}/skills/solving-a-bead/scripts/validate-bead" "$BEAD_ID"
    ```
+
+   `${CLAUDE_PLUGIN_ROOT}` is substituted with the plugin's install directory, so
+   the script resolves regardless of the current working directory (you are in the
+   consumer's repo, not this plugin's source tree). Do not use a repo-relative path.
 
    Branch on its **exit code**; any non-zero aborts — do not proceed to Phase 1.
    On exit `0` it prints the captured context, which also satisfies Phase 1

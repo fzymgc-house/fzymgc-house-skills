@@ -9,6 +9,7 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-05-30 | [fhsk-4bi](fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md) | Adopt @probelabs/maid as the primary Mermaid lint engine | Accepted |
 | 2026-05-29 | [fhsk-s15](fhsk-s15-use-custom-bd-type-handoffs-not-label-or-note.md) | Use a custom bd type for handoffs, not a label or note | Accepted |
 | 2026-05-29 | [fhsk-8xn](fhsk-8xn-carry-session-state-delta-handoff-body-not-full-re-snapshot.md) | Carry session-state delta in the handoff body, not a full re-snapshot | Accepted |
 | 2026-05-29 | [fhsk-57f](fhsk-57f-package-handoff-create-and-resume-as-one-conditional-workflo.md) | Package handoff create and resume as one conditional-workflow skill | Accepted |

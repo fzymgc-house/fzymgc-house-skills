@@ -196,6 +196,21 @@ def test_skill_invokes_the_script() -> None:
     assert "scripts/validate-bead" in body, "SKILL.md must call the validator"
 
 
+def test_validator_uses_plugin_root_not_cwd_relative_path() -> None:
+    # The script must be invoked via ${CLAUDE_PLUGIN_ROOT} so it resolves from a
+    # consumer's repo, not only from this plugin's source tree (bead fhsk-7wj: a
+    # bare repo-relative path failed with EXIT 127 when run against a real bead).
+    body = SKILL.read_text()
+    assert (
+        "${CLAUDE_PLUGIN_ROOT}/skills/solving-a-bead/scripts/validate-bead" in body
+    ), (
+        "validate-bead must be invoked via ${CLAUDE_PLUGIN_ROOT}, not a cwd-relative path"
+    )
+    assert "\n   dev-flow/skills/solving-a-bead/scripts/validate-bead" not in body, (
+        "remove the bare repo-relative validate-bead invocation (resolves only in the source tree)"
+    )
+
+
 def test_skill_documents_every_exit_code() -> None:
     body = SKILL.read_text()
     for code in ("`0`", "`1`", "`2`", "`3`", "`4`"):

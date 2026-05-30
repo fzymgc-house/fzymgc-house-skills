@@ -6,6 +6,7 @@ description: |
   AND `bd create -t decision` records. Triggered by `/capture-adrs
   <path>` or by the nudge-adr-capture hook's reminder. NOT for general
   ADR audit — use the adr-extractor agent directly for that.
+argument-hint: "[spec-or-plan-path]"
 ---
 
 # /capture-adrs

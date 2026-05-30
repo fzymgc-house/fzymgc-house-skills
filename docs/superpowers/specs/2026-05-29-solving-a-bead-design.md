@@ -54,8 +54,17 @@ problem-vs-suggested-fix separation; everything else is delegated:
 
 | File | Purpose |
 |---|---|
-| `dev-flow/skills/solving-a-bead/SKILL.md` | Canonical reference; the phased workflow |
-| `dev-flow/commands/solving-a-bead.md` | Thin operator entry; parses `<bead-id>` arg |
+| `dev-flow/skills/solving-a-bead/SKILL.md` | Canonical reference; the phased workflow, and the `/solving-a-bead <bead-id>` slash command |
+
+> **Note (fhsk-hcb):** the original design shipped a separate
+> `dev-flow/commands/solving-a-bead.md` thin wrapper. That collided with the
+> same-named skill in Claude Code's merged command/skill namespace — the command
+> shadowed the skill, so `Skill(dev-flow:solving-a-bead)` loaded the wrapper
+> (whose body said "invoke the skill") and looped. The wrapper was removed: a
+> skill already creates its own `/solving-a-bead` slash command (directory name),
+> takes the `<bead-id>` via `$ARGUMENTS` (or the `ARGUMENTS:` append fallback),
+> and declares the autocomplete hint via `argument-hint`. See
+> `code.claude.com/docs/en/skills.md`.
 
 **No release registration needed.** As of PR #115 (ADR `fhsk-7y4`), the repo
 uses a single repo-wide cocogitto version derived from conventional commits —
@@ -63,7 +72,8 @@ the 15 per-package release-please streams (and their `*-config.json` /
 `*-manifest.json` files) were removed. Adding a skill no longer touches any
 release manifest; skills auto-discover (`dev-flow/plugin.json` does not
 enumerate them) and `.claude-plugin/marketplace.json` lists plugins, not
-skills. The skill is purely the SKILL.md + command file.
+skills. The skill is purely the SKILL.md, which also provides the
+`/solving-a-bead` slash command (no separate command file).
 
 ## SKILL.md frontmatter
 

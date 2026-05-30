@@ -1,6 +1,7 @@
 ---
 name: solving-a-bead
 description: Use when asked to solve, fix, address, or work a specific bead/issue by ID — validates the bead is open and unblocked, creates an isolated workspace off latest main, separates the problem from any suggested fix (treating suggested fixes as non-authoritative hypotheses), then drives a root-caused, TDD solution.
+argument-hint: "[bead-id]"
 metadata:
   author: fzymgc-house
 ---

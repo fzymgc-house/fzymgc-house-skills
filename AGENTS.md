@@ -26,12 +26,14 @@ back to those sources instead of copying them.
 
 ## Quick Start
 
-```bash
-# Install git hooks
-lefthook install
+There is no pre-commit hook manager — jj does not fire git hooks reliably. The
+`Taskfile.yaml` is the single source of truth for quality gates, and CI runs the
+same tasks.
 
-# Verify hooks and local quality gates
-lefthook run pre-commit --all-files
+```bash
+task fmt    # auto-format markdown + Python before committing
+task lint   # markdown, Python, JSON, evals, ADR gates
+task test   # all harness-independent test suites
 ```
 
 ## Agent Docs
@@ -141,16 +143,20 @@ Conventional-commit validation runs in CI on the PR title
 
 ### Testing and Linting
 
-Primary local checks:
+Primary local checks — the same gates CI runs (see `.github/workflows/ci.yaml`):
 
 ```bash
-uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ tests/ -v --import-mode=importlib
-rumdl check README.md AGENTS.md CLAUDE.md docs/plans/*.md
-jq empty .agents/plugins/marketplace.json plugins/*/.codex-plugin/plugin.json
+task lint   # rumdl (curated set), ruff check + format, jq, evals schema, adr-doctor
+task test   # pytest across all harness-independent suites
+task fmt    # auto-fix markdown + Python formatting
 ```
 
-Use narrower commands when touching only part of the repo, but verify the
-relevant surface before claiming completion.
+The `Taskfile.yaml` `vars` block lists exactly which markdown, JSON, and test
+paths are gated. Behavioral evals (`dev-flow/evals`, `jj/evals`) need the Claude
+agent harness to execute, so they are schema-validated in `lint` but never run.
+
+Run the underlying commands directly when touching only part of the repo, but
+verify the relevant surface before claiming completion.
 
 ### Release Versioning
 
@@ -299,7 +305,10 @@ bd close <id>         # Complete work
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See <https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md> for details and anti-patterns.
+**Architecture in one line:** issues live in a local Dolt DB; sync uses
+`refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export.
+See <https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md> for
+details and anti-patterns.
 
 ## Session Completion
 

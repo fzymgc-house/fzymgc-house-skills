@@ -157,7 +157,7 @@ class TestAllowed:
             # Bash block with an unrelated `jj log -r '@ | @-'` state-display.
             # The `-r @` belongs to the log, not the rebase; the rebase uses
             # `-s`, so this must NOT block. (Cross-command leakage bug.)
-            "jj rebase -s \"$ROOT\" -o main@origin --skip-emptied\n"
+            'jj rebase -s "$ROOT" -o main@origin --skip-emptied\n'
             "jj --no-pager log -r '@ | @-' -T x",
             "jj rebase -s xyz -o main ; jj log -r @ -T x",
             "jj log -r @ && jj rebase -s xyz -o main",

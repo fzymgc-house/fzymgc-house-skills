@@ -1,12 +1,70 @@
 version: "3"
 
+# Single source of truth for repo quality gates. There is no pre-commit hook
+# manager (lefthook was removed — jj does not fire git hooks reliably), so run
+# `task fmt` before committing and `task lint` / `task test` to gate. CI
+# (.github/workflows/ci.yaml) invokes these same tasks, so local and CI agree
+# by construction.
+
+vars:
+  # Markdown linted explicitly. The repo's .rumdl.toml excludes dev-flow/**
+  # (lightly-modified upstream skills tracked by scan-upstream); --no-exclude
+  # plus this explicit list lets us lint the original / heavily-forked files
+  # without imposing our style on the rest and complicating upstream sync.
+  # Living docs + shipped artifacts only. Historical records under docs/plans/
+  # and docs/superpowers/ are point-in-time and intentionally not style-gated.
+  MD_FILES: >-
+    README.md AGENTS.md CLAUDE.md
+    homelab/skills/*/SKILL.md
+    jj/skills/*/SKILL.md
+    jj/commands/*.md
+    dev-flow/references/vcs-preamble.md
+    dev-flow/agents/*.md
+    dev-flow/skills/review-pr/SKILL.md
+    dev-flow/skills/address-findings/SKILL.md
+    dev-flow/skills/respond-to-comments/SKILL.md
+    dev-flow/skills/using-worktrees/SKILL.md
+    dev-flow/skills/requesting-code-review/SKILL.md
+    dev-flow/skills/solving-a-bead/SKILL.md
+  PLUGIN_JSON: >-
+    .claude-plugin/marketplace.json .agents/plugins/marketplace.json
+    homelab/plugin.json jj/plugin.json dev-flow/plugin.json
+    plugins/*/.codex-plugin/plugin.json
+  # All harness-independent pytest suites. Behavioral evals (dev-flow/evals,
+  # jj/evals) need the Claude agent harness to execute and are only
+  # schema-validated in `lint`, never run here.
+  PYTEST_DIRS: >-
+    tests/
+    .claude/hooks/tests/
+    jj/hooks/tests/
+    dev-flow/hooks/tests/
+    homelab/skills/terraform/tests/
+
 tasks:
-  lint:
-    desc: Run repo quality gates (markdown, JSON, hook tests)
+  fmt:
+    desc: Auto-format markdown and Python (run before committing)
     cmds:
-      - rumdl check README.md AGENTS.md CLAUDE.md docs/plans/*.md
-      - jq empty .claude-plugin/marketplace.json .agents/plugins/marketplace.json homelab/plugin.json jj/plugin.json dev-flow/plugin.json plugins/*/.codex-plugin/plugin.json
-      - uv run --with pytest pytest .claude/hooks/tests/ jj/hooks/tests/ dev-flow/hooks/tests/ tests/ -q --import-mode=importlib
+      - rumdl fmt --no-exclude {{.MD_FILES}}
+      - ruff format .
+      - ruff check --fix .
+
+  lint:
+    desc: Run all non-test quality gates (markdown, Python, JSON, evals, ADRs)
+    cmds:
+      - rumdl check --no-exclude {{.MD_FILES}}
+      - ruff check .
+      - ruff format --check .
+      - jq empty {{.PLUGIN_JSON}}
+      - uv run --with 'check-jsonschema>=0.37,<0.38' check-jsonschema
+        --schemafile dev-flow/evals/evals.schema.json
+        dev-flow/evals/evals.json jj/evals/evals.json
+      - ./dev-flow/scripts/adr-doctor.sh
+
+  test:
+    desc: Run all harness-independent tests (excludes Claude/agent evals)
+    cmds:
+      - uv run --with pytest --with httpx --with pyyaml pytest {{.PYTEST_DIRS}}
+        -q --import-mode=importlib
 
   verify:
     desc: Validate commit history against conventional-commit rules

@@ -11,9 +11,8 @@
 #   - SPEC path points at the dev-flow design doc.
 #   - Agent & hook locations match the dev-flow plugin layout.
 #
-# Wired in two places:
-#   - lefthook pre-commit (changed-files-only mode, perf-bounded)
-#   - CI .github/workflows/check-skills.yml (full pass, no flag)
+# Wired via the Taskfile `lint` task (full pass, no flag), which runs both
+# locally and in CI (.github/workflows/ci.yaml).
 #
 # Exit codes: 0 clean; 1 on any check failure; 2 on missing prerequisites.
 #

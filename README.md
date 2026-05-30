@@ -95,17 +95,23 @@ but agent-dispatch steps must follow the compatibility guidance in
 
 ### Prerequisites
 
-- [lefthook](https://github.com/evilmartians/lefthook) (git hooks)
+- [Task](https://taskfile.dev/) (task runner — wraps the quality gates)
 - [rumdl](https://github.com/rvben/rumdl) (markdown linting)
-- [cocogitto](https://docs.cocogitto.io/) (conventional commit validation)
 - [ruff](https://docs.astral.sh/ruff/) (Python linting/formatting)
+- [cocogitto](https://docs.cocogitto.io/) (conventional commit validation)
+- [uv](https://docs.astral.sh/uv/) (runs the Python test suites)
 
 ### Setup
 
 ```bash
 git clone git@github.com:fzymgc-house/fzymgc-house-skills.git
 cd fzymgc-house-skills
-lefthook install
+
+# There is no pre-commit hook manager — jj does not fire git hooks reliably.
+# Run the gates manually (the same tasks CI runs):
+task fmt    # auto-format markdown + Python before committing
+task lint   # markdown, Python, JSON, evals, ADR gates
+task test   # all harness-independent test suites
 ```
 
 Repo-wide agent guidance lives in `AGENTS.md`. `CLAUDE.md` remains in the

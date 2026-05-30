@@ -1,0 +1,134 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+# SPDX-License-Identifier: Apache-2.0
+#
+# validate-bead — run the solving-a-bead Phase 0 gates against one bead.
+#
+# Usage:
+#   dev-flow/skills/solving-a-bead/scripts/validate-bead <bead-id>
+#
+# Read-only. Runs the four Phase 0 gates in order and, on success, prints the
+# captured context (Phase 1 step 2) so the caller need not re-run `bd show`:
+#
+#   1. Bead exists           — `bd show --json`
+#   2. Not a design bead      — phase:design -> HARD-REDIRECT to the design
+#                               lifecycle (note-aware target), never claimed here
+#   3. Status workable        — open / in_progress proceed; else abort
+#   4. No unmet blockers       — any non-closed `blocks` dependency aborts
+#
+# Exit codes (let the caller branch without reparsing prose):
+#   0  proceed — context printed to stdout
+#   1  usage error / bead not found
+#   2  design-lifecycle redirect (phase:design) — see the printed next step
+#   3  status not workable (closed / in_review / other)
+#   4  unmet blocker dependencies
+#
+# bd quirks handled: `bd show --json` returns a SINGLE-ELEMENT ARRAY and the
+# type field is `issue_type` (not `type`); read via [0].
+
+import json
+import subprocess
+import sys
+
+PROCEED, USAGE, REDIRECT, STATUS, BLOCKED = 0, 1, 2, 3, 4
+
+SELF = "dev-flow/skills/solving-a-bead/scripts/validate-bead"
+
+
+def bd(args: list[str]) -> subprocess.CompletedProcess:
+    """Run a bd command, capturing stdout/stderr without raising."""
+    return subprocess.run(["bd", *args], capture_output=True, text=True)
+
+
+def die(code: int, *lines: str) -> None:
+    for line in lines:
+        print(line)
+    sys.exit(code)
+
+
+def redirect_target(notes: str) -> str:
+    """Pick the design-lifecycle next step from the bead's note trail."""
+    if "Plan:" in notes:
+        return "writing-plans / plan-to-beads — a plan exists; materialize it"
+    if "Spec:" in notes:
+        return "writing-plans — a spec exists; turn it into a plan"
+    return "brainstorming — no spec yet; continue the design"
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 1 or not argv[0].strip():
+        die(USAGE, f"usage: {SELF} <bead-id>")
+    bead_id = argv[0].strip()
+
+    # Gate 1 — bead exists.
+    show = bd(["show", bead_id, "--json"])
+    if show.returncode != 0:
+        die(USAGE, f"ABORT: bead {bead_id} not found", show.stderr.strip())
+    try:
+        records = json.loads(show.stdout)
+        bead = records[0]
+    except (json.JSONDecodeError, IndexError, KeyError):
+        die(USAGE, f"ABORT: could not parse `bd show {bead_id} --json` output")
+
+    labels = bead.get("labels") or []
+    notes = bead.get("notes") or ""
+    status = bead.get("status", "")
+
+    # Gate 2 — not a design-lifecycle bead (HARD-REDIRECT, never claim).
+    if "phase:design" in labels:
+        die(
+            REDIRECT,
+            f"ABORT: {bead_id} carries phase:design — it is a design-lifecycle",
+            "bead, not implementation work. solving-a-bead drives implementation.",
+            f"Resume with: {redirect_target(notes)}",
+        )
+
+    # Gate 3 — status workable.
+    if status == "in_progress":
+        print(f"NOTE: {bead_id} already claimed — resuming")
+    elif status != "open":
+        die(
+            STATUS,
+            f"ABORT: {bead_id} status is '{status}' (need open/in_progress); "
+            "its implementation phase is over",
+        )
+
+    # Gate 4 — no unmet blocker dependencies.
+    deps = bd(["dep", "list", bead_id, "--type", "blocks", "--json"])
+    if deps.returncode == 0 and deps.stdout.strip():
+        try:
+            open_blockers = [
+                d["id"] for d in json.loads(deps.stdout) if d.get("status") != "closed"
+            ]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            open_blockers = []
+        if open_blockers:
+            die(
+                BLOCKED,
+                f"ABORT: {bead_id} has unmet blocker dependencies:",
+                *open_blockers,
+                f"Finish those beads first, then re-run {SELF} {bead_id}",
+            )
+
+    # Proceed — emit captured context (Phase 1 step 2).
+    print(f"PROCEED: {bead_id} is workable.")
+    print(f"  title:  {bead.get('title', '')}")
+    print(f"  type:   {bead.get('issue_type', '')}")
+    print(f"  status: {status}")
+    if labels:
+        print(f"  labels: {', '.join(labels)}")
+    description = (bead.get("description") or "").strip()
+    if description:
+        print("  --- description ---")
+        print(description)
+    if notes.strip():
+        print("  --- notes ---")
+        print(notes.strip())
+    return PROCEED
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

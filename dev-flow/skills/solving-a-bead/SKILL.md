@@ -40,55 +40,41 @@ unit of work — do not open a separate TodoWrite list.
 
 ## Phase 0 — Validate (hard gates; abort on any failure)
 
-Run these from the **main checkout**, before any workspace exists. Any failure
-aborts — do not proceed to Phase 1.
+Run from the **main checkout**, before any workspace exists.
 
-1. **Arg present.** No `<bead-id>` supplied → print usage and exit.
-
-2. **Bead exists.** Capture the JSON in a variable (no temp file):
+1. **Execute the validator** — one read-only script runs all four Phase 0 gates
+   (exists → not `phase:design` → status workable → no unmet blockers):
 
    ```bash
-   BEAD_JSON=$(bd show "$BEAD_ID" --json) || { echo "ABORT: bead $BEAD_ID not found"; exit 1; }
+   dev-flow/skills/solving-a-bead/scripts/validate-bead "$BEAD_ID"
    ```
 
-   (`bd show --json` returns a single-element array; read fields via `.[0]`.)
+   Branch on its **exit code**; any non-zero aborts — do not proceed to Phase 1.
+   On exit `0` it prints the captured context, which also satisfies Phase 1
+   step 2 (no second `bd show` needed).
 
-3. **Status is workable.**
+   | Exit | Gate | Meaning / action |
+   |---|---|---|
+   | `0` | all pass | Proceed. Context (title / type / status / labels / description / notes) is on stdout. |
+   | `1` | missing / usage | No such bead, or no id supplied. Stop. |
+   | `2` | `phase:design` | Design-lifecycle bead (Rule 6) — **HARD-REDIRECT**, never claimed. The script prints the note-aware next step (`brainstorming` / `writing-plans` / `plan-to-beads`). Stop. |
+   | `3` | status | `closed` / `in_review` / other — its implementation phase is over. Stop. |
+   | `4` | unmet blockers | A non-closed `blocks` dependency exists; finish it first. Stop. |
 
-   ```bash
-   STATUS=$(jq -r '.[0].status' <<<"$BEAD_JSON")
-   case "$STATUS" in
-     open)        : ;;                                   # proceed
-     in_progress) echo "NOTE: $BEAD_ID already claimed — resuming" ;;
-     *)           echo "ABORT: $BEAD_ID status is '$STATUS' (need open/in_progress)"; exit 1 ;;
-   esac
-   ```
-
-   `closed` and `in_review` abort: their implementation phase is over.
-
-4. **No unmet dependencies (HARD-BLOCK).**
-
-   ```bash
-   # --type blocks filters to blocker deps; --direction=down (default) lists
-   # what this bead depends on. Each record carries the dependency's own status.
-   OPEN_BLOCKERS=$(bd dep list "$BEAD_ID" --type blocks --json 2>/dev/null \
-     | jq -r '[.[] | select(.status != "closed")] | .[].id')
-   if [ -n "$OPEN_BLOCKERS" ]; then
-     echo "ABORT: $BEAD_ID has unmet blocker dependencies:"; echo "$OPEN_BLOCKERS"
-     echo "Finish those beads first, then re-run /solving-a-bead $BEAD_ID"; exit 1
-   fi
-   ```
-
-   A bead's dependency graph expresses correctness preconditions, not scheduling
-   hints — building a fix on an unmet blocker risks invalidation. See
-   ADR `fhsk-3xn`.
+   The blocker gate is a hard block because a bead's dependency graph expresses
+   correctness preconditions, not scheduling hints — building a fix on an unmet
+   blocker risks invalidation (ADR `fhsk-3xn`). Do not hand-reimplement these
+   checks; the script is the source of truth and handles bd's quirks
+   (`bd show --json` returns a single-element array; the type field is
+   `issue_type`).
 
 ## Phase 1 — Claim & isolate
 
-5. **Capture context** from the `bd show --json` you already read: title, type,
-   description, acceptance criteria, notes, and labels (`model:*`, `agent:*`).
+2. **Capture context.** The Phase 0 validator already printed title, type,
+   status, description, notes, and labels — note the acceptance criteria and the
+   `model:*` / `agent:*` labels for routing and model selection.
 
-6. **Claim — from the main checkout:**
+3. **Claim — from the main checkout:**
 
    ```bash
    bd update "$BEAD_ID" --claim
@@ -98,14 +84,14 @@ aborts — do not proceed to Phase 1.
    inside the workspace you are about to create) to avoid the macOS sandbox
    SQLite-write-in-worktree issue.
 
-7. **Isolate.** Invoke `dev-flow:using-worktrees` to create an isolated
+4. **Isolate.** Invoke `dev-flow:using-worktrees` to create an isolated
    workspace off **latest main** (it fetches first and selects git worktree /
    jj workspace by VCS detection), and move into it. The sequence is deliberate:
    validate → workspace → triage.
 
 ## Phase 2 — Triage (the core mechanism)
 
-8. **Restate the problem in your own words**, then split the bead body into two
+5. **Restate the problem in your own words**, then split the bead body into two
    explicitly labeled buckets:
 
    - **Problem / symptom / desired outcome** — *authoritative.* This is what you
@@ -117,13 +103,26 @@ aborts — do not proceed to Phase 1.
    Never skip this split, even when the bead's suggested fix looks obviously
    correct. See ADR `fhsk-ypt`.
 
-9. **Route by classification:**
+6. **Route by classification:**
 
    | Bead shape | Route |
    |---|---|
    | `bug` / defect / error / unexpected behavior | `dev-flow:systematic-debugging` — its Iron Law (*NO FIXES WITHOUT ROOT CAUSE FIRST*) is the guarantee; each candidate solution enters as a hypothesis, adopted only if the confirmed root cause demands it |
    | Ambiguous / feature / unclear approach | `dev-flow:brainstorming`, scoped to this bead |
-   | Clear, well-specified `task` / `chore` | Straight to Phase 3 |
+   | Approach is concrete — bug reproduced, or acceptance criteria specific and the path mechanical | Straight to Phase 3 |
+
+   The type field is **not** a specification: never send a bead straight to
+   Phase 3 merely because it is typed `task` / `chore`. Skip brainstorming only
+   when the approach is genuinely concrete; when in doubt, brainstorm.
+
+   The scoped brainstorm has two terminal outcomes:
+
+   - **Converges** on a clear, one-bead approach → continue into Phase 3 here.
+   - **Reveals design-scale work** — spec-worthy, spans subsystems, or would
+     materialize into multiple beads → **stop. Do not build.** Leave the bead
+     `in_progress`, `bd note` the finding, and pivot to the formal lifecycle
+     (open/continue a design bead → `brainstorming` → `writing-plans` →
+     `plan-to-beads`). One-bead TDD is structurally wrong for design-scale work.
 
 ## Red Flags
 
@@ -134,24 +133,25 @@ These thoughts mean STOP — you are about to treat a hypothesis as an instructi
 | "The bead says to fix it by doing X" | X is a hypothesis. Confirm the root cause requires X before implementing. |
 | "The reporter already diagnosed it" | Reporter diagnosis is a lead, not a conclusion. Reproduce and verify. |
 | "This is obviously the fix" | Obvious fixes mask root causes. systematic-debugging Phase 1 first. |
+| "It's typed `task`, so it's clear enough to build" | Type is not specification. Brainstorm unless the approach is concrete or the bug is reproduced. |
 
 ## Phase 3 — TDD implementation
 
-10. Invoke `dev-flow:test-driven-development`: write a failing test that encodes
-    the bead's acceptance criteria (or reproduces the bug) → watch it fail →
-    write minimal code to pass → refactor. Drive in TDD as far as the work
-    allows; for genuinely untestable changes (config, docs, generated content),
-    use TDD's documented exception and ask the human partner before skipping.
+7. Invoke `dev-flow:test-driven-development`: write a failing test that encodes
+   the bead's acceptance criteria (or reproduces the bug) → watch it fail →
+   write minimal code to pass → refactor. Drive in TDD as far as the work
+   allows; for genuinely untestable changes (config, docs, generated content),
+   use TDD's documented exception and ask the human partner before skipping.
 
-11. Run the bead's verification commands (from its `--notes`) plus the project
-    quality gates relevant to the surface you changed.
+8. Run the bead's verification commands (from its `--notes`) plus the project
+   quality gates relevant to the surface you changed.
 
 ## Phase 4 — Verify & hand off
 
-12. Apply `dev-flow:verification-before-completion` — show the actual command
-    output before claiming anything passes. Evidence before assertions.
+9. Apply `dev-flow:verification-before-completion` — show the actual command
+   output before claiming anything passes. Evidence before assertions.
 
-13. Record the outcome on the bead:
+10. Record the outcome on the bead:
 
     ```bash
     bd note "$BEAD_ID" "Root cause: <…>. Fix: <…>."
@@ -160,7 +160,7 @@ These thoughts mean STOP — you are about to treat a hypothesis as an instructi
     **Leave the bead `in_progress`.** Closure happens at merge, not here — do not
     close it and do not open a PR automatically. See ADR `fhsk-hj3`.
 
-14. **Ask the operator whether to finish the branch now** via
+11. **Ask the operator whether to finish the branch now** via
     `AskUserQuestion` — do not stop at a passive text suggestion. The bead
     stays `in_progress` either way; this only decides whether to integrate now.
 
@@ -183,8 +183,8 @@ These thoughts mean STOP — you are about to treat a hypothesis as an instructi
 
 | Phase | Action | Abort/Stop condition |
 |-------|--------|----------------------|
-| 0 Validate | exists + status workable + no unmet blockers | missing / closed / in_review / blocked |
+| 0 Validate | exists + not `phase:design` + status workable + no unmet blockers | missing / `phase:design` / closed / in_review / blocked |
 | 1 Claim & isolate | `bd update --claim`, then `using-worktrees` | — |
-| 2 Triage | split problem vs candidate fix; route by type | — |
+| 2 Triage | split problem vs candidate fix; route by approach-clarity | design-scale → pivot to formal lifecycle |
 | 3 TDD | failing test → minimal code → refactor → gates | — |
 | 4 Verify & hand off | evidence, `bd note`, leave `in_progress`, `AskUserQuestion` → finish now or keep working | — |

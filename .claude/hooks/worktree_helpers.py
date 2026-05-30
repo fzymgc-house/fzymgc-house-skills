@@ -128,6 +128,89 @@ def detect_repo_root(*, cwd: Path | str) -> Path:
     )
 
 
+def fetch_origin(repo_root: Path | str, *, is_jj: bool, run=run_cmd) -> bool:
+    """Best-effort refresh of the origin remote so a new worktree can be based
+    on *current* upstream state rather than stale local refs.
+
+    Never fails the caller: returns False and warns to stderr when the fetch
+    fails (offline, or a local-only repo with no remote). jj is especially prone
+    to silent staleness — ``jj git fetch`` advances ``main@origin`` but not the
+    local ``main`` bookmark, so basing a workspace off local ``main`` keeps
+    last-known state. Fetching first is what makes ``trunk()`` current.
+    """
+    cmd = ["jj", "--no-pager", "git", "fetch"] if is_jj else ["git", "fetch", "origin"]
+    result = run(cmd, cwd=repo_root)
+    if result.returncode != 0:
+        label = "jj git fetch" if is_jj else "git fetch origin"
+        print(
+            f"WARNING: {label} failed (offline or no remote?) — basing worktree "
+            f"on last-known state: {sanitize_for_output((result.stderr or '').strip()[:200])}",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
+def jj_fresh_base_args(repo_root: Path | str, *, run=run_cmd) -> list[str]:
+    """Revision args for ``jj workspace add`` that base the new workspace on the
+    current remote trunk.
+
+    Returns ``["-r", "trunk()"]`` when a remote trunk resolves (so the workspace
+    starts from current origin main, not the stale local working-copy parent),
+    or ``[]`` for a local-only repo where ``trunk()`` collapses to ``root()`` —
+    preserving jj's default base so isolated work still works offline.
+    """
+    result = run(
+        [
+            "jj",
+            "--no-pager",
+            "log",
+            "-r",
+            "trunk() ~ root()",
+            "--no-graph",
+            "-T",
+            'change_id.short(12) ++ "\n"',
+        ],
+        cwd=repo_root,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        return ["-r", "trunk()"]
+    print(
+        "WARNING: no remote trunk resolved (local-only repo?) — basing jj "
+        "workspace on the default working-copy parent",
+        file=sys.stderr,
+    )
+    return []
+
+
+def git_fresh_base_ref(repo_root: Path | str, *, run=run_cmd) -> str:
+    """The ref a new git worktree should branch from: origin's default branch
+    when resolvable, else ``HEAD``.
+
+    Resolves ``refs/remotes/origin/HEAD`` (set by clone), falling back to
+    ``origin/main`` / ``origin/master``. Returns ``HEAD`` for a local-only repo
+    so worktree creation still works without a remote.
+    """
+    head = run(
+        ["git", "symbolic-ref", "--short", "--quiet", "refs/remotes/origin/HEAD"],
+        cwd=repo_root,
+    )
+    if head.returncode == 0 and head.stdout.strip():
+        return head.stdout.strip()
+    for candidate in ("origin/main", "origin/master"):
+        check = run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate], cwd=repo_root
+        )
+        if check.returncode == 0 and check.stdout.strip():
+            return candidate
+    print(
+        "WARNING: no origin default branch resolved (local-only repo?) — basing "
+        "git worktree on current HEAD",
+        file=sys.stderr,
+    )
+    return "HEAD"
+
+
 def cleanup_empty_parent(parent: Path | str) -> None:
     """Remove *parent* if it exists and is empty. Warns to stderr on failure."""
     parent = Path(parent)

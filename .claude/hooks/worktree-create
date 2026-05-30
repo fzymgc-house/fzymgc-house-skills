@@ -34,6 +34,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from worktree_helpers import (
     cleanup_empty_parent,
     detect_repo_root,
+    fetch_origin,
+    git_fresh_base_ref,
+    jj_fresh_base_args,
     run_cmd,
     sanitize_for_output,
     validate_safe_name,
@@ -247,10 +250,15 @@ def main() -> int:
         return 1
     _parent_created = True
 
-    # VCS-aware workspace creation
+    # VCS-aware workspace creation. Fetch first and base the new worktree on
+    # current origin trunk so it never starts from stale local state (the local
+    # `main` bookmark does not auto-advance on `jj git fetch`). Both fetch and
+    # base resolution degrade gracefully to local-only behavior with no remote.
     if _is_jj:
+        fetch_origin(repo_root, is_jj=True)
+        base_args = jj_fresh_base_args(repo_root)
         result = run_cmd(
-            ["jj", "--no-pager", "workspace", "add", str(worktree_path), "--name", f"worktree-{name}"],
+            ["jj", "--no-pager", "workspace", "add", str(worktree_path), "--name", f"worktree-{name}", *base_args],
             cwd=repo_root,
         )
         if result.returncode != 0:
@@ -272,8 +280,10 @@ def main() -> int:
             return 1
         _workspace_created = True
     else:
+        fetch_origin(repo_root, is_jj=False)
+        base_ref = git_fresh_base_ref(repo_root)
         result = run_cmd(
-            ["git", "worktree", "add", str(worktree_path), "-b", f"worktree/{name}", "HEAD"],
+            ["git", "worktree", "add", str(worktree_path), "-b", f"worktree/{name}", base_ref],
             cwd=repo_root,
         )
         if result.returncode != 0:

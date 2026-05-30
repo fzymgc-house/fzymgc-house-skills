@@ -54,6 +54,14 @@ You MUST complete each phase before proceeding to the next.
 
 **BEFORE attempting ANY fix:**
 
+0. **Confirm you are debugging CURRENT code.** A root cause traced through stale
+   code is a phantom — the bug may already be fixed, or the real defect lives in
+   lines you cannot see. Fetch and verify your checkout is current against the
+   right target (origin/main for a fresh investigation, or the relevant branch)
+   per `references/vcs-preamble.md` § "Ensure Current Before You Work". In jj,
+   `jj git fetch` does not advance the local `main` bookmark — compare against
+   `trunk()` / `main@origin`, not bare `main`.
+
 1. **Read Error Messages Carefully**
    - Don't skip past errors or warnings
    - They often contain the exact solution

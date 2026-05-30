@@ -90,9 +90,12 @@ Run from the **main checkout**, before any workspace exists.
    SQLite-write-in-worktree issue.
 
 4. **Isolate.** Invoke `dev-flow:using-worktrees` to create an isolated
-   workspace off **latest main** (it fetches first and selects git worktree /
-   jj workspace by VCS detection), and move into it. The sequence is deliberate:
-   validate → workspace → triage.
+   workspace off **current origin trunk** (it fetches and bases off
+   `origin/main` / `trunk()`, not the stale local `main` — see
+   `references/vcs-preamble.md` § "Ensure Current Before You Work"), and move
+   into it. The sequence is deliberate: validate → workspace → triage. You will
+   root-cause and test against this workspace, so it MUST reflect current main —
+   confirm `@-` / `HEAD` matches the fetched trunk before triaging.
 
 ## Phase 2 — Triage (the core mechanism)
 

@@ -28,9 +28,10 @@ only when no native tool is available.
 ```bash
 if jj root >/dev/null 2>&1; then
   VCS=jj
-  jj git fetch  # jj: always fetch at start
+  jj git fetch  # refresh origin so trunk() is current (local `main` stays stale)
 else
   VCS=git
+  git fetch origin  # refresh origin so origin/<default> is current
 fi
 ```
 
@@ -137,17 +138,24 @@ The parent directory is `../<repo-basename>_worktrees/`. This is determined auto
 
 #### Create the Workspace
 
+Base the new worktree on **current origin trunk**, not stale local state (you
+fetched above; see `references/vcs-preamble.md` § "Ensure Current Before You
+Work" for the currency target and the jj-local-`main` trap).
+
 **git:**
 
 ```bash
-git worktree add "$worktree_parent/$BRANCH_NAME" -b "$BRANCH_NAME"
+# origin/main is the current default branch; resolve a different default if needed
+git worktree add "$worktree_parent/$BRANCH_NAME" -b "$BRANCH_NAME" origin/main
 cd "$worktree_parent/$BRANCH_NAME"
 ```
 
 **jj:**
 
 ```bash
-jj workspace add "$worktree_parent/$WORKSPACE_NAME" --name "$WORKSPACE_NAME"
+# -r 'trunk()' bases the workspace on the fetched remote trunk, not the stale
+# local `main` bookmark (which jj git fetch does NOT advance).
+jj workspace add "$worktree_parent/$WORKSPACE_NAME" --name "$WORKSPACE_NAME" -r 'trunk()'
 cd "$worktree_parent/$WORKSPACE_NAME"
 # Create a bookmark for the workspace (needed for pushing/PRs)
 jj bookmark create "$WORKSPACE_NAME" -r @

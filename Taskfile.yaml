@@ -26,6 +26,11 @@ vars:
     dev-flow/skills/using-worktrees/SKILL.md
     dev-flow/skills/requesting-code-review/SKILL.md
     dev-flow/skills/solving-a-bead/SKILL.md
+    dev-flow/skills/grepping/SKILL.md
+    dev-flow/skills/grepping/references/ripgrep.md
+    dev-flow/skills/grepping/references/grep.md
+    dev-flow/skills/grepping/references/ugrep.md
+    dev-flow/skills/grepping/references/ast-grep.md
   PLUGIN_JSON: >-
     .claude-plugin/marketplace.json .agents/plugins/marketplace.json
     homelab/plugin.json jj/plugin.json dev-flow/plugin.json

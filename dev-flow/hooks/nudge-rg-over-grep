@@ -1,0 +1,259 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""PreToolUse hook: nudge toward probe / rg / ast-grep over grep-family tools.
+
+Soft-warn only — never blocks. Per the dev-flow `grepping` skill the ordering is:
+
+  - `mcp__probe__search_code` / `extract_code` — semantic "where is X / how does
+    Y work" symbol lookup (returns whole AST blocks). Preferred FIRST, but only
+    when the probe MCP is actually configured.
+  - `rg` (ripgrep) — raw text search. The default.
+  - `ast-grep` (`sg`) — structural / syntax-aware matches and rewrites.
+  - `grep`/`egrep`/`fgrep`/`ugrep`/`ug` — fallback.
+
+The nudge fires only when a search tool is the FIRST command word of a command
+segment (not when grep merely filters a pipe `cmd | grep x`, and not inside a
+quoted argument). Behaviour:
+
+  - grep-family leading a command  -> nudge toward rg/ast-grep (always), and
+    toward probe FIRST when the search looks symbol-shaped AND probe is available.
+  - rg / ast-grep leading a command -> silent UNLESS the search looks
+    symbol-shaped AND probe is available, in which case nudge toward probe.
+
+probe availability is detected lazily (only for symbol-shaped searches) and the
+result is cached in $XDG_CACHE_HOME/dev-flow-grepping keyed by a stat() signature
+of the candidate MCP config files, so the hot path stays a few stat()s — the MCP
+configs are only read/parsed when one of them actually changes.
+
+Output: hookSpecificOutput.additionalContext (reaches the model). No
+permissionDecision, so the command always runs.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import sys
+
+GREP_TOOLS = {"grep", "egrep", "fgrep", "ugrep", "ug"}
+RG_SG_TOOLS = {"rg", "sg", "ast-grep"}
+SEARCH_TOOLS = GREP_TOOLS | RG_SG_TOOLS
+
+# Strip single- and double-quoted strings (for leading-command detection only).
+_SQUOTE = re.compile(r"'[^']*'")
+_DQUOTE = re.compile(r'"[^"]*"')
+# Leading `VAR=value ` environment assignments before the real command word.
+_ENV_PREFIX = re.compile(r"^(?:[A-Za-z_]\w*=\S+\s+)+")
+# Command separators that start a new segment: && || ; and a bare newline.
+_SEGMENT_SEP = re.compile(r"&&|\|\||;|\n")
+# Code-definition keywords that signal a "where is X defined" symbol search.
+# Case-sensitive: these are lowercase in source, which avoids matching prose.
+_SYMBOL_RE = re.compile(r"\b(?:func|def|class|struct|interface|trait|impl|fn|function)\b")
+
+
+def leading_search_tool(command: str) -> str | None:
+    """Return the search tool leading any command segment, or None."""
+    stripped = _DQUOTE.sub("", _SQUOTE.sub("", command))
+    for segment in _SEGMENT_SEP.split(stripped):
+        # Only the portion before any pipe — a tool that merely filters a pipe
+        # is not the segment's leading command.
+        before_pipe = segment.split("|", 1)[0]
+        without_env = _ENV_PREFIX.sub("", before_pipe.lstrip())
+        tokens = without_env.split()
+        if not tokens:
+            continue
+        word = tokens[0].rsplit("/", 1)[-1]  # /usr/bin/grep -> grep
+        if word in SEARCH_TOOLS:
+            return word
+    return None
+
+
+# --- probe MCP availability detection (cached) ---------------------------------
+
+
+def _find_repo_root(cwd: str) -> str:
+    """Walk up from cwd to a repo marker; fall back to cwd."""
+    d = cwd
+    for _ in range(50):
+        if not d:
+            break
+        for marker in (".mcp.json", ".git", ".jj"):
+            if os.path.exists(os.path.join(d, marker)):
+                return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    return cwd
+
+
+def _candidate_configs(repo_root: str) -> list[str]:
+    home = os.path.expanduser("~")
+    cands: list[str] = []
+    if repo_root:
+        cands += [
+            os.path.join(repo_root, ".mcp.json"),
+            os.path.join(repo_root, ".claude", "settings.json"),
+            os.path.join(repo_root, ".claude", "settings.local.json"),
+        ]
+    cands += [
+        os.path.join(home, ".claude.json"),
+        os.path.join(home, ".claude", "settings.json"),
+    ]
+    return cands
+
+
+def _config_signature(paths: list[str]) -> str:
+    """Cheap signature over existing configs: only stat() calls, no reads."""
+    parts = []
+    for p in paths:
+        try:
+            st = os.stat(p)
+        except OSError:
+            continue
+        parts.append(f"{p}:{st.st_mtime_ns}:{st.st_size}")
+    return "|".join(parts)
+
+
+def _has_probe_server(obj: object) -> bool:
+    """Recursively look for a `probe` key under any mcpServers mapping."""
+    if isinstance(obj, dict):
+        for key in ("mcpServers", "mcp_servers"):
+            servers = obj.get(key)
+            if isinstance(servers, dict) and "probe" in servers:
+                return True
+        return any(_has_probe_server(v) for v in obj.values())
+    if isinstance(obj, list):
+        return any(_has_probe_server(v) for v in obj)
+    return False
+
+
+def _scan_for_probe(paths: list[str]) -> bool:
+    for p in paths:
+        try:
+            with open(p, encoding="utf-8") as f:
+                raw = f.read()
+        except OSError:
+            continue
+        if '"probe"' not in raw:  # cheap reject before JSON parse
+            continue
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return True  # key is present but file unparseable — assume configured
+        if _has_probe_server(data):
+            return True
+    return False
+
+
+def _cache_path(repo_root: str) -> str:
+    base = os.environ.get("XDG_CACHE_HOME") or os.path.join(os.path.expanduser("~"), ".cache")
+    key = hashlib.sha1((repo_root or "").encode("utf-8")).hexdigest()[:16]
+    return os.path.join(base, "dev-flow-grepping", f"probe-{key}.json")
+
+
+def probe_available(repo_root: str) -> bool:
+    """True if a probe MCP server is configured. Cached by config signature."""
+    paths = _candidate_configs(repo_root)
+    sig = _config_signature(paths)
+    cache = _cache_path(repo_root)
+    try:
+        with open(cache, encoding="utf-8") as f:
+            cached = json.load(f)
+        if cached.get("sig") == sig:
+            return bool(cached.get("probe"))
+    except (OSError, json.JSONDecodeError):
+        pass
+    result = _scan_for_probe(paths)
+    try:  # caching is best-effort; never fail the command over it
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        tmp = f"{cache}.{os.getpid()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"probe": result, "sig": sig}, f)
+        os.replace(tmp, cache)
+    except OSError:
+        pass
+    return result
+
+
+# --- nudge messages ------------------------------------------------------------
+
+
+def _msg_grep_to_rg(tool: str) -> str:
+    return (
+        f"grepping: `{tool}` invoked. Prefer `rg` (ripgrep) for text search — faster, "
+        "recursive by default, and .gitignore-aware — and `ast-grep` (`sg`) for "
+        "structural/syntax-aware code matches. The dev-flow `grepping` skill has the "
+        f"grep->rg flag mapping and common-mistake fixes. Advisory only; `{tool}` still "
+        "runs (use it when you need ugrep-only features like fuzzy or archive search)."
+    )
+
+
+def _msg_probe_over_grep(tool: str) -> str:
+    return (
+        f"grepping: `{tool}` looks like a symbol search and the probe MCP is available. "
+        "Prefer `mcp__probe__search_code` / `mcp__probe__extract_code` — they return the "
+        "whole enclosing function/type as one block, not line snippets — for 'where is X "
+        "/ how does Y work'. Use `rg` for raw text and `ast-grep` (`sg`) for structural "
+        f"matches. Advisory only; `{tool}` still runs."
+    )
+
+
+def _msg_probe_over_rg(tool: str) -> str:
+    return (
+        f"grepping: `{tool}` looks like a symbol search and the probe MCP is available. "
+        "Prefer `mcp__probe__search_code` / `mcp__probe__extract_code` first — they return "
+        "the enclosing function/type as one block. `rg` stays right for raw text and "
+        f"`ast-grep` for structural matches. Advisory only; `{tool}` still runs."
+    )
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+        tool_input = data.get("tool_input") or {}
+        command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+        cwd = data.get("cwd", "") or ""
+    except (json.JSONDecodeError, OSError, AttributeError):
+        sys.exit(0)  # best-effort: stay silent on bad input
+
+    if not command:
+        sys.exit(0)
+
+    tool = leading_search_tool(command)
+    if tool is None:
+        sys.exit(0)
+
+    is_grep = tool in GREP_TOOLS
+    # Symbol detection runs against the ORIGINAL command so keywords inside a
+    # quoted pattern (e.g. rg 'func Foo') are still seen. probe is only consulted
+    # for symbol-shaped searches — the common, non-symbol case never reads config.
+    symbol = bool(_SYMBOL_RE.search(command))
+    use_probe = symbol and probe_available(_find_repo_root(cwd))
+
+    if is_grep:
+        message = _msg_probe_over_grep(tool) if use_probe else _msg_grep_to_rg(tool)
+    elif use_probe:
+        message = _msg_probe_over_rg(tool)
+    else:
+        sys.exit(0)  # rg / ast-grep with no probe-worthy reason — stay silent
+
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "additionalContext": message,
+        }
+    }
+    try:
+        json.dump(result, sys.stdout)
+    except OSError:
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -15,7 +15,7 @@ def _run(args: list[str], cwd: str) -> str | None:
     """Run a command; return stripped stdout, or None on any failure."""
     try:
         proc = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=5)
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):
         return None
     if proc.returncode != 0:
         return None
@@ -89,3 +89,47 @@ def _repo_id(cwd: str) -> str | None:
             p = (Path(cwd) / p).resolve()
         return p.parent.name  # parent of the shared .git == main repo root
     return None
+
+
+def _workspace(cwd: str) -> str | None:
+    """Per-workspace name for the overlay; None for the primary checkout."""
+    if _run(["jj", "--no-pager", "root"], cwd) is not None:
+        wc = _run(
+            [
+                "jj",
+                "--no-pager",
+                "log",
+                "-r",
+                "@",
+                "--no-graph",
+                "-T",
+                "working_copies",
+            ],
+            cwd,
+        )
+        if wc:
+            name = wc.split("@")[0].split()[0] if wc.split() else ""
+            if name and name != "default":
+                return name
+        return None
+    # git worktree: primary -> None; linked -> toplevel basename
+    common = _run(["git", "rev-parse", "--git-common-dir"], cwd)
+    toplevel = _run(["git", "rev-parse", "--show-toplevel"], cwd)
+    if common and toplevel:
+        cp = Path(common)
+        if not cp.is_absolute():
+            cp = (Path(cwd) / cp).resolve()
+        if cp.parent.resolve() == Path(toplevel).resolve():
+            return None  # primary worktree
+        return Path(toplevel).name
+    return None
+
+
+def derive_scopes(cwd: str) -> tuple[str | None, str | None]:
+    rid = _repo_id(cwd)
+    if rid is None:
+        return (None, None)
+    spine = f"repo:{rid}"
+    ws = _workspace(cwd)
+    overlay = f"{spine}:ws:{ws}" if ws else None
+    return (spine, overlay)

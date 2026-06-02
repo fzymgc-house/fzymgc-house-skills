@@ -97,3 +97,106 @@ def test_no_repo_returns_none(monkeypatch):
     fake = make_fake_run([])  # everything returns None
     monkeypatch.setattr(scope, "_run", fake)
     assert scope._repo_id("/nowhere") is None
+
+
+def test_jj_named_workspace_overlay(monkeypatch):
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], "/repo/_wt/feat"),
+            (
+                ["jj", "--no-pager", "git", "remote", "list"],
+                "origin git@github.com:org/repo.git",
+            ),
+            (["jj", "--no-pager", "log", "-r", "@"], "worktree-feat@"),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    spine, overlay = scope.derive_scopes("/repo/_wt/feat")
+    assert spine == "repo:github.com/org/repo"
+    assert overlay == "repo:github.com/org/repo:ws:worktree-feat"
+
+
+def test_jj_default_workspace_spine_only(monkeypatch):
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], "/repo"),
+            (
+                ["jj", "--no-pager", "git", "remote", "list"],
+                "origin git@github.com:org/repo.git",
+            ),
+            (["jj", "--no-pager", "log", "-r", "@"], "default@"),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    spine, overlay = scope.derive_scopes("/repo")
+    assert spine == "repo:github.com/org/repo"
+    assert overlay is None
+
+
+def test_spine_identical_across_workspaces(monkeypatch):
+    # Same repo, two different workspaces -> same spine, different/None overlay.
+    def fake_for(ws_name):
+        return make_fake_run(
+            [
+                (["jj", "--no-pager", "root"], "/repo"),
+                (
+                    ["jj", "--no-pager", "git", "remote", "list"],
+                    "origin git@github.com:org/repo.git",
+                ),
+                (["jj", "--no-pager", "log", "-r", "@"], ws_name),
+            ]
+        )
+
+    monkeypatch.setattr(scope, "_run", fake_for("default@"))
+    spine_default, ov_default = scope.derive_scopes("/repo")
+    monkeypatch.setattr(scope, "_run", fake_for("worktree-feat@"))
+    spine_feat, ov_feat = scope.derive_scopes("/repo")
+    assert spine_default == spine_feat
+    assert ov_default is None
+    assert ov_feat == "repo:github.com/org/repo:ws:worktree-feat"
+
+
+def test_non_repo_returns_none_pair(monkeypatch):
+    monkeypatch.setattr(scope, "_run", make_fake_run([]))
+    assert scope.derive_scopes("/nowhere") == (None, None)
+
+
+def test_remoteless_git_uses_common_dir_parent(monkeypatch):
+    # jj absent, no origin -> fall back to parent of the shared .git.
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], None),
+            (["git", "remote", "get-url", "origin"], None),
+            (["git", "rev-parse", "--git-common-dir"], ".git"),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    assert scope._repo_id("/home/u/myrepo") == "myrepo"
+
+
+def test_git_primary_worktree_no_overlay(monkeypatch):
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], None),
+            (["git", "remote", "get-url", "origin"], "git@github.com:org/repo.git"),
+            (["git", "rev-parse", "--git-common-dir"], "/repo/.git"),
+            (["git", "rev-parse", "--show-toplevel"], "/repo"),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    assert scope.derive_scopes("/repo") == ("repo:github.com/org/repo", None)
+
+
+def test_git_linked_worktree_overlay_basename(monkeypatch):
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], None),
+            (["git", "remote", "get-url", "origin"], "git@github.com:org/repo.git"),
+            (["git", "rev-parse", "--git-common-dir"], "/repo/.git"),
+            (["git", "rev-parse", "--show-toplevel"], "/repo/_wt/feat"),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    spine, overlay = scope.derive_scopes("/repo/_wt/feat")
+    assert spine == "repo:github.com/org/repo"
+    assert overlay == "repo:github.com/org/repo:ws:feat"

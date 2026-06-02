@@ -31,9 +31,12 @@ vars:
     dev-flow/skills/grepping/references/grep.md
     dev-flow/skills/grepping/references/ugrep.md
     dev-flow/skills/grepping/references/ast-grep.md
+    memory-curator/skills/*/SKILL.md
+    memory-curator/README.md
   PLUGIN_JSON: >-
     .claude-plugin/marketplace.json .agents/plugins/marketplace.json
     homelab/plugin.json jj/plugin.json dev-flow/plugin.json
+    memory-curator/plugin.json
     plugins/*/.codex-plugin/plugin.json
   # All harness-independent pytest suites. Behavioral evals (dev-flow/evals,
   # jj/evals) need the Claude agent harness to execute and are only
@@ -44,6 +47,7 @@ vars:
     jj/hooks/tests/
     dev-flow/hooks/tests/
     homelab/skills/terraform/tests/
+    memory-curator/hooks/tests/
 
 tasks:
   fmt:
@@ -59,7 +63,7 @@ tasks:
       - rumdl check --no-exclude {{.MD_FILES}}
       - ruff check .
       - ruff format --check .
-      - jq empty {{.PLUGIN_JSON}}
+      - jq empty {{.PLUGIN_JSON}} memory-curator/.mcp.json
       - uv run --with 'check-jsonschema>=0.37,<0.38' check-jsonschema
         --schemafile dev-flow/evals/evals.schema.json
         dev-flow/evals/evals.json jj/evals/evals.json

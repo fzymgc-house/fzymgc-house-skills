@@ -21,6 +21,11 @@
       "name": "dev-flow",
       "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)",
       "source": "./dev-flow"
+    },
+    {
+      "name": "memory-curator",
+      "description": "Wires the self-hosted memory MCP layer into Claude Code: session-start recall, curation discipline, and a correctable two-tier per-workspace memory scope.",
+      "source": "./memory-curator"
     }
   ]
 }

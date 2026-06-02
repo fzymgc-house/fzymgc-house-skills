@@ -18,14 +18,17 @@ user/model-mediated — there is no automatic merge-triggered migration.
 2. `mcp__memory_oauth__list_memory(<overlay scope>)` to enumerate this
    workspace's local memories. (401/403 → server unauthenticated; tell the user
    to `/mcp` Authenticate and stop.) If empty, report "nothing to promote".
+   All tools are on the `memory_oauth` server; below, `…__` abbreviates the
+   `mcp__memory_oauth__` prefix.
 3. For each overlay memory, decide with the user:
-   - **Promote** — now true repo-wide. `search_memory(<spine>, …)` first for a
-     duplicate/contradiction; then `store_memory(<spine>, …)` (or `update_memory`
-     the spine record on contradiction); then `delete_memory` the overlay copy.
+   - **Promote** — now true repo-wide. `…__search_memory(<spine>, …)` first for a
+     duplicate/contradiction; then `…__store_memory(<spine>, …)` (or
+     `…__update_memory` the spine record on contradiction); then
+     `…__delete_memory` the overlay copy.
    - **Keep** — still genuinely work-local (rare once merged); leave it.
-   - **Drop** — no longer relevant; `delete_memory`.
-4. Once the workspace is being retired, offer `delete_all(<overlay scope>)` as a
-   teardown after promotions are done.
+   - **Drop** — no longer relevant; `…__delete_memory`.
+4. Once the workspace is being retired, offer `…__delete_all(<overlay scope>)` as
+   a teardown after promotions are done.
 
 Keep the spine zero-junk: promote only facts that are genuinely durable and
 repo-wide, applying the same junk taxonomy as `curating-memory`.

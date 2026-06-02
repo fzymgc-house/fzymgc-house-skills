@@ -65,3 +65,15 @@ def test_non_repo_no_interjection(tmp_path: Path):
     result = run_hook({"cwd": str(tmp_path), "stop_hook_active": False})
     assert result.returncode == 0
     assert result.stdout.strip() == ""
+
+
+def test_malformed_stdin_is_silent():
+    proc = subprocess.run(
+        [sys.executable, str(HOOK)],
+        input="not json",
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == ""

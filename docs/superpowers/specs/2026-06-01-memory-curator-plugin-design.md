@@ -293,6 +293,11 @@ emitted instruction, not by the hook inspecting tool output.
 
 ## Component: session-end capture (`hooks/session-end-memory-capture`)
 
+> **Superseded by ADR `fhsk-p07`.** This blocking `Stop` hook was removed: Claude
+> Code renders any `decision: block` as a "Stop hook error" on every session.
+> Capture now lives in the silent `SessionStart` briefing plus a throttled
+> `PostToolUse` nudge. The original design is retained below as historical record.
+
 `Stop` hook (command-type). **Mechanism note:** the only channel by which a hook
 can make Claude *act* at session end is the Stop hook's
 `{"decision": "block", "reason": "<text>"}` form — Claude receives `reason` as a

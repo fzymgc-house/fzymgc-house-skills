@@ -12,12 +12,13 @@
         ]
       }
     ],
-    "Stop": [
+    "PostToolUse": [
       {
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-end-memory-capture\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse-memory-capture-nudge\"",
             "timeout": 10
           }
         ]

@@ -56,6 +56,16 @@ def test_primary_checkout_spine_only(git_repo: Path):
     assert "401" in ctx
 
 
+def test_includes_capture_expectations(git_repo: Path):
+    # The capture discipline lives here now (silent), replacing the Stop nudge.
+    ctx = json.loads(run_hook(str(git_repo)).stdout)["hookSpecificOutput"][
+        "additionalContext"
+    ]
+    assert "curating-memory" in ctx
+    assert "no end-of-session prompt" in ctx
+    assert "semantic" in ctx  # search_memory is vector-backed
+
+
 def test_linked_worktree_has_overlay(git_repo: Path, tmp_path: Path):
     wt = tmp_path / "wt-feat"
     git("worktree", "add", "-q", str(wt), cwd=git_repo)

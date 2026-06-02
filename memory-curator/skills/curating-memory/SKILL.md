@@ -20,7 +20,10 @@ keys, timestamps, one-off tool output, or anything trivially re-derivable.
 ## Discipline
 
 1. **Search before store.** Call `mcp__memory_oauth__search_memory` across both
-   the spine and (if present) the workspace overlay first. If a near-duplicate
+   the spine and (if present) the workspace overlay first. `search_memory` is
+   backed by a semantic/vector engine, so query it with a natural-language
+   description of the fact (not keyword fragments) — it surfaces conceptually
+   related records even when they share no exact wording. If a near-duplicate
    exists, update it instead of adding a new record.
 2. **Supersede on contradiction — within a tier.** When new info conflicts with
    an existing memory, `update_memory` (preferred) or `delete_memory` the stale

@@ -29,13 +29,19 @@ def test_plugin_manifest_minimal():
     assert manifest["description"]
 
 
-def test_hooks_register_sessionstart_and_stop():
+def test_hooks_register_sessionstart_and_posttooluse():
     hooks = load(HOOKS_DIR / "hooks.json")["hooks"]
-    assert "SessionStart" in hooks and "Stop" in hooks
+    assert "SessionStart" in hooks and "PostToolUse" in hooks
+    # No blocking Stop hook: it rendered as a "Stop hook error" every session.
+    assert "Stop" not in hooks
     ss = hooks["SessionStart"][0]
     assert ss["matcher"] == "startup|clear|compact"
     assert "session-start-memory-recall" in ss["hooks"][0]["command"]
-    # Stop takes no matcher
-    stop = hooks["Stop"][0]
-    assert "matcher" not in stop
-    assert "session-end-memory-capture" in stop["hooks"][0]["command"]
+    # PostToolUse nudge is scoped to mutating tools (regex on tool_name).
+    ptu = hooks["PostToolUse"][0]
+    assert ptu["matcher"] == "Edit|Write|NotebookEdit"
+    assert "posttooluse-memory-capture-nudge" in ptu["hooks"][0]["command"]
+
+
+def test_no_stale_session_end_hook():
+    assert not (HOOKS_DIR / "session-end-memory-capture").exists()

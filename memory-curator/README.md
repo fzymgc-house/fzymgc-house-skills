@@ -33,10 +33,19 @@ same derivation, so what you store in one session is recalled in the next.
 
 ## What it does
 
-- **Session start:** a hook computes the scope(s) and asks Claude to recall this
-  repo's durable memories (silent when there are none).
+- **Session start:** a hook computes the scope(s), asks Claude to recall this
+  repo's durable memories (silent when there are none), and briefs it on the
+  capture discipline. This is silent `additionalContext` and re-fires after
+  compaction, so the expectations survive context loss.
 - **During the session:** the `curating-memory` skill enforces durable-only
-  capture, search-before-store, and supersede-on-contradiction.
-- **Session end:** a hook nudges Claude (once) to capture anything durable.
+  capture, search-before-store (semantic/vector recall), and
+  supersede-on-contradiction. After the first file edit, a throttled
+  `PostToolUse` hook silently re-surfaces the capture reminder once per session.
 - **Work completion:** the `promoting-memory` skill graduates workspace-local
   memories into the spine and cleans up.
+
+There is no blocking session-end hook: nudging at `Stop` requires
+`decision: block`, which Claude Code renders as a "Stop hook error" on every
+session. Capture is instead set up front (session start) and re-surfaced
+silently mid-work (`PostToolUse`), so the store stays current with zero
+error-styled noise.

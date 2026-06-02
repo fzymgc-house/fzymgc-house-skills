@@ -63,6 +63,8 @@ def test_linked_worktree_has_overlay(git_repo: Path, tmp_path: Path):
     ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
     assert "Memory spine scope: repo:github.com/org/repo" in ctx
     assert "Memory workspace scope: repo:github.com/org/repo:ws:wt-feat" in ctx
+    assert "mcp__memory_oauth__list_memory" in ctx
+    assert "401" in ctx
 
 
 def test_non_repo_is_silent(tmp_path: Path):

@@ -39,6 +39,29 @@ def test_normalize_remote_scp_and_https():
     )
 
 
+def test_normalize_remote_explicit_port_dropped():
+    # A numeric port after the host must be dropped, not treated as an scp path.
+    assert (
+        scope._normalize_remote("https://github.com:443/org/repo.git")
+        == "github.com/org/repo"
+    )
+
+
+def test_origin_from_jj_picks_origin_when_not_first(monkeypatch):
+    """origin must be found even when it is not the first remote listed."""
+    fake = make_fake_run(
+        [
+            (["jj", "--no-pager", "root"], "/repo"),
+            (
+                ["jj", "--no-pager", "git", "remote", "list"],
+                "upstream git@github.com:upstream/repo.git\norigin git@github.com:org/repo.git",
+            ),
+        ]
+    )
+    monkeypatch.setattr(scope, "_run", fake)
+    assert scope._repo_id("/repo") == "github.com/org/repo"
+
+
 def test_jj_repo_uses_jj_remote_never_git(monkeypatch):
     fake = make_fake_run(
         [

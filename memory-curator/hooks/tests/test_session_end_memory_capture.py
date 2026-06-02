@@ -61,6 +61,18 @@ def test_blocks_once_with_reason(git_repo: Path):
     assert "overlay" not in out["reason"]  # primary checkout = spine only
 
 
+def test_blocks_with_overlay_for_named_workspace(git_repo: Path, tmp_path: Path):
+    wt = tmp_path / "wt-feat"
+    git("worktree", "add", "-q", str(wt), cwd=git_repo)
+    result = run_hook({"cwd": str(wt), "stop_hook_active": False})
+    out = json.loads(result.stdout)
+    assert out["decision"] == "block"
+    assert "curating-memory" in out["reason"]
+    assert "repo:github.com/org/repo" in out["reason"]
+    assert "overlay" in out["reason"]
+    assert ":ws:wt-feat" in out["reason"]
+
+
 def test_non_repo_no_interjection(tmp_path: Path):
     result = run_hook({"cwd": str(tmp_path), "stop_hook_active": False})
     assert result.returncode == 0

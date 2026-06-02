@@ -1,14 +1,22 @@
 """Two-tier memory scope derivation (local git/jj only — no network, no auth).
 
-Public API: derive_scopes(cwd) -> (spine, overlay).
+Public API: derive_scopes(cwd) -> Scopes(spine, overlay).
   spine   = "repo:<repo-id>"                      (always, when in a repo)
   overlay = "repo:<repo-id>:ws:<workspace>" | None (None for the primary checkout)
+  Returns Scopes(None, None) when cwd is not inside any recognised repo.
 """
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
+from typing import NamedTuple
+
+
+class Scopes(NamedTuple):
+    spine: str | None
+    overlay: str | None
 
 
 def _run(args: list[str], cwd: str) -> str | None:
@@ -23,7 +31,14 @@ def _run(args: list[str], cwd: str) -> str | None:
 
 
 def _normalize_remote(url: str) -> str:
-    """git@github.com:org/repo.git -> github.com/org/repo."""
+    """Normalise a remote URL to a canonical host/org/repo key.
+
+    Examples:
+      git@github.com:org/repo.git        -> github.com/org/repo
+      https://github.com/org/repo.git    -> github.com/org/repo
+      https://github.com:443/org/repo    -> github.com/org/repo  (port dropped)
+      ssh://git@github.com/org/repo      -> github.com/org/repo
+    """
     u = url.strip()
     for scheme in ("https://", "http://", "ssh://", "git://"):
         if u.startswith(scheme):
@@ -32,7 +47,20 @@ def _normalize_remote(url: str) -> str:
     head = u.split("/", 1)[0]
     if "@" in head:
         u = u.split("@", 1)[1]
-    u = u.replace(":", "/", 1)  # scp-style host:path separator
+        head = u.split("/", 1)[0]
+    # After stripping the scheme (and optional user@), head may be "host:port"
+    # (numeric port → drop it) or "host:path" (scp-style → replace : with /).
+    # Only apply the scp replacement when the part after ':' is not all-digits.
+    colon_idx = head.find(":")
+    if colon_idx != -1:
+        after_colon = head[colon_idx + 1 :]
+        if re.match(r"^\d+$", after_colon):
+            # Numeric port: strip "host:port" → "host", re-attach the rest of path
+            rest = u[len(head) :]  # e.g. "/org/repo.git"
+            u = head[:colon_idx] + rest
+        else:
+            # scp-style host:path → host/path
+            u = u.replace(":", "/", 1)
     if u.endswith(".git"):
         u = u[:-4]
     return u.strip("/")
@@ -70,13 +98,14 @@ def _jj_primary_root(workspace_root: str | None) -> str | None:
 
 def _repo_id(cwd: str) -> str | None:
     # jj-first: a jj workspace is NOT a git repo, so git remote fails there.
-    if _run(["jj", "--no-pager", "root"], cwd) is not None:
+    jj_root = _run(["jj", "--no-pager", "root"], cwd)
+    if jj_root is not None:
         origin = _origin_from_jj(
             _run(["jj", "--no-pager", "git", "remote", "list"], cwd)
         )
         if origin:
             return _normalize_remote(origin)
-        primary = _jj_primary_root(_run(["jj", "--no-pager", "root"], cwd))
+        primary = _jj_primary_root(jj_root)
         return Path(primary).name if primary else None
     # pure git (including linked worktrees, which share origin)
     origin = _run(["git", "remote", "get-url", "origin"], cwd)
@@ -93,7 +122,8 @@ def _repo_id(cwd: str) -> str | None:
 
 def _workspace(cwd: str) -> str | None:
     """Per-workspace name for the overlay; None for the primary checkout."""
-    if _run(["jj", "--no-pager", "root"], cwd) is not None:
+    jj_root = _run(["jj", "--no-pager", "root"], cwd)
+    if jj_root is not None:
         wc = _run(
             [
                 "jj",
@@ -108,7 +138,8 @@ def _workspace(cwd: str) -> str | None:
             cwd,
         )
         if wc:
-            name = wc.split("@")[0].split()[0] if wc.split() else ""
+            parts = wc.split("@")[0].split()
+            name = parts[0] if parts else ""
             if name and name != "default":
                 return name
         return None
@@ -125,11 +156,11 @@ def _workspace(cwd: str) -> str | None:
     return None
 
 
-def derive_scopes(cwd: str) -> tuple[str | None, str | None]:
+def derive_scopes(cwd: str) -> Scopes:
     rid = _repo_id(cwd)
     if rid is None:
-        return (None, None)
+        return Scopes(None, None)
     spine = f"repo:{rid}"
     ws = _workspace(cwd)
     overlay = f"{spine}:ws:{ws}" if ws else None
-    return (spine, overlay)
+    return Scopes(spine, overlay)

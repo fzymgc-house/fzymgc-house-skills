@@ -33,7 +33,8 @@ def main() -> None:
     cwd = data.get("cwd", os.getcwd())
     try:
         spine, overlay = derive_scopes(cwd)
-    except Exception:
+    except Exception as exc:
+        print(f"session-end-memory-capture: scope derivation failed: {exc}", file=sys.stderr)
         sys.exit(0)
 
     if spine is None:

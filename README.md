@@ -1,11 +1,16 @@
 # fzymgc-house-skills
 
 A [Claude Code](https://claude.ai/code) plugin marketplace for the fzymgc-house
-self-hosted cluster. It currently ships four plugins: homelab operations,
-automated PR review, jj workflow guidance, and a development-flow workflow
-suite (originally forked from obra/superpowers, evolved independently). The
-repo now also includes a repo-local Codex marketplace that wraps the same
-skill content for Codex.
+self-hosted cluster. It currently ships three plugins: homelab operations, jj
+workflow guidance, and a development-flow workflow suite (originally forked from
+obra/superpowers, evolved independently). The repo now also includes a
+repo-local Codex marketplace that wraps the same skill content for Codex.
+
+> **`memory-curator` has moved.** The memory plugin now lives in
+> [seanb4t/engram](https://github.com/seanb4t/engram) as the `engram` bundled
+> skill-plugin, co-located with the memory MCP server it drives. Install it via
+> `/plugin marketplace add seanb4t/engram` → `/plugin install engram`. Its design
+> history (spec/plan/ADRs) remains in this repo under `docs/`.
 
 ## Plugins
 

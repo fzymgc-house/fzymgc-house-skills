@@ -1,4 +1,0 @@
-{
-  "name": "memory-curator",
-  "description": "Wires the self-hosted memory MCP layer into Claude Code: session-start recall, curation discipline, and a correctable two-tier per-workspace memory scope."
-}

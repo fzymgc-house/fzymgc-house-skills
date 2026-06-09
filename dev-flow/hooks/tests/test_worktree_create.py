@@ -494,6 +494,59 @@ class TestJjIntegration:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
+    def test_jj_workspace_gets_beads_redirect(self, jj_repo: Path) -> None:
+        """A jj workspace gets an untracked .beads/redirect pointing at the
+        main repo's .beads — jj workspaces are not git worktrees, so bd's
+        git common-directory discovery cannot find the shared database."""
+        beads_dir = jj_repo / ".beads"
+        beads_dir.mkdir()
+        (beads_dir / "metadata.json").write_text("{}\n")
+
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "with-beads"
+
+        try:
+            result = run_hook({"name": "with-beads"}, cwd=jj_repo)
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+
+            redirect = worktree_path / ".beads" / "redirect"
+            assert redirect.is_file(), (
+                ".beads/redirect missing — bd cannot resolve the shared "
+                "database from a jj workspace without it"
+            )
+            target = redirect.read_text().strip()
+            assert (worktree_path / target).resolve() == beads_dir.resolve()
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-with-beads"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+    def test_jj_workspace_without_beads_gets_no_redirect(self, jj_repo: Path) -> None:
+        """No .beads in the main repo → no redirect machinery in the workspace."""
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "no-beads"
+
+        try:
+            result = run_hook({"name": "no-beads"}, cwd=jj_repo)
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+            assert not (worktree_path / ".beads" / "redirect").exists()
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-no-beads"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
     def test_old_jj_version_error_message(self, jj_repo: Path, tmp_path: Path) -> None:
         """When jj workspace add --name fails with version-related error, shows version message."""
         # Create a fake jj script that simulates old jj behavior

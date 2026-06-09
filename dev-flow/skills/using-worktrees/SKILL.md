@@ -172,6 +172,14 @@ jj workspace add "$worktree_parent/$WORKSPACE_NAME" --name "$WORKSPACE_NAME" -r 
 cd "$worktree_parent/$WORKSPACE_NAME"
 # Create a bookmark for the workspace (needed for pushing/PRs)
 jj bookmark create "$WORKSPACE_NAME" -r @
+# If the repo uses beads, point bd at the main repo's database. jj workspaces
+# are NOT git worktrees, so bd's git common-directory discovery cannot find
+# the shared database — without this, bd commands fail in the workspace.
+# (.beads/redirect is untracked; .beads/.gitignore already covers it.)
+if [ -d "$REPO_ROOT/.beads" ]; then
+  mkdir -p .beads
+  echo "$REPO_ROOT/.beads" > .beads/redirect
+fi
 ```
 
 **Sandbox fallback:** If `git worktree add` / `jj workspace add` fails
@@ -274,6 +282,16 @@ are left in place for the host to manage.
 - **Problem:** Can't push or create PRs without a bookmark
 - **Fix:** Always `jj bookmark create <name> -r @` after workspace creation (Step 1b)
 
+### Missing .beads/redirect (jj)
+
+- **Problem:** bd resolves the workspace's checked-out `.beads/` (tracked config
+  files, no database) as a standalone workspace, so bd commands fail — jj
+  workspaces are not git worktrees, and bd's git common-directory discovery
+  can't find the shared database
+- **Fix:** Write `.beads/redirect` pointing at the main repo's `.beads` after
+  `jj workspace add` (Step 1b). Native worktree tools get this from the
+  WorktreeCreate hook automatically.
+
 ### Forgetting to fetch (jj)
 
 - **Problem:** Workspace starts with stale state
@@ -298,6 +316,7 @@ are left in place for the host to manage.
 - Skip Step 1a by jumping straight to Step 1b's commands
 - Use `git worktree add` in jj repos
 - Skip the `jj bookmark create` step in jj workspaces
+- Skip the `.beads/redirect` setup in jj workspaces when the repo uses beads
 - Skip baseline test verification
 - Proceed with failing tests without asking
 

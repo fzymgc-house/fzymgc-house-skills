@@ -42,7 +42,7 @@ fi
 cat <<'EOF'
 **You are in the shared `default` jj workspace.** jj snapshots the working copy on every `jj` command, so a dispatched subagent or hook running a `jj` command in this same workspace can move `@` off your in-flight change and orphan it (this is how uncommitted/unbookmarked work gets lost here). Before editing files for a task, isolate this session:
 
-- **Agents / Claude Code:** use the `EnterWorktree` tool (it triggers this repo's `WorktreeCreate` hook → a sibling jj workspace under `<repo>_worktrees/<name>`, registered with the harness so the working directory persists).
+- **Agents / Claude Code:** use the `EnterWorktree` tool (it triggers the dev-flow plugin's `WorktreeCreate` hook → a sibling jj workspace under `<repo>_worktrees/<name>`, trunk-based + bookmarked, registered with the harness so the working directory persists).
 - **Manual fallback:** `jj workspace add ../<repo>_worktrees/<name> --name <name>` then `cd` in and `jj bookmark create <name> -r @`.
 - See the `dev-flow:using-worktrees` and `jj:jujutsu` skills for the full pattern.
 

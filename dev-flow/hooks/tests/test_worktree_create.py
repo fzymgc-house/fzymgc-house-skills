@@ -295,6 +295,38 @@ class TestJjIntegration:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
+    def test_jj_workspace_gets_pushready_bookmark(self, jj_repo: Path) -> None:
+        """The jj workspace must get a ``worktree-<name>`` bookmark on creation.
+        jj has no implicit branch (unlike git's -b), so without this the
+        workspace cannot be pushed/PR'd without a manual bookmark."""
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "bm-test"
+
+        try:
+            result = run_hook({"name": "bm-test"}, cwd=jj_repo)
+            assert result.returncode == 0, f"stderr: {result.stderr}"
+
+            bm_list = subprocess.run(
+                ["jj", "--no-pager", "bookmark", "list"],
+                cwd=str(jj_repo),
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert "worktree-bm-test" in bm_list.stdout, (
+                f"expected worktree-bm-test bookmark, got: {bm_list.stdout}"
+            )
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-bm-test"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
     def test_jj_workspace_bases_on_remote_trunk_not_stale_local(
         self, tmp_path: Path
     ) -> None:
@@ -322,12 +354,34 @@ class TestJjIntegration:
         jj("config", "set", "--repo", "user.email", "test@example.com", cwd=repo)
         jj("config", "set", "--repo", "user.name", "Test User", cwd=repo)
 
+        def push_new_bookmark(name: str, *, cwd: Path) -> None:
+            # jj version skew: jj 0.42+ pushes new bookmarks by default and
+            # removed --allow-new; older jj REQUIRES --allow-new. Try the modern
+            # form first, fall back to the legacy flag.
+            modern = subprocess.run(
+                ["jj", "--no-pager", "git", "push", "--bookmark", name],
+                cwd=str(cwd),
+                capture_output=True,
+                text=True,
+            )
+            if modern.returncode == 0:
+                return
+            legacy = subprocess.run(
+                ["jj", "--no-pager", "git", "push", "--allow-new", "--bookmark", name],
+                cwd=str(cwd),
+                capture_output=True,
+                text=True,
+            )
+            assert legacy.returncode == 0, (
+                f"push failed both ways:\nmodern: {modern.stderr}\nlegacy: {legacy.stderr}"
+            )
+
         # c1, push as origin main
         (repo / "a.txt").write_text("c1\n")
         jj("commit", "-m", "c1", cwd=repo)
         jj("git", "remote", "add", "origin", str(origin), cwd=repo)
         jj("bookmark", "create", "main", "-r", "@-", cwd=repo)
-        jj("git", "push", "--allow-new", "--bookmark", "main", cwd=repo)
+        push_new_bookmark("main", cwd=repo)
 
         # c2 advances trunk
         (repo / "a.txt").write_text("c2\n")

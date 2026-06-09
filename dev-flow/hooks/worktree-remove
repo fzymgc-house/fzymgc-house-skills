@@ -4,7 +4,8 @@
 # ///
 """WorktreeRemove hook: remove worktrees from sibling directory.
 
-Input:  JSON on stdin with "path" field.
+Input:  JSON on stdin with a "worktree_path" field (Claude Code's
+        WorktreeRemove payload). A legacy/manual "path" field is also accepted.
 Output: none (exit 0 on success, exit 1 on failure).
 
 Behavior:
@@ -132,10 +133,15 @@ def main() -> int:
         )
         return 1
 
-    worktree_path_str: str = data.get("path", "")
+    # Claude Code's WorktreeRemove hook passes the absolute path in a
+    # "worktree_path" field. Older/manual callers may pass "path"; accept
+    # either (worktree_path wins). Reading the wrong field here makes the hook
+    # silently no-op while ExitWorktree still reports success, leaking the jj
+    # workspace + directory.
+    worktree_path_str: str = data.get("worktree_path") or data.get("path") or ""
     if not worktree_path_str:
         print(
-            "ERROR: no path field in WorktreeRemove input — skipping removal",
+            "ERROR: no worktree_path/path field in WorktreeRemove input — skipping removal",
             file=sys.stderr,
         )
         return 1

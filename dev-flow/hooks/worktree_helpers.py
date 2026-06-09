@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared helpers for worktree-create, worktree-remove, and post-edit-format hooks.
+"""Shared helpers for the worktree-create and worktree-remove hooks.
 
 Functions:
     sanitize_for_output(s)          — strip control chars for safe logging

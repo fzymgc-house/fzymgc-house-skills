@@ -62,10 +62,10 @@ def test_malformed_json_exits_1(git_repo: Path) -> None:
 
 
 def test_no_path_exits_1(git_repo: Path) -> None:
-    """Empty JSON input exits 1 with an error about missing path field."""
+    """Empty JSON input exits 1 with an error about the missing path field."""
     result = run_hook({}, cwd=git_repo)
     assert result.returncode == 1
-    assert "no path field" in result.stderr
+    assert "no worktree_path/path field" in result.stderr
 
 
 # ---------------------------------------------------------------------------
@@ -274,6 +274,62 @@ class TestJjIntegration:
                         "forget",
                         workspace_name,
                     ],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktrees_dir.is_dir() and not any(worktrees_dir.iterdir()):
+                worktrees_dir.rmdir()
+
+    def test_removes_jj_worktree_via_worktree_path_field(self, jj_repo: Path) -> None:
+        """Regression: the harness's WorktreeRemove payload uses a ``worktree_path``
+        field (not ``path``). Reading the wrong field made the hook silently
+        no-op while ExitWorktree reported success, leaking the jj workspace.
+        Driving removal with ``worktree_path`` must forget the workspace."""
+        repo_name = jj_repo.name
+        worktrees_dir = jj_repo.parent / f"{repo_name}_worktrees"
+        worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+        worktree_name = "harness-payload"
+        worktree_path = worktrees_dir / worktree_name
+        workspace_name = f"worktree-{worktree_name}"
+
+        result = subprocess.run(
+            [
+                "jj",
+                "--no-pager",
+                "workspace",
+                "add",
+                str(worktree_path),
+                "--name",
+                workspace_name,
+            ],
+            cwd=str(jj_repo),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"jj workspace add failed: {result.stderr}"
+        assert worktree_path.is_dir()
+
+        try:
+            # Use the real harness field name — NOT "path".
+            result = run_hook({"worktree_path": str(worktree_path)}, cwd=jj_repo)
+            assert result.returncode == 0, f"hook failed: {result.stderr}"
+            assert not worktree_path.exists()
+
+            list_result = subprocess.run(
+                ["jj", "--no-pager", "workspace", "list"],
+                cwd=str(jj_repo),
+                capture_output=True,
+                text=True,
+            )
+            assert workspace_name not in list_result.stdout, (
+                f"workspace leaked despite worktree_path payload: {list_result.stdout}"
+            )
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", workspace_name],
                     cwd=str(jj_repo),
                     capture_output=True,
                 )

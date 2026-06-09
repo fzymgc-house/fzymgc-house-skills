@@ -4,7 +4,7 @@
 # Adopt single repo-wide version replacing per-package streams
 
 **Date:** 2026-05-29
-**Status:** Accepted
+**Status:** Superseded by fhsk-dgo
 **Decision:** fhsk-7y4
 **Deciders:** Sean Brandt
 
@@ -27,3 +27,7 @@ Replace the 15 per-package release-please streams with a single repo-wide semver
 ## Consequences
 
 - Positive: release reduces to one tag + one GitHub Release; no manifest sync on new skills.\n- Negative: per-skill/per-package granularity permanently lost; divergent histories (homelab 1.0.0, dev-flow 0.9.0, jj 0.6.1) discarded, not reconciled.\n- Neutral: baseline read live from marketplace.json `$.version` at cutover.
+
+## References
+
+- Superseded by: fhsk-dgo

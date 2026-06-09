@@ -1,4 +1,5 @@
 {
   "name": "jj",
+  "version": "1.22.0",
   "description": "Jujutsu (jj) VCS workflow guidance for colocated and standalone repos"
 }

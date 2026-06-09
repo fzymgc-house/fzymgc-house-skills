@@ -4,7 +4,7 @@
 # Use tag-only cog releases with no commit to main
 
 **Date:** 2026-05-29
-**Status:** Accepted
+**Status:** Superseded by fhsk-dgo
 **Decision:** fhsk-toy
 **Deciders:** Sean Brandt
 
@@ -27,3 +27,7 @@ Configure cog with `disable_bump_commit = true` and `disable_changelog = true` s
 ## Consequences
 
 - Positive: release needs only contents:write via default GITHUB_TOKEN; main carries only functional changes.\n- Negative: no in-repo CHANGELOG.md — changelog lives only in GitHub Releases.\n- Neutral: cog.toml must use top-level keys (no [settings] wrapper) and must omit an empty [commit_types] block (empty {} disables a type).
+
+## References
+
+- Superseded by: fhsk-dgo

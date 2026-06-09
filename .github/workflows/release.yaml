@@ -1,77 +1,28 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      expected_increment:
-        description: "Guard: fail if cog computes a different bump (auto = no guard)"
-        required: false
-        default: "auto"
-        type: choice
-        options:
-          - auto
-          - major
-          - minor
-          - patch
+  push:
+    branches: [main]
 
+# release-please opens/maintains a release PR (bumps .release-please-manifest.json,
+# the plugin/marketplace $.version extra-files, and CHANGELOG.md); merging that PR
+# creates the tag + GitHub Release. All writes are performed by the release-please
+# GitHub App token minted below — the app is the named bypass actor on the
+# protect-main ruleset. The default GITHUB_TOKEN only needs read.
 permissions:
   contents: read
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # create the tag + GitHub Release
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        id: app-token
         with:
-          fetch-depth: 0 # full history + tags so cog can compute the bump
-
-      - name: Install cog
-        uses: ./.github/actions/install-cog
-
-      - name: Configure git identity for tagging
-        run: |
-          git config user.name "fzymgc-release[bot]"
-          git config user.email "fzymgc-release[bot]@users.noreply.github.com"
-
-      - name: Preview and guard the computed bump
-        env:
-          EXPECTED: ${{ inputs.expected_increment }}
-        run: |
-          set -euo pipefail
-          echo "Computed next version (dry-run):"
-          cog bump --auto --dry-run
-          if [ "$EXPECTED" != "auto" ]; then
-            CUR="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo '0.0.0')"
-            NEXT="$(cog bump --auto --dry-run 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -n1)"
-            [ -n "$NEXT" ] || { echo "::error::could not compute next version"; exit 1; }
-            IFS=. read -r cmaj cmin _ <<< "$CUR"
-            IFS=. read -r nmaj nmin _ <<< "$NEXT"
-            if   [ "$nmaj" -gt "$cmaj" ]; then KIND=major
-            elif [ "$nmin" -gt "$cmin" ]; then KIND=minor
-            else KIND=patch; fi
-            if [ "$KIND" != "$EXPECTED" ]; then
-              echo "::error::expected '$EXPECTED' bump but cog computed '$KIND' ($CUR -> $NEXT)"
-              exit 1
-            fi
-            echo "Guard OK: $KIND bump ($CUR -> $NEXT)"
-          fi
-
-      - name: Bump (create tag only) and push the tag
-        run: |
-          set -euo pipefail
-          cog bump --auto
-          TAG="$(git describe --tags --abbrev=0)"
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
-          git push origin "$TAG"
-
-      - name: Create GitHub Release with cog changelog notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
-          if [ -n "$PREV" ]; then RANGE="${PREV}..${TAG}"; else RANGE="$TAG"; fi
-          cog changelog "$RANGE" > /tmp/release-notes.md
-          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md
+          app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_PRIVATE_KEY }}
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

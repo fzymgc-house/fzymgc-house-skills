@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "extra-files": [
+        { "type": "json", "path": ".claude-plugin/marketplace.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "homelab/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "jj/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "dev-flow/plugin.json", "jsonpath": "$.version" }
+      ]
+    }
+  }
+}

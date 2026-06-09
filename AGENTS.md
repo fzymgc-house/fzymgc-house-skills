@@ -160,18 +160,30 @@ verify the relevant surface before claiming completion.
 
 ### Release Versioning
 
-Releases are cut with cocogitto (`cog`), tag-only. There are **no in-file
-version numbers** — plugins are versioned by git commit SHA (how Claude Code
-and Codex actually resolve installs) and each release is a single repo-wide
-`vX.Y.Z` git tag (the human-facing marker). Do not add `version` fields back to
-`marketplace.json`, `plugin.json`, `.codex-plugin/plugin.json`, or `SKILL.md`.
+Releases are managed by **release-please** (`.github/workflows/release.yaml`,
+push-triggered on `main`). Merging conventional-commit PRs maintains a **release
+PR** that bumps a single repo-wide version in `.release-please-manifest.json`,
+the `$.version` of the source plugin manifests (`.claude-plugin/marketplace.json`,
+`homelab/plugin.json`, `jj/plugin.json`, `dev-flow/plugin.json`) via the
+`extra-files` in `release-please-config.json`, and `CHANGELOG.md`. Merging that
+release PR creates the `vX.Y.Z` tag and the GitHub Release.
 
-To cut a release: `task release:cut` (optionally `increment=major|minor|patch`
-to guard the computed bump). This dispatches `.github/workflows/release.yaml`,
-which runs `cog bump --auto` to create the tag and a GitHub Release with notes
-from `cog changelog`. `cog` never commits to `main`
-(`disable_bump_commit`/`disable_changelog`). Conventional-commit validation
-runs in CI on the PR title (`.github/workflows/commit-lint.yaml`).
+It is **one repo-wide version line** (a single `.` package). Claude Code and
+Codex resolve installs by git commit SHA; the in-file `version` fields + tag are
+the human-facing markers, kept in sync automatically by release-please — do not
+bump them by hand.
+
+There is no local release command and no `cog`. PR titles are validated as
+conventional commits by the commit-lint workflow
+(`.github/workflows/commit-lint.yaml`, `amannn/action-semantic-pull-request`) —
+the same squash-merged titles release-please reads to compute the bump.
+
+The release-please GitHub App (`RELEASE_PLEASE_APP_ID` /
+`RELEASE_PLEASE_PRIVATE_KEY`, defined org-wide) performs the release-PR / tag /
+Release writes and must be a bypass actor on the protect-`main` ruleset.
+
+> See ADR `fhsk-dgo`, which supersedes `fhsk-toy` (tag-only cog, no commit to
+> main) and `fhsk-7y4` (no in-file versions).
 
 ### MCP Servers
 

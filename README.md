@@ -103,7 +103,6 @@ but agent-dispatch steps must follow the compatibility guidance in
 - [Task](https://taskfile.dev/) (task runner — wraps the quality gates)
 - [rumdl](https://github.com/rvben/rumdl) (markdown linting)
 - [ruff](https://docs.astral.sh/ruff/) (Python linting/formatting)
-- [cocogitto](https://docs.cocogitto.io/) (conventional commit validation)
 - [uv](https://docs.astral.sh/uv/) (runs the Python test suites)
 
 ### Setup
@@ -159,7 +158,10 @@ dev-flow/
 
 ### Commits
 
-All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format. This is enforced by a commit-msg hook via cocogitto.
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/)
+format, validated in CI by the commit-lint workflow
+([`amannn/action-semantic-pull-request`](https://github.com/amannn/action-semantic-pull-request)).
+The repo squash-merges, so the PR title is the commit that lands on `main`.
 
 ```text
 feat(grafana): add incident management support
@@ -169,11 +171,13 @@ docs: update README
 
 ### Versioning
 
-Releases are cut with [cocogitto](https://docs.cocogitto.io/) (`cog`),
-tag-only: a single repo-wide `vX.Y.Z` git tag plus a GitHub Release, derived
-from conventional commits. There are no in-file version numbers — plugins are
-versioned by git commit SHA. Cut a release with `task release:cut`. See the
-"Release Versioning" section in `AGENTS.md`.
+Releases are managed by [release-please](https://github.com/googleapis/release-please):
+merging conventional-commit PRs maintains a release PR that bumps a single
+repo-wide version (`.release-please-manifest.json`, the plugin/marketplace
+`$.version` fields, and `CHANGELOG.md`); merging it cuts the `vX.Y.Z` tag and
+GitHub Release. Claude Code and Codex resolve installs by git commit SHA — the
+in-file `version` fields and tag are human-facing markers, kept in sync by
+release-please. See the "Release Versioning" section in `AGENTS.md`.
 
 ## License
 

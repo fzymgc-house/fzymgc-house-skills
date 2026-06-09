@@ -1,4 +1,5 @@
 {
   "name": "homelab",
+  "version": "1.22.0",
   "description": "Infrastructure skills for homelab cluster (Grafana, Terraform)"
 }

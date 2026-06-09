@@ -71,17 +71,9 @@ tasks:
       - uv run --with pytest --with httpx --with pyyaml pytest {{.PYTEST_DIRS}}
         -q --import-mode=importlib
 
-  verify:
-    desc: Validate commit history against conventional-commit rules
-    cmds:
-      - cog check
-
-  release:preview:
-    desc: Show the next version cog would compute (no side effects)
-    cmds:
-      - cog bump --auto --dry-run
-
-  release:cut:
-    desc: "Cut a release via GitHub Actions. Args: increment=auto|major|minor|patch"
-    cmds:
-      - gh workflow run release.yaml -f expected_increment={{.increment | default "auto"}}
+  # Releases are managed by release-please (.github/workflows/release.yaml):
+  # merging conventional-commit PRs to main maintains a release PR that bumps
+  # .release-please-manifest.json + the plugin/marketplace $.version extra-files
+  # + CHANGELOG.md; merging that PR cuts the tag + GitHub Release. There is no
+  # local release task and no `cog` — PR titles are validated by the
+  # commit-lint workflow (amannn/action-semantic-pull-request).

@@ -25,10 +25,16 @@ first — it returns whole AST blocks. `rg` is for raw text matches; `sg` is for
 **Stance:** `rg` and `ast-grep` are the tools this plugin pushes; `grep`/`egrep`/`fgrep`/`ugrep`
 are a fallback (a box without rg, or a ugrep-only feature like fuzzy/archive search). For
 symbol lookup ("where is X / how does Y work"), `probe` outranks all of them when it is available.
-A PreToolUse hook (`dev-flow/hooks/nudge-rg-over-grep`) emits a non-blocking advisory when a search
-tool leads a shell command: toward `rg`/`ast-grep` when a grep-family tool is used, and toward
-`mcp__probe__search_code` first when the search looks symbol-shaped **and** the probe MCP is
-configured (detected once and cached, so it's cheap). It never blocks — it teaches the better tool.
+Two hooks guard this skill non-blockingly:
+
+- **PreToolUse** (`nudge-rg-over-grep`): when a grep-family tool leads a Bash command, nudges
+  toward `rg`/`ast-grep`. When the search looks symbol-shaped **and** the probe MCP is configured,
+  nudges toward `mcp__probe__search_code` first.
+- **PostToolUse** (`nudge-rg-failure`): after an `rg` command completes, detects failure patterns
+  (flag errors, `\|` alternation, suspect flags like `-rn`/`--include=`) and nudges to load this
+  skill before retrying.
+
+Both are advisory-only — they never block.
 
 ## Tool selection
 

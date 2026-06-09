@@ -1,0 +1,185 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""PostToolUse hook: nudge toward the grepping skill on rg failures.
+
+Detects rg commands that errored or silently returned wrong results, and
+injects additionalContext referencing the dev-flow:grepping skill so the
+model loads the skill before trying again.
+
+Works alongside the PreToolUse nudge-rg-over-grep hook — that hook steers
+toward rg BEFORE execution; this one catches failures AFTER.
+
+Failure patterns caught:
+
+  - Hard errors: unrecognized flag, regex parse error, missing value for
+    flag -r, unknown encoding — rg writes these to stderr.
+  - Exit code != 0 (match not found is exit 1; this is the "rg 'A\\|B'"
+    case where the backslash makes it a literal pipe OR).
+  - PATTERN HEURISTIC: exit code 0 + empty stdout + pattern contains `\\|`
+    — the silent failure where rg matches the literal text "A|B" instead
+    of OR-ing. We can't detect all silent failures, but `\\|` is the #1
+    cause and has a reliable textual signature.
+  - Additional suspect patterns: `-rn` / `-nr` (grep "recursive +
+    line-numbers" habit that turns into --replace in rg).
+
+Output: hookSpecificOutput.additionalContext only — no permissionDecision.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+
+# --- failure detectors ---------------------------------------------------------
+
+# Hard errors rg writes to stderr — always worth a nudge.
+_HARD_ERROR_RE = re.compile(
+    r"unrecognized flag|regex parse error|missing value for flag|"
+    r"unknown encoding|unrecognized file type|"
+    r"error:.*(?:invalid|unexpected)",
+    re.IGNORECASE,
+)
+
+# Patterns in the command that suggest grep muscle memory at play.
+# -r with -n: "rg -rn 'pat'" or "rg -nr 'pat'" — user wants recursive +
+#   line numbers, but rg's -r is --replace. Both `-rn` and `-nr` are traps.
+# --include= / --exclude=: grep flags that don't exist in rg.
+# --no-pager: git/jj muscle memory.
+_SUSPECT_FLAGS_RE = re.compile(r"(?:^|\s)(?:-rn|-nr|--include=|--exclude=|--no-pager)")
+
+# `\|` — the #1 silent-failure cause. grep BRE uses `\|` for alternation;
+# rg uses bare `|`. When a pattern contains `\|`, rg matches it literally
+# and returns nothing (or a bizarre literal match).
+_BRE_ALTERNATION_RE = re.compile(r"\\\|")
+
+
+def _leading_command(command: str) -> str | None:
+    """Return the first word (after env vars) of the first command segment."""
+    # Strip env prefix: VAR=val VAR2=val2 cmd ...
+    env_stripped = re.sub(r"^(?:[A-Za-z_]\w*=\S+\s+)+", "", command.strip())
+    tokens = env_stripped.split()
+    if not tokens:
+        return None
+    # Handle /usr/bin/rg, ./rg, etc.
+    return tokens[0].rsplit("/", 1)[-1]
+
+
+def _is_rg_command(command: str) -> bool:
+    return _leading_command(command) == "rg"
+
+
+def _has_hard_error(stderr: str) -> bool:
+    return bool(_HARD_ERROR_RE.search(stderr))
+
+
+def _has_suspect_flags(command: str) -> bool:
+    return bool(_SUSPECT_FLAGS_RE.search(command))
+
+
+def _has_bre_alternation(command: str) -> bool:
+    """Check if the rg pattern contains \\| — the #1 silent-failure cause."""
+    # Extract the pattern argument. rg's first positional arg after options
+    # is the pattern. We'll just search the whole command for `\|`.
+    return bool(_BRE_ALTERNATION_RE.search(command))
+
+
+def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str | None:
+    """Return a nudge message if this rg invocation looks like a failure, or None."""
+
+    # Hard error → definite nudge.
+    if _has_hard_error(stderr) or exit_code not in (0, 1):
+        return (
+            "grepping: `rg` exited with an error. Before retrying, load the "
+            "`dev-flow:grepping` skill (Skill tool) — it has the common-mistake "
+            "table ranked by frequency. The #1 silent killer is `rg 'A\\|B'` "
+            "(matches literal pipe — use `rg 'A|B'`), and a stray `-r` flag "
+            "silently corrupts output as `--replace`. Advisory only."
+        )
+
+    # Exited 1 (no match found) — could be a real "not found" or could be a
+    # silent failure like `\|`. Check for suspect patterns.
+    if exit_code == 1:
+        if _has_bre_alternation(command):
+            return (
+                "grepping: `rg` found no matches. Your pattern contains `\\|` — "
+                "in rg this matches a LITERAL pipe character, not alternation. "
+                "Use bare `|` instead: `rg 'A|B'`. See the `dev-flow:grepping` "
+                "skill for the full common-mistake table. Advisory only."
+            )
+        if _has_suspect_flags(command):
+            return (
+                "grepping: `rg` found no matches. Your command has `-rn`/`-nr` "
+                "(rg's `-r` is `--replace`, not recursive — it may have corrupted "
+                "the search) or `--include=`/`--no-pager` (unrecognized by rg). "
+                "Drop `-r` (rg is already recursive) and use `-g '*.ext'` / "
+                "`-t <type>`. Full mapping in `dev-flow:grepping`. Advisory only."
+            )
+
+    # Exited 0, stdout empty, pattern has `\|` — the truly silent case where
+    # rg matched literal pipe text and found it (or didn't). Either way, the
+    # user almost certainly meant alternation.
+    if exit_code == 0 and not stdout.strip() and _has_bre_alternation(command):
+        return (
+            "grepping: `rg` returned empty. Your pattern contains `\\|` which "
+            "matches a LITERAL pipe in rg — not alternation. Use bare `|`: "
+            "`rg 'A|B'`. See `dev-flow:grepping` for the full table. "
+            "Advisory only."
+        )
+
+    # Exited 0, stdout empty, suspect flags → may have corrupted search.
+    if exit_code == 0 and not stdout.strip() and _has_suspect_flags(command):
+        return (
+            "grepping: `rg` returned empty. Your command has flags that may "
+            "not do what you expect in rg (`-rn` → replace, `--include=` "
+            "→ unrecognized). Load `dev-flow:grepping` for the flag mapping. "
+            "Advisory only."
+        )
+
+    return None
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, OSError, AttributeError):
+        sys.exit(0)
+
+    tool_name = data.get("tool_name", "")
+    if tool_name != "Bash":
+        sys.exit(0)
+
+    tool_input = data.get("tool_input") or {}
+    command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    if not command or not _is_rg_command(command):
+        sys.exit(0)
+
+    tool_response = data.get("tool_response") or {}
+    stderr = tool_response.get("stderr", "") if isinstance(tool_response, dict) else ""
+    stdout = tool_response.get("stdout", "") if isinstance(tool_response, dict) else ""
+    exit_code = (
+        tool_response.get("exit_code", 0) if isinstance(tool_response, dict) else 0
+    )
+
+    nudge = _build_nudge(command, stderr, exit_code, stdout)
+    if nudge is None:
+        sys.exit(0)
+
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": nudge,
+        }
+    }
+    try:
+        json.dump(result, sys.stdout)
+    except OSError:
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

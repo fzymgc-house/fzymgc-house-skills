@@ -61,16 +61,34 @@ jobs:
       - name: Bump (create tag only) and push the tag
         run: |
           set -euo pipefail
+          # cog bump --auto is a no-op when nothing since the last tag is
+          # version-bumping (e.g. only chore/docs commits). Detect that by
+          # comparing the latest tag before and after — if unchanged, there is
+          # nothing to release, so finish cleanly instead of re-releasing the
+          # existing tag (which 422s in the release step).
+          PRE_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
           cog bump --auto
           TAG="$(git describe --tags --abbrev=0)"
+          if [ "$TAG" = "$PRE_TAG" ]; then
+            echo "No version-bumping commits since ${PRE_TAG:-<none>} (chore/docs only?) — nothing to release."
+            echo "RELEASE_SKIP=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           git push origin "$TAG"
 
       - name: Create GitHub Release with cog changelog notes
+        if: env.RELEASE_SKIP != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # Idempotent: if a release for this tag already exists (e.g. a
+          # re-dispatch after a partial run), do not fail.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to do."
+            exit 0
+          fi
           PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
           if [ -n "$PREV" ]; then RANGE="${PREV}..${TAG}"; else RANGE="$TAG"; fi
           cog changelog "$RANGE" > /tmp/release-notes.md

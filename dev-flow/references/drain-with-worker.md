@@ -31,9 +31,10 @@ command -v cmux >/dev/null 2>&1 || { echo "cmux not on PATH — drain-with-worke
 ## Launch sequence (drive cmux from your own pane)
 
 Each step is **verified before the next** — the cwd, direnv, and submit steps each failed
-live when chained or assumed. Capture the new surface ref from step 1 and reuse it.
+live when chained or assumed. Capture the new surface ref from step 1 and reuse it **as
+the full `surface:<N>` ref** in every `--surface` arg — a bare `<N>` errors. [Gotcha #4]
 
-1. **New pane** (don't steal focus): `cmux new-pane --type terminal --direction right --focus false` → capture `surface:<N>`.
+1. **New pane** (don't steal focus): `cmux new-pane --type terminal --direction right --focus false` → capture the printed ref `surface:<N>`. Pass it **verbatim, prefix included** (`--surface surface:<N>`); `--surface <N>` without the `surface:` prefix is rejected.
 2. **cd as its OWN verified step** — never chain `cd X && claude`:
    `cmux send --surface <s> "cd $WORKSPACE"` → `cmux send-key --surface <s> Enter` → `cmux send --surface <s> "pwd"` + Enter → `cmux read-screen --surface <s>` and **confirm pwd == `$WORKSPACE`**. [Gotcha #1]
 3. **`direnv allow`** — a fresh split hits a *blocked* `.envrc`: `cmux send --surface <s> "direnv allow"` + Enter → `read-screen` and confirm `direnv: loading` (not `…is blocked`). [Gotcha #5]
@@ -106,6 +107,7 @@ same command) to keep watching, except on `complete`:
 | 1 | cmux split does NOT inherit cwd; `cd X && claude` chains drop the `cd` | `cd` as its own send, verify `pwd` via read-screen |
 | 2 | Worker stalls on the first permission prompt | launch with `--dangerously-skip-permissions` |
 | 3 | `/goal` rejects conditions >4000 chars | use the thin bead-driven condition (no handoff file) |
+| 4 | `cmux --surface` rejects a bare index (`--surface 12` errors) | pass the **full ref `surface:<N>`** — capture it verbatim from `new-pane` and reuse the prefixed form in every `send` / `send-key` / `read-screen` |
 | 5 | Fresh split hits a blocked `.envrc` → no workspace env | `direnv allow` + verify `direnv: loading` before launch |
 | 6 | Drain bead is itself an in_progress epic child → stall signature unreachable | filter `startswith("$SCOPE.")` to count task-children only |
 | 7 | Long drain drifts from main; pre-push rebase conflicts; `jj new` forks topology | worker condition tells it to invoke `jj:jujutsu` |

@@ -97,7 +97,12 @@ The user has asked for an isolated workspace (Step 0 consent). Do you already ha
 - A tool named `EnterWorktree`, `WorktreeCreate`, or similar
 - A `/worktree` slash command
 - A `--worktree` flag on the command you're invoking
-- A repo-level `WorktreeCreate` hook (this repo has one at `.claude/hooks/worktree-create` — VCS-aware, handles both git and jj)
+- A `WorktreeCreate`/`WorktreeRemove` hook. The dev-flow plugin ships VCS-aware
+  ones (`dev-flow/hooks/worktree-create`, `worktree-remove`) declared in its
+  `hooks.json`: a configured `WorktreeCreate` hook *replaces* `EnterWorktree`'s
+  built-in git-worktree behavior, so in a jj or colocated jj+git repo
+  `EnterWorktree` creates a sibling jj **workspace** (trunk-based + bookmarked),
+  not a `.claude/worktrees/` git worktree.
 
 If you have one, use it and skip to Step 3.
 
@@ -105,6 +110,14 @@ Native tools handle directory placement, branch/bookmark creation, hook
 installation, and cleanup automatically. Using `git worktree add` or
 `jj workspace add` when you have a native tool creates phantom state your
 harness can't see or manage.
+
+> **`ExitWorktree` caveat (jj):** `ExitWorktree`'s uncommitted-change check is
+> git-only — in a jj workspace it reports "Could not verify worktree state" and
+> requires `discard_changes: true` to remove. That bypasses its safety check, so
+> before removing a jj worktree confirm your work is committed/pushed yourself
+> (or finish via `finishing-a-development-branch`, which forgets the workspace
+> explicitly). Removal itself works: the `WorktreeRemove` hook runs
+> `jj workspace forget` + `rm -rf`.
 
 Only proceed to Step 1b if you have no native worktree tool available.
 

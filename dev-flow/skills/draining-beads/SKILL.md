@@ -101,6 +101,23 @@ lessons, rejections) and `cd`'d to `drain_workspace`. Each `/goal` Stop-hook
 re-fire runs **ONE** bead via the 12 steps below. `<drain-id>` / `<epic-id>` /
 `<scope>` / `<sentinel>` come from the drain bead.
 
+**Step 0 — Isolation guard (precondition, every re-fire).** Before mutating any
+bead, confirm `drain_workspace` is an isolated workspace, not the shared default.
+The drain mutates VCS and bead state on a loop; in the shared default jj workspace
+each `jj` command snapshots the working copy and can move `@` off unrelated
+in-flight work, orphaning it. `/drain` setup auto-isolates, but an older drain bead
+may carry a default-workspace path — so the worker re-checks (must already be
+`cd`'d into `drain_workspace`):
+
+```bash
+dev-flow/scripts/ensure-isolated-workspace check || exit 1
+```
+
+The script exits non-zero with a `STATUS: FAILED` message when `drain_workspace`
+is the shared default jj workspace (git repos and isolated workspaces pass). On
+failure, append `bd note <drain-id> "halt: drain_workspace not isolated"`, run
+`/goal clear`, send a PushNotification, and exit. Do NOT proceed to step 1.
+
 1. **Check sentinel** — run the mode-specific bd query (see "Sentinel design"). If
    met: emit a completion summary, append
    `bd note <drain-id> "result: complete; iterations=<N>, ..."`, run

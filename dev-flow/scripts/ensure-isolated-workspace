@@ -1,0 +1,190 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+# SPDX-License-Identifier: Apache-2.0
+#
+# ensure-isolated-workspace — keep VCS-mutating loops (e.g. /drain) out of the
+# shared default jj workspace, where every jj command snapshots the working copy
+# and can move @ off unrelated in-flight work, orphaning it.
+#
+# Subcommands:
+#   ensure --name <name>
+#       Print an isolated workspace root to stdout (the value to use as
+#       drain_workspace). Behavior by VCS state:
+#         - default jj workspace  -> create a dedicated sibling workspace
+#           (<repo>_worktrees/<name>), trunk-based + bookmarked, exactly like the
+#           worktree-create hook, and print its path.
+#         - additional jj workspace (already isolated) -> print its root, no-op.
+#         - git repo -> print the repo/worktree root unchanged (git's
+#           default-workspace snapshot hazard does not apply; /drain's
+#           branch-safety check already refuses main/master).
+#       Exits 1 with a message on failure (never silently falls back to the
+#       shared workspace).
+#
+#   check
+#       Guard for the drain worker. Exit 0 if the CWD is isolated; exit 1 with a
+#       "STATUS: FAILED" message if it is the shared default jj workspace.
+#
+# jj default vs additional workspace: .jj/repo is a DIRECTORY in the default
+# workspace and a FILE (a pointer back to the main .jj) in additional ones.
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hooks"))
+from worktree_helpers import (  # noqa: E402
+    detect_repo_root,
+    fetch_origin,
+    jj_fresh_base_args,
+    run_cmd,
+    sanitize_for_output,
+    validate_safe_name,
+)
+
+
+def _jj_workspace_root(cwd: Path) -> Path | None:
+    """Absolute root of the current jj workspace, or None if not a jj repo."""
+    result = run_cmd(["jj", "--no-pager", "workspace", "root"], cwd=cwd)
+    if result.returncode != 0:
+        return None
+    root = result.stdout.strip()
+    if not root:
+        return None
+    return Path(root)
+
+
+def _is_default_jj_workspace(ws_root: Path) -> bool:
+    """True only in the shared default workspace (.jj/repo is a directory).
+
+    In an additional workspace .jj/repo is a file pointing back at the main .jj,
+    so this returns False there.
+    """
+    return (ws_root / ".jj" / "repo").is_dir()
+
+
+def _cmd_check(cwd: Path) -> int:
+    ws_root = _jj_workspace_root(cwd)
+    # Not a jj repo (git or none): nothing to guard — git has no shared-default
+    # snapshot hazard, and /drain's branch-safety check covers the main/master case.
+    if ws_root is None:
+        return 0
+    if _is_default_jj_workspace(ws_root):
+        print(
+            "STATUS: FAILED — current workspace is the shared default jj workspace, "
+            "not isolated. Refusing to mutate VCS/bead state here (re-run /drain to "
+            "auto-isolate, or repoint to a dedicated workspace).",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
+def _cmd_ensure(cwd: Path, name: str) -> int:
+    ws_root = _jj_workspace_root(cwd)
+
+    # git or non-VCS: print the repo/worktree root as-is.
+    if ws_root is None:
+        try:
+            repo_root = detect_repo_root(cwd=cwd)
+        except RuntimeError as exc:
+            print(f"ERROR: {sanitize_for_output(str(exc))}", file=sys.stderr)
+            return 1
+        print(repo_root)
+        return 0
+
+    # Already isolated (additional jj workspace): use it unchanged.
+    if not _is_default_jj_workspace(ws_root):
+        print(ws_root)
+        return 0
+
+    # Shared default jj workspace: create a dedicated sibling workspace.
+    try:
+        validate_safe_name(name, "workspace name")
+    except ValueError as exc:
+        print(f"ERROR: {sanitize_for_output(str(exc))}", file=sys.stderr)
+        return 1
+
+    repo_root = ws_root
+    worktree_parent = repo_root.parent / f"{repo_root.name}_worktrees"
+    worktree_path = worktree_parent / name
+
+    # Idempotent: reuse an existing workspace dir of the same name (e.g. a
+    # resumed drain) rather than failing.
+    if worktree_path.exists():
+        print(worktree_path)
+        return 0
+
+    try:
+        worktree_parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        print(
+            f"ERROR: failed to create worktree parent "
+            f"'{sanitize_for_output(str(worktree_parent))}': "
+            f"{sanitize_for_output(str(exc))}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Fetch + base on current remote trunk so the workspace never starts stale
+    # (the local `main` bookmark does not auto-advance on `jj git fetch`).
+    fetch_origin(repo_root, is_jj=True)
+    base_args = jj_fresh_base_args(repo_root)
+    workspace_name = f"worktree-{name}"
+    add = run_cmd(
+        ["jj", "--no-pager", "workspace", "add", str(worktree_path), "--name", workspace_name, *base_args],
+        cwd=repo_root,
+    )
+    if add.returncode != 0:
+        print(
+            f"ERROR: jj workspace add failed: "
+            f"{sanitize_for_output((add.stderr or add.stdout or '').strip()[:500])}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Create a push/PR-ready bookmark on the new workspace's working copy. Run
+    # it from the new workspace so @ resolves there. Non-fatal: the workspace is
+    # usable for editing even if the bookmark fails (only pushing would need it).
+    bookmark = run_cmd(
+        ["jj", "--no-pager", "bookmark", "create", workspace_name, "-r", "@"],
+        cwd=worktree_path,
+    )
+    if bookmark.returncode != 0:
+        print(
+            f"WARNING: jj bookmark create {workspace_name} failed — workspace is "
+            f"usable but not push-ready: "
+            f"{sanitize_for_output((bookmark.stderr or '').strip()[:300])}",
+            file=sys.stderr,
+        )
+
+    print(worktree_path)
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="ensure-isolated-workspace")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    ensure = sub.add_parser("ensure", help="print an isolated workspace root (create if in default jj workspace)")
+    ensure.add_argument("--name", required=True, help="workspace name (sanitized; becomes <repo>_worktrees/<name>)")
+
+    sub.add_parser("check", help="exit non-zero if the CWD is the shared default jj workspace")
+
+    args = parser.parse_args()
+    cwd = Path.cwd()
+
+    if args.command == "check":
+        return _cmd_check(cwd)
+    if args.command == "ensure":
+        return _cmd_ensure(cwd, args.name)
+    parser.error(f"unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

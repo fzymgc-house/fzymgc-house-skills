@@ -12,7 +12,9 @@
 #   2. Detect repo root via git rev-parse or jj root
 #   3. Create parent dir: <repo-parent>/<repo-name>_worktrees/
 #   4. VCS-aware workspace creation:
-#      - jj repos (.jj/): jj workspace add --name worktree-<name>
+#      - jj repos (.jj/): jj workspace add --name worktree-<name>, then
+#        jj bookmark create worktree-<name> (push/PR-ready; jj has no implicit
+#        branch the way git's -b gives one)
 #      - git repos: git worktree add -b worktree/<name>
 #   5. Install git hooks (lefthook) if configured
 #   6. Print worktree path to stdout
@@ -279,6 +281,26 @@ def main() -> int:
                 )
             return 1
         _workspace_created = True
+
+        # Create a bookmark on the new workspace's working copy so it is
+        # push/PR-ready. jj has no implicit branch (unlike git's `-b` below);
+        # without this, the workspace cannot be pushed without a manual
+        # `jj bookmark create`. Name it after the workspace for discoverability
+        # (matches `jj workspace list` and the worktree-remove forget target).
+        # A bookmark failure is non-fatal: the workspace is still usable for
+        # editing, only pushing would need a manual bookmark.
+        bookmark_result = run_cmd(
+            ["jj", "--no-pager", "bookmark", "create", f"worktree-{name}", "-r", "@"],
+            cwd=worktree_path,
+        )
+        if bookmark_result.returncode != 0:
+            bm_err = sanitize_for_output((bookmark_result.stderr or "").strip()[:500])
+            print(
+                f"WARNING: jj bookmark create worktree-{name} failed — workspace is "
+                f"usable but not push-ready (create the bookmark manually before "
+                f"pushing): {bm_err}",
+                file=sys.stderr,
+            )
     else:
         fetch_origin(repo_root, is_jj=False)
         base_ref = git_fresh_base_ref(repo_root)

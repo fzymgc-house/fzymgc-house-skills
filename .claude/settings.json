@@ -28,7 +28,7 @@
       {
         "hooks": [
           {
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/worktree-create",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/dev-flow/hooks/worktree-create",
             "timeout": 30,
             "type": "command"
           }
@@ -39,7 +39,7 @@
       {
         "hooks": [
           {
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/worktree-remove",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/dev-flow/hooks/worktree-remove",
             "timeout": 15,
             "type": "command"
           }

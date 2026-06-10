@@ -9,6 +9,7 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-06-10 | [fhsk-8g6](fhsk-8g6-drain-finishes-branch-autonomously-push-pr-at-clean-sentinel.md) | Drain finishes the branch autonomously (push + PR) at the clean sentinel | Accepted |
 | 2026-06-09 | [fhsk-dgo](fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md) | Use release-please with in-file plugin versions (reverse cog tag-only) | Accepted |
 | 2026-06-01 | [fhsk-e0u](fhsk-e0u-use-two-tier-spine-overlay-memory-scope-model.md) | Use two-tier spine/overlay memory scope model | Accepted |
 | 2026-05-30 | [fhsk-4bi](fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md) | Adopt @probelabs/maid as the primary Mermaid lint engine | Accepted |

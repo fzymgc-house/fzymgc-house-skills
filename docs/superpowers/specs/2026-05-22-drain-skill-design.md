@@ -95,7 +95,11 @@ Each iteration runs the following 12-step body, embedded verbatim in `commands/d
 
 ```text
 1.  Check sentinel — run mode-appropriate bd query.
-    If met: emit completion summary; invoke finishing-a-development-branch; exit.
+    If met: emit completion summary; invoke finishing-a-development-branch in
+    autonomous (non-interactive) mode — fixed to Option 2 (push + create PR) +
+    review gate, NO menu/prompt; carry it through to PR-open + gate PASS; close
+    the drain bead only after a clean finish (a finish failure is halt #3 and
+    leaves the bead in_progress); exit.
 
 2.  Check halt conditions — scan drain bead's notes for "rejection: ... N=3+" lines
     OR check for any "halt:" note (idempotency on re-entry).
@@ -304,9 +308,14 @@ Subsequent `/drain` invocations call into a read-only version of `/drain init`'s
 
 ```text
 bd note <drain-id> "result: complete; iterations=<N>, duration=<ms>, tokens=<n>"
+Invoke dev-flow:finishing-a-development-branch (autonomous mode: no menu/prompt;
+  fixed to Option 2 push + create PR + review gate; carry through to gate PASS)
+# Only after a clean finish (pushed, PR open, gate PASS):
 bd close <drain-id> --reason="drain completed cleanly"
-Invoke dev-flow:finishing-a-development-branch
-PushNotification "Drain <drain-id> complete (<N> beads closed)"
+PushNotification "Drain <drain-id> complete (<N> beads closed); PR open"
+# If the finish fails (aggregate tests / push / PR error): halt condition #3 —
+#   note "halt: finish-failure", leave drain bead in_progress, /goal clear,
+#   PushNotification; do NOT close the drain bead.
 ```
 
 **Halt:**
@@ -335,7 +344,7 @@ Resume then runs pre-flight steps 1–7 against the recovered scope and re-fires
 |------|----------|
 | Codex compatibility | Skill intro notes `/goal` is Claude Code-only; Codex users get a manual loop recipe. |
 | Context bloat | Skill recommends `/compact` when iteration count > ~30 OR tokens > 70% limit. `/goal` survives `/compact` (Stop hook, not prompt-bound). |
-| Pushing commits | Subagents commit but do not push. Orchestrator pushes only at clean-sentinel via `finishing-a-development-branch`. On halt, operator pushes manually after triage. |
+| Pushing commits | Subagents commit but do not push. At clean-sentinel the worker pushes + opens the PR itself via `finishing-a-development-branch` in autonomous mode (no menu/prompt — fixed to Option 2 + review gate). On halt, operator pushes manually after triage. |
 | Drain bead vs epic bead status | Orthogonal. Epic closes via `finishing-a-development-branch`; drain closes per its own lifecycle. |
 | `bd dolt` server crashes mid-drain | Falls under halt #3 (VCS / harness failure). Drain bead stays in_progress; operator restarts server and `/drain resume`s. |
 | PushNotification unavailable | Fall back to final-turn message text. |

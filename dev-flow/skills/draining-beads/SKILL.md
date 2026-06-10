@@ -120,9 +120,30 @@ failure, append `bd note <drain-id> "halt: drain_workspace not isolated"`, run
 
 1. **Check sentinel** — run the mode-specific bd query (see "Sentinel design"). If
    met: emit a completion summary, append
-   `bd note <drain-id> "result: complete; iterations=<N>, ..."`, run
-   `bd close <drain-id> --reason="drain completed cleanly"`, invoke
-   `dev-flow:finishing-a-development-branch`, then exit (do NOT continue to step 2).
+   `bd note <drain-id> "result: complete; iterations=<N>, ..."`, then **finish the
+   branch autonomously** (see below), and exit (do NOT continue to step 2).
+
+   **Finishing is mandatory and non-interactive.** A drain is hands-off: at the
+   clean sentinel the worker MUST invoke `dev-flow:finishing-a-development-branch`
+   in its **autonomous (non-interactive) mode** and carry it through itself — no
+   menu, no "which option?", no stopping at "ready to push." Hand off with an
+   explicit directive, e.g.:
+
+   > Finish autonomously: push and open a PR — do not present the menu. Fixed to
+   > Option 2 (push + create PR) + the `/review-pr` gate.
+
+   The worker pushes the branch, opens the PR, and runs the Option 2 review-gate
+   loop (`/review-pr <n>` → `/address-findings <n>` → re-review until **PASS**)
+   with no operator input.
+
+   **Close the drain bead only after a clean finish.** On success (branch pushed,
+   PR open, gate PASS), run `bd close <drain-id> --reason="drain completed
+   cleanly"` and exit. If the autonomous finish cannot complete — aggregate tests
+   fail at finish, or the push / PR creation errors — treat it as **halt
+   condition #3**: append `bd note <drain-id> "halt: finish-failure;
+   detail=<short>"`, leave the drain bead `in_progress` (resumable via
+   `/drain resume <drain-id>`), run `/goal clear`, send a PushNotification, and
+   exit. Never prompt the operator.
 2. **Check halt conditions** — scan `bd show <drain-id> --json | jq -r '.[0].notes'`
    for any "rejection: <id> N=3+" line OR any prior "halt:" line. On match: append
    `bd note <drain-id> "halt: <reason>"`, run `/goal clear`, send PushNotification, exit.
@@ -231,9 +252,10 @@ model's context limit, run `/compact` between iterations. `/goal` survives
 
 ### Push timing
 
-Subagents commit but do not push. The orchestrator pushes only at the clean
-sentinel, via `dev-flow:finishing-a-development-branch`. On halt, the operator
-pushes manually after triage.
+Subagents commit but do not push. At the clean sentinel the worker pushes and
+opens the PR **itself**, autonomously, via `dev-flow:finishing-a-development-branch`
+in its non-interactive mode (no menu, no prompt — see iteration step 1). On halt,
+the operator pushes manually after triage.
 
 ### `bd dolt` server crash mid-drain
 
@@ -265,6 +287,7 @@ authoritative audit trail regardless of notification delivery.
 
 | Resource | Path |
 |---|---|
+| Visual flow reference (mermaid) | `dev-flow/references/drain-flow.md` |
 | Spec (original design) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
 | Spec (cold-boot handoff redesign) | `docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
@@ -275,6 +298,7 @@ authoritative audit trail regardless of notification delivery.
 | ADR: protocol in skill / cold-boot condition / bead carrier | `fhsk-eqt`, `fhsk-zds`, `fhsk-e4i` |
 | ADR: `bd mol pour` (superseded) | `fhsk-rqh` |
 | ADR: lessons in bd notes | `fhsk-ce3` |
+| ADR: autonomous finish (push + PR) at clean sentinel | `fhsk-8g6` |
 | ADR: `/drain init` explicit | `fhsk-0cd` |
 | Rule 1 (structure in specs/plans) | `dev-flow/AGENTS.md` |
 | Rule 5 (model selection on beads) | `dev-flow/AGENTS.md` |

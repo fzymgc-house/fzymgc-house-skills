@@ -3,7 +3,9 @@ name: finishing-a-development-branch
 description: >-
   Use when implementation is complete, all tests pass, and you need to
   decide how to integrate the work (git or jj) - guides completion of
-  development work by presenting structured options for merge, PR, or cleanup
+  development work by presenting structured options for merge, PR, or cleanup.
+  Supports an autonomous (non-interactive) mode for callers like the drain
+  worker that must push and open a PR without prompting.
 metadata:
   author: fzymgc-house
 ---
@@ -21,6 +23,49 @@ Guide completion of development work by presenting clear options and handling ch
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
+## Autonomous mode (non-interactive callers)
+
+Some callers run this skill with no operator at the keyboard — most notably the
+`dev-flow:draining-beads` worker, which reaches a clean sentinel mid-`/goal` and
+must finish the branch in the same turn.
+
+**How autonomous mode is selected.** It is active when the invoking instruction
+contains an explicit non-interactive directive — it tells you to finish without
+prompting and to push + open a PR yourself (e.g. "finish autonomously: push and
+open a PR — do not present the menu"). The exact wording is **not** a magic
+string; any unambiguous non-interactive push-and-PR directive selects this mode.
+Absent such a directive, run the normal interactive Process. When it is active,
+**you MUST NOT present the Step 4 menu and MUST NOT stop to ask.** Apply these
+overrides; everything else in The Process is unchanged:
+
+- **The action is fixed to Option 2 (Push and create PR)** followed by the
+  Option 2 review gate. You MUST NOT auto-select merge (Option 1), keep
+  (Option 3), or discard (Option 4) — those are human-only decisions. If the
+  workspace is detached-HEAD / bookmark-less, use the 3-option set's "Push as new
+  branch and create a Pull Request" equivalent, deriving the branch name from the
+  existing workspace bookmark or the driving bead id (e.g. the drain / epic id) —
+  never block waiting for a name, and never discard or keep silently.
+- **Step 0 (pre-flight bd check):** do NOT `AskUserQuestion`. A clean drain
+  sentinel means every in-scope bead is already closed, so this is normally a
+  silent no-op. If an open/in-progress bead is unexpectedly found, file a
+  follow-up via `dev-flow:bead-create-smart` and close the original
+  `--reason="Deferred to follow-up <new-id> at autonomous finish"`. Never block.
+- **Step 5.5 (post-merge close):** do NOT `AskUserQuestion`. Automatically close
+  every in-scope bead that landed with this branch
+  (`--reason="Merged in <branch> via PR #<number>"`), then run the epic /
+  review-epic auto-close exactly as written.
+- **Still mandatory (autonomous mode removes the *menu*, not these):**
+  - **Test verification (Step 1).** If tests fail at finish, do not stop
+    silently — report the failure to the caller. For a drain worker this is
+    **halt condition #3** (recorded on the drain bead, which stays
+    `in_progress`); do not close the drain bead.
+  - **The worker performs the push and PR creation directly** — execute the
+    Step 5 Option 2 `git`/`jj` + `gh` commands yourself in this turn; never print
+    push commands and wait for an operator, and never stop at "ready to push."
+  - **The full Option 2 review-gate loop** (`/review-pr <n>` →
+    `/address-findings <n>` → re-review until **PASS**). The work is not complete
+    until the gate reaches PASS.
+
 ## VCS Detection
 
 ```bash
@@ -36,6 +81,8 @@ fi
 ### Step 0: Pre-flight bd Check
 
 Before verifying tests or presenting options, reconcile the bd state for this branch's epic. Open beads at this point typically indicate work that the user thinks is complete but the tracker doesn't yet know about.
+
+> **Autonomous mode:** skip the `AskUserQuestion` in 3b — file follow-ups and continue silently per "Autonomous mode (non-interactive callers)" above.
 
 1. **Identify the epic / design bead.** Determine the bd ID associated with this branch's work:
 
@@ -140,6 +187,10 @@ jj log -r 'trunk()' --no-graph -T 'bookmarks' --limit 1
 Or ask: "This branch split from main - is that correct?"
 
 ### Step 4: Present Options
+
+> **Autonomous mode:** do NOT present this menu. The action is fixed to Option 2
+> (Push and create PR) + review gate — see "Autonomous mode (non-interactive
+> callers)" above, then go straight to Step 5 Option 2.
 
 **Normal repo and named-branch worktree/workspace — present exactly these 4 options:**
 
@@ -339,6 +390,8 @@ Then: cleanup workspace (Step 6).
 
 After **Option 1 (merge)** or **Option 2 (PR)** succeeds, reconcile bd state by closing beads whose work landed with this branch. Skip this step for Options 3 (keep) and 4 (discard).
 
+> **Autonomous mode:** skip the `AskUserQuestion` in step 2 — close every in-scope landed bead automatically per "Autonomous mode (non-interactive callers)" above.
+
 1. **List in-flight beads in the epic:** `bd list --parent <epic-id> --status=in_progress --status=open` (covers both claimed and unclaimed). If no epic is associated with this branch, skip the step.
 
 2. **Ask via `AskUserQuestion` (multi-select):** "Which beads merged with this work? (select all that apply)". Present each candidate with title and ID. Pre-select beads whose `--claim` matches the current actor as a hint.
@@ -508,7 +561,9 @@ the review epic is closed (by `/review-pr`, backstopped by Step 5.5).
 - Detect VCS before running commands
 - Verify tests before offering options
 - Detect environment before presenting menu
-- Present exactly 4 options (or 3 for detached HEAD / bookmark-less workspace)
+- Present exactly 4 options (or 3 for detached HEAD / bookmark-less workspace) —
+  EXCEPT in autonomous mode, where the menu is skipped and the action is fixed to
+  Option 2 (push + PR) + review gate
 - Get typed confirmation for Option 4
 - Run the post-merge interactive close (Step 5.5) after Options 1 and 2
 - Run the `/review-pr` gate to a PASS verdict after Option 2 before declaring
@@ -523,6 +578,8 @@ the review epic is closed (by `/review-pr`, backstopped by Step 5.5).
 
 - **subagent-driven-development** (Step 7) - After all tasks complete
 - **executing-plans** (Step 5) - After all batches complete
+- **draining-beads** (iteration step 1, clean sentinel) - In **autonomous mode**:
+  no menu, fixed to Option 2 (push + PR) + review gate
 
 **Pairs with:**
 

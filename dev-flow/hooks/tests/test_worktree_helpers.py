@@ -19,6 +19,7 @@ from worktree_helpers import (
     jj_fresh_base_args,
     run_cmd,
     sanitize_for_output,
+    setup_beads_redirect,
     validate_safe_name,
 )
 
@@ -355,3 +356,61 @@ class TestGitFreshBaseRef:
 
         assert git_fresh_base_ref("/repo", run=fake_run) == "HEAD"
         assert "WARNING" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# setup_beads_redirect
+# ---------------------------------------------------------------------------
+
+
+class TestSetupBeadsRedirect:
+    def test_noop_when_main_repo_has_no_beads(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        worktree = tmp_path / "repo_worktrees" / "feat"
+        worktree.mkdir(parents=True)
+        repo.mkdir()
+
+        assert setup_beads_redirect(repo, worktree) is False
+        assert not (worktree / ".beads").exists()
+
+    def test_writes_relative_redirect_to_main_beads(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        (repo / ".beads").mkdir(parents=True)
+        worktree = tmp_path / "repo_worktrees" / "feat"
+        worktree.mkdir(parents=True)
+
+        assert setup_beads_redirect(repo, worktree) is True
+
+        redirect = worktree / ".beads" / "redirect"
+        assert redirect.is_file()
+        content = redirect.read_text()
+        assert content.endswith("\n")
+        target = content.strip()
+        # Relative paths resolve from the worktree root (parent of .beads)
+        assert not Path(target).is_absolute()
+        assert (worktree / target).resolve() == (repo / ".beads").resolve()
+
+    def test_reuses_existing_checked_out_beads_dir(self, tmp_path: Path):
+        """A workspace checkout may already contain tracked .beads/ files."""
+        repo = tmp_path / "repo"
+        (repo / ".beads").mkdir(parents=True)
+        worktree = tmp_path / "repo_worktrees" / "feat"
+        (worktree / ".beads").mkdir(parents=True)
+        (worktree / ".beads" / "config.yaml").write_text("prefix: test\n")
+
+        assert setup_beads_redirect(repo, worktree) is True
+        assert (worktree / ".beads" / "redirect").is_file()
+        assert (worktree / ".beads" / "config.yaml").is_file()
+
+    def test_write_failure_warns_and_returns_false(self, tmp_path: Path, capsys):
+        repo = tmp_path / "repo"
+        (repo / ".beads").mkdir(parents=True)
+        worktree = tmp_path / "repo_worktrees" / "feat"
+        worktree.mkdir(parents=True)
+        # A *file* named .beads makes mkdir/write fail
+        (worktree / ".beads").write_text("not a directory\n")
+
+        assert setup_beads_redirect(repo, worktree) is False
+        err = capsys.readouterr().err
+        assert "WARNING" in err
+        assert "redirect" in err

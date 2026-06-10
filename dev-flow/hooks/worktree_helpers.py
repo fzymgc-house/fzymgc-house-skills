@@ -6,11 +6,13 @@ Functions:
     validate_safe_name(name, label) — reject path traversal/metacharacters
     run_cmd(args, *, cwd)           — thin subprocess wrapper, never raises
     detect_repo_root(*, cwd)        — find repo root via git or jj
+    setup_beads_redirect(root, wt)  — point a jj workspace's bd at the main DB
     cleanup_empty_parent(parent)    — rmdir if directory exists and is empty
 """
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -209,6 +211,43 @@ def git_fresh_base_ref(repo_root: Path | str, *, run=run_cmd) -> str:
         file=sys.stderr,
     )
     return "HEAD"
+
+
+def setup_beads_redirect(repo_root: Path | str, worktree_path: Path | str) -> bool:
+    """Point a new workspace's ``.beads/`` at the main repo's beads database.
+
+    jj workspaces are not git worktrees, so bd's git common-directory
+    discovery does not apply: the workspace's checked-out ``.beads/`` (tracked
+    config files, no database) resolves as a standalone workspace and bd
+    commands fail there. bd's documented mechanism for sharing a database is
+    an untracked ``.beads/redirect`` file containing a single path to the
+    shared ``.beads`` directory; relative paths resolve from the workspace
+    root.
+
+    Never fails the caller: returns False and warns to stderr when the
+    redirect cannot be written. No-op (returns False, no warning) when the
+    main repo has no ``.beads`` directory.
+    """
+    repo_root = Path(repo_root)
+    worktree_path = Path(worktree_path)
+    main_beads = repo_root / ".beads"
+    if not main_beads.is_dir():
+        return False
+    target = os.path.relpath(main_beads, worktree_path)
+    worktree_beads = worktree_path / ".beads"
+    try:
+        worktree_beads.mkdir(mode=0o700, exist_ok=True)
+        (worktree_beads / "redirect").write_text(target + "\n")
+    except OSError as exc:
+        print(
+            f"WARNING: failed to write .beads/redirect in "
+            f"'{sanitize_for_output(str(worktree_path))}' — bd commands in this "
+            f"worktree will not resolve the shared database: "
+            f"{sanitize_for_output(str(exc))}",
+            file=sys.stderr,
+        )
+        return False
+    return True
 
 
 def cleanup_empty_parent(parent: Path | str) -> None:

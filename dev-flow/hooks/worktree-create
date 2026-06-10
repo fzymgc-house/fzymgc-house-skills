@@ -14,7 +14,9 @@
 #   4. VCS-aware workspace creation:
 #      - jj repos (.jj/): jj workspace add --name worktree-<name>, then
 #        jj bookmark create worktree-<name> (push/PR-ready; jj has no implicit
-#        branch the way git's -b gives one)
+#        branch the way git's -b gives one), then write .beads/redirect to the
+#        main repo's .beads (jj workspaces are not git worktrees, so bd's
+#        common-directory discovery cannot find the shared database)
 #      - git repos: git worktree add -b worktree/<name>
 #   5. Install git hooks (lefthook) if configured
 #   6. Print worktree path to stdout
@@ -41,6 +43,7 @@ from worktree_helpers import (
     jj_fresh_base_args,
     run_cmd,
     sanitize_for_output,
+    setup_beads_redirect,
     validate_safe_name,
 )
 
@@ -301,6 +304,10 @@ def main() -> int:
                 f"pushing): {bm_err}",
                 file=sys.stderr,
             )
+
+        # jj workspaces are not git worktrees, so bd cannot discover the shared
+        # database via the git common directory — point it there explicitly.
+        setup_beads_redirect(repo_root, worktree_path)
     else:
         fetch_origin(repo_root, is_jj=False)
         base_ref = git_fresh_base_ref(repo_root)

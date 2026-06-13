@@ -9,8 +9,12 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-06-13 | [fhsk-a6v](fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md) | Add tmux as a standalone plugin rather than folding into dev-flow | Accepted |
+| 2026-06-13 | [fhsk-8yz](fhsk-8yz-share-cmux-tmux-driver-logic-via-muxdriver-module-not-script.md) | Share cmux/tmux driver logic via a _muxdriver module, not script duplication | Accepted |
+| 2026-06-13 | [fhsk-5dj](fhsk-5dj-convert-drain-worker-command-parameterized-skill.md) | Convert drain-with-worker command to a parameterized skill | Accepted |
 | 2026-06-10 | [fhsk-8g6](fhsk-8g6-drain-finishes-branch-autonomously-push-pr-at-clean-sentinel.md) | Drain finishes the branch autonomously (push + PR) at the clean sentinel | Accepted |
 | 2026-06-09 | [fhsk-dgo](fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md) | Use release-please with in-file plugin versions (reverse cog tag-only) | Accepted |
+| 2026-06-02 | [fhsk-p07](fhsk-p07-replace-blocking-stop-hook-capture-nudge-silent-sessionstart.md) | Replace blocking Stop-hook capture nudge with silent SessionStart briefing and throttled PostToolUse nudge | Accepted |
 | 2026-06-01 | [fhsk-e0u](fhsk-e0u-use-two-tier-spine-overlay-memory-scope-model.md) | Use two-tier spine/overlay memory scope model | Accepted |
 | 2026-05-30 | [fhsk-4bi](fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md) | Adopt @probelabs/maid as the primary Mermaid lint engine | Accepted |
 | 2026-05-29 | [fhsk-ypt](fhsk-ypt-treat-bug-bead-suggested-fixes-as-non-authoritative-hypothes.md) | Treat bug bead suggested fixes as non-authoritative hypotheses | Accepted |
@@ -33,7 +37,6 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 | 2026-05-22 | [fhsk-rqh](fhsk-rqh-use-bd-mol-pour-versioned-formula-drain-bead-creation.md) | Use bd mol pour with versioned formula for drain bead creation | Superseded by fhsk-buu |
 | 2026-05-22 | [fhsk-ce3](fhsk-ce3-store-drain-lessons-bd-notes-rather-than-prompt-body.md) | Store drain lessons in bd notes rather than the prompt body | Accepted |
 | 2026-05-22 | [fhsk-0o2](fhsk-0o2-split-drain-harness-into-formula-command-and-skill.md) | Split drain harness into formula, command, and skill | Superseded by fhsk-eqt |
-| 2026-05-22 | [fhsk-0cd](fhsk-0cd-make-drain-init-explicit-rather-than-auto-bootstrap.md) | Make /drain init explicit rather than auto-bootstrapping on first run | Accepted |
 | 2026-05-22 | [fhsk-0cd](fhsk-0cd-make-drain-init-explicit-rather-than-auto-bootstrapping-firs.md) | Make /drain init explicit rather than auto-bootstrapping on first run | Accepted |
 
 <!-- END INDEX -->

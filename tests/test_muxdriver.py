@@ -44,6 +44,30 @@ def test_cmux_argv_construction() -> None:
     assert m.parse_ref("surface:7\n") == "surface:7"
 
 
+def test_cmux_parse_ref_extracts_surface_token_from_banner() -> None:
+    # cmux 0.64.15 `new-pane` prints a multi-token status banner, not a bare
+    # ref. parse_ref must pull the `surface:<N>` token the send/read argv
+    # builders consume — returning the whole line breaks every later call with
+    # `Invalid surface handle`. See GitHub #153.
+    m = _load().CmuxDriver()
+    assert m.parse_ref("OK surface:26 pane:25 workspace:14\n") == "surface:26"
+
+
+def test_cmux_parse_ref_empty_when_no_surface_token() -> None:
+    # No surface token -> empty string, which drain-worker-launch treats as a
+    # hard launch failure (`if not ref: _die(...)`). Never return a junk ref.
+    m = _load().CmuxDriver()
+    assert m.parse_ref("OK pane:25 workspace:14\n") == ""
+
+
+def test_cmux_parse_ref_rejects_bare_integer() -> None:
+    # cmux requires the full `surface:<N>` ref; a bare `<N>` is rejected. parse_ref
+    # must NOT emit a bare integer — guards against a strip()-based regression that
+    # would round-trip "26" into an invalid --surface arg.
+    m = _load().CmuxDriver()
+    assert m.parse_ref("26\n") == ""
+
+
 def test_tmux_argv_construction() -> None:
     m = _load().TmuxDriver(in_tmux=True)
     assert m.name == "tmux"

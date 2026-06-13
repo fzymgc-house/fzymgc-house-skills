@@ -155,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--surface",
         required=True,
-        help="surface ref of the worker pane (e.g. surface:100 for cmux, %12 for tmux)",
+        help="surface ref of the worker pane (e.g. surface:100 for cmux, %%12 for tmux)",
     )
     ap.add_argument(
         "--multiplexer",

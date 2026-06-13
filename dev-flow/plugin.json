@@ -1,5 +1,5 @@
 {
   "name": "dev-flow",
-  "version": "1.24.1",
+  "version": "1.24.2",
   "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)"
 }

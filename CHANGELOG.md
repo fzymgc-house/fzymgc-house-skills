@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.24.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.1...v1.24.2) (2026-06-13)
+
+
+### Bug Fixes
+
+* **drain:** escape literal % in drain-watchdog argparse help (Python 3.14) ([#159](https://github.com/fzymgc-house/fzymgc-house-skills/issues/159)) ([2f5d562](https://github.com/fzymgc-house/fzymgc-house-skills/commit/2f5d56279bb5f037e5d271ed13c97e8d59c0e5aa))
+* **drain:** make drain-worker-launch direnv gate idempotent ([#158](https://github.com/fzymgc-house/fzymgc-house-skills/issues/158)) ([#161](https://github.com/fzymgc-house/fzymgc-house-skills/issues/161)) ([1fb66c5](https://github.com/fzymgc-house/fzymgc-house-skills/commit/1fb66c5b39bf14930a6ef6cc009819f675dab2d8))
+
 ## [1.24.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.0...v1.24.1) (2026-06-13)
 
 

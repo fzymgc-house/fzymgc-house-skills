@@ -1,0 +1,5 @@
+{
+  "name": "tmux",
+  "version": "1.23.0",
+  "description": "tmux terminal-multiplexer usage skill (sessions, windows, panes, scripting)"
+}

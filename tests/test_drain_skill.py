@@ -265,3 +265,20 @@ def test_watchdog_nudge_uses_tmux_argv(monkeypatch) -> None:
     wd.nudge(mux, "%9")
     assert calls[0] == ["tmux", "send-keys", "-t", "%9", "-l", wd.NUDGE]
     assert calls[1] == ["tmux", "send-keys", "-t", "%9", "Enter"]
+
+
+def test_tmux_plugin_registered_and_versioned() -> None:
+    import json
+
+    claude_mp = json.loads(
+        (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text()
+    )
+    assert any(p["name"] == "tmux" for p in claude_mp["plugins"])
+    codex_mp = json.loads(
+        (REPO_ROOT / ".agents" / "plugins" / "marketplace.json").read_text()
+    )
+    assert any(p["name"] == "tmux" for p in codex_mp["plugins"])
+    cfg = json.loads((REPO_ROOT / "release-please-config.json").read_text())
+    paths = [f["path"] for f in cfg["packages"]["."]["extra-files"]]
+    assert "tmux/plugin.json" in paths
+    assert (REPO_ROOT / "tmux" / "skills" / "tmux" / "SKILL.md").exists()

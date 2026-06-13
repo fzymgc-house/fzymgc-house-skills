@@ -105,6 +105,59 @@ class TestJj:
             if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
                 worktree_parent.rmdir()
 
+    def test_ensure_writes_beads_redirect_for_new_workspace(
+        self, jj_repo: Path
+    ) -> None:
+        """A workspace created from the default jj workspace gets an untracked
+        .beads/redirect pointing at the main repo's .beads — without it bd in
+        the isolated workspace fails with 'no beads database found'."""
+        beads_dir = jj_repo / ".beads"
+        beads_dir.mkdir()
+        (beads_dir / "metadata.json").write_text("{}\n")
+
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "drain-beads"
+        try:
+            result = run(["ensure", "--name", "drain-beads"], cwd=jj_repo)
+            assert result.returncode == 0, result.stderr
+
+            redirect = worktree_path / ".beads" / "redirect"
+            assert redirect.is_file(), (
+                ".beads/redirect missing — bd cannot resolve the shared "
+                "database from an isolated jj workspace without it"
+            )
+            target = redirect.read_text().strip()
+            assert (worktree_path / target).resolve() == beads_dir.resolve()
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-drain-beads"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
+    def test_ensure_without_beads_writes_no_redirect(self, jj_repo: Path) -> None:
+        """No .beads in the main repo → no redirect machinery in the workspace."""
+        worktree_parent = jj_repo.parent / f"{jj_repo.name}_worktrees"
+        worktree_path = worktree_parent / "no-beads"
+        try:
+            result = run(["ensure", "--name", "no-beads"], cwd=jj_repo)
+            assert result.returncode == 0, result.stderr
+            assert not (worktree_path / ".beads" / "redirect").exists()
+        finally:
+            if worktree_path.exists():
+                subprocess.run(
+                    ["jj", "--no-pager", "workspace", "forget", "worktree-no-beads"],
+                    cwd=str(jj_repo),
+                    capture_output=True,
+                )
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            if worktree_parent.is_dir() and not any(worktree_parent.iterdir()):
+                worktree_parent.rmdir()
+
     def test_check_passes_in_additional_workspace(self, jj_repo: Path) -> None:
         ws = jj_repo.parent / f"{jj_repo.name}_worktrees" / "iso"
         ws.parent.mkdir(parents=True, exist_ok=True)

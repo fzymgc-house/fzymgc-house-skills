@@ -43,6 +43,7 @@ from worktree_helpers import (  # noqa: E402
     jj_fresh_base_args,
     run_cmd,
     sanitize_for_output,
+    setup_beads_redirect,
     validate_safe_name,
 )
 
@@ -161,6 +162,11 @@ def _cmd_ensure(cwd: Path, name: str) -> int:
             f"{sanitize_for_output((bookmark.stderr or '').strip()[:300])}",
             file=sys.stderr,
         )
+
+    # jj workspaces are not git worktrees, so bd cannot discover the shared
+    # database via the git common directory — point it there explicitly, or bd
+    # commands in the isolated workspace fail with "no beads database found".
+    setup_beads_redirect(repo_root, worktree_path)
 
     print(worktree_path)
     return 0

@@ -222,6 +222,18 @@ def test_drain_epic_phase_d_offers_worker() -> None:
     assert "/drain-with-worker" in text, "Phase D must hand off to /drain-with-worker"
 
 
+def test_drain_phase_d_probes_tmux_too() -> None:
+    text = DRAIN_CMD.read_text()
+    assert "command -v cmux || command -v tmux" in text, (
+        "Phase D must probe both multiplexers"
+    )
+
+
+def test_drain_frontmatter_allows_tmux() -> None:
+    fm = _frontmatter(DRAIN_CMD.read_text())
+    assert "Bash(tmux:*)" in fm and "Bash(command -v tmux:*)" in fm
+
+
 def test_agents_doc_mentions_drain_with_worker() -> None:
     agents = (REPO_ROOT / "dev-flow" / "AGENTS.md").read_text()
     assert "/drain-with-worker" in agents, "AGENTS.md must document the new command"

@@ -15,6 +15,7 @@ else.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from abc import ABC, abstractmethod
 
@@ -61,7 +62,14 @@ class CmuxDriver(Multiplexer):
         ]
 
     def parse_ref(self, spawn_stdout: str) -> str:
-        return spawn_stdout.strip().splitlines()[-1].strip()
+        # cmux 0.64.15 `new-pane` prints a status banner, not a bare ref:
+        #   OK surface:26 pane:25 workspace:14
+        # Extract the `surface:<N>` token the send/read calls require, rather
+        # than the whole line (which cmux rejects as `Invalid surface handle`).
+        # No token -> empty string; drain-worker-launch fails the launch loudly
+        # on `if not ref`. See GitHub #153.
+        m = re.search(r"surface:\d+", spawn_stdout)
+        return m.group(0) if m else ""
 
     def send_text_argv(self, ref: str, text: str) -> list[str]:
         return ["cmux", "send", "--surface", ref, text]

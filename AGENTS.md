@@ -6,7 +6,7 @@ cross-platform rules and Claude-specific notes.
 
 ## Repository Purpose
 
-This repository publishes three source plugins for the fzymgc-house skills
+This repository publishes four source plugins for the fzymgc-house skills
 marketplace:
 
 - `homelab` - infrastructure skills for Grafana, Terraform, and skill QA
@@ -14,6 +14,7 @@ marketplace:
 - `dev-flow` - development workflow skills forked from obra/superpowers, plus
   the PR review orchestrators (`review-pr`, `address-findings`,
   `respond-to-comments`) and review/fix/verification agents
+- `tmux` - terminal-multiplexer usage skill
 
 It also publishes a repo-local Codex compatibility layer:
 

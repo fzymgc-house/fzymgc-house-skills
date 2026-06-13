@@ -11,8 +11,8 @@ the spec it cites) wins. See:
   halt conditions, lessons mechanism, edge cases
 - `dev-flow/commands/drain.md` — operator entry point (pre-flight, create bead,
   emit `/goal` condition)
-- `dev-flow/commands/drain-with-worker.md` + `dev-flow/references/drain-with-worker.md`
-  — detached cmux worker + surface-aware watchdog
+- `dev-flow/skills/drain-with-worker/SKILL.md` + `dev-flow/references/drain-with-worker.md`
+  — detached multiplexer worker (cmux/tmux) + surface-aware watchdog
 - `docs/superpowers/specs/2026-05-22-drain-skill-design.md` — design spec (source
   of truth)
 

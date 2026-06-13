@@ -291,7 +291,7 @@ authoritative audit trail regardless of notification delivery.
 | Spec (original design) | `docs/superpowers/specs/2026-05-22-drain-skill-design.md` |
 | Spec (cold-boot handoff redesign) | `docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
-| Detached worker launch + surface-aware watchdog | `dev-flow/commands/drain-with-worker.md`, `dev-flow/references/drain-with-worker.md` |
+| Detached worker launch + surface-aware watchdog | `dev-flow/skills/drain-with-worker/SKILL.md`, `dev-flow/references/drain-with-worker.md` |
 | Watchdog script (surface scan + `classify()`) | `dev-flow/scripts/drain-watchdog` |
 | ADR: `/goal` over `/loop` | `fhsk-thw` |
 | ADR: harness split (superseded by `fhsk-eqt`) | `fhsk-0o2` |

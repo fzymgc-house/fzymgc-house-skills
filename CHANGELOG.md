@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.0...v1.24.1) (2026-06-13)
+
+
+### Bug Fixes
+
+* **drain:** extract surface:&lt;N&gt; token in CmuxDriver.parse_ref (cmux 0.64.15) ([#155](https://github.com/fzymgc-house/fzymgc-house-skills/issues/155)) ([de10412](https://github.com/fzymgc-house/fzymgc-house-skills/commit/de104121e71d59e4d2b485b14d8fc27a27e39430))
+
 ## [1.24.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.23.0...v1.24.0) (2026-06-13)
 
 

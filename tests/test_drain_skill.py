@@ -10,7 +10,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DRAIN_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain.md"
 DRAIN_SKILL = REPO_ROOT / "dev-flow" / "skills" / "draining-beads" / "SKILL.md"
 DRAIN_WITH_WORKER_REF = REPO_ROOT / "dev-flow" / "references" / "drain-with-worker.md"
-DRAIN_WITH_WORKER_CMD = REPO_ROOT / "dev-flow" / "commands" / "drain-with-worker.md"
+DRAIN_WITH_WORKER_SKILL = (
+    REPO_ROOT / "dev-flow" / "skills" / "drain-with-worker" / "SKILL.md"
+)
 DRAIN_WATCHDOG = REPO_ROOT / "dev-flow" / "scripts" / "drain-watchdog"
 
 CONDITION_MAX = 1500
@@ -103,22 +105,18 @@ def test_worker_condition_has_jj_clause() -> None:
     )
 
 
-def test_reference_uses_issue_type_not_type() -> None:
+def test_reference_delegates_refuse_early_to_launch() -> None:
     text = DRAIN_WITH_WORKER_REF.read_text()
-    assert ".[0].issue_type" in text, "must read the array element's issue_type field"
-    assert ".type //" not in text, "the buggy '.type //' object-fallback must be gone"
-    assert "// .metadata" not in text, "drop the '// .metadata' object-fallback"
-    assert "// .status" not in text, "drop the '// .status' object-fallback"
-
-
-def test_reference_prereqs_refuse_early() -> None:
-    text = DRAIN_WITH_WORKER_REF.read_text()
-    assert "issue_type // empty" in text or ".[0].issue_type" in text
-    assert '"in_progress"' in text
-    assert '"epic"' in text
+    assert "drain-worker-launch" in text, (
+        "reference must delegate validation to the script"
+    )
+    assert "--check" in text, "reference must mention the validate-only mode"
+    # Reclaim the reference coverage the deleted prereqs/arms tests had:
     for meta in ("drain_workspace", "drain_scope", "drain_sentinel"):
-        assert meta in text, f"prereq must guard {meta}"
-    assert "command -v cmux" in text, "must refuse when cmux is not on PATH"
+        assert meta in text, f"reference must still document the {meta} guard"
+    assert "drain-watchdog" in text and "--multiplexer" in text, (
+        "reference must keep the (now parameterized) watchdog arm command"
+    )
 
 
 def test_watchdog_completion_keys_on_bead_closed() -> None:
@@ -129,18 +127,10 @@ def test_watchdog_completion_keys_on_bead_closed() -> None:
     )
 
 
-def test_reference_arms_the_watchdog_script() -> None:
-    text = DRAIN_WITH_WORKER_REF.read_text()
-    assert "dev-flow/scripts/drain-watchdog" in text, (
-        "reference must arm the script, not inline bash"
-    )
-    assert "--drain-id" in text and "--scope" in text and "--surface" in text, (
-        "reference must show the script's required arguments"
-    )
-    cmd_fm = _frontmatter(DRAIN_WITH_WORKER_CMD.read_text())
-    assert "Bash(dev-flow/scripts/drain-watchdog:*)" in cmd_fm, (
-        "command must gate the watchdog script in allowed-tools"
-    )
+def test_skill_arms_the_watchdog_script() -> None:
+    text = DRAIN_WITH_WORKER_SKILL.read_text()
+    assert "--drain-id" in text and "--scope" in text and "--surface" in text
+    assert "--multiplexer" in text
 
 
 def test_watchdog_classifies_blocked_input() -> None:
@@ -205,18 +195,19 @@ def _frontmatter(text: str) -> str:
     return m.group(1)
 
 
-def test_drain_with_worker_command_frontmatter() -> None:
-    fm = _frontmatter(DRAIN_WITH_WORKER_CMD.read_text())
-    assert "AskUserQuestion" in fm, "confirm gate needs AskUserQuestion"
-    assert "Bash(cmux:*)" in fm, "launch needs cmux"
-    assert "PushNotification" in fm, "watchdog completion needs PushNotification"
+def test_skill_frontmatter_declares_script_tools() -> None:
+    fm = _frontmatter(DRAIN_WITH_WORKER_SKILL.read_text())
+    assert "Bash(dev-flow/scripts/drain-worker-launch:*)" in fm
+    assert "Bash(dev-flow/scripts/drain-watchdog:*)" in fm
+    assert "AskUserQuestion" in fm
 
 
-def test_drain_with_worker_command_body() -> None:
-    text = DRAIN_WITH_WORKER_CMD.read_text()
-    assert "references/drain-with-worker.md" in text, "must delegate to the reference"
-    assert "AskUserQuestion" in text, "must confirm before launch"
-    assert "epic" in text, "must state epic-mode-only"
+def test_skill_body_invokes_launch_and_watchdog() -> None:
+    text = DRAIN_WITH_WORKER_SKILL.read_text()
+    assert "drain-worker-launch" in text, "skill must invoke the launch script"
+    assert "drain-watchdog --multiplexer" in text, (
+        "skill must arm the parameterized watchdog"
+    )
 
 
 def test_drain_allowed_tools_gained_launch_toolset() -> None:

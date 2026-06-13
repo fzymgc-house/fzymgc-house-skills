@@ -1,5 +1,16 @@
 # cog Tag-Only Release Flow Implementation Plan
 
+> [!CAUTION]
+> **SUPERSEDED — do not implement.** This plan describes the abandoned *cog
+> tag-only* release approach (drop all in-file `version` fields, version by git
+> SHA only, delete `release-please-config.json`). That direction was **reversed**
+> by ADR `fhsk-dgo` — *"Use release-please with in-file plugin versions (reverse
+> cog tag-only)"* (Accepted 2026-06-09), which supersedes `fhsk-toy` and
+> `fhsk-7y4`. The repo now uses **release-please** with one repo-wide version and
+> in-file `$.version` bumps via `extra-files` in `release-please-config.json`.
+> Retained for historical context only — see `docs/adr/fhsk-dgo-*.md` and the
+> "Release Versioning" section of `AGENTS.md` / `CLAUDE.md` for the current flow.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace release-please's 15-package monorepo versioning with a single repo-wide, tag-only release derived by cocogitto (`cog`), with GitHub Release notes, manual dispatch, and CI PR-title validation.

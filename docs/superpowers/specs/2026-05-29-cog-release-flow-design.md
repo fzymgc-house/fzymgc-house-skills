@@ -1,8 +1,20 @@
 # Design: Replace release-please with a cog tag-only release flow
 
+> [!CAUTION]
+> **SUPERSEDED — not implemented.** This spec proposed replacing release-please
+> with a *cog tag-only* flow (drop in-file `version` fields, version by git SHA,
+> delete `release-please-config.json`). That direction was **reversed** by ADR
+> `fhsk-dgo` — *"Use release-please with in-file plugin versions (reverse cog
+> tag-only)"* (Accepted 2026-06-09), which supersedes `fhsk-toy` and `fhsk-7y4`.
+> The repo uses **release-please** with one repo-wide version and in-file
+> `$.version` bumps via `extra-files` in `release-please-config.json`. Retained
+> for historical context — see `docs/adr/fhsk-dgo-*.md`, the companion plan
+> `docs/superpowers/plans/2026-05-29-cog-release-flow.md`, and the "Release
+> Versioning" section of `AGENTS.md` / `CLAUDE.md` for the current flow.
+
 - **Design bead:** fhsk-9g0
 - **Date:** 2026-05-29
-- **Status:** Draft for review
+- **Status:** Superseded (was: Draft for review) — see ADR `fhsk-dgo`
 
 ## Problem
 

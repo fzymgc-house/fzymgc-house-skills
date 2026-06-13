@@ -92,12 +92,16 @@ def _screen(mux, ref: str) -> str:
     return _run(mux.read_screen_argv(ref))
 
 
-# Idempotent direnv-readiness probe. `direnv allow; echo DRAIN_DIRENV=$?`
-# captures the allow exit status on the SAME input line, before the shell's
-# direnv prompt hook can clobber `$?`. The gate matches the RESOLVED
+# Idempotent, shell-agnostic direnv-readiness probe. The surface inherits the
+# host's login shell, which may be fish — where bare `$?` is a parse error
+# (fish uses `$status`), so `direnv allow` never runs and no DRAIN_DIRENV line
+# is emitted (GitHub #162). Wrapping in `sh -c '...'` runs identically under
+# bash/zsh/fish: fish just execs `sh`, and `$?` (literal inside fish single
+# quotes) is evaluated by POSIX `sh`, capturing the allow exit status in the
+# subshell before any prompt hook can clobber it. The gate matches the RESOLVED
 # `=<digit>` output, never the echoed `=$?` command line, so a stale pre-allow
 # "…is blocked" error left in the scrollback cannot poison it (GitHub #158).
-_DIRENV_PROBE_CMD = "direnv allow; echo DRAIN_DIRENV=$?"
+_DIRENV_PROBE_CMD = "sh -c 'direnv allow; echo DRAIN_DIRENV=$?'"
 _DIRENV_PROBE_RE = re.compile(r"DRAIN_DIRENV=(\d+)")
 
 

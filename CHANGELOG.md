@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.3](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.2...v1.24.3) (2026-06-13)
+
+
+### Bug Fixes
+
+* **drain:** make drain-worker-launch direnv probe shell-agnostic (fish) ([#163](https://github.com/fzymgc-house/fzymgc-house-skills/issues/163)) ([d0c709b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/d0c709b2d130f9762ac004a2e86a04ebafd037e6))
+
 ## [1.24.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.1...v1.24.2) (2026-06-13)
 
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -91,6 +92,41 @@ def _screen(mux, ref: str) -> str:
     return _run(mux.read_screen_argv(ref))
 
 
+# Idempotent direnv-readiness probe. `direnv allow; echo DRAIN_DIRENV=$?`
+# captures the allow exit status on the SAME input line, before the shell's
+# direnv prompt hook can clobber `$?`. The gate matches the RESOLVED
+# `=<digit>` output, never the echoed `=$?` command line, so a stale pre-allow
+# "…is blocked" error left in the scrollback cannot poison it (GitHub #158).
+_DIRENV_PROBE_CMD = "direnv allow; echo DRAIN_DIRENV=$?"
+_DIRENV_PROBE_RE = re.compile(r"DRAIN_DIRENV=(\d+)")
+
+
+def _await(
+    read_screen,
+    predicate,
+    *,
+    timeout=15.0,
+    interval=1.0,
+    now=time.monotonic,
+    sleep=time.sleep,
+):
+    """Poll ``read_screen()`` until ``predicate(screen)`` is truthy.
+
+    Returns the matching screen text, or ``None`` on timeout. Polling (vs a
+    fixed sleep) absorbs the interactive shell's re-eval latency on a large
+    ``.envrc``. ``now``/``sleep`` are injectable so callers unit-test without a
+    real clock.
+    """
+    deadline = now() + timeout
+    while True:
+        screen = read_screen()
+        if predicate(screen):
+            return screen
+        if now() >= deadline:
+            return None
+        sleep(interval)
+
+
 def launch(mux, drain_id: str, md: dict) -> str:
     """Spawn the surface and drive the verified launch sequence. Returns ref."""
     spawned = subprocess.run(
@@ -112,12 +148,19 @@ def launch(mux, drain_id: str, md: dict) -> str:
     if workspace not in _screen(mux, ref):
         _die(f"cwd did not become {workspace} after cd (surface {ref})")
 
-    # direnv allow — a fresh split hits a blocked .envrc.
-    _send(mux, ref, "direnv allow")
+    # direnv allow — a fresh split hits a blocked .envrc. Assert the allow
+    # exit code via the idempotent probe rather than grepping the pane for
+    # "blocked": the pre-allow `cd` leaves a stale "…is blocked" line in the
+    # scrollback that keeps an absence-of-negative test tripped even after a
+    # successful allow (GitHub #158).
+    _send(mux, ref, _DIRENV_PROBE_CMD)
     _enter(mux, ref)
-    time.sleep(1)
-    if "blocked" in _screen(mux, ref).lower():
-        _die(f".envrc still blocked after direnv allow (surface {ref})")
+    screen = _await(lambda: _screen(mux, ref), _DIRENV_PROBE_RE.search)
+    if screen is None:
+        _die(f"direnv allow produced no result (surface {ref})")
+    code = _DIRENV_PROBE_RE.search(screen).group(1)
+    if code != "0":
+        _die(f".envrc still blocked after direnv allow (exit {code}, surface {ref})")
 
     # Launch Claude with the bypass guard.
     _send(mux, ref, "claude --dangerously-skip-permissions")

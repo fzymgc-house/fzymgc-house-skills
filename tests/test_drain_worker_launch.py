@@ -1,14 +1,32 @@
-"""Validation tests for drain-worker-launch --check."""
+"""Validation tests for drain-worker-launch --check and its direnv gate."""
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import subprocess
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LAUNCH = REPO_ROOT / "dev-flow" / "scripts" / "drain-worker-launch"
+
+
+def _load_launch():
+    """Import the extensionless `uv run --script` entrypoint as a module.
+
+    `spec_from_file_location` can't infer a loader without a `.py` suffix, so
+    drive a `SourceFileLoader` explicitly. The script self-inserts its own dir
+    on `sys.path` to resolve `import _muxdriver`; `main()` stays guarded by
+    `__name__ == "__main__"`, so import has no side effects.
+    """
+    loader = SourceFileLoader("drain_worker_launch", str(LAUNCH))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
 
 GOOD_BEAD = [
     {
@@ -86,3 +104,74 @@ def test_check_refuses_missing_metadata(tmp_path) -> None:
     r = _run_check(tmp_path, bad)
     assert r.returncode != 0
     assert "sentinel" in r.stderr.lower()
+
+
+# --- direnv readiness gate (GitHub #158) ---------------------------------
+
+# A realistic post-allow pane: the stale pre-allow "is blocked" error from the
+# first `cd` is still visible, then the echoed probe command, then the resolved
+# success line. The old gate did `"blocked" in screen` and false-died on this.
+STALE_BLOCKED_THEN_OK = (
+    "$ cd /ws/_worktrees/drain-epic-7\n"
+    "direnv: error /ws/_worktrees/drain-epic-7/.envrc is blocked. "
+    "Run `direnv allow` to approve its content\n"
+    "$ direnv allow; echo DRAIN_DIRENV=$?\n"
+    "direnv: loading /ws/_worktrees/drain-epic-7/.envrc\n"
+    "direnv: export +FOO +BAR\n"
+    "DRAIN_DIRENV=0\n"
+    "$ \n"
+)
+
+
+def test_probe_is_idempotent_despite_stale_blocked_line() -> None:
+    """#158 regression: stale 'is blocked' scrollback must not fail the gate."""
+    m = _load_launch()
+    # The old absence-of-negative test would have tripped here:
+    assert "blocked" in STALE_BLOCKED_THEN_OK.lower()
+    # The new positive probe reads the resolved exit code = success:
+    match = m._DIRENV_PROBE_RE.search(STALE_BLOCKED_THEN_OK)
+    assert match is not None and match.group(1) == "0"
+
+
+def test_probe_ignores_the_echoed_command_line() -> None:
+    """The typed `=$?` command echo must not match before output resolves."""
+    m = _load_launch()
+    echo_only = "$ direnv allow; echo DRAIN_DIRENV=$?\n"
+    assert m._DIRENV_PROBE_RE.search(echo_only) is None
+
+
+def test_probe_detects_nonzero_exit() -> None:
+    m = _load_launch()
+    match = m._DIRENV_PROBE_RE.search("DRAIN_DIRENV=1\n")
+    assert match is not None and match.group(1) == "1"
+
+
+def test_await_polls_until_predicate_then_returns_screen() -> None:
+    m = _load_launch()
+    reads = iter(
+        [
+            "$ direnv allow; echo DRAIN_DIRENV=$?\n",  # echo only — no digit yet
+            "direnv: loading .envrc\n",  # mid re-eval
+            "DRAIN_DIRENV=0\n",  # resolved
+        ]
+    )
+    clock = iter([0.0, 1.0, 2.0, 3.0, 4.0])
+    got = m._await(
+        lambda: next(reads),
+        m._DIRENV_PROBE_RE.search,
+        now=lambda: next(clock),
+        sleep=lambda _seconds: None,
+    )
+    assert got is not None and m._DIRENV_PROBE_RE.search(got).group(1) == "0"
+
+
+def test_await_returns_none_on_timeout() -> None:
+    m = _load_launch()
+    clock = iter([0.0, 16.0])  # second tick is past the default 15s deadline
+    got = m._await(
+        lambda: "still blocked, never resolves\n",
+        m._DIRENV_PROBE_RE.search,
+        now=lambda: next(clock),
+        sleep=lambda _seconds: None,
+    )
+    assert got is None

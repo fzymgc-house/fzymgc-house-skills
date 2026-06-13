@@ -234,3 +234,31 @@ def test_drain_epic_phase_d_offers_worker() -> None:
 def test_agents_doc_mentions_drain_with_worker() -> None:
     agents = (REPO_ROOT / "dev-flow" / "AGENTS.md").read_text()
     assert "/drain-with-worker" in agents, "AGENTS.md must document the new command"
+
+
+def test_watchdog_multiplexer_defaults_to_cmux() -> None:
+    wd = _load_watchdog()
+    mux = wd.resolve_mux(None)  # None = flag absent
+    assert mux.name == "cmux"
+
+
+def test_watchdog_read_surface_uses_tmux_argv(monkeypatch) -> None:
+    wd = _load_watchdog()
+    calls: list[list[str]] = []
+    monkeypatch.setattr(wd, "_run", lambda cmd: calls.append(cmd) or "line\n")
+    mux = wd.resolve_mux("tmux")
+    wd.read_surface(mux, "%9")
+    assert calls[-1] == ["tmux", "capture-pane", "-p", "-t", "%9"]
+
+
+def test_watchdog_nudge_uses_tmux_argv(monkeypatch) -> None:
+    wd = _load_watchdog()
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        wd.subprocess, "run", lambda cmd, check=False: calls.append(cmd)
+    )
+    monkeypatch.setattr(wd.time, "sleep", lambda _s: None)
+    mux = wd.resolve_mux("tmux")
+    wd.nudge(mux, "%9")
+    assert calls[0] == ["tmux", "send-keys", "-t", "%9", "-l", wd.NUDGE]
+    assert calls[1] == ["tmux", "send-keys", "-t", "%9", "Enter"]

@@ -5,9 +5,12 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LAUNCH = REPO_ROOT / "dev-flow" / "scripts" / "drain-worker-launch"
@@ -175,3 +178,40 @@ def test_await_returns_none_on_timeout() -> None:
         sleep=lambda _seconds: None,
     )
     assert got is None
+
+
+# --- shell-agnostic probe (GitHub #162) ----------------------------------
+
+
+def test_probe_is_wrapped_in_posix_sh() -> None:
+    """#162 regression: the probe must exec POSIX `sh`, not lean on the
+    surface's login shell, whose `$?` is a parse error under fish."""
+    m = _load_launch()
+    assert m._DIRENV_PROBE_CMD.startswith("sh -c ")
+    # The exit-status syntax stays sandboxed inside the sh subshell.
+    assert "$?" in m._DIRENV_PROBE_CMD
+
+
+def test_probe_echo_line_still_does_not_match() -> None:
+    """The echoed `sh -c '... =$?'` command must not match before output
+    resolves — `$?` is not a digit, so the idempotency property holds."""
+    m = _load_launch()
+    echo_only = "$ " + m._DIRENV_PROBE_CMD + "\n"
+    assert m._DIRENV_PROBE_RE.search(echo_only) is None
+
+
+@pytest.mark.skipif(shutil.which("fish") is None, reason="fish not installed")
+def test_probe_parses_under_fish() -> None:
+    """#162 regression: drive the probe string through a real fish parse.
+
+    The pre-#162 probe `direnv allow; echo DRAIN_DIRENV=$?` is a parse error
+    under fish (`$? is not the exit status`); `fish --no-execute` validates
+    syntax without running the command.
+    """
+    m = _load_launch()
+    r = subprocess.run(
+        ["fish", "--no-execute", "-c", m._DIRENV_PROBE_CMD],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, f"fish rejected the probe: {r.stderr.strip()}"

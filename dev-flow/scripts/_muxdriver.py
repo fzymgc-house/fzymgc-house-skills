@@ -82,7 +82,10 @@ class TmuxDriver(Multiplexer):
 
     def spawn_argv(self, drain_id: str) -> list[str]:
         if self._in_tmux:
-            return ["tmux", "new-window", "-P", "-F", "#{pane_id}"]
+            # -d: create the window WITHOUT switching focus to it, so the worker
+            # does not hijack the operator's current window (parity with cmux's
+            # --focus false and the detached new-session path below).
+            return ["tmux", "new-window", "-d", "-P", "-F", "#{pane_id}"]
         return [
             "tmux",
             "new-session",

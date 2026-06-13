@@ -56,7 +56,8 @@ def test_tmux_argv_construction() -> None:
 def test_tmux_spawn_placement_branch() -> None:
     mod = _load()
     inside = mod.TmuxDriver(in_tmux=True).spawn_argv("ep-1")
-    assert inside == ["tmux", "new-window", "-P", "-F", "#{pane_id}"]
+    # -d so the worker window does not steal the operator's focus
+    assert inside == ["tmux", "new-window", "-d", "-P", "-F", "#{pane_id}"]
     outside = mod.TmuxDriver(in_tmux=False).spawn_argv("ep-1")
     assert outside[:5] == ["tmux", "new-session", "-d", "-s", "drain-ep-1"]
     assert "-x" in outside and "-y" in outside

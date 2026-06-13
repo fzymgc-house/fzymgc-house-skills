@@ -1,6 +1,6 @@
 ---
 name: drain-with-worker
-description: Launch an autonomous /drain worker in a detached cmux or tmux surface and arm a surface-aware watchdog (epic-mode drains). Use when the user runs `/drain-with-worker [cmux|tmux] <drain-id>` or accepts the `/drain` worker handoff. Takes an optional worker-type (auto-detected when omitted).
+description: Launch an autonomous /drain worker in a detached cmux or tmux surface and arm a surface-aware watchdog (epic-mode drains). Use when the user runs `/drain-with-worker [cmux|tmux] DRAIN_ID` or accepts the `/drain` worker handoff. Takes an optional worker-type (auto-detected when omitted).
 allowed-tools: ["Read", "AskUserQuestion", "PushNotification", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(jq:*)", "Bash(command -v cmux:*)", "Bash(command -v tmux:*)", "Bash(dev-flow/scripts/drain-worker-launch:*)", "Bash(dev-flow/scripts/drain-watchdog:*)"]
 ---
 

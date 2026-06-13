@@ -7,7 +7,8 @@
         { "type": "json", "path": ".claude-plugin/marketplace.json", "jsonpath": "$.version" },
         { "type": "json", "path": "homelab/plugin.json", "jsonpath": "$.version" },
         { "type": "json", "path": "jj/plugin.json", "jsonpath": "$.version" },
-        { "type": "json", "path": "dev-flow/plugin.json", "jsonpath": "$.version" }
+        { "type": "json", "path": "dev-flow/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "tmux/plugin.json", "jsonpath": "$.version" }
       ]
     }
   }

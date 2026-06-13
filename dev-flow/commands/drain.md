@@ -1,7 +1,7 @@
 ---
 description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, worker, resume.
 argument-hint: "init | epic <id> | set <id...> | cascade <id...> | worker <drain-id> | resume <drain-id>"
-allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "PushNotification", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)", "Bash(command -v cmux:*)", "Bash(cmux:*)", "Bash(direnv:*)", "Bash(sleep:*)", "Bash(jq:*)", "Bash(dev-flow/scripts/ensure-isolated-workspace:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "PushNotification", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)", "Bash(command -v cmux:*)", "Bash(cmux:*)", "Bash(tmux:*)", "Bash(command -v tmux:*)", "Bash(direnv:*)", "Bash(sleep:*)", "Bash(jq:*)", "Bash(dev-flow/scripts/ensure-isolated-workspace:*)"]
 ---
 
 # /drain
@@ -185,9 +185,9 @@ Print the **Worker condition** (see that section) with `<DRAIN_ID>` and
 workspace and submit the following as its first input (do not run it here):".
 Do not attempt to invoke `/goal` (it is a user-only built-in).
 
-**Then probe for an autonomous launcher:** run `command -v cmux`.
+**Then probe for an autonomous launcher:** run `command -v cmux || command -v tmux`.
 
-- **cmux present** → ask via **AskUserQuestion**: "Launch the autonomous worker
+- **cmux/tmux present** → ask via **AskUserQuestion**: "Launch the autonomous worker
   for `$DRAIN_ID` now?" with options **Launch now** / **Just give me the command** /
   **Not now**.
   - *Launch now* → this prompt IS the confirm gate; follow
@@ -196,7 +196,7 @@ Do not attempt to invoke `/goal` (it is a user-only built-in).
   - *Just give me the command* → print `/drain-with-worker $DRAIN_ID`.
   - *Not now* → print `/drain-with-worker $DRAIN_ID` for later, plus the emitted
     `/goal` condition above as the manual fallback.
-- **cmux absent** → the emitted `/goal` condition above is the handoff; stop.
+- **cmux/tmux absent** → the emitted `/goal` condition above is the handoff; stop.
 
 (This cmux-aware launch offer is **epic-mode only** — set/cascade Phase D below
 emit the condition without it, since the worker-pane watchdog is epic-specific.)

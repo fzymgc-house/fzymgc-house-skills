@@ -1,0 +1,31 @@
+{
+  "name": "tmux",
+  "description": "tmux terminal-multiplexer usage skill (sessions, windows, panes, scripting)",
+  "author": {
+    "name": "Sean Brandt",
+    "email": "4678+seanb4t@users.noreply.github.com",
+    "url": "https://github.com/seanb4t"
+  },
+  "homepage": "https://github.com/fzymgc-house/fzymgc-house-skills",
+  "repository": "https://github.com/fzymgc-house/fzymgc-house-skills",
+  "license": "UNLICENSED",
+  "keywords": ["tmux", "terminal", "multiplexer", "panes"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "tmux",
+    "shortDescription": "tmux usage skill for scripting and agent automation.",
+    "longDescription": "Codex wrapper for the tmux plugin. Reuses the tmux usage skill for spawning, driving, and reading tmux sessions, windows, and panes.",
+    "developerName": "fzymgc-house",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Run"],
+    "websiteURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "privacyPolicyURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "termsOfServiceURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "defaultPrompt": [
+      "Spawn a detached tmux session and run a command in it.",
+      "Capture the output of a tmux pane by its pane id.",
+      "Explain how to target tmux panes reliably from a script."
+    ],
+    "brandColor": "#1BB91F"
+  }
+}

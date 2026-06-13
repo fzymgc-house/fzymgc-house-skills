@@ -36,10 +36,15 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _muxdriver  # noqa: E402  (sibling stdlib module on the inserted path)
+
 import argparse
 import json
 import subprocess
-import sys
 import time
 from re import IGNORECASE, compile as re_compile
 
@@ -115,19 +120,22 @@ def child_counts(scope: str) -> tuple[int, int]:
     return count("in_progress"), count("closed")
 
 
-def read_surface(surface: str) -> str:
-    """Last 40 lines of the worker's cmux surface."""
-    return "\n".join(
-        _run(["cmux", "read-screen", "--surface", surface]).splitlines()[-40:]
-    )
+def resolve_mux(flag: str | None):
+    """Map the --multiplexer flag to a driver; None/absent -> cmux (back-compat)."""
+    return _muxdriver.detect(flag or "cmux")
 
 
-def nudge(surface: str) -> None:
+def read_surface(mux, surface: str) -> str:
+    """Last 40 lines of the worker's surface, via the active multiplexer."""
+    return "\n".join(_run(mux.read_screen_argv(surface)).splitlines()[-40:])
+
+
+def nudge(mux, surface: str) -> None:
     """Send a SHORT single-line nudge, then submit — a 2s gap lets the TUI
     register the text before Enter (long/fast sends race the submit)."""
-    subprocess.run(["cmux", "send", "--surface", surface, NUDGE], check=False)
+    subprocess.run(mux.send_text_argv(surface, NUDGE), check=False)
     time.sleep(2)
-    subprocess.run(["cmux", "send-key", "--surface", surface, "Enter"], check=False)
+    subprocess.run(mux.send_enter_argv(surface), check=False)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -147,7 +155,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--surface",
         required=True,
-        help="cmux surface ref of the worker pane, e.g. surface:100",
+        help="surface ref of the worker pane (e.g. surface:100 for cmux, %12 for tmux)",
+    )
+    ap.add_argument(
+        "--multiplexer",
+        choices=["cmux", "tmux"],
+        default="cmux",
+        help="terminal multiplexer driving the worker surface (default cmux)",
     )
     ap.add_argument(
         "--poll", type=int, default=75, help="seconds between polls (default 75)"
@@ -159,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:
         help="count-stall debounce ticks (default 5 ≈ 6min at 75s)",
     )
     a = ap.parse_args(argv)
+    mux = resolve_mux(a.multiplexer)
 
     prev, strikes = -1, 0
     while True:
@@ -167,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         # Surface scan: states the closed-count can't see; EXIT to wake the orchestrator.
-        screen = read_surface(a.surface)
+        screen = read_surface(mux, a.surface)
         state = classify(screen)
         if state == "api-error":
             print(f"EXIT=api-error WORKER API-ERROR on {a.surface}:")
@@ -189,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
         if inprog == 0 and closed == prev:
             strikes += 1
             if strikes >= a.strikes:
-                nudge(a.surface)
+                nudge(mux, a.surface)
                 strikes = 0
         else:
             strikes = 0

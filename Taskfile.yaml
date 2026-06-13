@@ -31,9 +31,12 @@ vars:
     dev-flow/skills/grepping/references/grep.md
     dev-flow/skills/grepping/references/ugrep.md
     dev-flow/skills/grepping/references/ast-grep.md
+    tmux/skills/*/SKILL.md
+    dev-flow/skills/drain-with-worker/SKILL.md
+    dev-flow/references/drain-with-worker.md
   PLUGIN_JSON: >-
     .claude-plugin/marketplace.json .agents/plugins/marketplace.json
-    homelab/plugin.json jj/plugin.json dev-flow/plugin.json
+    homelab/plugin.json jj/plugin.json dev-flow/plugin.json tmux/plugin.json
     plugins/*/.codex-plugin/plugin.json
   # All harness-independent pytest suites. Behavioral evals (dev-flow/evals,
   # jj/evals) need the Claude agent harness to execute and are only

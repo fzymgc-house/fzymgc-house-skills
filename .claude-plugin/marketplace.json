@@ -22,6 +22,11 @@
       "name": "dev-flow",
       "description": "Development workflow skills with git and jj VCS support (fork of obra/superpowers v5.0.2)",
       "source": "./dev-flow"
+    },
+    {
+      "name": "tmux",
+      "description": "tmux terminal-multiplexer usage skill (sessions, windows, panes, scripting)",
+      "source": "./tmux"
     }
   ]
 }

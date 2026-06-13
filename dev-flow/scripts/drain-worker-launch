@@ -1,0 +1,174 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+# SPDX-License-Identifier: Apache-2.0
+#
+# drain-worker-launch — validate a drain bead and launch its /drain worker in a
+# detached multiplexer surface (cmux or tmux). The bead-validation and the
+# verified pane-launch sequence live here, NOT in markdown.
+#
+#   drain-worker-launch --check --drain-id <id> [--worker-type auto|cmux|tmux]
+#       validate + resolve multiplexer, print the plan, exit (no side effects)
+#   drain-worker-launch --drain-id <id> [--worker-type auto|cmux|tmux]
+#       the above, then spawn the surface and drive cd/direnv/claude/goal;
+#       prints `multiplexer=<name>` and `surface=<ref>` for the watchdog.
+"""Validate a drain bead and launch its worker in a cmux/tmux surface."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import NoReturn
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _muxdriver  # noqa: E402  (sibling stdlib module on the inserted path)
+
+# Byte-identical with dev-flow/commands/drain.md `## Worker condition`.
+WORKER_CONDITION = """\
+Drain worker for bead {drain_id}. Invoke the dev-flow:draining-beads skill for
+the iteration protocol, then run `bd show {drain_id} --json` for your assignment
+(workspace, mode, scope, lessons, rejection counts). cd to the workspace named in
+that bead before any bd/jj/file operation. Also invoke the jj:jujutsu skill before
+any commit/rebase/topology surgery. Execute exactly ONE ready bead this turn
+following the protocol, then stop. Goal met when: {sentinel}."""
+
+
+def _run(cmd: list[str]) -> str:
+    return subprocess.run(
+        cmd, capture_output=True, text=True, timeout=30, check=False
+    ).stdout
+
+
+def _die(msg: str) -> NoReturn:
+    print(msg, file=sys.stderr)
+    raise SystemExit(1)
+
+
+def validate(drain_id: str) -> dict:
+    """Read + validate the drain bead; return its metadata or exit non-zero.
+
+    `bd show --json` returns a single-element array; the type field is
+    `issue_type`, not `type`.
+    """
+    try:
+        data = json.loads(_run(["bd", "show", drain_id, "--json"]))
+    except json.JSONDecodeError:
+        _die(f"could not read bead {drain_id} (bd show returned no JSON)")
+    if not (isinstance(data, list) and data and isinstance(data[0], dict)):
+        _die(f"could not read bead {drain_id} (unexpected bd show shape)")
+    b = data[0]
+    if b.get("issue_type") != "drain":
+        _die(f"not a drain bead: {drain_id} (issue_type={b.get('issue_type')!r})")
+    if b.get("status") != "in_progress":
+        _die(f"drain {drain_id} not in_progress (already closed?)")
+    md = b.get("metadata") or {}
+    if md.get("drain_mode") != "epic":
+        _die(
+            "drain-with-worker supports epic-mode drains only "
+            f"(got mode={md.get('drain_mode')!r})"
+        )
+    for key in ("drain_workspace", "drain_scope", "drain_sentinel"):
+        if not md.get(key):
+            _die(f"drain bead missing {key}")
+    return md
+
+
+def _send(mux, ref: str, text: str) -> None:
+    subprocess.run(mux.send_text_argv(ref, text), check=False)
+
+
+def _enter(mux, ref: str) -> None:
+    subprocess.run(mux.send_enter_argv(ref), check=False)
+
+
+def _screen(mux, ref: str) -> str:
+    return _run(mux.read_screen_argv(ref))
+
+
+def launch(mux, drain_id: str, md: dict) -> str:
+    """Spawn the surface and drive the verified launch sequence. Returns ref."""
+    spawned = subprocess.run(
+        mux.spawn_argv(drain_id), capture_output=True, text=True, check=False
+    )
+    if spawned.returncode != 0:
+        _die(f"failed to spawn {mux.name} surface: {spawned.stderr.strip()}")
+    ref = mux.parse_ref(spawned.stdout)
+    if not ref:
+        _die(f"{mux.name} spawn printed no surface ref")
+
+    workspace = md["drain_workspace"]
+    # cd as its own verified step — never chain `cd X && claude`.
+    _send(mux, ref, f"cd {workspace}")
+    _enter(mux, ref)
+    _send(mux, ref, "pwd")
+    _enter(mux, ref)
+    time.sleep(1)
+    if workspace not in _screen(mux, ref):
+        _die(f"cwd did not become {workspace} after cd (surface {ref})")
+
+    # direnv allow — a fresh split hits a blocked .envrc.
+    _send(mux, ref, "direnv allow")
+    _enter(mux, ref)
+    time.sleep(1)
+    if "blocked" in _screen(mux, ref).lower():
+        _die(f".envrc still blocked after direnv allow (surface {ref})")
+
+    # Launch Claude with the bypass guard.
+    _send(mux, ref, "claude --dangerously-skip-permissions")
+    _enter(mux, ref)
+    time.sleep(6)
+    # Trust-folder prompt (option 1 pre-highlighted).
+    _enter(mux, ref)
+    time.sleep(2)
+
+    # Fire the thin /goal (long send races the submit -> sleep 3 before Enter).
+    condition = WORKER_CONDITION.format(
+        drain_id=drain_id, sentinel=md["drain_sentinel"]
+    )
+    goal = f"/goal {condition}"
+    _send(mux, ref, goal)
+    time.sleep(3)
+    _enter(mux, ref)
+    time.sleep(2)
+    if "Goal set:" not in _screen(mux, ref) and "/goal active" not in _screen(mux, ref):
+        print(
+            f"warning: did not observe 'Goal set:' on {ref}; verify the worker manually",
+            file=sys.stderr,
+        )
+    return ref
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--drain-id", required=True)
+    ap.add_argument("--worker-type", choices=["auto", "cmux", "tmux"], default="auto")
+    ap.add_argument("--check", action="store_true", help="validate + resolve only")
+    a = ap.parse_args(argv)
+
+    md = validate(a.drain_id)
+    try:
+        mux = _muxdriver.detect(a.worker_type)
+    except (RuntimeError, ValueError) as exc:
+        _die(str(exc))
+
+    if a.check:
+        print(f"multiplexer={mux.name}")
+        print(f"workspace={md['drain_workspace']}")
+        print(f"scope={md['drain_scope']}")
+        print(f"sentinel={md['drain_sentinel']}")
+        return 0
+
+    ref = launch(mux, a.drain_id, md)
+    print(f"multiplexer={mux.name}")
+    print(f"surface={ref}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

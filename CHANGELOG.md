@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.23.0...v1.24.0) (2026-06-13)
+
+
+### Features
+
+* **drain:** tmux support for the /drain worker (parameterized skill + _muxdriver + tmux plugin) ([#151](https://github.com/fzymgc-house/fzymgc-house-skills/issues/151)) ([feb124b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/feb124bf900775834367050800893025171fd939))
+
 ## [1.23.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.22.1...v1.23.0) (2026-06-13)
 
 

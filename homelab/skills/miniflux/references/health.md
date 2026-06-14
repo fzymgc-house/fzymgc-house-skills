@@ -31,7 +31,7 @@ disabled:
 stale:
   - id: 5
     title: "Inactive Blog"
-    latest_entry: 1672531200
+    latest_entry: "2023-01-01T00:00:00Z"
   - id: 9
     title: "Dormant Newsletter"
     latest_entry: null

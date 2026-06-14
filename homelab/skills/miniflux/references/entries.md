@@ -34,20 +34,21 @@ entries:
     url: "https://example.com/article"
     status: "unread"
     starred: false
-    published_at: 1686067200
-    feed: 1
+    published_at: "2026-06-13T08:00:00Z"
+    feed: "Example Feed"
     category: "Technology"
   - id: 1002
     title: "Another Article"
     url: "https://example.com/another"
     status: "unread"
     starred: true
-    published_at: 1686067100
-    feed: 2
+    published_at: "2026-06-13T07:58:20Z"
+    feed: "Another Feed"
     category: "News"
 ```
 
-Fields: `id`, `title`, `url`, `status`, `starred`, `published_at` (Unix timestamp), `feed`, `category`.
+Fields: `id`, `title`, `url`, `status`, `starred`, `published_at` (ISO 8601
+string from the API), `feed` (feed title, not id), `category` (category title).
 
 ## Mark Entry Read
 

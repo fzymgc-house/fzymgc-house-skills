@@ -46,6 +46,18 @@ Returns:
 
 Fields: `id`, `title`.
 
+## Get Feed
+
+Fetch a single feed by id (raw Miniflux feed object, including
+`blocklist_rules` / `keeplist_rules` / `scraper_rules` / `rewrite_rules`):
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/miniflux/scripts/miniflux_api.py get-feed 42
+```
+
+Returns the raw feed object as Miniflux reports it (`id`, `title`, `feed_url`,
+`category`, `parsing_error_count`, `disabled`, the per-feed rule fields, etc.).
+
 ## Subscribe to Feed
 
 Create a new subscription:
@@ -64,6 +76,31 @@ Returns:
 
 ```yaml
 created_feed_id: 42
+```
+
+## Update Feed
+
+Update attributes of an existing feed:
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/miniflux/scripts/miniflux_api.py update-feed 42 --category 5 --crawler
+```
+
+Arguments:
+
+- `<id>` - Feed ID (required)
+- `--title TEXT` - Rename the feed (optional)
+- `--category N` - Move to category ID (optional)
+- `--crawler` / `--no-crawler` - Toggle the content crawler (optional)
+- `--disabled` / `--no-disabled` - Disable or re-enable the feed (optional)
+
+At least one attribute flag is required. Returns:
+
+```yaml
+updated_feed_id: 42
+updated:
+  category_id: 5
+  crawler: true
 ```
 
 ## Unsubscribe from Feed

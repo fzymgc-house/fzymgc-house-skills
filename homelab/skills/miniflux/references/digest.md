@@ -56,16 +56,16 @@ candidates:
   - id: 1001
     title: "Kubernetes 1.30 Released"
     url: "https://kubernetes.io/blog/releases/"
-    feed: 5
+    feed: "Kubernetes Blog"
     category: "Technology"
-    published: 1686067200
+    published: "2026-06-13T08:00:00Z"
     excerpt: "Kubernetes 1.30 is now available with enhanced security features..."
   - id: 1002
     title: "New Node.js Framework"
     url: "https://example.com/nodejs-framework"
-    feed: 8
+    feed: "Node Weekly"
     category: "Technology"
-    published: 1686067100
+    published: "2026-06-13T07:58:20Z"
     excerpt: "A lightweight framework for building scalable applications..."
 marked_read:
   - 1001
@@ -82,9 +82,9 @@ starred:
   - `id` - Entry ID
   - `title` - Entry title
   - `url` - Entry URL
-  - `feed` - Feed ID
-  - `category` - Category name
-  - `published` - Unix timestamp of publication
+  - `feed` - Feed title (string, not id)
+  - `category` - Category title
+  - `published` - ISO 8601 publication timestamp from the API
   - `excerpt` - HTML-stripped, truncated summary (~280 chars)
 - `marked_read` - Entry IDs marked as read (present only if `--mark-read` used)
 - `starred` - Entry IDs starred (present only if `--star` used)

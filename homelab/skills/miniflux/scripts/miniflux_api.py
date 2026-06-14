@@ -50,7 +50,10 @@ def resolve_config(config_path: Path | None = None) -> dict[str, str]:
     path = config_path or default_config_path()
     file_cfg: dict[str, Any] = {}
     if path.exists():
-        file_cfg = yaml.safe_load(path.read_text()) or {}
+        try:
+            file_cfg = yaml.safe_load(path.read_text()) or {}
+        except yaml.YAMLError as e:
+            raise ConfigError(f"Invalid YAML in {path}: {e}") from e
 
     url = url or file_cfg.get("url")
     api_key = api_key or file_cfg.get("api_key")
@@ -86,6 +89,9 @@ def run_command(call, fmt: str) -> int:
         status = getattr(e, "status_code", "?")
         print(f"Miniflux API error (HTTP {status}): {e}", file=sys.stderr)
         return 1
+    except ValueError as e:
+        print(f"Invalid usage: {e}", file=sys.stderr)
+        return 1
     except (ConnectionError, OSError) as e:
         print(
             f"Cannot reach Miniflux: {e}. Check MINIFLUX_URL / config url.",
@@ -117,6 +123,29 @@ def cmd_list_feeds(client, args) -> list[dict[str, Any]]:
 
 def cmd_list_categories(client, args) -> list[dict[str, Any]]:
     return [{"id": c["id"], "title": c.get("title")} for c in client.get_categories()]
+
+
+def cmd_get_feed(client, args) -> dict[str, Any]:
+    return client.get_feed(args.feed_id)
+
+
+def cmd_update_feed(client, args) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    if getattr(args, "title", None) is not None:
+        fields["title"] = args.title
+    if getattr(args, "category", None) is not None:
+        fields["category_id"] = args.category
+    if getattr(args, "crawler", None) is not None:
+        fields["crawler"] = args.crawler
+    if getattr(args, "disabled", None) is not None:
+        fields["disabled"] = args.disabled
+    if not fields:
+        raise ValueError(
+            "update-feed requires at least one of "
+            "--title / --category / --crawler / --disabled"
+        )
+    client.update_feed(args.feed_id, **fields)
+    return {"updated_feed_id": args.feed_id, "updated": fields}
 
 
 def cmd_create_feed(client, args) -> dict[str, Any]:
@@ -188,8 +217,10 @@ def cmd_export_opml(client, args) -> dict[str, Any]:
 
 
 def cmd_import_opml(client, args) -> dict[str, Any]:
-    opml = Path(args.path).read_text()
-    client.import_feeds(opml)
+    path = Path(args.path)
+    if not path.is_file():
+        raise ValueError(f"OPML file not found: {args.path}")
+    client.import_feeds(path.read_text())
     return {"imported_from": args.path}
 
 
@@ -350,7 +381,9 @@ def cmd_apply_rule(client, args) -> dict[str, Any]:
 COMMANDS = {
     "list-feeds": cmd_list_feeds,
     "list-categories": cmd_list_categories,
+    "get-feed": cmd_get_feed,
     "create-feed": cmd_create_feed,
+    "update-feed": cmd_update_feed,
     "delete-feed": cmd_delete_feed,
     "get-entries": cmd_get_entries,
     "mark-read": cmd_mark_read,
@@ -383,10 +416,20 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("list-feeds", parents=[common], help="List feeds")
     sub.add_parser("list-categories", parents=[common], help="List categories")
 
+    gf = sub.add_parser("get-feed", parents=[common], help="Get one feed by id")
+    gf.add_argument("feed_id", type=int)
+
     cf = sub.add_parser("create-feed", parents=[common], help="Subscribe to a feed")
     cf.add_argument("url")
     cf.add_argument("--category", type=int)
     cf.add_argument("--crawler", action="store_true")
+
+    uf = sub.add_parser("update-feed", parents=[common], help="Update feed attributes")
+    uf.add_argument("feed_id", type=int)
+    uf.add_argument("--title")
+    uf.add_argument("--category", type=int)
+    uf.add_argument("--crawler", action=argparse.BooleanOptionalAction, default=None)
+    uf.add_argument("--disabled", action=argparse.BooleanOptionalAction, default=None)
 
     df = sub.add_parser("delete-feed", parents=[common], help="Delete a feed")
     df.add_argument("feed_id", type=int)
@@ -446,13 +489,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     if args.list_commands:
         print(format_output(sorted(COMMANDS), getattr(args, "format", "yaml")))
         return 0
     if not args.command:
-        build_parser().print_help()
+        parser.print_help()
         return 2
 
     try:

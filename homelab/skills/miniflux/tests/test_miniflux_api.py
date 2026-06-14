@@ -461,3 +461,90 @@ class TestMainDispatch:
         err = capsys.readouterr().err
         assert rc == 2
         assert "no config" in err
+
+
+class TestGetUpdateFeed:
+    def test_get_feed_returns_raw(self):
+        client = MagicMock()
+        client.get_feed.return_value = {"id": 42, "title": "Example"}
+        out = mfa.cmd_get_feed(client, _ns(feed_id=42))
+        client.get_feed.assert_called_once_with(42)
+        assert out == {"id": 42, "title": "Example"}
+
+    def test_update_feed_sets_fields(self):
+        client = MagicMock()
+        out = mfa.cmd_update_feed(
+            client,
+            _ns(feed_id=42, title="New", category=7, crawler=True, disabled=None),
+        )
+        client.update_feed.assert_called_once_with(
+            42, title="New", category_id=7, crawler=True
+        )
+        assert out == {
+            "updated_feed_id": 42,
+            "updated": {"title": "New", "category_id": 7, "crawler": True},
+        }
+
+    def test_update_feed_requires_a_field(self):
+        client = MagicMock()
+        with pytest.raises(ValueError):
+            mfa.cmd_update_feed(
+                client,
+                _ns(feed_id=42, title=None, category=None, crawler=None, disabled=None),
+            )
+
+    def test_get_feed_dispatches_in_command_list(self):
+        assert "get-feed" in mfa.COMMANDS and "update-feed" in mfa.COMMANDS
+
+
+class TestEntryFilterEdgeCases:
+    def test_starred_false_passed_through(self):
+        # --no-starred yields starred=False, which is meaningful (not None)
+        # and must reach the API, not be dropped by the is-not-None guard.
+        client = MagicMock()
+        client.get_entries.return_value = {"total": 0, "entries": []}
+        mfa.cmd_get_entries(
+            client,
+            _ns(
+                status=None,
+                starred=False,
+                search=None,
+                category=None,
+                feed=None,
+                after=None,
+                limit=20,
+                order="published_at",
+                direction="desc",
+            ),
+        )
+        _, kwargs = client.get_entries.call_args
+        assert kwargs["starred"] is False
+
+
+class TestErrorTranslation:
+    def test_value_error_maps_to_invalid_usage(self, capsys):
+        def boom():
+            raise ValueError("apply-rule requires --blocklist or --keeplist")
+
+        rc = mfa.run_command(boom, "yaml")
+        err = capsys.readouterr().err
+        assert rc == 1
+        assert "Invalid usage" in err
+        assert "apply-rule requires" in err
+
+    def test_import_opml_missing_file_is_clean_error(self, tmp_path):
+        client = MagicMock()
+        missing = tmp_path / "nope.opml"
+        with pytest.raises(ValueError) as exc:
+            mfa.cmd_import_opml(client, _ns(path=str(missing)))
+        assert "OPML file not found" in str(exc.value)
+        client.import_feeds.assert_not_called()
+
+    def test_invalid_config_yaml_raises_config_error(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("MINIFLUX_URL", raising=False)
+        monkeypatch.delenv("MINIFLUX_API_KEY", raising=False)
+        path = tmp_path / "config.yaml"
+        path.write_text("url: [unclosed\n")
+        with pytest.raises(mfa.ConfigError) as exc:
+            mfa.resolve_config(config_path=path)
+        assert "Invalid YAML" in str(exc.value)

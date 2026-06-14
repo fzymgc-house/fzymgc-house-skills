@@ -138,6 +138,17 @@ fi
 # refs merged). Older ADR bodies embed a References section; capture-adrs bodies do
 # not. Without this, render-adr's own "## References" would duplicate the body's
 # (MD024). Assumes "## References" runs to the next "## " heading or end of body.
+# Backstop guard: render-adr reproduces the bead body verbatim, so a literal
+# two-character escape \n in the description would render as backslash-n rather
+# than a line break (the capture-adrs PR #167 bug). Warn loudly — do not silently
+# rewrite, since a fenced code block could legitimately document a \n. Fix the
+# source with: bd update <id> --body-file <file>.
+if printf '%s' "$DESCRIPTION" | grep -q '\\n'; then
+  echo "render-adr: WARNING: bead $ID body contains the literal escape \\n; it will" \
+       "render verbatim. Fix the bead description to use real newlines" \
+       "(bd update $ID --body-file ...)." >&2
+fi
+
 BODY_MAIN="$DESCRIPTION"
 BODY_REF_BULLETS=""
 if grep -q '^## References' <<<"$DESCRIPTION"; then

@@ -18,15 +18,21 @@ Configure cog with `disable_bump_commit = true` and `disable_changelog = true` s
 
 ## Rationale
 
-- Avoids a GitHub App token / branch-protection bypass for release commits (plain GITHUB_TOKEN + contents:write suffices).\n- `cog changelog <range>` produces equivalent human-readable release notes.\n- Tag-only is proven in the holomush repo with the same cog 7.x toolchain.\n- Keeps main history free of release-metadata commits.
+- Avoids a GitHub App token / branch-protection bypass for release commits (plain GITHUB_TOKEN + contents:write suffices).
+- `cog changelog <range>` produces equivalent human-readable release notes.
+- Tag-only is proven in the holomush repo with the same cog 7.x toolchain.
+- Keeps main history free of release-metadata commits.
 
 ## Alternatives Considered
 
-- **release-please PRs committing changelog to main** (rejected): in-repo CHANGELOG.md, but commits non-functional metadata to protected main and needs the release-PR merge cycle.\n- **cog tag-only (disable_bump_commit + disable_changelog)** (chosen): no commit to main; tag + GitHub Release is the changelog surface.
+- **release-please PRs committing changelog to main** (rejected): in-repo CHANGELOG.md, but commits non-functional metadata to protected main and needs the release-PR merge cycle.
+- **cog tag-only (disable_bump_commit + disable_changelog)** (chosen): no commit to main; tag + GitHub Release is the changelog surface.
 
 ## Consequences
 
-- Positive: release needs only contents:write via default GITHUB_TOKEN; main carries only functional changes.\n- Negative: no in-repo CHANGELOG.md — changelog lives only in GitHub Releases.\n- Neutral: cog.toml must use top-level keys (no [settings] wrapper) and must omit an empty [commit_types] block (empty {} disables a type).
+- Positive: release needs only contents:write via default GITHUB_TOKEN; main carries only functional changes.
+- Negative: no in-repo CHANGELOG.md — changelog lives only in GitHub Releases.
+- Neutral: cog.toml must use top-level keys (no [settings] wrapper) and must omit an empty [commit_types] block (empty {} disables a type).
 
 ## References
 

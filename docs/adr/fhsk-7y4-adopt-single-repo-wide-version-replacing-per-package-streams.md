@@ -18,15 +18,21 @@ Replace the 15 per-package release-please streams with a single repo-wide semver
 
 ## Rationale
 
-- Installs resolve by git SHA, not in-file semver, so per-package versions are ceremony.\n- Per-package histories were already inconsistent with no observed impact.\n- One version line eliminates manifest drift and the 15-package release-please config surface.\n- Continues the marketplace.json lineage as the canonical v1.x line.
+- Installs resolve by git SHA, not in-file semver, so per-package versions are ceremony.
+- Per-package histories were already inconsistent with no observed impact.
+- One version line eliminates manifest drift and the 15-package release-please config surface.
+- Continues the marketplace.json lineage as the canonical v1.x line.
 
 ## Alternatives Considered
 
-- **Keep per-package versioning via release-please** (rejected): fine-grained per-skill changelogs, but heavy ceremony, 15 manifests to keep in sync, already drifting, and release PRs commit to main.\n- **Single repo-wide cog tag** (chosen): one version, auto-derived from conventional commits, no manifest drift, matches how installs resolve.
+- **Keep per-package versioning via release-please** (rejected): fine-grained per-skill changelogs, but heavy ceremony, 15 manifests to keep in sync, already drifting, and release PRs commit to main.
+- **Single repo-wide cog tag** (chosen): one version, auto-derived from conventional commits, no manifest drift, matches how installs resolve.
 
 ## Consequences
 
-- Positive: release reduces to one tag + one GitHub Release; no manifest sync on new skills.\n- Negative: per-skill/per-package granularity permanently lost; divergent histories (homelab 1.0.0, dev-flow 0.9.0, jj 0.6.1) discarded, not reconciled.\n- Neutral: baseline read live from marketplace.json `$.version` at cutover.
+- Positive: release reduces to one tag + one GitHub Release; no manifest sync on new skills.
+- Negative: per-skill/per-package granularity permanently lost; divergent histories (homelab 1.0.0, dev-flow 0.9.0, jj 0.6.1) discarded, not reconciled.
+- Neutral: baseline read live from marketplace.json `$.version` at cutover.
 
 ## References
 

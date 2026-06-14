@@ -348,3 +348,43 @@ class TestTriage:
         out = mfa.cmd_triage(client, _ns(mark_read_feed=None, mark_read_category=7))
         client.mark_category_entries_as_read.assert_called_once_with(7)
         assert out["marked_read_category"] == 7
+
+
+class TestHealthAudit:
+    def test_flags_errored_disabled_and_stale(self):
+        client = MagicMock()
+        client.get_feeds.return_value = [
+            {"id": 1, "title": "Errored", "parsing_error_count": 4, "disabled": False},
+            {"id": 2, "title": "Disabled", "parsing_error_count": 0, "disabled": True},
+            {"id": 3, "title": "Stale", "parsing_error_count": 0, "disabled": False},
+            {"id": 4, "title": "Fresh", "parsing_error_count": 0, "disabled": False},
+        ]
+
+        # Latest entry published_at per feed. Feed 1 (Errored) gets a fresh entry
+        # so it is flagged ONLY as errored, not incidentally stale (errored and
+        # stale are independent conditions in the impl).
+        def feed_entries(feed_id, **kwargs):
+            latest = {
+                1: "2026-06-13T00:00:00Z",
+                3: "2000-01-01T00:00:00Z",
+                4: "2026-06-13T00:00:00Z",
+            }.get(feed_id)
+            entries = [{"published_at": latest}] if latest else []
+            return {"total": len(entries), "entries": entries}
+
+        client.get_feed_entries.side_effect = feed_entries
+
+        out = mfa.cmd_health_audit(client, _ns(stale_days=30, now=1750000000))
+        assert {f["id"] for f in out["errored"]} == {1}
+        assert {f["id"] for f in out["disabled"]} == {2}
+        assert {f["id"] for f in out["stale"]} == {3}
+
+    def test_no_entries_counts_as_stale(self):
+        client = MagicMock()
+        client.get_feeds.return_value = [
+            {"id": 9, "title": "Empty", "parsing_error_count": 0, "disabled": False}
+        ]
+        client.get_feed_entries.return_value = {"total": 0, "entries": []}
+        out = mfa.cmd_health_audit(client, _ns(stale_days=30, now=1750000000))
+        assert out["stale"][0]["id"] == 9
+        assert out["stale"][0]["latest_entry"] is None

@@ -19,6 +19,8 @@ import json
 import os
 import re
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -273,3 +275,45 @@ def cmd_triage(client, args) -> dict[str, Any]:
         )
     rows.sort(key=lambda r: r["unread"], reverse=True)
     return {"unread_by_feed": rows, "total_unread": sum(r["unread"] for r in rows)}
+
+
+def _parse_ts(value: str | None) -> float | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _latest_entry_ts(client, feed_id: int) -> tuple[float | None, str | None]:
+    result = client.get_feed_entries(
+        feed_id, order="published_at", direction="desc", limit=1
+    )
+    entries = result.get("entries", [])
+    if not entries:
+        return None, None
+    raw = entries[0].get("published_at")
+    return _parse_ts(raw), raw
+
+
+def cmd_health_audit(client, args) -> dict[str, Any]:
+    now = getattr(args, "now", None) or time.time()
+    cutoff = now - args.stale_days * 86400
+    errored, disabled, stale = [], [], []
+    for f in client.get_feeds():
+        summary = {"id": f["id"], "title": f.get("title")}
+        if f.get("parsing_error_count", 0) > 0:
+            errored.append({**summary, "errors": f["parsing_error_count"]})
+        if f.get("disabled", False):
+            disabled.append(summary)
+            continue  # disabled feeds are not also flagged stale
+        ts, raw = _latest_entry_ts(client, f["id"])
+        if ts is None or ts < cutoff:
+            stale.append({**summary, "latest_entry": raw})
+    return {
+        "errored": errored,
+        "disabled": disabled,
+        "stale": stale,
+        "stale_days": args.stale_days,
+    }

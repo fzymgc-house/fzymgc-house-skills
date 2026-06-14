@@ -46,6 +46,7 @@ vars:
     .claude/hooks/tests/
     jj/hooks/tests/
     dev-flow/hooks/tests/
+    dev-flow/scripts/tests/
     homelab/skills/terraform/tests/
 
 tasks:

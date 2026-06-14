@@ -125,9 +125,21 @@ class TmuxDriver(Multiplexer):
 def detect(explicit: str = "auto") -> Multiplexer:
     """Resolve a multiplexer from an explicit choice or the environment.
 
-    Precedence for ``auto``: inside tmux (``$TMUX``) → tmux; else cmux on PATH →
-    cmux; else tmux on PATH → tmux; else refuse. An explicit ``cmux``/``tmux``
-    always wins; any other value is an error.
+    Precedence for ``auto`` (the session you are *inside* beats binary
+    availability — picking by PATH when a session signal exists chooses the
+    wrong surface):
+
+    1. inside a tmux session (``$TMUX``) → tmux. Innermost wins on nesting:
+       running ``tmux`` inside a cmux surface leaves you looking at a tmux
+       pane, so ``$TMUX`` takes precedence even when a cmux marker is also set.
+    2. inside a cmux surface (``$CMUX_SURFACE_ID`` / ``$CMUX_WORKSPACE_ID``)
+       → cmux. Refuse if ``cmux`` is not on PATH rather than falling through
+       to tmux — that would spawn tmux while the operator sits in cmux.
+    3. else cmux on PATH → cmux.
+    4. else tmux on PATH → tmux.
+    5. else refuse.
+
+    An explicit ``cmux``/``tmux`` always wins; any other value is an error.
     """
     if explicit == "cmux":
         return CmuxDriver()
@@ -137,10 +149,18 @@ def detect(explicit: str = "auto") -> Multiplexer:
         raise ValueError(f"unknown worker-type: {explicit!r} (want auto|cmux|tmux)")
     if os.environ.get("TMUX"):
         return TmuxDriver(in_tmux=True)
+    if os.environ.get("CMUX_SURFACE_ID") or os.environ.get("CMUX_WORKSPACE_ID"):
+        if shutil.which("cmux"):
+            return CmuxDriver()
+        raise RuntimeError(
+            "inside a cmux surface but `cmux` is not on PATH; refusing to fall "
+            "back to tmux (pass --worker-type explicitly to override)"
+        )
     if shutil.which("cmux"):
         return CmuxDriver()
     if shutil.which("tmux"):
         return TmuxDriver(in_tmux=False)
     raise RuntimeError(
-        "no usable multiplexer: not inside tmux and neither cmux nor tmux on PATH"
+        "no usable multiplexer: not inside tmux or a cmux surface and neither "
+        "cmux nor tmux on PATH"
     )

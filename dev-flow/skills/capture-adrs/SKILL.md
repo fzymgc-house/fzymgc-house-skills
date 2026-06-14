@@ -147,20 +147,61 @@ For each accepted candidate, in order:
    flat top-level `.id`, and sets `adr_deciders` metadata directly. `bd mol pour`
    is NOT used: bd 1.0.4's cook step downgrades the formula's `type = "decision"`
    step to `task`, leaves `adr_deciders` a literal `{{deciders}}`, and emits a
-   wrapper epic (see ADR `fhsk-buu`):
+   wrapper epic (see ADR `fhsk-buu`).
+
+   > **CAUTION — real newlines, never the literal `\n` escape.** Rationale /
+   > Alternatives / Consequences are almost always multi-line bulleted lists.
+   > Do **not** build the body with `printf '## Context\n\n%s...' "$rationale"`:
+   > `printf` interprets `\n` in the *format string* (so the section headers get
+   > real breaks) but **not** inside a `%s`-substituted value, so bulleted
+   > content written as `"- a\n- b"` renders as literal backslash-n and breaks
+   > every renderer (this shipped as the PR #167 bug). Write the body with a
+   > **quoted heredoc** (`<<'ADRBODY'`) containing actual line breaks, then guard
+   > before continuing:
 
    ```bash
-   ID=$(printf '## Context\n\n%s\n\n## Decision\n\n%s\n\n## Rationale\n\n%s\n\n## Alternatives Considered\n\n%s\n\n## Consequences\n\n%s\n' \
-          "$context" "$decision" "$rationale" "$alternatives" "$consequences" \
-        | bd create \
+   # Quoted delimiter => no shell expansion; fill each section with the
+   # candidate's real markdown, bullets on their own lines (NOT "\n").
+   ID=$(bd create \
             --title "$title" \
             --type decision \
             --label phase:design \
             --metadata "$(jq -n --arg d "$deciders" '{adr_deciders:$d}')" \
-            --stdin --json \
-        | jq -r '.id')
+            --stdin --json <<'ADRBODY' | jq -r '.id'
+   ## Context
+
+   <context prose>
+
+   ## Decision
+
+   <decision prose>
+
+   ## Rationale
+
+   - <reason one, on its own line>
+   - <reason two>
+
+   ## Alternatives Considered
+
+   - **<option> (chosen):** <why>
+   - **<option> (rejected):** <why not>
+
+   ## Consequences
+
+   - Positive: <...>
+   - Negative: <...>
+   - Neutral: <...>
+   ADRBODY
+   )
    [ -n "$ID" ] && [ "$ID" != "null" ] \
      || { echo "capture-adrs: bd create -t decision failed for '$title'" >&2; exit 1; }
+
+   # Guard: reject a body that still carries the literal two-char escape \n.
+   if bd show "$ID" --json | jq -r '.[0].description' | grep -q '\\n'; then
+     echo "capture-adrs: ADR body for $ID contains literal \\n; rewrite with real" \
+          "newlines and re-apply via: bd update $ID --body-file <file>" >&2
+     exit 1
+   fi
 
    # Close immediately — capture-adrs is the retrospective path (Accepted on creation)
    bd close "$ID" --reason="Accepted ADR filed via capture-adrs"

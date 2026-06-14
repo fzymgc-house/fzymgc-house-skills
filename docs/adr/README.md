@@ -9,6 +9,9 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-06-14 | [fhsk-pqw](fhsk-pqw-wrap-miniflux-client-directly-not-via-mcp-gateway.md) | Wrap Miniflux client directly, not via MCP gateway | Accepted |
+| 2026-06-14 | [fhsk-qs9](fhsk-qs9-use-env-then-file-config-resolution-miniflux-credentials.md) | Use env-then-file config resolution for Miniflux credentials | Accepted |
+| 2026-06-14 | [fhsk-0qz](fhsk-0qz-split-curation-into-deterministic-rules-miniflux-and-reasoni.md) | Split curation into deterministic rules (Miniflux) and reasoning (Claude) | Accepted |
 | 2026-06-13 | [fhsk-a6v](fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md) | Add tmux as a standalone plugin rather than folding into dev-flow | Accepted |
 | 2026-06-13 | [fhsk-8yz](fhsk-8yz-share-cmux-tmux-driver-logic-via-muxdriver-module-not-script.md) | Share cmux/tmux driver logic via a _muxdriver module, not script duplication | Accepted |
 | 2026-06-13 | [fhsk-5dj](fhsk-5dj-convert-drain-worker-command-parameterized-skill.md) | Convert drain-with-worker command to a parameterized skill | Accepted |

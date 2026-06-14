@@ -313,3 +313,38 @@ class TestDigest:
         client.toggle_bookmark.assert_called_once_with(3)
         assert out["marked_read"] == [1, 2]
         assert out["starred"] == [3]
+
+
+class TestTriage:
+    def test_triage_summarizes_unread_per_feed(self):
+        client = MagicMock()
+        client.get_feed_counters.return_value = {
+            "reads": {"42": 100},
+            "unreads": {"42": 3, "7": 0},
+        }
+        client.get_feeds.return_value = [
+            {"id": 42, "title": "Example", "category": {"title": "Tech"}},
+            {"id": 7, "title": "Quiet", "category": {"title": "Tech"}},
+        ]
+        out = mfa.cmd_triage(client, _ns(mark_read_feed=None, mark_read_category=None))
+        # Only feeds with unread > 0 appear, sorted desc by count
+        assert out["unread_by_feed"] == [
+            {"feed_id": 42, "title": "Example", "category": "Tech", "unread": 3}
+        ]
+        assert out["total_unread"] == 3
+
+    def test_triage_mark_read_feed(self):
+        client = MagicMock()
+        client.get_feed_counters.return_value = {"unreads": {}}
+        client.get_feeds.return_value = []
+        out = mfa.cmd_triage(client, _ns(mark_read_feed=42, mark_read_category=None))
+        client.mark_feed_entries_as_read.assert_called_once_with(42)
+        assert out["marked_read_feed"] == 42
+
+    def test_triage_mark_read_category(self):
+        client = MagicMock()
+        client.get_feed_counters.return_value = {"unreads": {}}
+        client.get_feeds.return_value = []
+        out = mfa.cmd_triage(client, _ns(mark_read_feed=None, mark_read_category=7))
+        client.mark_category_entries_as_read.assert_called_once_with(7)
+        assert out["marked_read_category"] == 7

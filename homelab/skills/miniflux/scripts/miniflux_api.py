@@ -246,3 +246,30 @@ def cmd_digest(client, args) -> dict[str, Any]:
             client.toggle_bookmark(entry_id)
         out["starred"] = args.star
     return out
+
+
+def cmd_triage(client, args) -> dict[str, Any]:
+    if getattr(args, "mark_read_feed", None) is not None:
+        client.mark_feed_entries_as_read(args.mark_read_feed)
+        return {"marked_read_feed": args.mark_read_feed}
+    if getattr(args, "mark_read_category", None) is not None:
+        client.mark_category_entries_as_read(args.mark_read_category)
+        return {"marked_read_category": args.mark_read_category}
+
+    counters = client.get_feed_counters().get("unreads", {})
+    feeds_by_id = {f["id"]: f for f in client.get_feeds()}
+    rows = []
+    for feed_id_str, count in counters.items():
+        if count <= 0:
+            continue
+        feed = feeds_by_id.get(int(feed_id_str), {})
+        rows.append(
+            {
+                "feed_id": int(feed_id_str),
+                "title": feed.get("title"),
+                "category": (feed.get("category") or {}).get("title"),
+                "unread": count,
+            }
+        )
+    rows.sort(key=lambda r: r["unread"], reverse=True)
+    return {"unread_by_feed": rows, "total_unread": sum(r["unread"] for r in rows)}

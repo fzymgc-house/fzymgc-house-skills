@@ -127,3 +127,52 @@ def cmd_create_feed(client, args) -> dict[str, Any]:
 def cmd_delete_feed(client, args) -> dict[str, Any]:
     client.delete_feed(args.feed_id)
     return {"deleted_feed_id": args.feed_id}
+
+
+def _project_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    feed = entry.get("feed") or {}
+    cat = feed.get("category") or {}
+    return {
+        "id": entry["id"],
+        "title": entry.get("title"),
+        "url": entry.get("url"),
+        "status": entry.get("status"),
+        "starred": entry.get("starred"),
+        "published_at": entry.get("published_at"),
+        "feed": feed.get("title"),
+        "category": cat.get("title"),
+    }
+
+
+def _entry_filters(args) -> dict[str, Any]:
+    """Translate CLI args into get_entries kwargs, omitting unset ones."""
+    mapping = {
+        "status": getattr(args, "status", None),
+        "starred": getattr(args, "starred", None),
+        "search": getattr(args, "search", None),
+        "category_id": getattr(args, "category", None),
+        "feed_id": getattr(args, "feed", None),
+        "after": getattr(args, "after", None),
+        "limit": getattr(args, "limit", None),
+        "order": getattr(args, "order", None),
+        "direction": getattr(args, "direction", None),
+    }
+    return {k: v for k, v in mapping.items() if v is not None}
+
+
+def cmd_get_entries(client, args) -> dict[str, Any]:
+    result = client.get_entries(**_entry_filters(args))
+    return {
+        "total": result.get("total", 0),
+        "entries": [_project_entry(e) for e in result.get("entries", [])],
+    }
+
+
+def cmd_mark_read(client, args) -> dict[str, Any]:
+    client.update_entries(args.ids, "read")
+    return {"marked_read": args.ids}
+
+
+def cmd_toggle_star(client, args) -> dict[str, Any]:
+    client.toggle_bookmark(args.entry_id)
+    return {"toggled_star": args.entry_id}

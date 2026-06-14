@@ -154,3 +154,62 @@ class TestFeedCommands:
         out = mfa.cmd_delete_feed(client, _ns(feed_id=42))
         client.delete_feed.assert_called_once_with(42)
         assert out == {"deleted_feed_id": 42}
+
+
+class TestEntryCommands:
+    def test_get_entries_passes_filters_and_projects(self):
+        client = MagicMock()
+        client.get_entries.return_value = {
+            "total": 1,
+            "entries": [
+                {
+                    "id": 5,
+                    "title": "Hello",
+                    "url": "https://ex.org/a",
+                    "status": "unread",
+                    "starred": False,
+                    "published_at": "2026-06-13T00:00:00Z",
+                    "feed": {"title": "Example", "category": {"title": "Tech"}},
+                }
+            ],
+        }
+        out = mfa.cmd_get_entries(
+            client,
+            _ns(
+                status="unread",
+                starred=None,
+                search=None,
+                category=None,
+                feed=None,
+                after=None,
+                limit=20,
+                order="published_at",
+                direction="desc",
+            ),
+        )
+        client.get_entries.assert_called_once_with(
+            status="unread", limit=20, order="published_at", direction="desc"
+        )
+        assert out["total"] == 1
+        assert out["entries"][0] == {
+            "id": 5,
+            "title": "Hello",
+            "url": "https://ex.org/a",
+            "status": "unread",
+            "starred": False,
+            "published_at": "2026-06-13T00:00:00Z",
+            "feed": "Example",
+            "category": "Tech",
+        }
+
+    def test_mark_read(self):
+        client = MagicMock()
+        out = mfa.cmd_mark_read(client, _ns(ids=[1, 2, 3]))
+        client.update_entries.assert_called_once_with([1, 2, 3], "read")
+        assert out == {"marked_read": [1, 2, 3]}
+
+    def test_toggle_star(self):
+        client = MagicMock()
+        out = mfa.cmd_toggle_star(client, _ns(entry_id=9))
+        client.toggle_bookmark.assert_called_once_with(9)
+        assert out == {"toggled_star": 9}

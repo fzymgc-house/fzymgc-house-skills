@@ -12,14 +12,14 @@ itself can't: the multiplexer surface mechanics + launch sequence, and the watch
 
 ## Prerequisites (refuse early)
 
-Validation is owned by `dev-flow/scripts/drain-worker-launch`. Run it in
+Validation is owned by `${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch`. Run it in
 check mode — it refuses fail-fast on a non-drain bead, a closed/!in_progress
 bead, a non-epic mode, a missing multiplexer, or absent
 `drain_workspace`/`drain_scope`/`drain_sentinel` metadata (the `issue_type`
 field, not `type`, is the bead type):
 
 ```bash
-dev-flow/scripts/drain-worker-launch --check --drain-id <drain-id> --worker-type <auto|cmux|tmux>
+${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch --check --drain-id <drain-id> --worker-type <auto|cmux|tmux>
 ```
 
 On a non-zero exit, surface the printed reason and stop.
@@ -30,7 +30,7 @@ The verified pane-launch sequence (spawn → `cd` + verify `pwd` → `direnv all
 
 - verify → `claude --dangerously-skip-permissions` → trust prompt → fire the
 thin `/goal` with a 3s pre-submit pause) is implemented in
-`dev-flow/scripts/drain-worker-launch`. It prints `multiplexer=<name>` and
+`${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch`. It prints `multiplexer=<name>` and
 `surface=<ref>` on success. For the tmux primitives it builds on (spawn a
 window vs detached session, `send-keys` vs Enter, `capture-pane`), see the
 `tmux` skill.
@@ -52,11 +52,11 @@ following the protocol, then stop. Goal met when: <SENTINEL>.
 
 ## Surface-aware watchdog (arm after the worker is iterating)
 
-Arm `dev-flow/scripts/drain-watchdog` as a **background** task in your orchestrating session
+Arm `${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog` as a **background** task in your orchestrating session
 (`run_in_background: true`):
 
 ```bash
-dev-flow/scripts/drain-watchdog \
+${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog \
   --multiplexer <multiplexer> --drain-id <drain-id> --scope <epic-scope> --surface <surface-ref>
 ```
 

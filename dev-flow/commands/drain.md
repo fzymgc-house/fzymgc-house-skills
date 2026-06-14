@@ -1,7 +1,7 @@
 ---
 description: Autonomous bead iteration via /goal. Modes: init, epic, set, cascade, worker, resume.
 argument-hint: "init | epic <id> | set <id...> | cascade <id...> | worker <drain-id> | resume <drain-id>"
-allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "PushNotification", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)", "Bash(command -v cmux:*)", "Bash(cmux:*)", "Bash(tmux:*)", "Bash(command -v tmux:*)", "Bash(direnv:*)", "Bash(sleep:*)", "Bash(jq:*)", "Bash(dev-flow/scripts/ensure-isolated-workspace:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "PushNotification", "Bash(bd config get types.custom:*)", "Bash(bd config set types.custom:*)", "Bash(bd types:*)", "Bash(bd create:*)", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(bd ready:*)", "Bash(bd update:*)", "Bash(bd note:*)", "Bash(bd close:*)", "Bash(bd dep list:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(git status:*)", "Bash(git rev-parse:*)", "Bash(date:*)", "Bash(command -v cmux:*)", "Bash(cmux:*)", "Bash(tmux:*)", "Bash(command -v tmux:*)", "Bash(direnv:*)", "Bash(sleep:*)", "Bash(jq:*)", "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/ensure-isolated-workspace:*)"]
 ---
 
 # /drain
@@ -137,7 +137,7 @@ STARTED_AT=$(date -u +%FT%TZ)
 # a dedicated sibling workspace (trunk-based + bookmarked, like the worktree-create
 # hook) when this IS the default workspace; an already-isolated jj workspace or a
 # git repo is returned unchanged. See dev-flow:using-worktrees.
-WORKSPACE=$(dev-flow/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
+WORKSPACE=$(${CLAUDE_PLUGIN_ROOT}/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
   || { echo "Refusing to drain: could not obtain an isolated workspace." >&2; exit 1; }
 
 # Create the typed audit-trail drain bead directly. `bd create --type drain`
@@ -296,7 +296,7 @@ STARTED_AT=$(date -u +%FT%TZ)
 # a dedicated sibling workspace (trunk-based + bookmarked, like the worktree-create
 # hook) when this IS the default workspace; an already-isolated jj workspace or a
 # git repo is returned unchanged. See dev-flow:using-worktrees.
-WORKSPACE=$(dev-flow/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
+WORKSPACE=$(${CLAUDE_PLUGIN_ROOT}/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
   || { echo "Refusing to drain: could not obtain an isolated workspace." >&2; exit 1; }
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for
@@ -433,7 +433,7 @@ STARTED_AT=$(date -u +%FT%TZ)
 # a dedicated sibling workspace (trunk-based + bookmarked, like the worktree-create
 # hook) when this IS the default workspace; an already-isolated jj workspace or a
 # git repo is returned unchanged. See dev-flow:using-worktrees.
-WORKSPACE=$(dev-flow/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
+WORKSPACE=$(${CLAUDE_PLUGIN_ROOT}/scripts/ensure-isolated-workspace ensure --name "drain-${MODE}-${SCOPE%% *}") \
   || { echo "Refusing to drain: could not obtain an isolated workspace." >&2; exit 1; }
 
 # Create the typed audit-trail drain bead directly (see epic-mode Phase B for

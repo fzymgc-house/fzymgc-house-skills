@@ -197,8 +197,11 @@ def _frontmatter(text: str) -> str:
 
 def test_skill_frontmatter_declares_script_tools() -> None:
     fm = _frontmatter(DRAIN_WITH_WORKER_SKILL.read_text())
-    assert "Bash(dev-flow/scripts/drain-worker-launch:*)" in fm
-    assert "Bash(dev-flow/scripts/drain-watchdog:*)" in fm
+    # Scripts must be granted via ${CLAUDE_PLUGIN_ROOT} so they resolve in a
+    # consumer repo, not only this plugin's source tree (fhsk-4pz).
+    assert "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch:*)" in fm
+    assert "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog:*)" in fm
+    assert "Bash(dev-flow/scripts/" not in fm, "no cwd-relative script grants"
     assert "AskUserQuestion" in fm
 
 

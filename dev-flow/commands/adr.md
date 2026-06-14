@@ -1,12 +1,12 @@
 ---
 description: ADR lifecycle operations. Modes: init, new, propose, update, supersede, addendum, accept, deprecate, render, migrate.
 argument-hint: "init | new | propose | update <id> | supersede <old-id> | addendum <id> --text \"...\" | accept <id> | deprecate <id> --reason \"...\" | render <id> | migrate [--apply]"
-allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "Bash(bd:*)", "Bash(jq:*)", "Bash(printf:*)", "Bash(dev-flow/scripts/render-adr:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(date:*)"]
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion", "Bash(bd:*)", "Bash(jq:*)", "Bash(printf:*)", "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/render-adr:*)", "Bash(jj st:*)", "Bash(jj root:*)", "Bash(date:*)"]
 ---
 
 # /adr
 
-ADR lifecycle operations. bd is the source of truth; this command mutates bd state and re-renders `docs/adr/<id>-<slug>.md` via `dev-flow/scripts/render-adr`. See `dev-flow:evolve-adr` for the canonical reference (capture-vs-propose distinction, status mechanics, migration).
+ADR lifecycle operations. bd is the source of truth; this command mutates bd state and re-renders `docs/adr/<id>-<slug>.md` via `${CLAUDE_PLUGIN_ROOT}/scripts/render-adr`. See `dev-flow:evolve-adr` for the canonical reference (capture-vs-propose distinction, status mechanics, migration).
 
 Parse `$ARGUMENTS` as one of:
 
@@ -66,7 +66,7 @@ Retrospective ADR documentation. Creates a bead via the formula and immediately 
    ```
 4. Render:
    ```bash
-   dev-flow/scripts/render-adr "$ID"
+   ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
    ```
 5. Print: `Created and accepted ADR $ID → docs/adr/<rendered>.md`
 
@@ -95,7 +95,7 @@ Forward-looking ADR. Same flow as New EXCEPT skip Step 3 (no `bd close`). The be
 3. Do NOT close the bead — leave it open (Proposed status).
 4. Render:
    ```bash
-   dev-flow/scripts/render-adr "$ID"
+   ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
    ```
 5. Print: `Proposed ADR $ID → docs/adr/<rendered>.md (run /adr accept $ID to finalize)`
 
@@ -107,7 +107,7 @@ Re-render the ADR file from bd state. No bd mutation.
 ID="$1"
 bd show "$ID" --json >/dev/null 2>&1 \
   || { echo "Decision bead $ID not found." >&2; exit 1; }
-dev-flow/scripts/render-adr "$ID"
+${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
 ```
 
 ## Update mode (/adr update <id>)
@@ -155,7 +155,7 @@ Edit an ADR's body or individual sections, then re-render.
 
 6. Render:
    ```bash
-   dev-flow/scripts/render-adr "$ID"
+   ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
    ```
 
 ## Addendum mode (/adr addendum <id> --text "...")
@@ -173,7 +173,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$TEXT" ] || { echo "Usage: /adr addendum <id> --text \"<text>\"" >&2; exit 1; }
 bd note "$ID" "addendum: $TEXT"
-dev-flow/scripts/render-adr "$ID"
+${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
 echo "Addendum added to $ID and re-rendered."
 ```
 
@@ -187,7 +187,7 @@ STATUS=$(bd show "$ID" --json | jq -r '.[0].status')
 [ "$STATUS" = "open" ] \
   || { echo "ADR $ID is not in Proposed state (bd status=$STATUS); cannot accept." >&2; exit 1; }
 bd close "$ID" --reason="Accepted"
-dev-flow/scripts/render-adr "$ID"
+${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
 echo "ADR $ID accepted."
 ```
 
@@ -213,7 +213,7 @@ STATUS=$(bd show "$ID" --json | jq -r '.[0].status')
 
 bd update "$ID" --add-label adr:deprecated
 bd note "$ID" "deprecated: $REASON"
-dev-flow/scripts/render-adr "$ID"
+${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
 echo "ADR $ID deprecated: $REASON"
 ```
 
@@ -256,8 +256,8 @@ Operator steps (shell + interactive):
    ```
 6. Re-render BOTH markdown files:
    ```bash
-   dev-flow/scripts/render-adr "$OLD"   # status flips to Superseded by NEW
-   dev-flow/scripts/render-adr "$NEW"   # References shows Supersedes: OLD
+   ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$OLD"   # status flips to Superseded by NEW
+   ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$NEW"   # References shows Supersedes: OLD
    ```
 7. Print: `"Superseded $OLD with $NEW. Both ADRs re-rendered."`
 
@@ -306,7 +306,7 @@ for ID in $(bd list --all --type=decision --json | jq -r '.[].id'); do
     if [ -n "$EXTRACTED" ]; then
       if [ "$APPLY" = "1" ]; then
         bd update "$ID" --set-metadata "adr_deciders=$EXTRACTED"
-        dev-flow/scripts/render-adr "$ID"
+        ${CLAUDE_PLUGIN_ROOT}/scripts/render-adr "$ID"
         MIGRATED=$((MIGRATED+1))
         echo "MIGRATED: $ID (deciders='$EXTRACTED') + re-rendered"
       else

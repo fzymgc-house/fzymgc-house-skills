@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.25.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.4...v1.25.0) (2026-06-14)
+
+
+### Features
+
+* **miniflux:** add Miniflux RSS feed management & curation skill (fhsk-8k8) ([#174](https://github.com/fzymgc-house/fzymgc-house-skills/issues/174)) ([6137627](https://github.com/fzymgc-house/fzymgc-house-skills/commit/613762740d180f4c3144f0977d6bb6203db98eff))
+
+
+### Bug Fixes
+
+* **dev-flow:** resolve drain/adr scripts via ${CLAUDE_PLUGIN_ROOT} ([#172](https://github.com/fzymgc-house/fzymgc-house-skills/issues/172)) ([ea5cdc4](https://github.com/fzymgc-house/fzymgc-house-skills/commit/ea5cdc48279ed0f73733457d63542ac3411052e0))
+* **drain:** detect cmux by session, not PATH — symmetric mux selection (fhsk-3v3) ([#173](https://github.com/fzymgc-house/fzymgc-house-skills/issues/173)) ([02750c5](https://github.com/fzymgc-house/fzymgc-house-skills/commit/02750c58abc3d095d0b75b167b7c6f1b2781042d))
+* **drain:** skip direnv gate in non-direnv repos (missing .envrc misread as blocked) ([#170](https://github.com/fzymgc-house/fzymgc-house-skills/issues/170)) ([1c1e44b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/1c1e44b6973941196e70ef90cd4cf7245cb09ff7))
+* **drain:** stop watchdog api-error false-positive on diff line numbers (fhsk-b43) ([#175](https://github.com/fzymgc-house/fzymgc-house-skills/issues/175)) ([39957db](https://github.com/fzymgc-house/fzymgc-house-skills/commit/39957db3cdf72180346119420d5162b76d581626))
+
 ## [1.24.4](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.3...v1.24.4) (2026-06-14)
 
 

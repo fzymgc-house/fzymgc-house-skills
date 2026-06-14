@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.4](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.3...v1.24.4) (2026-06-14)
+
+
+### Bug Fixes
+
+* **capture-adrs:** prevent literal \n in ADR bodies ([#168](https://github.com/fzymgc-house/fzymgc-house-skills/issues/168)) ([73ca96b](https://github.com/fzymgc-house/fzymgc-house-skills/commit/73ca96b5697e30a812038b9ba14dbd601b3df408))
+
 ## [1.24.3](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.2...v1.24.3) (2026-06-13)
 
 

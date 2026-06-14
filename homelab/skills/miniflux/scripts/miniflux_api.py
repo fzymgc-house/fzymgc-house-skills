@@ -16,10 +16,13 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
+import miniflux
 import yaml
+from miniflux import AccessUnauthorized, ClientError
 
 
 class ConfigError(Exception):
@@ -58,3 +61,31 @@ def format_output(data: Any, fmt: str) -> str:
     if fmt == "json":
         return json.dumps(data, indent=2, default=str)
     return yaml.safe_dump(data, sort_keys=False, allow_unicode=True).rstrip()
+
+
+def make_client(config: dict[str, str]) -> "miniflux.Client":
+    return miniflux.Client(config["url"], api_key=config["api_key"])
+
+
+def run_command(call, fmt: str) -> int:
+    """Execute a no-arg callable, format its result, translate errors."""
+    try:
+        result = call()
+    except AccessUnauthorized:
+        print(
+            "Authentication failed (401). Check MINIFLUX_API_KEY / config api_key.",
+            file=sys.stderr,
+        )
+        return 1
+    except ClientError as e:
+        status = getattr(e, "status_code", "?")
+        print(f"Miniflux API error (HTTP {status}): {e}", file=sys.stderr)
+        return 1
+    except (ConnectionError, OSError) as e:
+        print(
+            f"Cannot reach Miniflux: {e}. Check MINIFLUX_URL / config url.",
+            file=sys.stderr,
+        )
+        return 1
+    print(format_output(result, fmt))
+    return 0

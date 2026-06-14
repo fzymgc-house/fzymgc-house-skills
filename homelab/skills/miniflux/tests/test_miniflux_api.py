@@ -48,3 +48,52 @@ class TestFormatOutput:
     def test_json(self):
         out = mfa.format_output({"a": 1}, "json")
         assert json.loads(out) == {"a": 1}
+
+
+class TestRunCommand:
+    def test_success_prints_formatted(self, capsys):
+        rc = mfa.run_command(lambda: {"ok": True}, "json")
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert json.loads(out) == {"ok": True}
+
+    def test_unauthorized_maps_to_api_key_hint(self, capsys):
+        import miniflux
+        from unittest.mock import Mock
+
+        def boom():
+            resp = Mock()
+            resp.status_code = 401
+            resp.headers = {"Content-Type": "application/json"}
+            resp.json.return_value = {"error_message": "unauthorized"}
+            raise miniflux.AccessUnauthorized(resp)
+
+        rc = mfa.run_command(boom, "yaml")
+        err = capsys.readouterr().err
+        assert rc == 1
+        assert "MINIFLUX_API_KEY" in err
+
+    def test_client_error_surfaces_message(self, capsys):
+        import miniflux
+        from unittest.mock import Mock
+
+        def boom():
+            resp = Mock()
+            resp.status_code = 404
+            resp.headers = {"Content-Type": "application/json"}
+            resp.json.return_value = {"error_message": "feed not found"}
+            raise miniflux.ResourceNotFound(resp)
+
+        rc = mfa.run_command(boom, "yaml")
+        err = capsys.readouterr().err
+        assert rc == 1
+        assert "feed not found" in err
+
+    def test_connection_error_maps_to_url_hint(self, capsys):
+        def boom():
+            raise ConnectionError("refused")
+
+        rc = mfa.run_command(boom, "yaml")
+        err = capsys.readouterr().err
+        assert rc == 1
+        assert "MINIFLUX_URL" in err

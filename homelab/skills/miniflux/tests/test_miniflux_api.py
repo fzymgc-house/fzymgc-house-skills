@@ -8,6 +8,7 @@
 import json
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -15,6 +16,13 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 import miniflux_api as mfa
+
+
+def _ns(**kwargs):
+    """Build a throwaway args namespace for handler tests."""
+    from argparse import Namespace
+
+    return Namespace(**kwargs)
 
 
 class TestResolveConfig:
@@ -97,3 +105,52 @@ class TestRunCommand:
         err = capsys.readouterr().err
         assert rc == 1
         assert "MINIFLUX_URL" in err
+
+
+class TestFeedCommands:
+    def test_list_feeds_projects_fields(self):
+        client = MagicMock()
+        client.get_feeds.return_value = [
+            {
+                "id": 42,
+                "title": "Example",
+                "feed_url": "https://ex.org/feed",
+                "category": {"id": 7, "title": "Tech"},
+                "parsing_error_count": 0,
+                "disabled": False,
+            }
+        ]
+        out = mfa.cmd_list_feeds(client, _ns())
+        assert out == [
+            {
+                "id": 42,
+                "title": "Example",
+                "feed_url": "https://ex.org/feed",
+                "category": "Tech",
+                "parsing_error_count": 0,
+                "disabled": False,
+            }
+        ]
+
+    def test_list_categories(self):
+        client = MagicMock()
+        client.get_categories.return_value = [{"id": 7, "title": "Tech"}]
+        out = mfa.cmd_list_categories(client, _ns())
+        assert out == [{"id": 7, "title": "Tech"}]
+
+    def test_create_feed_returns_id(self):
+        client = MagicMock()
+        client.create_feed.return_value = 99
+        out = mfa.cmd_create_feed(
+            client, _ns(url="https://x/feed", category=7, crawler=True)
+        )
+        client.create_feed.assert_called_once_with(
+            "https://x/feed", category_id=7, crawler=True
+        )
+        assert out == {"created_feed_id": 99}
+
+    def test_delete_feed(self):
+        client = MagicMock()
+        out = mfa.cmd_delete_feed(client, _ns(feed_id=42))
+        client.delete_feed.assert_called_once_with(42)
+        assert out == {"deleted_feed_id": 42}

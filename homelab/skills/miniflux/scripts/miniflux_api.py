@@ -89,3 +89,41 @@ def run_command(call, fmt: str) -> int:
         return 1
     print(format_output(result, fmt))
     return 0
+
+
+def _feed_category_name(feed: dict[str, Any]) -> str | None:
+    cat = feed.get("category")
+    return cat.get("title") if isinstance(cat, dict) else None
+
+
+def cmd_list_feeds(client, args) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": f["id"],
+            "title": f.get("title"),
+            "feed_url": f.get("feed_url"),
+            "category": _feed_category_name(f),
+            "parsing_error_count": f.get("parsing_error_count", 0),
+            "disabled": f.get("disabled", False),
+        }
+        for f in client.get_feeds()
+    ]
+
+
+def cmd_list_categories(client, args) -> list[dict[str, Any]]:
+    return [{"id": c["id"], "title": c.get("title")} for c in client.get_categories()]
+
+
+def cmd_create_feed(client, args) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {}
+    if args.category is not None:
+        kwargs["category_id"] = args.category
+    if getattr(args, "crawler", False):
+        kwargs["crawler"] = True
+    feed_id = client.create_feed(args.url, **kwargs)
+    return {"created_feed_id": feed_id}
+
+
+def cmd_delete_feed(client, args) -> dict[str, Any]:
+    client.delete_feed(args.feed_id)
+    return {"deleted_feed_id": args.feed_id}

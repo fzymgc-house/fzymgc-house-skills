@@ -176,3 +176,27 @@ def cmd_mark_read(client, args) -> dict[str, Any]:
 def cmd_toggle_star(client, args) -> dict[str, Any]:
     client.toggle_bookmark(args.entry_id)
     return {"toggled_star": args.entry_id}
+
+
+def cmd_export_opml(client, args) -> dict[str, Any]:
+    return {"opml": client.export_feeds()}
+
+
+def cmd_import_opml(client, args) -> dict[str, Any]:
+    opml = Path(args.path).read_text()
+    client.import_feeds(opml)
+    return {"imported_from": args.path}
+
+
+def cmd_discover(client, args) -> list[dict[str, Any]]:
+    return client.discover(args.url)
+
+
+def cmd_refresh_feed(client, args) -> dict[str, Any]:
+    client.refresh_feed(args.feed_id)
+    return {"refreshed_feed_id": args.feed_id}
+
+
+def cmd_refresh_all(client, args) -> dict[str, Any]:
+    client.refresh_all_feeds()
+    return {"refreshed": "all"}

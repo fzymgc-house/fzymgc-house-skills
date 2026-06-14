@@ -213,3 +213,38 @@ class TestEntryCommands:
         out = mfa.cmd_toggle_star(client, _ns(entry_id=9))
         client.toggle_bookmark.assert_called_once_with(9)
         assert out == {"toggled_star": 9}
+
+
+class TestOpmlAndMaintenance:
+    def test_export_opml_returns_text(self):
+        client = MagicMock()
+        client.export_feeds.return_value = "<opml></opml>"
+        out = mfa.cmd_export_opml(client, _ns())
+        assert out == {"opml": "<opml></opml>"}
+
+    def test_import_opml_reads_file(self, tmp_path):
+        client = MagicMock()
+        path = tmp_path / "feeds.opml"
+        path.write_text("<opml>data</opml>")
+        out = mfa.cmd_import_opml(client, _ns(path=str(path)))
+        client.import_feeds.assert_called_once_with("<opml>data</opml>")
+        assert out == {"imported_from": str(path)}
+
+    def test_discover(self):
+        client = MagicMock()
+        client.discover.return_value = [{"url": "https://ex.org/feed", "title": "Ex"}]
+        out = mfa.cmd_discover(client, _ns(url="https://ex.org"))
+        client.discover.assert_called_once_with("https://ex.org")
+        assert out == [{"url": "https://ex.org/feed", "title": "Ex"}]
+
+    def test_refresh_feed(self):
+        client = MagicMock()
+        out = mfa.cmd_refresh_feed(client, _ns(feed_id=42))
+        client.refresh_feed.assert_called_once_with(42)
+        assert out == {"refreshed_feed_id": 42}
+
+    def test_refresh_all(self):
+        client = MagicMock()
+        out = mfa.cmd_refresh_all(client, _ns())
+        client.refresh_all_feeds.assert_called_once_with()
+        assert out == {"refreshed": "all"}

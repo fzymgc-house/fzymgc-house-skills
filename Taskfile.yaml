@@ -48,6 +48,7 @@ vars:
     dev-flow/hooks/tests/
     dev-flow/scripts/tests/
     homelab/skills/terraform/tests/
+    homelab/skills/miniflux/tests/
 
 tasks:
   fmt:
@@ -72,7 +73,7 @@ tasks:
   test:
     desc: Run all harness-independent tests (excludes Claude/agent evals)
     cmds:
-      - uv run --with pytest --with httpx --with pyyaml pytest {{.PYTEST_DIRS}}
+      - uv run --with pytest --with httpx --with pyyaml --with miniflux pytest {{.PYTEST_DIRS}}
         -q --import-mode=importlib
 
   # Releases are managed by release-please (.github/workflows/release.yaml):

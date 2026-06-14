@@ -432,3 +432,32 @@ class TestCuration:
         client = MagicMock()
         with pytest.raises(ValueError):
             mfa.cmd_apply_rule(client, _ns(feed=7, blocklist=None, keeplist=None))
+
+
+class TestMainDispatch:
+    def test_list_commands_runs_without_client(self, capsys):
+        rc = mfa.main(["--list-commands"])
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "digest" in out and "health-audit" in out
+
+    def test_list_feeds_dispatches_through_client(self, capsys, monkeypatch):
+        fake = MagicMock()
+        fake.get_feeds.return_value = []
+        monkeypatch.setattr(mfa, "resolve_config", lambda: {"url": "u", "api_key": "k"})
+        monkeypatch.setattr(mfa, "make_client", lambda cfg: fake)
+        rc = mfa.main(["list-feeds", "--format", "json"])
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert json.loads(out) == []
+        fake.get_feeds.assert_called_once_with()
+
+    def test_config_error_returns_2(self, capsys, monkeypatch):
+        def boom():
+            raise mfa.ConfigError("no config")
+
+        monkeypatch.setattr(mfa, "resolve_config", boom)
+        rc = mfa.main(["list-feeds"])
+        err = capsys.readouterr().err
+        assert rc == 2
+        assert "no config" in err

@@ -14,6 +14,7 @@ Run with --help for the command list.
 
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import os
@@ -343,3 +344,127 @@ def cmd_apply_rule(client, args) -> dict[str, Any]:
         raise ValueError("apply-rule requires --blocklist or --keeplist")
     client.update_feed(args.feed, **applied)
     return {"feed_id": args.feed, "applied": applied}
+
+
+# command name -> handler. Handlers take (client, args) and return data.
+COMMANDS = {
+    "list-feeds": cmd_list_feeds,
+    "list-categories": cmd_list_categories,
+    "create-feed": cmd_create_feed,
+    "delete-feed": cmd_delete_feed,
+    "get-entries": cmd_get_entries,
+    "mark-read": cmd_mark_read,
+    "toggle-star": cmd_toggle_star,
+    "export-opml": cmd_export_opml,
+    "import-opml": cmd_import_opml,
+    "discover": cmd_discover,
+    "refresh-feed": cmd_refresh_feed,
+    "refresh-all": cmd_refresh_all,
+    "digest": cmd_digest,
+    "triage": cmd_triage,
+    "health-audit": cmd_health_audit,
+    "suggest-rules": cmd_suggest_rules,
+    "apply-rule": cmd_apply_rule,
+}
+
+
+def build_parser() -> argparse.ArgumentParser:
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--format", choices=["yaml", "json"], default="yaml")
+
+    parser = argparse.ArgumentParser(
+        prog="miniflux_api.py", description="Manage and curate Miniflux RSS feeds."
+    )
+    parser.add_argument(
+        "--list-commands", action="store_true", help="List available commands and exit"
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("list-feeds", parents=[common], help="List feeds")
+    sub.add_parser("list-categories", parents=[common], help="List categories")
+
+    cf = sub.add_parser("create-feed", parents=[common], help="Subscribe to a feed")
+    cf.add_argument("url")
+    cf.add_argument("--category", type=int)
+    cf.add_argument("--crawler", action="store_true")
+
+    df = sub.add_parser("delete-feed", parents=[common], help="Delete a feed")
+    df.add_argument("feed_id", type=int)
+
+    ge = sub.add_parser("get-entries", parents=[common], help="List entries")
+    ge.add_argument("--status", choices=["read", "unread", "removed"])
+    ge.add_argument("--starred", action=argparse.BooleanOptionalAction, default=None)
+    ge.add_argument("--search")
+    ge.add_argument("--category", type=int)
+    ge.add_argument("--feed", type=int)
+    ge.add_argument("--after", type=int)
+    ge.add_argument("--limit", type=int, default=20)
+    ge.add_argument("--order", default="published_at")
+    ge.add_argument("--direction", default="desc", choices=["asc", "desc"])
+
+    mr = sub.add_parser("mark-read", parents=[common], help="Mark entries read")
+    mr.add_argument("ids", nargs="+", type=int)
+
+    ts = sub.add_parser("toggle-star", parents=[common], help="Toggle entry star")
+    ts.add_argument("entry_id", type=int)
+
+    sub.add_parser("export-opml", parents=[common], help="Export OPML")
+    io = sub.add_parser("import-opml", parents=[common], help="Import OPML")
+    io.add_argument("path")
+
+    dc = sub.add_parser("discover", parents=[common], help="Discover feeds at a URL")
+    dc.add_argument("url")
+
+    rf = sub.add_parser("refresh-feed", parents=[common], help="Refresh one feed")
+    rf.add_argument("feed_id", type=int)
+    sub.add_parser("refresh-all", parents=[common], help="Refresh all feeds")
+
+    dg = sub.add_parser("digest", parents=[common], help="Unread digest candidates")
+    dg.add_argument("--category", type=int)
+    dg.add_argument("--since", type=int, help="Unix timestamp; only entries after")
+    dg.add_argument("--limit", type=int, default=50)
+    dg.add_argument("--mark-read", nargs="+", type=int, dest="mark_read")
+    dg.add_argument("--star", nargs="+", type=int)
+
+    tr = sub.add_parser("triage", parents=[common], help="Unread summary + bulk read")
+    tr.add_argument("--mark-read-feed", type=int, dest="mark_read_feed")
+    tr.add_argument("--mark-read-category", type=int, dest="mark_read_category")
+
+    ha = sub.add_parser("health-audit", parents=[common], help="Audit feed health")
+    ha.add_argument("--stale-days", type=int, default=30, dest="stale_days")
+
+    sr = sub.add_parser("suggest-rules", parents=[common], help="Dump titles for rules")
+    sr.add_argument("--feed", type=int, required=True)
+    sr.add_argument("--limit", type=int, default=50)
+
+    ar = sub.add_parser("apply-rule", parents=[common], help="Apply blocklist/keeplist")
+    ar.add_argument("--feed", type=int, required=True)
+    ar.add_argument("--blocklist")
+    ar.add_argument("--keeplist")
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+
+    if args.list_commands:
+        print(format_output(sorted(COMMANDS), getattr(args, "format", "yaml")))
+        return 0
+    if not args.command:
+        build_parser().print_help()
+        return 2
+
+    try:
+        config = resolve_config()
+    except ConfigError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+
+    client = make_client(config)
+    handler = COMMANDS[args.command]
+    return run_command(lambda: handler(client, args), args.format)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

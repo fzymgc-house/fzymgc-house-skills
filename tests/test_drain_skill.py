@@ -153,6 +153,17 @@ def test_watchdog_classifies_api_error() -> None:
     )
     assert classify("API Error (Overloaded) 529") == "api-error"
     assert classify("Connection error: fetch failed") == "api-error"
+    # a status code adjacent to a JSON error body is still a real error
+    assert classify('429 {"type":"error","error":{"type":"rate_limit"}}') == "api-error"
+
+
+def test_watchdog_diff_line_numbers_do_not_false_positive() -> None:
+    # a bare status-code-like number in the worker's own diff/listing output is
+    # NOT an API error — it is a file line number (fhsk-b43)
+    classify = _load_watchdog().classify
+    assert classify('      429 +    uf.add_argument("--title")') == "working"
+    assert classify("      529 +        rc = mfa.run_command(boom)") == "working"
+    assert classify("  503  return self._retry()") == "working"
 
 
 def test_watchdog_classifies_healthy_surface_as_working() -> None:

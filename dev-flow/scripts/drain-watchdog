@@ -50,9 +50,17 @@ from re import IGNORECASE, compile as re_compile
 
 # States the closed-count probe is blind to. Order matters: an API error can
 # co-occur with a retry prompt, so the error (the more urgent signal) wins.
+# A bare status code (\b429\b) matched diff/listing line numbers the worker
+# prints while editing files (e.g. `429 +    code`), tripping a false api-error
+# on a healthy surface (fhsk-b43). The Claude CLI always prefixes a real error
+# with "API Error" and renders rate-limit/overload as text, so the textual
+# signals below cover every real banner; a status code is matched only when
+# it is immediately followed by a JSON error body ({ or "), which a line number
+# never is.
 ERR_RE = re_compile(
-    r"API Error|overloaded|rate.?limit|\b429\b|\b529\b|"
-    r"Internal server error|Connection error|fetch failed",
+    r"API Error|overloaded|rate.?limit|"
+    r"Internal server error|Connection error|fetch failed|"
+    r'\b(?:429|500|503|529)\b\s*[{"]',
     IGNORECASE,
 )
 ASK_RE = re_compile(

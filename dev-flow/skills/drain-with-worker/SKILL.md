@@ -1,7 +1,7 @@
 ---
 name: drain-with-worker
 description: Launch an autonomous /drain worker in a detached cmux or tmux surface and arm a surface-aware watchdog (epic-mode drains). Use when the user runs `/drain-with-worker [cmux|tmux] DRAIN_ID` or accepts the `/drain` worker handoff. Takes an optional worker-type (auto-detected when omitted).
-allowed-tools: ["Read", "AskUserQuestion", "PushNotification", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(jq:*)", "Bash(command -v cmux:*)", "Bash(command -v tmux:*)", "Bash(dev-flow/scripts/drain-worker-launch:*)", "Bash(dev-flow/scripts/drain-watchdog:*)"]
+allowed-tools: ["Read", "AskUserQuestion", "PushNotification", "Bash(bd show:*)", "Bash(bd list:*)", "Bash(jq:*)", "Bash(command -v cmux:*)", "Bash(command -v tmux:*)", "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch:*)", "Bash(${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog:*)"]
 ---
 
 # drain-with-worker
@@ -30,7 +30,7 @@ cmux; else tmux on PATH → tmux; else the launch script refuses.
 Run the launch script in check mode:
 
 ```bash
-dev-flow/scripts/drain-worker-launch --check --drain-id <drain-id> --worker-type <worker-type>
+${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch --check --drain-id <drain-id> --worker-type <worker-type>
 ```
 
 It validates the bead (type=drain, in_progress, epic-mode, workspace/scope/
@@ -50,7 +50,7 @@ confirmation; never launch without it.
 ## Step 4 — Launch
 
 ```bash
-dev-flow/scripts/drain-worker-launch --drain-id <drain-id> --worker-type <worker-type>
+${CLAUDE_PLUGIN_ROOT}/scripts/drain-worker-launch --drain-id <drain-id> --worker-type <worker-type>
 ```
 
 It spawns the surface and drives the verified `cd → direnv → claude → trust →
@@ -63,7 +63,7 @@ Arm the watchdog as a **background** task (`run_in_background: true`), passing
 the captured multiplexer + surface:
 
 ```bash
-dev-flow/scripts/drain-watchdog --multiplexer <multiplexer> --drain-id <drain-id> --scope <scope> --surface <surface>
+${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog --multiplexer <multiplexer> --drain-id <drain-id> --scope <scope> --surface <surface>
 ```
 
 When it exits with an `EXIT=<reason>` marker, react per the reaction table in

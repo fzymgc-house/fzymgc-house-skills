@@ -110,7 +110,7 @@ may carry a default-workspace path — so the worker re-checks (must already be
 `cd`'d into `drain_workspace`):
 
 ```bash
-dev-flow/scripts/ensure-isolated-workspace check || exit 1
+${CLAUDE_PLUGIN_ROOT}/scripts/ensure-isolated-workspace check || exit 1
 ```
 
 The script exits non-zero with a `STATUS: FAILED` message when `drain_workspace`
@@ -292,7 +292,7 @@ authoritative audit trail regardless of notification delivery.
 | Spec (cold-boot handoff redesign) | `docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md` |
 | Slash command | `dev-flow/commands/drain.md` |
 | Detached worker launch + surface-aware watchdog | `dev-flow/skills/drain-with-worker/SKILL.md`, `dev-flow/references/drain-with-worker.md` |
-| Watchdog script (surface scan + `classify()`) | `dev-flow/scripts/drain-watchdog` |
+| Watchdog script (surface scan + `classify()`) | `${CLAUDE_PLUGIN_ROOT}/scripts/drain-watchdog` |
 | ADR: `/goal` over `/loop` | `fhsk-thw` |
 | ADR: harness split (superseded by `fhsk-eqt`) | `fhsk-0o2` |
 | ADR: protocol in skill / cold-boot condition / bead carrier | `fhsk-eqt`, `fhsk-zds`, `fhsk-e4i` |

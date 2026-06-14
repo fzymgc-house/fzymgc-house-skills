@@ -215,3 +215,59 @@ def test_probe_parses_under_fish() -> None:
         text=True,
     )
     assert r.returncode == 0, f"fish rejected the probe: {r.stderr.strip()}"
+
+
+# --- non-direnv repos: skip the probe entirely (GitHub #166) -------------
+
+
+class _FakeMux:
+    """Minimal mux double: spawn runs `true`, ref is fixed."""
+
+    name = "cmux"
+
+    def spawn_argv(self, _drain_id):
+        return ["true"]
+
+    def parse_ref(self, _stdout):
+        return "surface:1"
+
+
+def _drive_launch(m, monkeypatch, workspace: Path) -> list[str]:
+    """Drive `launch()` with all pane I/O faked, returning the texts sent.
+
+    `_send`/`_enter`/`_screen` are stubbed so no real multiplexer is touched;
+    `time.sleep` is neutralized so the launch's fixed delays don't run. The
+    canned screen carries the workspace path (cd check), a resolved
+    `DRAIN_DIRENV=0` (probe gate, when reached), and `Goal set:` (no warning).
+    """
+    sent: list[str] = []
+    screen = f"{workspace}\nDRAIN_DIRENV=0\nGoal set:\n"
+    monkeypatch.setattr(m, "_send", lambda _mux, _ref, text: sent.append(text))
+    monkeypatch.setattr(m, "_enter", lambda _mux, _ref: None)
+    monkeypatch.setattr(m, "_screen", lambda _mux, _ref: screen)
+    monkeypatch.setattr(m.time, "sleep", lambda _seconds: None)
+    md = {"drain_workspace": str(workspace), "drain_sentinel": "done"}
+    ref = m.launch(_FakeMux(), "ep-9", md)
+    assert ref == "surface:1"
+    return sent
+
+
+def test_launch_skips_direnv_probe_when_no_envrc(tmp_path, monkeypatch) -> None:
+    """#166 regression: a workspace with no .envrc must not run the probe.
+
+    `direnv allow` exits 1 for BOTH a blocked and a missing .envrc, so the
+    exit-code gate would misread a non-direnv repo as 'still blocked' and abort
+    the launch. The probe must be skipped when there is nothing to allow.
+    """
+    m = _load_launch()
+    assert not (tmp_path / ".envrc").exists()
+    sent = _drive_launch(m, monkeypatch, tmp_path)
+    assert m._DIRENV_PROBE_CMD not in sent
+
+
+def test_launch_runs_direnv_probe_when_envrc_present(tmp_path, monkeypatch) -> None:
+    """The guard must not over-correct: a real .envrc still gets probed."""
+    m = _load_launch()
+    (tmp_path / ".envrc").write_text("export FOO=bar\n")
+    sent = _drive_launch(m, monkeypatch, tmp_path)
+    assert m._DIRENV_PROBE_CMD in sent

@@ -157,14 +157,22 @@ def launch(mux, drain_id: str, md: dict) -> str:
     # "blocked": the pre-allow `cd` leaves a stale "…is blocked" line in the
     # scrollback that keeps an absence-of-negative test tripped even after a
     # successful allow (GitHub #158).
-    _send(mux, ref, _DIRENV_PROBE_CMD)
-    _enter(mux, ref)
-    screen = _await(lambda: _screen(mux, ref), _DIRENV_PROBE_RE.search)
-    if screen is None:
-        _die(f"direnv allow produced no result (surface {ref})")
-    code = _DIRENV_PROBE_RE.search(screen).group(1)
-    if code != "0":
-        _die(f".envrc still blocked after direnv allow (exit {code}, surface {ref})")
+    #
+    # Skip entirely for non-direnv repos: `direnv allow` exits 1 BOTH for a
+    # blocked .envrc and a missing one, so without this guard a workspace with
+    # no .envrc is misread as "still blocked" and the launch aborts. direnv
+    # readiness is vacuously true when there is nothing to allow (GitHub #166).
+    if (Path(workspace) / ".envrc").is_file():
+        _send(mux, ref, _DIRENV_PROBE_CMD)
+        _enter(mux, ref)
+        screen = _await(lambda: _screen(mux, ref), _DIRENV_PROBE_RE.search)
+        if screen is None:
+            _die(f"direnv allow produced no result (surface {ref})")
+        code = _DIRENV_PROBE_RE.search(screen).group(1)
+        if code != "0":
+            _die(
+                f".envrc still blocked after direnv allow (exit {code}, surface {ref})"
+            )
 
     # Launch Claude with the bypass guard.
     _send(mux, ref, "claude --dangerously-skip-permissions")

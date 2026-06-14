@@ -248,3 +248,68 @@ class TestOpmlAndMaintenance:
         out = mfa.cmd_refresh_all(client, _ns())
         client.refresh_all_feeds.assert_called_once_with()
         assert out == {"refreshed": "all"}
+
+
+class TestDigest:
+    def test_excerpt_strips_html_and_truncates(self):
+        html = "<p>Hello <b>world</b> &amp; friends.</p>" + ("x" * 400)
+        out = mfa._excerpt(html, limit=21)
+        assert out.startswith("Hello world & friends")
+        assert len(out) <= 22  # 21 chars + ellipsis
+
+    def test_digest_returns_candidates(self):
+        client = MagicMock()
+        client.get_entries.return_value = {
+            "total": 1,
+            "entries": [
+                {
+                    "id": 5,
+                    "title": "Hello",
+                    "url": "https://ex.org/a",
+                    "content": "<p>Body text</p>",
+                    "published_at": "2026-06-13T00:00:00Z",
+                    "feed": {"title": "Example", "category": {"title": "Tech"}},
+                }
+            ],
+        }
+        out = mfa.cmd_digest(
+            client,
+            _ns(category=None, since=None, limit=50, mark_read=None, star=None),
+        )
+        client.get_entries.assert_called_once_with(
+            status="unread", order="published_at", direction="desc", limit=50
+        )
+        assert out["count"] == 1
+        cand = out["candidates"][0]
+        assert cand["id"] == 5
+        assert cand["feed"] == "Example"
+        assert cand["category"] == "Tech"
+        assert cand["excerpt"] == "Body text"
+
+    def test_digest_since_filters_by_after(self):
+        client = MagicMock()
+        client.get_entries.return_value = {"total": 0, "entries": []}
+        mfa.cmd_digest(
+            client,
+            _ns(category=3, since=1700000000, limit=10, mark_read=None, star=None),
+        )
+        client.get_entries.assert_called_once_with(
+            status="unread",
+            order="published_at",
+            direction="desc",
+            limit=10,
+            category_id=3,
+            after=1700000000,
+        )
+
+    def test_digest_applies_mark_read_and_star(self):
+        client = MagicMock()
+        client.get_entries.return_value = {"total": 0, "entries": []}
+        out = mfa.cmd_digest(
+            client,
+            _ns(category=None, since=None, limit=50, mark_read=[1, 2], star=[3]),
+        )
+        client.update_entries.assert_called_once_with([1, 2], "read")
+        client.toggle_bookmark.assert_called_once_with(3)
+        assert out["marked_read"] == [1, 2]
+        assert out["starred"] == [3]

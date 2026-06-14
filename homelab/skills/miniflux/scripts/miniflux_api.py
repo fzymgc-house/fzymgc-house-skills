@@ -14,8 +14,10 @@ Run with --help for the command list.
 
 from __future__ import annotations
 
+import html
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -200,3 +202,47 @@ def cmd_refresh_feed(client, args) -> dict[str, Any]:
 def cmd_refresh_all(client, args) -> dict[str, Any]:
     client.refresh_all_feeds()
     return {"refreshed": "all"}
+
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _excerpt(content: str | None, limit: int = 280) -> str:
+    text = html.unescape(_TAG_RE.sub("", content or "")).strip()
+    text = re.sub(r"\s+", " ", text)
+    return text if len(text) <= limit else text[:limit].rstrip() + "…"
+
+
+def cmd_digest(client, args) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "status": "unread",
+        "order": "published_at",
+        "direction": "desc",
+        "limit": args.limit,
+    }
+    if args.category is not None:
+        kwargs["category_id"] = args.category
+    if args.since is not None:
+        kwargs["after"] = args.since
+    result = client.get_entries(**kwargs)
+    candidates = [
+        {
+            "id": e["id"],
+            "title": e.get("title"),
+            "url": e.get("url"),
+            "feed": (e.get("feed") or {}).get("title"),
+            "category": ((e.get("feed") or {}).get("category") or {}).get("title"),
+            "published": e.get("published_at"),
+            "excerpt": _excerpt(e.get("content")),
+        }
+        for e in result.get("entries", [])
+    ]
+    out: dict[str, Any] = {"count": len(candidates), "candidates": candidates}
+    if getattr(args, "mark_read", None):
+        client.update_entries(args.mark_read, "read")
+        out["marked_read"] = args.mark_read
+    if getattr(args, "star", None):
+        for entry_id in args.star:
+            client.toggle_bookmark(entry_id)
+        out["starred"] = args.star
+    return out

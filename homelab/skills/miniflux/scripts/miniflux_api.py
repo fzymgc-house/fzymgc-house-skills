@@ -317,3 +317,29 @@ def cmd_health_audit(client, args) -> dict[str, Any]:
         "stale": stale,
         "stale_days": args.stale_days,
     }
+
+
+def cmd_suggest_rules(client, args) -> dict[str, Any]:
+    feed = client.get_feed(args.feed)
+    result = client.get_feed_entries(args.feed, limit=args.limit, direction="desc")
+    return {
+        "feed_id": args.feed,
+        "feed_title": feed.get("title"),
+        "current": {
+            "blocklist_rules": feed.get("blocklist_rules", ""),
+            "keeplist_rules": feed.get("keeplist_rules", ""),
+        },
+        "recent_titles": [e.get("title") for e in result.get("entries", [])],
+    }
+
+
+def cmd_apply_rule(client, args) -> dict[str, Any]:
+    applied: dict[str, str] = {}
+    if getattr(args, "blocklist", None) is not None:
+        applied["blocklist_rules"] = args.blocklist
+    if getattr(args, "keeplist", None) is not None:
+        applied["keeplist_rules"] = args.keeplist
+    if not applied:
+        raise ValueError("apply-rule requires --blocklist or --keeplist")
+    client.update_feed(args.feed, **applied)
+    return {"feed_id": args.feed, "applied": applied}

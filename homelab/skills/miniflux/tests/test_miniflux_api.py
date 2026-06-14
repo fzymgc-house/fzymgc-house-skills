@@ -388,3 +388,47 @@ class TestHealthAudit:
         out = mfa.cmd_health_audit(client, _ns(stale_days=30, now=1750000000))
         assert out["stale"][0]["id"] == 9
         assert out["stale"][0]["latest_entry"] is None
+
+
+class TestCuration:
+    def test_suggest_rules_dumps_titles_and_current_rules(self):
+        client = MagicMock()
+        client.get_feed.return_value = {
+            "id": 42,
+            "title": "Example",
+            "blocklist_rules": "(?i)sponsored",
+            "keeplist_rules": "",
+        }
+        client.get_feed_entries.return_value = {
+            "total": 2,
+            "entries": [
+                {"id": 1, "title": "Real post"},
+                {"id": 2, "title": "Sponsored: buy now"},
+            ],
+        }
+        out = mfa.cmd_suggest_rules(client, _ns(feed=42, limit=50))
+        client.get_feed_entries.assert_called_once_with(42, limit=50, direction="desc")
+        assert out["feed_id"] == 42
+        assert out["current"]["blocklist_rules"] == "(?i)sponsored"
+        assert out["recent_titles"] == ["Real post", "Sponsored: buy now"]
+
+    def test_apply_rule_blocklist(self):
+        client = MagicMock()
+        out = mfa.cmd_apply_rule(
+            client, _ns(feed=42, blocklist="(?i)sponsored", keeplist=None)
+        )
+        client.update_feed.assert_called_once_with(42, blocklist_rules="(?i)sponsored")
+        assert out == {"feed_id": 42, "applied": {"blocklist_rules": "(?i)sponsored"}}
+
+    def test_apply_rule_keeplist(self):
+        client = MagicMock()
+        out = mfa.cmd_apply_rule(
+            client, _ns(feed=7, blocklist=None, keeplist="(?i)python")
+        )
+        client.update_feed.assert_called_once_with(7, keeplist_rules="(?i)python")
+        assert out == {"feed_id": 7, "applied": {"keeplist_rules": "(?i)python"}}
+
+    def test_apply_rule_requires_one_rule(self):
+        client = MagicMock()
+        with pytest.raises(ValueError):
+            mfa.cmd_apply_rule(client, _ns(feed=7, blocklist=None, keeplist=None))

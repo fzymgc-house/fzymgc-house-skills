@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json as _json
+import os
+import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -146,3 +150,76 @@ def test_build_document_references_merge():
     )
     # Exactly one References heading (no MD024 duplicate).
     assert out.count("## References") == 1
+
+
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
+RENDER_ADR = SCRIPTS_DIR / "render-adr"
+
+
+def _fake_bd(tmp_path: Path, bead: dict) -> Path:
+    """Create a fake `bd` executable that answers show/dep-list for one bead."""
+    bd = tmp_path / "bin" / "bd"
+    bd.parent.mkdir(parents=True, exist_ok=True)
+    bd.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/usr/bin/env python3
+            import json, sys
+            args = sys.argv[1:]
+            if args[:1] == ["show"]:
+                print(json.dumps([{_json.dumps(bead)}]))
+            elif args[:2] == ["dep", "list"]:
+                print("[]")
+            else:
+                print("[]")
+            """
+        )
+    )
+    bd.chmod(0o755)
+    return bd
+
+
+def test_render_adr_wrapper_writes_new_format(tmp_path):
+    bead = {
+        "title": "Wrapper Smoke Test",
+        "status": "closed",
+        "created_at": "2026-06-30T00:00:00Z",
+        "closed_at": "",
+        "description": "## Context\nx\n\n## Decision\ny\n\n## Consequences\nz",
+        "metadata": {"adr_deciders": "Sean"},
+        "notes": "",
+        "labels": [],
+    }
+    fake_bd = _fake_bd(tmp_path, bead)
+    env = dict(os.environ, PATH=f"{fake_bd.parent}{os.pathsep}{os.environ['PATH']}")
+    proc = subprocess.run(
+        [str(RENDER_ADR), "fhsk-smk"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    out_file = tmp_path / "docs" / "adr" / "fhsk-smk-wrapper-smoke-test.md"
+    assert out_file.exists()
+    content = out_file.read_text()
+    assert content.startswith('---\ntitle: "Wrapper Smoke Test"\n---\n')
+    assert "**Decision:** fhsk-smk\n" in content
+    assert not any(line.startswith("# ") for line in content.splitlines())
+
+
+def test_render_adr_wrapper_missing_bead_exits_1(tmp_path):
+    empty_bd = tmp_path / "bin" / "bd"
+    empty_bd.parent.mkdir(parents=True, exist_ok=True)
+    empty_bd.write_text("#!/usr/bin/env python3\nprint('[]')\n")
+    empty_bd.chmod(0o755)
+    env = dict(os.environ, PATH=f"{empty_bd.parent}{os.pathsep}{os.environ['PATH']}")
+    proc = subprocess.run(
+        [str(RENDER_ADR), "fhsk-nope"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert "not found" in proc.stderr

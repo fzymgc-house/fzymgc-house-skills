@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.25.0...v2.0.0) (2026-06-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **homelab:** remove unused grafana skill ([#181](https://github.com/fzymgc-house/fzymgc-house-skills/issues/181))
+
+### Features
+
+* **adr:** migrate render-adr + adr-doctor to Python/uv with Starlight frontmatter ([#184](https://github.com/fzymgc-house/fzymgc-house-skills/issues/184)) ([32bd353](https://github.com/fzymgc-house/fzymgc-house-skills/commit/32bd353ff25294d2529f60107863b706782ad2cc))
+* **homelab:** remove unused grafana skill ([#181](https://github.com/fzymgc-house/fzymgc-house-skills/issues/181)) ([acdfee0](https://github.com/fzymgc-house/fzymgc-house-skills/commit/acdfee04ed1fbc78077a0403155b2041102fc972))
+
 ## [1.25.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.24.4...v1.25.0) (2026-06-14)
 
 

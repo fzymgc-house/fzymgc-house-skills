@@ -6,7 +6,10 @@ new INV-A25 frontmatter-title check.
 
 from __future__ import annotations
 
+import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -130,5 +133,49 @@ def check_render_match(path: Path, bd_id: str) -> list[str]:
     if path.read_text() != expected:
         return [
             f"{path}: drift between rendered output and committed file. Run: /adr render {bd_id} (INV-A22)"
+        ]
+    return []
+
+
+def check_agent_frontmatter(agent_path: Path) -> list[str]:
+    """INV-A14/A15: adr-extractor.md model must be sonnet; tools must not include
+    Write/Edit/NotebookEdit."""
+    if not agent_path.is_file():
+        return [f"agent file missing: {agent_path}"]
+    text = agent_path.read_text()
+    parts = text.split("---")
+    fm = parts[1] if len(parts) >= 3 else ""
+    fails = []
+    if not re.search(r"^model:\s+sonnet\s*$", fm, re.M):
+        fails.append(f"{agent_path}: model must be sonnet")
+    if re.search(r"^\s+-\s+(Write|Edit|NotebookEdit)\s*$", fm, re.M):
+        fails.append(
+            f"{agent_path}: tools list MUST NOT include Write/Edit/NotebookEdit"
+        )
+    return fails
+
+
+def check_hook_executable(hook_path: Path) -> list[str]:
+    """Hook must be executable; shellcheck-clean if shellcheck is available."""
+    fails = []
+    if not (hook_path.is_file() and os.access(hook_path, os.X_OK)):
+        fails.append(f"{hook_path}: not executable")
+        return fails
+    if shutil.which("shellcheck"):
+        proc = subprocess.run(["shellcheck", str(hook_path)], capture_output=True)
+        if proc.returncode != 0:
+            fails.append(f"{hook_path}: shellcheck failed")
+    return fails
+
+
+def check_forbid_skill_commits(skill_path: Path) -> list[str]:
+    """INV-A2: capture-adrs SKILL.md must not contain a commit/describe command."""
+    if not skill_path.is_file():
+        return []
+    text = skill_path.read_text()
+    pattern = r"(^\s*\$\s*(jj commit|jj describe|git commit|git add)|^\s*`(jj commit|jj describe|git commit|git add)`)"
+    if re.search(pattern, text, re.M):
+        return [
+            f"{skill_path}: contains a commit/describe command — skill MUST NOT commit"
         ]
     return []

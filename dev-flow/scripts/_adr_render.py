@@ -108,3 +108,66 @@ def split_body_references(description: str) -> tuple[str, str]:
             bullets.append(line)
 
     return "\n".join(main).rstrip("\n"), "\n".join(bullets).rstrip("\n")
+
+
+def build_document(
+    bd_id: str,
+    bead: dict,
+    *,
+    superseded_by: str | None,
+    supersedes_ids: list[str],
+) -> str:
+    """Assemble the ADR markdown string from a bead dict + supersession refs.
+
+    Pure: no I/O. Mirrors the former bash assembly byte-for-byte EXCEPT it
+    prepends YAML `title:` frontmatter and omits the body `# <TITLE>` H1.
+    """
+    title = (bead.get("title") or "").rstrip("\n")
+    status_raw = (bead.get("status") or "").rstrip("\n")
+    created_at = (bead.get("created_at") or "").rstrip("\n")
+    closed_at = (bead.get("closed_at") or "").rstrip("\n")
+    description = (bead.get("description") or "").rstrip("\n")
+    deciders = ((bead.get("metadata") or {}).get("adr_deciders") or "").rstrip("\n")
+    notes = (bead.get("notes") or "").rstrip("\n")
+    labels = normalize_labels(bead.get("labels"))
+
+    date = compute_date(created_at, closed_at)
+    status = compute_status(status_raw, superseded_by, labels)
+    deciders_out = deciders or "—"
+    addenda = parse_addenda(notes)
+    body_main, body_ref_bullets = split_body_references(description)
+
+    lines: list[str] = []
+    lines.append("---")
+    lines.append(f'title: "{yaml_title(title)}"')
+    lines.append("---")
+    lines.append("<!-- markdownlint-disable MD013 -->")
+    lines.append(
+        f"<!-- adr-render: source=bd:{bd_id}; do not edit manually; use `/adr update {bd_id}` -->"
+    )
+    lines.append("")
+    lines.append(f"**Date:** {date}")
+    lines.append(f"**Status:** {status}")
+    lines.append(f"**Decision:** {bd_id}")
+    lines.append(f"**Deciders:** {deciders_out}")
+    lines.append("")
+    if body_main:
+        lines.extend(body_main.split("\n"))
+
+    if addenda:
+        lines.append("")
+        lines.append("## Addenda")
+        lines.append("")
+        lines.extend(f"- {entry}" for entry in addenda)
+
+    if body_ref_bullets or supersedes_ids or superseded_by:
+        lines.append("")
+        lines.append("## References")
+        lines.append("")
+        if body_ref_bullets:
+            lines.extend(body_ref_bullets.split("\n"))
+        lines.extend(f"- Supersedes: {old_id}" for old_id in supersedes_ids)
+        if superseded_by:
+            lines.append(f"- Superseded by: {superseded_by}")
+
+    return "".join(line + "\n" for line in lines)

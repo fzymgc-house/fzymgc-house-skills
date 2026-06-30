@@ -81,3 +81,68 @@ def test_split_body_references_no_section_returns_whole_body():
     main, bullets = R.split_body_references(desc)
     assert main == desc
     assert bullets == ""
+
+
+def _sample_bead() -> dict:
+    return {
+        "title": "Adopt Single Repo-Wide Version",
+        "status": "closed",
+        "created_at": "2026-05-22T10:00:00Z",
+        "closed_at": "",
+        "description": "## Context\n\nWhy.\n\n## Decision\n\nDo it.\n\n## Consequences\n\nFine.",
+        "metadata": {"adr_deciders": "Sean Brandt (@seanb4t)"},
+        "notes": "addendum: revisited later",
+        "labels": [],
+    }
+
+
+EXPECTED = (
+    "---\n"
+    'title: "Adopt Single Repo-Wide Version"\n'
+    "---\n"
+    "<!-- markdownlint-disable MD013 -->\n"
+    "<!-- adr-render: source=bd:fhsk-7y4; do not edit manually; use `/adr update fhsk-7y4` -->\n"
+    "\n"
+    "**Date:** 2026-05-22\n"
+    "**Status:** Accepted\n"
+    "**Decision:** fhsk-7y4\n"
+    "**Deciders:** Sean Brandt (@seanb4t)\n"
+    "\n"
+    "## Context\n\nWhy.\n\n## Decision\n\nDo it.\n\n## Consequences\n\nFine.\n"
+    "\n"
+    "## Addenda\n"
+    "\n"
+    "- revisited later\n"
+)
+
+
+def test_build_document_golden():
+    out = R.build_document(
+        "fhsk-7y4", _sample_bead(), superseded_by=None, supersedes_ids=[]
+    )
+    assert out == EXPECTED
+
+
+def test_build_document_format_invariants():
+    out = R.build_document(
+        "fhsk-7y4", _sample_bead(), superseded_by=None, supersedes_ids=[]
+    )
+    assert out.startswith("---\n")
+    assert out.splitlines()[1] == 'title: "Adopt Single Repo-Wide Version"'
+    # No body H1 line anywhere.
+    assert not any(line.startswith("# ") for line in out.splitlines())
+
+
+def test_build_document_references_merge():
+    bead = _sample_bead()
+    bead["description"] = "## Context\nbody\n\n## References\n\n- existing ref"
+    bead["notes"] = ""
+    out = R.build_document(
+        "fhsk-7y4", bead, superseded_by="fhsk-new", supersedes_ids=["fhsk-old"]
+    )
+    assert (
+        "## References\n\n- existing ref\n- Supersedes: fhsk-old\n- Superseded by: fhsk-new\n"
+        in out
+    )
+    # Exactly one References heading (no MD024 duplicate).
+    assert out.count("## References") == 1

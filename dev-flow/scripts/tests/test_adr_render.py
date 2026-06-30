@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import _adr_render as R  # noqa: E402  (sibling stdlib module on the inserted path)
+import _adr_render as R  # noqa: E402  (sibling local module on the inserted path)
 
 
 def test_slugify_basic_kebab():
@@ -157,7 +157,14 @@ RENDER_ADR = SCRIPTS_DIR / "render-adr"
 
 
 def _fake_bd(tmp_path: Path, bead: dict) -> Path:
-    """Create a fake `bd` executable that answers show/dep-list for one bead."""
+    """Create a fake `bd` executable that answers show/dep-list for one bead.
+
+    The bead is written to a JSON file so the fake script can load it safely
+    — embedding json.dumps() output directly in Python source would turn JSON
+    null/true/false into NameErrors.
+    """
+    bead_file = tmp_path / "bead.json"
+    bead_file.write_text(_json.dumps(bead))
     bd = tmp_path / "bin" / "bd"
     bd.parent.mkdir(parents=True, exist_ok=True)
     bd.write_text(
@@ -165,9 +172,11 @@ def _fake_bd(tmp_path: Path, bead: dict) -> Path:
             f"""\
             #!/usr/bin/env python3
             import json, sys
+            with open({repr(str(bead_file))}) as f:
+                bead = json.load(f)
             args = sys.argv[1:]
             if args[:1] == ["show"]:
-                print(json.dumps([{_json.dumps(bead)}]))
+                print(json.dumps([bead]))
             elif args[:2] == ["dep", "list"]:
                 print("[]")
             else:
@@ -206,6 +215,30 @@ def test_render_adr_wrapper_writes_new_format(tmp_path):
     assert content.startswith('---\ntitle: "Wrapper Smoke Test"\n---\n')
     assert "**Decision:** fhsk-smk\n" in content
     assert not any(line.startswith("# ") for line in content.splitlines())
+
+
+def test_render_adr_wrapper_no_title_exits_1(tmp_path):
+    bead = {
+        "title": "",
+        "status": "closed",
+        "created_at": "2026-06-30T00:00:00Z",
+        "closed_at": "",
+        "description": "## Context\nx\n",
+        "metadata": {},
+        "notes": "",
+        "labels": [],
+    }
+    fake_bd = _fake_bd(tmp_path, bead)
+    env = dict(os.environ, PATH=f"{fake_bd.parent}{os.pathsep}{os.environ['PATH']}")
+    proc = subprocess.run(
+        [str(RENDER_ADR), "fhsk-notitle"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert "has no title" in proc.stderr
 
 
 def test_render_adr_wrapper_missing_bead_exits_1(tmp_path):

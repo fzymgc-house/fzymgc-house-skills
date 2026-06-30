@@ -92,3 +92,64 @@ def test_render_match_in_memory(monkeypatch, tmp_path):
     bad = tmp_path / "fhsk-xyz-t.md"
     bad.write_text(content + "drift\n")
     assert D.check_render_match(bad, "fhsk-xyz") != []
+
+
+# ---------------------------------------------------------------------------
+# check_readme (INV-A12)
+# ---------------------------------------------------------------------------
+
+_GOOD_README = "# ADR Index\n\n<!-- BEGIN INDEX -->\n\n<!-- END INDEX -->\n"
+
+
+def test_check_readme_passes_with_sentinels(tmp_path):
+    (tmp_path / "README.md").write_text(_GOOD_README)
+    assert D.check_readme(tmp_path) == []
+
+
+def test_check_readme_fails_when_missing_readme(tmp_path):
+    fails = D.check_readme(tmp_path)
+    assert len(fails) >= 1
+    assert any("missing" in m for m in fails)
+
+
+def test_check_readme_fails_when_begin_sentinel_missing(tmp_path):
+    (tmp_path / "README.md").write_text("# Index\n\n<!-- END INDEX -->\n")
+    fails = D.check_readme(tmp_path)
+    assert any("BEGIN INDEX" in m for m in fails)
+    assert not any("END INDEX" in m for m in fails)
+
+
+def test_check_readme_fails_when_end_sentinel_missing(tmp_path):
+    (tmp_path / "README.md").write_text("# Index\n\n<!-- BEGIN INDEX -->\n")
+    fails = D.check_readme(tmp_path)
+    assert any("END INDEX" in m for m in fails)
+    assert not any("BEGIN INDEX" in m for m in fails)
+
+
+def test_check_readme_fails_with_legacy_subdir(tmp_path):
+    (tmp_path / "README.md").write_text(_GOOD_README)
+    (tmp_path / "legacy").mkdir()
+    fails = D.check_readme(tmp_path)
+    assert any("legacy" in m for m in fails)
+
+
+# ---------------------------------------------------------------------------
+# check_decision_header — "missing **Decision:** header" branch
+# ---------------------------------------------------------------------------
+
+
+def test_decision_header_missing_header_fails(tmp_path):
+    """When no **Decision:** line is present the check should fail."""
+    no_decision = (
+        "---\n"
+        'title: "A Decision"\n'
+        "---\n"
+        "<!-- markdownlint-disable MD013 -->\n"
+        "\n"
+        "## Decision\nd\n## Rationale\nr\n## Alternatives Considered\na\n"
+    )
+    f = tmp_path / "fhsk-abc-a-decision.md"
+    f.write_text(no_decision)
+    fails = D.check_decision_header(f)
+    assert len(fails) >= 1
+    assert any("missing" in m and "Decision" in m for m in fails)

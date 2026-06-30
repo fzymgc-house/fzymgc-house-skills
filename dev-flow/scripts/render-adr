@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import _adr_render as R  # noqa: E402  (sibling stdlib module on the inserted path)
+import _adr_render as R  # noqa: E402  (sibling local module on the inserted path)
 
 
 def main(argv: list[str]) -> int:

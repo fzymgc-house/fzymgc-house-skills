@@ -1,7 +1,8 @@
-"""Pure check functions for adr-doctor. Each returns a list[str] of FAIL
-messages (empty == clean). The adr-doctor wrapper orchestrates these plus the
-bd-backed checks. Faithful port of the former adr-doctor.sh invariants, with a
-new INV-A25 frontmatter-title check.
+"""Check functions for adr-doctor. Each returns a list[str] of FAIL messages
+(empty == clean). Most checks are pure (no I/O, no bd); check_render_match
+delegates to load_and_render which shells out to bd. The adr-doctor wrapper
+orchestrates these plus the bd-backed checks. Faithful port of the former
+adr-doctor.sh invariants, with a new INV-A25 frontmatter-title check.
 """
 
 from __future__ import annotations
@@ -125,11 +126,12 @@ def check_deciders_present(bd_id: str, deciders: str) -> list[str]:
 
 def check_render_match(path: Path, bd_id: str) -> list[str]:
     """INV-A22: committed file must equal a fresh in-memory render. No in-place
-    overwrite, no VCS restore — render() is pure and returns a string."""
+    overwrite, no VCS restore — the in-memory string comparison is the check;
+    load_and_render is the documented impure entry that shells out to bd."""
     try:
         _slug, expected, _warn = R.load_and_render(bd_id)
     except R.RenderError:
-        return []  # bd doesn't know this id; nothing to compare
+        return []  # unrenderable (unknown id or no title); nothing to compare
     if path.read_text() != expected:
         return [
             f"{path}: drift between rendered output and committed file. Run: /adr render {bd_id} (INV-A22)"

@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+from typing import Any
 
 # Stop-words dropped from slugs (verbatim from the former bash awk list).
 _STOP_WORDS = frozenset({"a", "an", "the", "for", "of", "to", "in", "on", "with"})
@@ -59,7 +60,7 @@ def compute_date(created_at: str, closed_at: str) -> str:
     return date or "—"
 
 
-def normalize_labels(raw) -> list[str]:
+def normalize_labels(raw: list[str] | str | None) -> list[str]:
     """bd labels may be null, an array, or a string. Normalize to a list."""
     if raw is None:
         return []
@@ -184,7 +185,7 @@ class RenderError(Exception):
         self.code = code
 
 
-def _bd_json(args: list[str], default):
+def _bd_json(args: list[str], default: list | dict) -> Any:
     """Run `bd <args> --json`; return parsed JSON or `default` on any failure."""
     try:
         proc = subprocess.run(["bd", *args, "--json"], capture_output=True, text=True)

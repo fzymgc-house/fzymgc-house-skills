@@ -1,7 +1,8 @@
+---
+title: "Use a custom bd type for handoffs, not a label or note"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-s15; do not edit manually; use `/adr update fhsk-s15` -->
-
-# Use a custom bd type for handoffs, not a label or note
 
 **Date:** 2026-05-29
 **Status:** Accepted

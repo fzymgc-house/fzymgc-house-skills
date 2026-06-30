@@ -1,7 +1,8 @@
+---
+title: "Carry session-state delta in the handoff body, not a full re-snapshot"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-8xn; do not edit manually; use `/adr update fhsk-8xn` -->
-
-# Carry session-state delta in the handoff body, not a full re-snapshot
 
 **Date:** 2026-05-29
 **Status:** Accepted

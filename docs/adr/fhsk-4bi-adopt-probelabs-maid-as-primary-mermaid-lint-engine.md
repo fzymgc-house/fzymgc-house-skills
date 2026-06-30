@@ -1,7 +1,8 @@
+---
+title: "Adopt @probelabs/maid as the primary Mermaid lint engine"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-4bi; do not edit manually; use `/adr update fhsk-4bi` -->
-
-# Adopt @probelabs/maid as the primary Mermaid lint engine
 
 **Date:** 2026-05-30
 **Status:** Accepted

@@ -210,8 +210,10 @@ The dry-run path has no such constraint and runs in any context.
 ### Codex compatibility
 
 All `/adr` subcommands use `bd`, `bash`, `jq`, and standard POSIX utilities —
-no Claude Code-specific APIs. `render-adr` is a plain bash script. These work
-in Codex with no special glue. The single main-session dependency is
+no Claude Code-specific APIs. `render-adr` and `adr-doctor` are Python PEP 723
+scripts run via `uv` (`#!/usr/bin/env -S uv run --script`), so Codex needs `uv`
+on `PATH` — the same dependency as the repo's other `uv run --script` tools.
+These work in Codex with no further glue. The single main-session dependency is
 `AskUserQuestion` in:
 
 - `capture-adrs` (approval loop)
@@ -222,7 +224,7 @@ commands for capture instead of the skill's approval loop).
 
 ### adr-doctor invariants
 
-New checks added by this spec (in `dev-flow/scripts/adr-doctor.sh`):
+New checks added by this spec (in `dev-flow/scripts/adr-doctor`):
 
 | INV | Check |
 |-----|-------|
@@ -260,5 +262,5 @@ but the committed markdown is stale.
 - **Spec:** `docs/superpowers/specs/2026-05-22-adr-evolution-design.md`
 - **Slash command:** `dev-flow/commands/adr.md`
 - **Render script:** `dev-flow/scripts/render-adr`
-- **adr-doctor invariants INV-A20 through INV-A24:** `dev-flow/scripts/adr-doctor.sh`
+- **adr-doctor invariants INV-A20 through INV-A24:** `dev-flow/scripts/adr-doctor`
 - **capture-adrs skill:** `dev-flow/skills/capture-adrs/SKILL.md`

@@ -1,7 +1,8 @@
+---
+title: "Use release-please with in-file plugin versions (reverse cog tag-only)"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-dgo; do not edit manually; use `/adr update fhsk-dgo` -->
-
-# Use release-please with in-file plugin versions (reverse cog tag-only)
 
 **Date:** 2026-06-09
 **Status:** Accepted

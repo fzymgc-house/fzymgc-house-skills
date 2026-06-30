@@ -1,7 +1,8 @@
+---
+title: "Make /drain init explicit rather than auto-bootstrapping on first run"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-0cd; do not edit manually; use `/adr update fhsk-0cd` -->
-
-# Make /drain init explicit rather than auto-bootstrapping on first run
 
 **Date:** 2026-05-22
 **Status:** Accepted

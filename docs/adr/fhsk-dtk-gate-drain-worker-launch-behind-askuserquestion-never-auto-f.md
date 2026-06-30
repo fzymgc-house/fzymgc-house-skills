@@ -1,7 +1,8 @@
+---
+title: "Gate drain worker launch behind AskUserQuestion, never auto-fire"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-dtk; do not edit manually; use `/adr update fhsk-dtk` -->
-
-# Gate drain worker launch behind AskUserQuestion, never auto-fire
 
 **Date:** 2026-05-25
 **Status:** Accepted

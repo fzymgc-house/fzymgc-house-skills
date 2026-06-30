@@ -1,7 +1,8 @@
+---
+title: "Convert drain-with-worker command to a parameterized skill"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-5dj; do not edit manually; use `/adr update fhsk-5dj` -->
-
-# Convert drain-with-worker command to a parameterized skill
 
 **Date:** 2026-06-13
 **Status:** Accepted

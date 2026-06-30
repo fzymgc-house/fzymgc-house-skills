@@ -1,7 +1,8 @@
+---
+title: "Add tmux as a standalone plugin rather than folding into dev-flow"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-a6v; do not edit manually; use `/adr update fhsk-a6v` -->
-
-# Add tmux as a standalone plugin rather than folding into dev-flow
 
 **Date:** 2026-06-13
 **Status:** Accepted

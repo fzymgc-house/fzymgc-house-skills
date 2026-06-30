@@ -1,4 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 # SPDX-License-Identifier: Apache-2.0
 #
 # render-adr — render a decision bead to a canonical ADR markdown file.
@@ -6,208 +10,42 @@
 # Usage:
 #   dev-flow/scripts/render-adr <bd-id>
 #
-# Reads bd state via `bd show --json` and writes
-# `docs/adr/<bd-id>-<slug>.md` from title + computed-status + body + addenda
-# + supersession references. Idempotent — safe to re-run.
-#
-# Computed status (5 branches, per ADR Evolution spec):
-#   1. bd.status == "open"              -> "Proposed"
-#   2. Incoming supersedes edge exists  -> "Superseded by <new-id>"
-#   3. Label adr:rejected               -> "Rejected"
-#   4. Label adr:deprecated             -> "Deprecated"
-#   5. Otherwise (closed bead)          -> "Accepted"
-#
-# Plan-stage gate result (verified experimentally 2026-05-22, bd 1.0.4):
-#   `bd dep list <id> --direction=up --type=supersedes --json` works as a
-#   list-time filter and returns the filtered edges directly. We use it
-#   below for both incoming (--direction=up) and outgoing
-#   (--direction=down) supersedes lookups.
+# Reads bd state via `bd show --json` and writes docs/adr/<bd-id>-<slug>.md
+# (relative to the current directory; run from the repo root). Idempotent.
+# Logic lives in the importable sibling module _adr_render.py.
 
-set -euo pipefail
+from __future__ import annotations
 
-if [[ $# -ne 1 ]]; then
-  echo "usage: $0 <bd-id>" >&2
-  exit 2
-fi
+import sys
+from pathlib import Path
 
-ID="$1"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Fetch bead JSON. bd show returns an array — take element 0.
-BEAD_JSON="$(bd show "$ID" --json)"
-if [[ -z "$BEAD_JSON" ]] || [[ "$BEAD_JSON" == "[]" ]]; then
-  echo "render-adr: bead $ID not found" >&2
-  exit 1
-fi
+import _adr_render as R  # noqa: E402  (sibling local module on the inserted path)
 
-# Extract fields defensively (jq // empty for optional fields).
-TITLE="$(jq -r '.[0].title // empty' <<<"$BEAD_JSON")"
-STATUS_RAW="$(jq -r '.[0].status // empty' <<<"$BEAD_JSON")"
-CREATED_AT="$(jq -r '.[0].created_at // empty' <<<"$BEAD_JSON")"
-CLOSED_AT="$(jq -r '.[0].closed_at // empty' <<<"$BEAD_JSON")"
-DESCRIPTION="$(jq -r '.[0].description // empty' <<<"$BEAD_JSON")"
-DECIDERS="$(jq -r '.[0].metadata.adr_deciders // empty' <<<"$BEAD_JSON")"
-NOTES="$(jq -r '.[0].notes // empty' <<<"$BEAD_JSON")"
-# Labels: bd may return null, an array, or a string. Normalize to newline-separated.
-LABELS="$(jq -r '
-  .[0].labels
-  | if . == null then ""
-    elif type == "array" then (. | join("\n"))
-    else tostring
-    end
-' <<<"$BEAD_JSON")"
 
-if [[ -z "$TITLE" ]]; then
-  echo "render-adr: bead $ID has no title" >&2
-  exit 1
-fi
+def main(argv: list[str]) -> int:
+    if len(argv) != 1:
+        print(f"usage: {Path(sys.argv[0]).name} <bd-id>", file=sys.stderr)
+        return 2
+    bd_id = argv[0]
 
-# Date: the decision date (created_at), NOT closed_at — for a superseded ADR,
-# closed_at is the supersede date, which would wrongly rewrite the ADR's Date on
-# re-render. Fall back to closed_at only if created_at is absent. Format YYYY-MM-DD.
-DATE_RAW="${CREATED_AT:-$CLOSED_AT}"
-DATE="${DATE_RAW%%T*}"
-if [[ -z "$DATE" ]]; then
-  DATE="—"
-fi
+    try:
+        slug, content, warning = R.load_and_render(bd_id)
+    except R.RenderError as err:
+        print(err.message, file=sys.stderr)
+        return err.code
 
-# Slug: lowercase, kebab-case from title, drop stop-words, cap 60 chars.
-slugify() {
-  local input="$1"
-  # Lowercase, replace non-alnum with spaces, collapse, strip stop-words, join with -.
-  printf '%s' "$input" \
-    | tr '[:upper:]' '[:lower:]' \
-    | tr -c 'a-z0-9' ' ' \
-    | tr -s ' ' \
-    | awk '{
-        for (i=1; i<=NF; i++) {
-          w = $i;
-          if (w == "a" || w == "an" || w == "the" || w == "for" || w == "of" \
-              || w == "to" || w == "in" || w == "on" || w == "with") continue;
-          out = (out == "" ? w : out "-" w);
-        }
-        print out;
-      }' \
-    | cut -c1-60 \
-    | sed 's/-*$//'
-}
-SLUG="$(slugify "$TITLE")"
-if [[ -z "$SLUG" ]]; then
-  SLUG="untitled"
-fi
+    if warning:
+        print(warning, file=sys.stderr)
 
-# Incoming supersedes (this bead was replaced by a newer one).
-# Returns JSON array; we read .id of the first edge if any.
-SUPERSEDED_BY_JSON="$(bd dep list "$ID" --direction=up --type=supersedes --json 2>/dev/null || echo '[]')"
-SUPERSEDED_BY="$(jq -r '.[0].id // empty' <<<"$SUPERSEDED_BY_JSON")"
+    out_dir = Path("docs/adr")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / f"{bd_id}-{slug}.md"
+    out_file.write_text(content)
+    print(f"render-adr: wrote {out_file}")
+    return 0
 
-# Outgoing supersedes (this bead replaced an older one).
-SUPERSEDES_JSON="$(bd dep list "$ID" --direction=down --type=supersedes --json 2>/dev/null || echo '[]')"
 
-# Compute status per the 5-branch spec.
-has_label() {
-  local needle="$1"
-  if [[ -z "$LABELS" ]]; then return 1; fi
-  while IFS= read -r line; do
-    [[ "$line" == "$needle" ]] && return 0
-  done <<<"$LABELS"
-  return 1
-}
-
-if [[ "$STATUS_RAW" == "open" ]]; then
-  STATUS="Proposed"
-elif [[ -n "$SUPERSEDED_BY" ]]; then
-  STATUS="Superseded by $SUPERSEDED_BY"
-elif has_label "adr:rejected"; then
-  STATUS="Rejected"
-elif has_label "adr:deprecated"; then
-  STATUS="Deprecated"
-else
-  STATUS="Accepted"
-fi
-
-DECIDERS_OUT="${DECIDERS:-—}"
-
-# Addenda: grep lines starting with "addendum: " from the notes string.
-ADDENDA_LINES=""
-if [[ -n "$NOTES" ]]; then
-  ADDENDA_LINES="$(grep '^addendum: ' <<<"$NOTES" || true)"
-fi
-
-# Separate any "## References" section already embedded in the body from the rest,
-# so the rendered file has exactly ONE References section (body refs + supersession
-# refs merged). Older ADR bodies embed a References section; capture-adrs bodies do
-# not. Without this, render-adr's own "## References" would duplicate the body's
-# (MD024). Assumes "## References" runs to the next "## " heading or end of body.
-# Backstop guard: render-adr reproduces the bead body verbatim, so a literal
-# two-character escape \n in the description would render as backslash-n rather
-# than a line break (the capture-adrs PR #167 bug). Warn loudly — do not silently
-# rewrite, since a fenced code block could legitimately document a \n. Fix the
-# source with: bd update <id> --body-file <file>.
-if printf '%s' "$DESCRIPTION" | grep -q '\\n'; then
-  echo "render-adr: WARNING: bead $ID body contains the literal escape \\n; it will" \
-       "render verbatim. Fix the bead description to use real newlines" \
-       "(bd update $ID --body-file ...)." >&2
-fi
-
-BODY_MAIN="$DESCRIPTION"
-BODY_REF_BULLETS=""
-if grep -q '^## References' <<<"$DESCRIPTION"; then
-  BODY_MAIN="$(awk '/^## References/{skip=1; next} skip && /^## /{skip=0} !skip{print}' <<<"$DESCRIPTION")"
-  BODY_REF_BULLETS="$(awk '/^## References/{f=1; next} f && /^## /{f=0} f && /^- /{print}' <<<"$DESCRIPTION")"
-fi
-
-# Output path. Ensure docs/adr/ exists.
-mkdir -p docs/adr
-OUTFILE="docs/adr/${ID}-${SLUG}.md"
-
-# Build the file content.
-{
-  echo '<!-- markdownlint-disable MD013 -->'
-  printf '<!-- adr-render: source=bd:%s; do not edit manually; use `/adr update %s` -->\n' "$ID" "$ID"
-  echo
-  printf '# %s\n' "$TITLE"
-  echo
-  printf '**Date:** %s\n' "$DATE"
-  printf '**Status:** %s\n' "$STATUS"
-  printf '**Decision:** %s\n' "$ID"
-  printf '**Deciders:** %s\n' "$DECIDERS_OUT"
-  echo
-  if [[ -n "$BODY_MAIN" ]]; then
-    printf '%s\n' "$BODY_MAIN"
-  fi
-
-  # Addenda section (if any).
-  if [[ -n "$ADDENDA_LINES" ]]; then
-    echo
-    echo '## Addenda'
-    echo
-    while IFS= read -r line; do
-      # Strip leading "addendum: " and emit as bullet.
-      entry="${line#addendum: }"
-      printf -- '- %s\n' "$entry"
-    done <<<"$ADDENDA_LINES"
-  fi
-
-  # References section: merge any body-embedded refs with supersession refs into a
-  # SINGLE section (avoids a duplicate "## References" heading — MD024).
-  refs_count="$(jq -r 'length' <<<"$SUPERSEDES_JSON")"
-  if [[ -n "$BODY_REF_BULLETS" ]] || [[ "$refs_count" != "0" ]] || [[ -n "$SUPERSEDED_BY" ]]; then
-    echo
-    echo '## References'
-    echo
-    if [[ -n "$BODY_REF_BULLETS" ]]; then
-      printf '%s\n' "$BODY_REF_BULLETS"
-    fi
-    if [[ "$refs_count" != "0" ]]; then
-      while IFS= read -r old_id; do
-        [[ -z "$old_id" ]] && continue
-        printf -- '- Supersedes: %s\n' "$old_id"
-      done < <(jq -r '.[].id' <<<"$SUPERSEDES_JSON")
-    fi
-    if [[ -n "$SUPERSEDED_BY" ]]; then
-      printf -- '- Superseded by: %s\n' "$SUPERSEDED_BY"
-    fi
-  fi
-} >"$OUTFILE"
-
-echo "render-adr: wrote $OUTFILE"
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

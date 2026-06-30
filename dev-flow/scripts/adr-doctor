@@ -1,0 +1,184 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+# SPDX-License-Identifier: Apache-2.0
+#
+# adr-doctor — durable health check for docs/adr/. Python port of the former
+# adr-doctor.sh. Orchestrates pure checks (_adr_doctor.py) + bd-backed checks.
+#
+# Usage:
+#   dev-flow/scripts/adr-doctor [--explain] [--changed-only <file> ...]
+#
+# Exit codes: 0 clean; 1 on any check failure; 2 on missing prerequisites.
+
+from __future__ import annotations
+
+import json
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _adr_doctor as D  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+ADR_DIR = REPO_ROOT / "docs" / "adr"
+
+
+def _have_bd() -> bool:
+    return shutil.which("bd") is not None
+
+
+def _bd_decision_ids(*extra: str) -> list[str]:
+    """IDs of decision beads (optionally filtered). Mirrors the bash pattern of
+    using `bd list` ONLY for IDs, then `bd show <id>` per bead for field access."""
+    try:
+        out = subprocess.check_output(
+            ["bd", "list", "--all", "--type=decision", *extra, "--json"], text=True
+        )
+        return [b["id"] for b in json.loads(out) if b.get("id")]
+    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def _bd_show(bd_id: str) -> dict | None:
+    try:
+        arr = json.loads(subprocess.check_output(["bd", "show", bd_id, "--json"], text=True))
+        return arr[0] if arr else None
+    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError, IndexError):
+        return None
+
+
+def _id_from_name(name: str) -> str | None:
+    # Non-greedy middle so we stop at the shortest valid bead ID, not the full
+    # filename slug. Bead IDs are PREFIX-SHORTID where SHORTID has no dashes;
+    # the lookahead ensures we stop before the slug separator or extension.
+    m = re.match(r"([a-z][a-z0-9-]*?-[a-z0-9]+)(?=-|\.)", name)
+    return m.group(1) if m else None
+
+
+def _check_supersession_edges(adr_files: list[Path]) -> list[str]:
+    fails = []
+    for f in adr_files:
+        if f.name == "README.md":
+            continue
+        text = f.read_text()
+        m = re.search(rf"^\*\*Status:\*\*\s+Superseded by\s+({D.BD_ID_RE})", text, re.M)
+        if not m:
+            continue
+        superseder = m.group(1)
+        this_m = re.search(rf"^\*\*Decision:\*\*\s+({D.BD_ID_RE})", text, re.M)
+        if not this_m:
+            continue
+        this_id = this_m.group(1)
+        try:
+            dep = subprocess.check_output(["bd", "dep", "list", superseder], text=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            dep = ""
+        if not re.search(rf"{re.escape(this_id)}.*via supersedes", dep):
+            fails.append(f"{f}: Status says superseded by {superseder}, but bd dep edge missing")
+    return fails
+
+
+def main(argv: list[str]) -> int:
+    explain = False
+    changed_only = False
+    changed_files: list[str] = []
+    for arg in argv:
+        if arg == "--explain":
+            explain = True
+        elif arg == "--changed-only":
+            changed_only = True
+        elif changed_only:
+            changed_files.append(arg)
+
+    def note(msg: str) -> None:
+        if explain:
+            print(f"→ {msg}", file=sys.stderr)
+
+    if not ADR_DIR.is_dir():
+        print(f"missing {ADR_DIR}", file=sys.stderr)
+        return 2
+
+    if changed_only:
+        adr_files = [
+            Path(f)
+            for f in changed_files
+            if f
+            and (("/docs/adr/" in f) or f.startswith("docs/adr/"))
+            and f.endswith(".md")
+            and Path(f).is_file()
+        ]
+    else:
+        adr_files = sorted(p for p in ADR_DIR.glob("*.md"))
+
+    fails: list[str] = []
+
+    note("readme + sentinels + no-legacy (INV-A12)")
+    fails += D.check_readme(ADR_DIR)
+
+    for f in adr_files:
+        if f.name == "README.md":
+            continue
+        note(f"file checks: {f.name}")
+        fails += D.check_frontmatter_title(f)  # INV-A25
+        fails += D.check_decision_header(f)  # INV-A4/A5
+        fails += D.check_validator_sections(f)  # INV-A4
+        if _have_bd():
+            bd_id = _id_from_name(f.name)
+            if bd_id:
+                if _bd_show(bd_id) is None:
+                    fails.append(f"{f}: bd show {bd_id} failed (record missing)")  # INV-A4/A5
+                else:
+                    fails += D.check_render_match(f, bd_id)  # INV-A22 (bd-guarded)
+
+    if _have_bd():
+        note("bd description + metadata checks (INV-A20/A21/A24)")
+        for bd_id in _bd_decision_ids():
+            bead = _bd_show(bd_id)
+            if bead is None:
+                continue
+            desc = bead.get("description") or ""
+            if desc:
+                fails += D.check_description_sections(bd_id, desc)
+        for bd_id in _bd_decision_ids("--status=closed"):
+            bead = _bd_show(bd_id)
+            if bead is None:
+                continue
+            deciders = (bead.get("metadata") or {}).get("adr_deciders") or ""
+            fails += D.check_deciders_present(bd_id, deciders)
+        note("status/label coherence (INV-A23)")
+        for bd_id in _bd_decision_ids("--label", "adr:deprecated"):
+            bead = _bd_show(bd_id)
+            if bead is None:
+                continue
+            fails += D.check_status_label_coherent(bd_id, bead.get("status", ""))
+
+    if not changed_only:
+        note("agent_frontmatter (INV-A14/A15)")
+        fails += D.check_agent_frontmatter(REPO_ROOT / "dev-flow" / "agents" / "adr-extractor.md")
+        note("hook_executable + shellcheck")
+        fails += D.check_hook_executable(REPO_ROOT / "dev-flow" / "hooks" / "nudge-adr-capture")
+        note("forbid_skill_commits (INV-A2)")
+        fails += D.check_forbid_skill_commits(
+            REPO_ROOT / "dev-flow" / "skills" / "capture-adrs" / "SKILL.md"
+        )
+        if _have_bd():
+            note("supersession_edges (INV-A13)")
+            fails += _check_supersession_edges(adr_files)
+
+    for msg in fails:
+        print(f"FAIL: {msg}", file=sys.stderr)
+    if fails:
+        print(f"{len(fails)} check(s) failed.", file=sys.stderr)
+        return 1
+    print("adr-doctor: all checks passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

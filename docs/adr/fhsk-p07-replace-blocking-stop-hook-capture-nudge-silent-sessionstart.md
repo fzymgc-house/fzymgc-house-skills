@@ -1,7 +1,8 @@
+---
+title: "Replace blocking Stop-hook capture nudge with silent SessionStart briefing and throttled PostToolUse nudge"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-p07; do not edit manually; use `/adr update fhsk-p07` -->
-
-# Replace blocking Stop-hook capture nudge with silent SessionStart briefing and throttled PostToolUse nudge
 
 **Date:** 2026-06-02
 **Status:** Accepted

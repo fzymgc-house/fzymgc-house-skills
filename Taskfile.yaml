@@ -68,7 +68,7 @@ tasks:
       - uv run --with 'check-jsonschema>=0.37,<0.38' check-jsonschema
         --schemafile dev-flow/evals/evals.schema.json
         dev-flow/evals/evals.json jj/evals/evals.json
-      - ./dev-flow/scripts/adr-doctor.sh
+      - ./dev-flow/scripts/adr-doctor
 
   test:
     desc: Run all harness-independent tests (excludes Claude/agent evals)

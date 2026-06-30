@@ -1,7 +1,8 @@
+---
+title: "Use bd create --type drain for drain bead creation (not bd mol pour)"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-buu; do not edit manually; use `/adr update fhsk-buu` -->
-
-# Use bd create --type drain for drain bead creation (not bd mol pour)
 
 **Date:** 2026-05-24
 **Status:** Accepted

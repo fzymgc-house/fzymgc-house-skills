@@ -1,7 +1,8 @@
+---
+title: "Use env-then-file config resolution for Miniflux credentials"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-qs9; do not edit manually; use `/adr update fhsk-qs9` -->
-
-# Use env-then-file config resolution for Miniflux credentials
 
 **Date:** 2026-06-14
 **Status:** Accepted

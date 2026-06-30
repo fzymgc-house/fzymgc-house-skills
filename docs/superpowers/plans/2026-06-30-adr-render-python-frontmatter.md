@@ -2,6 +2,17 @@
 
 # ADR render-adr + adr-doctor → Python/uv with Starlight frontmatter — Implementation Plan
 
+> **STATUS: IMPLEMENTED (epic `fhsk-cdr`, all tasks closed).** The shipped code in
+> `dev-flow/scripts/` (`_adr_render.py`, `render-adr`, `_adr_doctor.py`, `adr-doctor`,
+> and the tests under `dev-flow/scripts/tests/`) is **authoritative**. A few code
+> snippets below reflect an earlier plan revision whose review corrections were lost in
+> the PR #183 squash/reconcile (markdown `\n`-in-code-fence edits mis-fired); the
+> as-built code applied those corrections — notably: the split-refs test asserts the
+> rstripped value; `adr-doctor` uses `_bd_decision_ids()` + per-bead `bd show` (not a
+> `_bd_decisions` full-record read) plus a record-missing check; stdlib imports are
+> hoisted to the top of each module; and the parity harness used `difflib`. Read the
+> code, not these snippets, for exact behavior.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Rewrite `dev-flow/scripts/render-adr` and `adr-doctor.sh` as Python PEP 723 (`uv run --script`) tools so generated ADRs carry a Starlight-valid YAML `title:` frontmatter (no body H1), and regenerate all committed ADRs to the new format.
@@ -1437,3 +1448,4 @@ Run: `jj commit -m "test(adr): verify task fmt/lint/test green for ADR Python mi
 
 - **Spec coverage:** frontmatter format (Tasks 3,7), drop H1 (Tasks 3,7), Python/uv PEP 723 (all script tasks), INV-A25 (Task 8), in-memory INV-A22 (Task 9), regenerate + orphan removal (Task 7), parity harness one-shot/uncommitted (Task 6), rename + reference updates (Tasks 10–12), Codex-compat fix (Task 12), no `docs/adr` in `MD_FILES` (Task 11). All covered.
 - **Cross-repo:** homelab impact is documented in the spec; no task here (out of scope). Call it out in the PR description.
+<!-- adr-capture: sha256=6e84e9f699993020; session=cli; ts=2026-06-30T15:49:47Z; adrs=fhsk-slp,fhsk-nlw,fhsk-bmn -->

@@ -1,7 +1,8 @@
+---
+title: "Split curation into deterministic rules (Miniflux) and reasoning (Claude)"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-0qz; do not edit manually; use `/adr update fhsk-0qz` -->
-
-# Split curation into deterministic rules (Miniflux) and reasoning (Claude)
 
 **Date:** 2026-06-14
 **Status:** Accepted

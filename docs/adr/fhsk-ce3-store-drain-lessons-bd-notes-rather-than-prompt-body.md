@@ -1,7 +1,8 @@
+---
+title: "Store drain lessons in bd notes rather than the prompt body"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-ce3; do not edit manually; use `/adr update fhsk-ce3` -->
-
-# Store drain lessons in bd notes rather than the prompt body
 
 **Date:** 2026-05-22
 **Status:** Accepted

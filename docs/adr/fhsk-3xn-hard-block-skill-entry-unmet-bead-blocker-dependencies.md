@@ -1,7 +1,8 @@
+---
+title: "Hard-block skill entry on unmet bead blocker dependencies"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-3xn; do not edit manually; use `/adr update fhsk-3xn` -->
-
-# Hard-block skill entry on unmet bead blocker dependencies
 
 **Date:** 2026-05-29
 **Status:** Accepted

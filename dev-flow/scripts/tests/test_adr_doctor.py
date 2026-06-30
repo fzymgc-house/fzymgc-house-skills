@@ -58,3 +58,37 @@ def test_validator_sections_required(tmp_path):
     f.write_text(GOOD.replace("## Rationale\nr\n", ""))
     fails = D.check_validator_sections(f)
     assert any("## Rationale" in m for m in fails)
+
+
+def test_description_sections_required():
+    assert (
+        D.check_description_sections("fhsk-abc", "## Context\nx\n## Consequences\ny")
+        == []
+    )
+    fails = D.check_description_sections("fhsk-abc", "## Decision\nonly")
+    assert any("## Context" in m for m in fails)
+    assert any("## Consequences" in m for m in fails)
+
+
+def test_status_label_coherent():
+    assert D.check_status_label_coherent("fhsk-abc", "closed") == []
+    assert D.check_status_label_coherent("fhsk-abc", "open") != []
+
+
+def test_deciders_present():
+    assert D.check_deciders_present("fhsk-abc", "Sean") == []
+    assert D.check_deciders_present("fhsk-abc", "") != []
+
+
+def test_render_match_in_memory(monkeypatch, tmp_path):
+    # Stub _adr_render.load_and_render to return a known content; compare to file.
+    import _adr_render as R
+
+    content = '---\ntitle: "T"\n---\nbody\n'
+    monkeypatch.setattr(R, "load_and_render", lambda bd_id: ("t", content, None))
+    good = tmp_path / "fhsk-abc-t.md"
+    good.write_text(content)
+    assert D.check_render_match(good, "fhsk-abc") == []
+    bad = tmp_path / "fhsk-xyz-t.md"
+    bad.write_text(content + "drift\n")
+    assert D.check_render_match(bad, "fhsk-xyz") != []

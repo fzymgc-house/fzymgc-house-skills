@@ -7,11 +7,15 @@ new INV-A25 frontmatter-title check.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 # Generic bd-id matcher (verbatim from adr-doctor.sh): any-prefix-XXXX.
 BD_ID_RE = r"[a-z][a-z0-9-]*-[a-z0-9]+"
 _FILENAME_RE = re.compile(rf"^{BD_ID_RE}-[a-z0-9-]+\.md$")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _adr_render as R  # noqa: E402  (sibling module on the inserted path)
 
 
 def _frontmatter_block(text: str) -> str | None:
@@ -83,3 +87,48 @@ def check_readme(adr_dir: Path) -> list[str]:
             f"{adr_dir / 'legacy'} must not exist (dev-flow has no legacy ADR migration)"
         )
     return fails
+
+
+def check_description_sections(bd_id: str, description: str) -> list[str]:
+    """INV-A20/A21: bd description must have '## Context' and '## Consequences'."""
+    fails = []
+    if not re.search(r"^## Context", description, re.M):
+        fails.append(f"{bd_id}: bd description missing '## Context' heading (INV-A20)")
+    if not re.search(r"^## Consequences", description, re.M):
+        fails.append(
+            f"{bd_id}: bd description missing '## Consequences' heading (INV-A21)"
+        )
+    return fails
+
+
+def check_status_label_coherent(bd_id: str, status: str) -> list[str]:
+    """INV-A23: a bead carrying adr:deprecated must be closed. (Caller passes
+    only deprecated-labelled beads.)"""
+    if status != "closed":
+        return [
+            f"{bd_id}: has adr:deprecated label but bd status={status} (must be closed) (INV-A23)"
+        ]
+    return []
+
+
+def check_deciders_present(bd_id: str, deciders: str) -> list[str]:
+    """INV-A24: closed decision bead must carry adr_deciders metadata."""
+    if not deciders:
+        return [
+            f"{bd_id}: closed decision bead lacks adr_deciders metadata. Run: /adr migrate --apply (INV-A24)"
+        ]
+    return []
+
+
+def check_render_match(path: Path, bd_id: str) -> list[str]:
+    """INV-A22: committed file must equal a fresh in-memory render. No in-place
+    overwrite, no VCS restore — render() is pure and returns a string."""
+    try:
+        _slug, expected, _warn = R.load_and_render(bd_id)
+    except R.RenderError:
+        return []  # bd doesn't know this id; nothing to compare
+    if path.read_text() != expected:
+        return [
+            f"{path}: drift between rendered output and committed file. Run: /adr render {bd_id} (INV-A22)"
+        ]
+    return []

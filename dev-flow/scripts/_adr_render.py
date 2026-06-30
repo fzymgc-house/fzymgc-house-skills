@@ -13,7 +13,9 @@ newlines; we mirror that with `.rstrip("\\n")` on every value read from bd.
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
 
 # Stop-words dropped from slugs (verbatim from the former bash awk list).
 _STOP_WORDS = frozenset({"a", "an", "the", "for", "of", "to", "in", "on", "with"})
@@ -171,3 +173,66 @@ def build_document(
             lines.append(f"- Superseded by: {superseded_by}")
 
     return "".join(line + "\n" for line in lines)
+
+
+class RenderError(Exception):
+    """Raised with a message + intended exit code for the wrapper to surface."""
+
+    def __init__(self, message: str, code: int):
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+
+def _bd_json(args: list[str], default):
+    """Run `bd <args> --json`; return parsed JSON or `default` on any failure."""
+    try:
+        proc = subprocess.run(["bd", *args, "--json"], capture_output=True, text=True)
+    except FileNotFoundError:
+        return default
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return default
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return default
+
+
+def load_and_render(bd_id: str) -> tuple[str, str, str | None]:
+    """Fetch the bead + supersession edges and render.
+
+    Returns (slug, content, literal_newline_warning_or_None). Raises RenderError
+    with the appropriate exit code on not-found / no-title.
+    """
+    bead_arr = _bd_json(["show", bd_id], default=[])
+    if not bead_arr:
+        raise RenderError(f"render-adr: bead {bd_id} not found", 1)
+    bead = bead_arr[0]
+
+    title = (bead.get("title") or "").rstrip("\n")
+    if not title:
+        raise RenderError(f"render-adr: bead {bd_id} has no title", 1)
+
+    up = _bd_json(
+        ["dep", "list", bd_id, "--direction=up", "--type=supersedes"], default=[]
+    )
+    superseded_by = (up[0].get("id") if up else None) or None
+    down = _bd_json(
+        ["dep", "list", bd_id, "--direction=down", "--type=supersedes"], default=[]
+    )
+    supersedes_ids = [edge["id"] for edge in down if edge.get("id")]
+
+    warning = None
+    description = bead.get("description") or ""
+    if "\\n" in description:
+        warning = (
+            f"render-adr: WARNING: bead {bd_id} body contains the literal escape \\n; "
+            f"it will render verbatim. Fix the bead description to use real newlines "
+            f"(bd update {bd_id} --body-file ...)."
+        )
+
+    slug = slugify(title) or "untitled"
+    content = build_document(
+        bd_id, bead, superseded_by=superseded_by, supersedes_ids=supersedes_ids
+    )
+    return slug, content, warning

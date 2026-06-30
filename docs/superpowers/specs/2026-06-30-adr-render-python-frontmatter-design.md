@@ -301,3 +301,4 @@ PR. Worth a one-line heads-up in the PR description for homelab maintainers.
 
 None outstanding. (Frontmatter scope, runtime style, migration approach, and the
 `adr-doctor.sh` → `adr-doctor` rename are all resolved.)
+<!-- adr-capture: sha256=c64b3d0d8731c1bf; session=cli; ts=2026-06-30T15:49:47Z; adrs=fhsk-slp,fhsk-nlw,fhsk-bmn -->

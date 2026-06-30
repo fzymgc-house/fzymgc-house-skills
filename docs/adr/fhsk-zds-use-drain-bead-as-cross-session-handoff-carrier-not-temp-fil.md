@@ -1,7 +1,8 @@
+---
+title: "Use the drain bead as the cross-session handoff carrier, not a temp file"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-zds; do not edit manually; use `/adr update fhsk-zds` -->
-
-# Use the drain bead as the cross-session handoff carrier, not a temp file
 
 **Date:** 2026-05-24
 **Status:** Accepted

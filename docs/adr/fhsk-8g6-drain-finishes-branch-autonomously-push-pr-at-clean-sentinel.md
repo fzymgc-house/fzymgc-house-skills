@@ -1,7 +1,8 @@
+---
+title: "Drain finishes the branch autonomously (push + PR) at the clean sentinel"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-8g6; do not edit manually; use `/adr update fhsk-8g6` -->
-
-# Drain finishes the branch autonomously (push + PR) at the clean sentinel
 
 **Date:** 2026-06-10
 **Status:** Accepted

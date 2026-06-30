@@ -1,7 +1,8 @@
+---
+title: "Use tag-only cog releases with no commit to main"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-toy; do not edit manually; use `/adr update fhsk-toy` -->
-
-# Use tag-only cog releases with no commit to main
 
 **Date:** 2026-05-29
 **Status:** Superseded by fhsk-dgo

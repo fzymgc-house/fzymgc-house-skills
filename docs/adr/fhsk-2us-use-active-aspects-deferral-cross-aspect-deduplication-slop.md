@@ -1,7 +1,8 @@
+---
+title: "Use ACTIVE_ASPECTS deferral for cross-aspect deduplication in slop-hunter"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-2us; do not edit manually; use `/adr update fhsk-2us` -->
-
-# Use ACTIVE_ASPECTS deferral for cross-aspect deduplication in slop-hunter
 
 **Date:** 2026-05-28
 **Status:** Accepted

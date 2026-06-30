@@ -1,7 +1,8 @@
+---
+title: "Treat bug bead suggested fixes as non-authoritative hypotheses"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-ypt; do not edit manually; use `/adr update fhsk-ypt` -->
-
-# Treat bug bead suggested fixes as non-authoritative hypotheses
 
 **Date:** 2026-05-29
 **Status:** Accepted

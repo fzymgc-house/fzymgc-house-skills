@@ -1,7 +1,8 @@
+---
+title: "Never invoke /goal from a skill; emit the condition for a user or driver to submit"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-e4i; do not edit manually; use `/adr update fhsk-e4i` -->
-
-# Never invoke /goal from a skill; emit the condition for a user or driver to submit
 
 **Date:** 2026-05-24
 **Status:** Accepted

@@ -1,7 +1,8 @@
+---
+title: "Use two-tier spine/overlay memory scope model"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-e0u; do not edit manually; use `/adr update fhsk-e0u` -->
-
-# Use two-tier spine/overlay memory scope model
 
 **Date:** 2026-06-01
 **Status:** Accepted

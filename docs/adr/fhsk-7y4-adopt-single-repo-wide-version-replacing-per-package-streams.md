@@ -1,7 +1,8 @@
+---
+title: "Adopt single repo-wide version replacing per-package streams"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-7y4; do not edit manually; use `/adr update fhsk-7y4` -->
-
-# Adopt single repo-wide version replacing per-package streams
 
 **Date:** 2026-05-29
 **Status:** Superseded by fhsk-dgo

@@ -1,7 +1,8 @@
+---
+title: "Use agent:* label as the sole subagent dispatch signal"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-bj8; do not edit manually; use `/adr update fhsk-bj8` -->
-
-# Use agent:* label as the sole subagent dispatch signal
 
 **Date:** 2026-05-28
 **Status:** Accepted

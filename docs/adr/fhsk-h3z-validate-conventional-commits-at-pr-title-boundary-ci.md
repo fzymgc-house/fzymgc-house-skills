@@ -1,7 +1,8 @@
+---
+title: "Validate conventional commits at the PR-title boundary in CI"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-h3z; do not edit manually; use `/adr update fhsk-h3z` -->
-
-# Validate conventional commits at the PR-title boundary in CI
 
 **Date:** 2026-05-29
 **Status:** Accepted

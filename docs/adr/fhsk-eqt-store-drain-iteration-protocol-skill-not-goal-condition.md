@@ -1,7 +1,8 @@
+---
+title: "Store the drain iteration protocol in the skill, not the /goal condition"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-eqt; do not edit manually; use `/adr update fhsk-eqt` -->
-
-# Store the drain iteration protocol in the skill, not the /goal condition
 
 **Date:** 2026-05-24
 **Status:** Accepted

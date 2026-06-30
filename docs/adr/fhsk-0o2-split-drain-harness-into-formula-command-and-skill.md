@@ -1,7 +1,8 @@
+---
+title: "Split drain harness into formula, command, and skill"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-0o2; do not edit manually; use `/adr update fhsk-0o2` -->
-
-# Split drain harness into formula, command, and skill
 
 **Date:** 2026-05-22
 **Status:** Superseded by fhsk-eqt

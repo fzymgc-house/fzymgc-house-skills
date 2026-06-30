@@ -1,7 +1,8 @@
+---
+title: "Share cmux/tmux driver logic via a _muxdriver module, not script duplication"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-8yz; do not edit manually; use `/adr update fhsk-8yz` -->
-
-# Share cmux/tmux driver logic via a _muxdriver module, not script duplication
 
 **Date:** 2026-06-13
 **Status:** Accepted

@@ -1,7 +1,8 @@
+---
+title: "Package handoff create and resume as one conditional-workflow skill"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-57f; do not edit manually; use `/adr update fhsk-57f` -->
-
-# Package handoff create and resume as one conditional-workflow skill
 
 **Date:** 2026-05-29
 **Status:** Accepted

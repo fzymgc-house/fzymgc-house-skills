@@ -1,7 +1,8 @@
+---
+title: "Wrap Miniflux client directly, not via MCP gateway"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-pqw; do not edit manually; use `/adr update fhsk-pqw` -->
-
-# Wrap Miniflux client directly, not via MCP gateway
 
 **Date:** 2026-06-14
 **Status:** Accepted

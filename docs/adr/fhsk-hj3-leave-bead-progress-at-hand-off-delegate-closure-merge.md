@@ -1,7 +1,8 @@
+---
+title: "Leave bead in_progress at hand-off; delegate closure to merge"
+---
 <!-- markdownlint-disable MD013 -->
 <!-- adr-render: source=bd:fhsk-hj3; do not edit manually; use `/adr update fhsk-hj3` -->
-
-# Leave bead in_progress at hand-off; delegate closure to merge
 
 **Date:** 2026-05-29
 **Status:** Accepted

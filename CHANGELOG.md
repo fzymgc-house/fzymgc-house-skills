@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v2.0.0...v2.0.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* **adr-doctor:** resolve bd-id from Decision line for hyphenated prefixes (fhsk-51g) ([#185](https://github.com/fzymgc-house/fzymgc-house-skills/issues/185)) ([ec0d820](https://github.com/fzymgc-house/fzymgc-house-skills/commit/ec0d820a8914fc85e72abaa7313556b8ef0fbef7))
+
 ## [2.0.0](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v1.25.0...v2.0.0) (2026-06-30)
 
 

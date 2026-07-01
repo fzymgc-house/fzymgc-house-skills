@@ -17,6 +17,14 @@ from pathlib import Path
 # Generic bd-id matcher (verbatim from adr-doctor.sh): any-prefix-XXXX.
 BD_ID_RE = r"[a-z][a-z0-9-]*-[a-z0-9]+"
 _FILENAME_RE = re.compile(rf"^{BD_ID_RE}-[a-z0-9-]+\.md$")
+_DECISION_RE = re.compile(rf"^\*\*Decision:\*\*\s+({BD_ID_RE})", re.M)
+
+
+def _decision_id(text: str) -> str | None:
+    """The bd-id declared by a file's '**Decision:** <bd-id>' line, or None."""
+    m = _DECISION_RE.search(text)
+    return m.group(1) if m else None
+
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _adr_render as R  # noqa: E402  (sibling module on the inserted path)
@@ -50,15 +58,28 @@ def check_decision_header(path: Path) -> list[str]:
     if not _FILENAME_RE.match(bn):
         return []
     text = path.read_text()
-    m = re.search(rf"^\*\*Decision:\*\*\s+({BD_ID_RE})", text, re.M)
-    if not m:
+    decision_id = _decision_id(text)
+    if decision_id is None:
         return [f"{path}: missing **Decision:** <bd-id> header"]
-    decision_id = m.group(1)
     if not bn.startswith(f"{decision_id}-"):
         return [
             f"{path}: filename does not start with **Decision:** id ({decision_id}-)"
         ]
     return []
+
+
+def _id_from_name(name: str) -> str | None:
+    """Fallback bd-id from a filename; truncates multi-segment prefixes, so used
+    only when the **Decision:** header is absent. See bd_id_for_file."""
+    m = re.match(r"([a-z][a-z0-9-]*?-[a-z0-9]+)(?=-|\.)", name)
+    return m.group(1) if m else None
+
+
+def bd_id_for_file(path: Path) -> str | None:
+    """Resolve an ADR's bd-id for bd lookups, prefix-agnostically. Prefer the
+    '**Decision:** <bd-id>' line (INV-A4/A5 checks the filename starts with it);
+    fall back to the ambiguous filename regex only when the header is absent."""
+    return _decision_id(path.read_text()) or _id_from_name(path.name)
 
 
 def check_validator_sections(path: Path) -> list[str]:

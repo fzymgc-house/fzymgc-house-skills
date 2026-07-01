@@ -153,3 +153,47 @@ def test_decision_header_missing_header_fails(tmp_path):
     fails = D.check_decision_header(f)
     assert len(fails) >= 1
     assert any("missing" in m and "Decision" in m for m in fails)
+
+
+# ---------------------------------------------------------------------------
+# bd_id_for_file — prefix-agnostic bd-id resolution (INV-A4/A5; fhsk-51g)
+# ---------------------------------------------------------------------------
+
+
+def test_bd_id_prefers_decision_line_for_multisegment_prefix(tmp_path):
+    """A multi-segment prefix must resolve from the authoritative **Decision:**
+    line, not the ambiguous filename. The filename regex alone would truncate
+    'fzymgc-skills-001-slug.md' to 'fzymgc-skills' (fhsk-51g regression)."""
+    f = tmp_path / "fzymgc-skills-001-some-slug.md"
+    f.write_text(
+        GOOD.replace("**Decision:** fhsk-abc", "**Decision:** fzymgc-skills-001")
+    )
+    assert D.bd_id_for_file(f) == "fzymgc-skills-001"
+
+
+def test_bd_id_from_decision_line_single_token_prefix(tmp_path):
+    f = tmp_path / "fhsk-abc-a-decision.md"
+    f.write_text(GOOD)
+    assert D.bd_id_for_file(f) == "fhsk-abc"
+
+
+def test_bd_id_falls_back_to_filename_without_decision_line(tmp_path):
+    """No **Decision:** header → fall back to the filename regex."""
+    f = tmp_path / "fhsk-abc-a-decision.md"
+    f.write_text(GOOD.replace("**Decision:** fhsk-abc\n", ""))
+    assert D.bd_id_for_file(f) == "fhsk-abc"
+
+
+def test_bd_id_none_when_unresolvable(tmp_path):
+    """No Decision line and a filename with no bead id → None (not a crash)."""
+    f = tmp_path / "README.md"
+    f.write_text(GOOD.replace("**Decision:** fhsk-abc\n", ""))
+    assert D.bd_id_for_file(f) is None
+
+
+def test_id_from_name_fallback_truncates_multisegment_prefix():
+    """Pin the documented fallback limitation: without a **Decision:** header the
+    filename regex truncates a multi-segment prefix. bd_id_for_file only reaches
+    this path when the header is absent (check_decision_header then FAILs the
+    file separately), so the truncation never silently mislabels a valid ADR."""
+    assert D._id_from_name("fzymgc-skills-001-some-slug.md") == "fzymgc-skills"

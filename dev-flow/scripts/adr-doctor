@@ -53,14 +53,6 @@ def _bd_show(bd_id: str) -> dict | None:
         return None
 
 
-def _id_from_name(name: str) -> str | None:
-    # Non-greedy middle so we stop at the shortest valid bead ID, not the full
-    # filename slug. Bead IDs are PREFIX-SHORTID where SHORTID has no dashes;
-    # the lookahead ensures we stop before the slug separator or extension.
-    m = re.match(r"([a-z][a-z0-9-]*?-[a-z0-9]+)(?=-|\.)", name)
-    return m.group(1) if m else None
-
-
 def _check_supersession_edges(adr_files: list[Path]) -> list[str]:
     fails = []
     for f in adr_files:
@@ -129,7 +121,7 @@ def main(argv: list[str]) -> int:
         fails += D.check_decision_header(f)  # INV-A4/A5
         fails += D.check_validator_sections(f)  # INV-A4
         if _have_bd():
-            bd_id = _id_from_name(f.name)
+            bd_id = D.bd_id_for_file(f)
             if bd_id:
                 if _bd_show(bd_id) is None:
                     fails.append(f"{f}: bd show {bd_id} failed (record missing)")  # INV-A4/A5

@@ -1,10 +1,11 @@
 # fzymgc-house-skills
 
 A [Claude Code](https://claude.ai/code) plugin marketplace for the fzymgc-house
-self-hosted cluster. It currently ships three plugins: homelab operations, jj
-workflow guidance, and a development-flow workflow suite (originally forked from
-obra/superpowers, evolved independently). The repo now also includes a
-repo-local Codex marketplace that wraps the same skill content for Codex.
+self-hosted cluster. It ships several plugins: homelab operations, jj
+workflow guidance, a development-flow workflow suite (originally forked from
+obra/superpowers, evolved independently), a tmux usage skill, and a grepping
+search skill. The repo now also includes a repo-local Codex marketplace that
+wraps the same skill content for Codex.
 
 > **`memory-curator` has moved.** The memory plugin now lives in
 > [seanb4t/engram](https://github.com/seanb4t/engram) as the `engram` bundled
@@ -69,6 +70,23 @@ Review/fix agents (dispatched by the orchestrators): `code-reviewer`,
 `spec-compliance`, `code-simplifier`, `slop-hunter`, `fix-worker`,
 `review-gate`, `verification-runner`.
 
+### tmux
+
+Terminal-multiplexer usage skill for scripting and agent automation.
+
+| Skill | Description |
+|-------|-------------|
+| **tmux** | Spawn and drive tmux sessions, windows, and panes; capture pane output |
+
+### grepping
+
+Shell code/text search skill. Two advisory hooks nudge toward `rg` / `ast-grep`
+over grep-family tools (PreToolUse) and flag common `rg` mistakes (PostToolUse).
+
+| Skill | Description |
+|-------|-------------|
+| **grepping** | ripgrep (`rg`), ast-grep (`sg`), and grep-family → rg translation |
+
 ## Installation
 
 ### Claude Code
@@ -80,15 +98,17 @@ claude plugin marketplace add fzymgc-house/fzymgc-house-skills
 claude plugin install homelab@fzymgc-house-skills
 claude plugin install jj@fzymgc-house-skills
 claude plugin install dev-flow@fzymgc-house-skills
+claude plugin install tmux@fzymgc-house-skills
+claude plugin install grepping@fzymgc-house-skills
 ```
 
 ### Codex
 
 Use the repo-local Codex marketplace at
 `.agents/plugins/marketplace.json`. The `plugins/` directory contains thin
-Codex wrappers that symlink back to the existing `homelab/`, `jj/`, and
-`dev-flow/` directories so the underlying SKILL.md content remains
-single-source.
+Codex wrappers that symlink back to the existing `homelab/`, `jj/`,
+`dev-flow/`, `tmux/`, and `grepping/` directories so the underlying SKILL.md
+content remains single-source.
 
 Current Codex limitation: named Claude plugin agents are not installed
 natively. The `dev-flow` review workflows still work in Codex,
@@ -152,6 +172,15 @@ dev-flow/
     address-findings/   # Fix loop orchestrator
     respond-to-comments/  # PR comment management
     ...                 # Workflow skills (originally from obra/superpowers v5.0.7)
+tmux/
+  plugin.json           # Plugin manifest
+  skills/
+    tmux/               # tmux usage skill
+grepping/
+  plugin.json           # Plugin manifest
+  hooks/                # nudge-rg-over-grep, nudge-rg-failure (advisory)
+  skills/
+    grepping/           # rg / ast-grep / grep-family search skill
 ```
 
 ### Commits

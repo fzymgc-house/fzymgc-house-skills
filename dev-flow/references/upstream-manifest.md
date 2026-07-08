@@ -63,7 +63,6 @@ skills/subagent-driven-development/SKILL.md:
 
 # Local only — no upstream equivalent
 skills/using-git-worktrees/SKILL.md: local
-skills/grepping/: local
 references/vcs-preamble.md: local
 references/upstream-manifest.md: local
 scripts/sync-upstream: local

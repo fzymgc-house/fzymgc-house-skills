@@ -5,7 +5,7 @@
 """PostToolUse hook: nudge toward the grepping skill on rg failures.
 
 Detects rg commands that errored or silently returned wrong results, and
-injects additionalContext referencing the dev-flow:grepping skill so the
+injects additionalContext referencing the grepping:grepping skill so the
 model loads the skill before trying again.
 
 Works alongside the PreToolUse nudge-rg-over-grep hook — that hook steers
@@ -94,7 +94,7 @@ def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str 
     if _has_hard_error(stderr) or exit_code not in (0, 1):
         return (
             "grepping: `rg` exited with an error. Before retrying, load the "
-            "`dev-flow:grepping` skill (Skill tool) — it has the common-mistake "
+            "`grepping:grepping` skill (Skill tool) — it has the common-mistake "
             "table ranked by frequency. The #1 silent killer is `rg 'A\\|B'` "
             "(matches literal pipe — use `rg 'A|B'`), and a stray `-r` flag "
             "silently corrupts output as `--replace`. Advisory only."
@@ -107,7 +107,7 @@ def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str 
             return (
                 "grepping: `rg` found no matches. Your pattern contains `\\|` — "
                 "in rg this matches a LITERAL pipe character, not alternation. "
-                "Use bare `|` instead: `rg 'A|B'`. See the `dev-flow:grepping` "
+                "Use bare `|` instead: `rg 'A|B'`. See the `grepping:grepping` "
                 "skill for the full common-mistake table. Advisory only."
             )
         if _has_suspect_flags(command):
@@ -116,7 +116,7 @@ def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str 
                 "(rg's `-r` is `--replace`, not recursive — it may have corrupted "
                 "the search) or `--include=`/`--no-pager` (unrecognized by rg). "
                 "Drop `-r` (rg is already recursive) and use `-g '*.ext'` / "
-                "`-t <type>`. Full mapping in `dev-flow:grepping`. Advisory only."
+                "`-t <type>`. Full mapping in `grepping:grepping`. Advisory only."
             )
 
     # Exited 0, stdout empty, pattern has `\|` — the truly silent case where
@@ -126,7 +126,7 @@ def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str 
         return (
             "grepping: `rg` returned empty. Your pattern contains `\\|` which "
             "matches a LITERAL pipe in rg — not alternation. Use bare `|`: "
-            "`rg 'A|B'`. See `dev-flow:grepping` for the full table. "
+            "`rg 'A|B'`. See `grepping:grepping` for the full table. "
             "Advisory only."
         )
 
@@ -135,7 +135,7 @@ def _build_nudge(command: str, stderr: str, exit_code: int, stdout: str) -> str 
         return (
             "grepping: `rg` returned empty. Your command has flags that may "
             "not do what you expect in rg (`-rn` → replace, `--include=` "
-            "→ unrecognized). Load `dev-flow:grepping` for the flag mapping. "
+            "→ unrecognized). Load `grepping:grepping` for the flag mapping. "
             "Advisory only."
         )
 

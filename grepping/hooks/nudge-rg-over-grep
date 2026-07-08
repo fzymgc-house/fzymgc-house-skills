@@ -4,7 +4,7 @@
 # ///
 """PreToolUse hook: nudge toward probe / rg / ast-grep over grep-family tools.
 
-Soft-warn only — never blocks. Per the dev-flow `grepping` skill the ordering is:
+Soft-warn only — never blocks. Per the `grepping` skill the ordering is:
 
   - `mcp__probe__search_code` / `extract_code` — semantic "where is X / how does
     Y work" symbol lookup (returns whole AST blocks). Preferred FIRST, but only
@@ -23,7 +23,7 @@ quoted argument). Behaviour:
     symbol-shaped AND probe is available, in which case nudge toward probe.
 
 probe availability is detected lazily (only for symbol-shaped searches) and the
-result is cached in $XDG_CACHE_HOME/dev-flow-grepping keyed by a stat() signature
+result is cached in $XDG_CACHE_HOME/grepping keyed by a stat() signature
 of the candidate MCP config files, so the hot path stays a few stat()s — the MCP
 configs are only read/parsed when one of them actually changes.
 
@@ -153,7 +153,7 @@ def _scan_for_probe(paths: list[str]) -> bool:
 def _cache_path(repo_root: str) -> str:
     base = os.environ.get("XDG_CACHE_HOME") or os.path.join(os.path.expanduser("~"), ".cache")
     key = hashlib.sha1((repo_root or "").encode("utf-8")).hexdigest()[:16]
-    return os.path.join(base, "dev-flow-grepping", f"probe-{key}.json")
+    return os.path.join(base, "grepping", f"probe-{key}.json")
 
 
 def probe_available(repo_root: str) -> bool:
@@ -187,7 +187,7 @@ def _msg_grep_to_rg(tool: str) -> str:
     return (
         f"grepping: `{tool}` invoked. Prefer `rg` (ripgrep) for text search — faster, "
         "recursive by default, and .gitignore-aware — and `ast-grep` (`sg`) for "
-        "structural/syntax-aware code matches. The dev-flow `grepping` skill has the "
+        "structural/syntax-aware code matches. The `grepping` skill has the "
         f"grep->rg flag mapping and common-mistake fixes. Advisory only; `{tool}` still "
         "runs (use it when you need ugrep-only features like fuzzy or archive search)."
     )

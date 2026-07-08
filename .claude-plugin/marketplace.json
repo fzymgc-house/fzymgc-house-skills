@@ -27,6 +27,11 @@
       "name": "tmux",
       "description": "tmux terminal-multiplexer usage skill (sessions, windows, panes, scripting)",
       "source": "./tmux"
+    },
+    {
+      "name": "grepping",
+      "description": "Shell code/text search skill (rg, ast-grep, grep-family) with rg-over-grep and rg-failure nudge hooks",
+      "source": "./grepping"
     }
   ]
 }

@@ -6,7 +6,7 @@ cross-platform rules and Claude-specific notes.
 
 ## Repository Purpose
 
-This repository publishes four source plugins for the fzymgc-house skills
+This repository publishes five source plugins for the fzymgc-house skills
 marketplace:
 
 - `homelab` - infrastructure skills for Terraform and skill QA
@@ -15,6 +15,8 @@ marketplace:
   the PR review orchestrators (`review-pr`, `address-findings`,
   `respond-to-comments`) and review/fix/verification agents
 - `tmux` - terminal-multiplexer usage skill
+- `grepping` - shell code/text search skill (rg, ast-grep, grep-family) with
+  advisory rg-over-grep / rg-failure nudge hooks
 
 It also publishes a repo-local Codex compatibility layer:
 
@@ -22,7 +24,7 @@ It also publishes a repo-local Codex compatibility layer:
 - `plugins/<name>/` - thin Codex wrapper plugins
 
 Keep the real skill content in the source plugin directories (`homelab/`,
-`jj/`, `dev-flow/`). The `plugins/` wrappers should point
+`jj/`, `dev-flow/`, `tmux/`, `grepping/`). The `plugins/` wrappers should point
 back to those sources instead of copying them.
 
 ## Quick Start
@@ -70,6 +72,13 @@ dev-flow/
   references/     # incl. code-slop, prose-slop, vcs preambles
   scripts/
   skills/         # incl. review-pr, address-findings, respond-to-comments
+tmux/
+  plugin.json
+  skills/
+grepping/
+  plugin.json
+  hooks/          # nudge-rg-over-grep (PreToolUse), nudge-rg-failure (PostToolUse)
+  skills/
 ```
 
 ## Issue Tracking With bd

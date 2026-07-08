@@ -1,0 +1,31 @@
+{
+  "name": "grepping",
+  "description": "Shell code/text search skill (rg, ast-grep, grep-family) with rg-over-grep and rg-failure nudge hooks",
+  "author": {
+    "name": "Sean Brandt",
+    "email": "4678+seanb4t@users.noreply.github.com",
+    "url": "https://github.com/seanb4t"
+  },
+  "homepage": "https://github.com/fzymgc-house/fzymgc-house-skills",
+  "repository": "https://github.com/fzymgc-house/fzymgc-house-skills",
+  "license": "UNLICENSED",
+  "keywords": ["ripgrep", "rg", "ast-grep", "grep", "search"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Grepping",
+    "shortDescription": "Code/text search skill for rg, ast-grep, and grep-family tools.",
+    "longDescription": "Codex wrapper for the grepping plugin. Reuses the grepping skill covering ripgrep (rg), ast-grep (sg), and grep-family translation, plus the advisory rg-over-grep / rg-failure nudge hooks.",
+    "developerName": "fzymgc-house",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Run"],
+    "websiteURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "privacyPolicyURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "termsOfServiceURL": "https://github.com/fzymgc-house/fzymgc-house-skills",
+    "defaultPrompt": [
+      "Translate this grep command to ripgrep.",
+      "Why is my rg search returning nothing?",
+      "Write an ast-grep pattern to match this code shape."
+    ],
+    "brandColor": "#1BB91F"
+  }
+}

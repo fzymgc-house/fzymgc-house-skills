@@ -82,14 +82,14 @@
 
 **Worktree creation/removal hook chain (fhsk-0sq, fhsk-3v3, fhsk-b43):**
 
-- Files: `dev-flow/hooks/worktree_create.py`, `dev-flow/hooks/worktree_remove.py`, `dev-flow/hooks/worktree_helpers.py`
+- Files: `dev-flow/hooks/worktree-create`, `dev-flow/hooks/worktree-remove`, `dev-flow/hooks/worktree_helpers.py`
 - Why fragile: Multiple interdependent VCS operations (git, jj, bd) run in sequence. Cleanup must handle partial failures. Recent fixes (PR #144, #173, #175) show tight coupling between beads redirect, workspace creation, and mux detection.
 - Safe modification: Add integration tests that exercise full chains (create → modify → remove) with failure injection at each step. Verify cleanup state after each failure. Test with both git and jj repos.
 - Test coverage: Already well-covered by `test_worktree_create.py` and `test_worktree_remove.py`, but add end-to-end scenario tests.
 
 **Drain worker shell compatibility (fhsk-163, fhsk-158):**
 
-- Files: `dev-flow/skills/drain-with-worker/SKILL.md`, `dev-flow/hooks/drain_worker_launch.sh`, tests in `tests/test_drain_worker_launch.py`
+- Files: `dev-flow/skills/drain-with-worker/SKILL.md`, `dev-flow/scripts/drain-worker-launch`, tests in `tests/test_drain_worker_launch.py`
 - Why fragile: Direnv probe assumes bash/zsh syntax; recent fix for fish shell (PR #163) shows assumptions about shell syntax. Argparse `%` escaping changes across Python versions (PR #159).
 - Safe modification: Abstract shell detection into helper function. Add tests for each supported shell (bash, zsh, fish, sh). Pin Python version constraint (≥3.11) in scripts.
 - Test coverage: Add platform-specific tests for shells (skip if shell not installed). Test on Python 3.11, 3.12, 3.13, 3.14 in CI.
@@ -183,14 +183,14 @@
 **Cross-shell compatibility (drain worker):**
 
 - What's not tested: (1) dash/sh (POSIX shell, common in Alpine/minimal images). (2) ksh (legacy systems). (3) Shell with aliases/functions in rc files that interfere. (4) Non-standard `direnv` installations.
-- Files: `dev-flow/hooks/drain_worker_launch.sh`, `tests/test_drain_worker_launch.py`
+- Files: `dev-flow/scripts/drain-worker-launch`, `tests/test_drain_worker_launch.py`
 - Risk: Drain worker fails silently on systems with unexpected shell.
 - Priority: **Medium** — affects niche deployments but not common desktop use cases.
 
 **Error recovery in worktree operations:**
 
 - What's not tested: (1) Partial failure (git succeeds, jj fails). (2) Cleanup failures (rm fails due to permission, symlink points stale). (3) Concurrent worktree operations (race condition).
-- Files: `dev-flow/hooks/worktree_create.py`, `dev-flow/hooks/worktree_remove.py`
+- Files: `dev-flow/hooks/worktree-create`, `dev-flow/hooks/worktree-remove`
 - Risk: Orphaned worktrees, stale beads redirects, corrupted jj state.
 - Priority: **High** — high-frequency operation with complex cleanup logic.
 

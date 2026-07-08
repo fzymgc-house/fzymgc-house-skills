@@ -1,0 +1,39 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-03-06-worktree-isolation-fix.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Worktree Isolation Fix Implementation Plan",
+  "summary": "Step-by-step implementation guide for fixing worktree-isolated agents to use sibling directory layout, comprising 7 tasks covering hook scripts, agent modifications, and documentation updates.",
+  "scope": [
+    "worktree-isolation",
+    "fix-worker agent",
+    "verification-runner agent",
+    "git hooks",
+    "agent architecture",
+    "Claude settings",
+    "sibling directory layout"
+  ],
+  "cross_refs": [
+    ".claude/hooks/worktree-create.sh",
+    ".claude/hooks/worktree-remove.sh",
+    ".claude/settings.json",
+    "pr-review/agents/fix-worker.md",
+    "pr-review/agents/verification-runner.md",
+    "pr-review/agents/code-reviewer.md",
+    "pr-review/agents/silent-failure-hunter.md",
+    "pr-review/agents/api-contract-checker.md",
+    "pr-review/agents/code-simplifier.md",
+    "pr-review/agents/security-auditor.md",
+    "pr-review/agents/spec-compliance.md",
+    "pr-review/agents/comment-analyzer.md",
+    "pr-review/agents/pr-test-analyzer.md",
+    "pr-review/agents/type-design-analyzer.md",
+    "pr-review/skills/address-findings/SKILL.md",
+    "pr-review/skills/respond-to-comments/SKILL.md",
+    "CLAUDE.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

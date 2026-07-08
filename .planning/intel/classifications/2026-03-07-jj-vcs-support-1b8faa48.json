@@ -1,0 +1,39 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-03-07-jj-vcs-support.md",
+  "type": "DOC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "jj (Jujutsu) VCS Support Implementation Plan",
+  "summary": "Implementation plan for adding Jujutsu VCS support with new jj plugin, VCS-aware pr-review skills/agents, and workspace hooks.",
+  "scope": [
+    "jj plugin",
+    "VCS detection",
+    "pr-review skills",
+    "pr-review agents",
+    "worktree hooks",
+    "release configuration",
+    "integration testing"
+  ],
+  "cross_refs": [
+    "docs/plans/2026-03-07-jj-vcs-support-design.md",
+    "jj/plugin.json",
+    "jj/skills/jujutsu/references/jj-git-interop.md",
+    "jj/skills/jujutsu/SKILL.md",
+    "jj/commands/jj-init.md",
+    "pr-review/references/vcs-equivalence.md",
+    "pr-review/skills/address-findings/SKILL.md",
+    "pr-review/skills/review-pr/SKILL.md",
+    "pr-review/skills/respond-to-comments/SKILL.md",
+    "pr-review/agents/",
+    ".claude/hooks/worktree-create.sh",
+    ".claude/hooks/worktree-remove.sh",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    ".claude-plugin/marketplace.json",
+    "CLAUDE.md",
+    "MEMORY.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Classified as DOC (supporting context/implementation planning) rather than ADR/PRD/SPEC. Document provides goal, architecture, tech stack, and 12 procedural tasks for implementation. Medium confidence because implementation plans are not explicitly defined in taxonomy but closest fit is DOC (design rationale + procedural guidance similar to runbooks)."
+}

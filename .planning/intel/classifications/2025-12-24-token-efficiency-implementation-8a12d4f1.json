@@ -1,0 +1,39 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2025-12-24-token-efficiency-implementation.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Token Efficiency Implementation Plan",
+  "summary": "Phased implementation guide for reducing Grafana skill token usage through output formatting, compound workflows, and pre-baked schemas.",
+  "scope": [
+    "grafana_mcp.py",
+    "PyYAML",
+    "output formatting",
+    "--format flag",
+    "--brief flag",
+    "compound workflows",
+    "investigate-logs",
+    "investigate-metrics",
+    "quick-status",
+    "find-dashboard",
+    "reference documentation",
+    "tool schemas",
+    "SKILL.md",
+    "version 0.2.0"
+  ],
+  "cross_refs": [
+    "grafana/skills/grafana/scripts/grafana_mcp.py",
+    "grafana/skills/grafana/references/prometheus.md",
+    "grafana/skills/grafana/references/loki.md",
+    "grafana/skills/grafana/references/dashboards.md",
+    "grafana/skills/grafana/references/alerting.md",
+    "grafana/skills/grafana/references/incidents.md",
+    "grafana/skills/grafana/references/oncall.md",
+    "grafana/skills/grafana/SKILL.md",
+    ".claude-plugin/marketplace.json",
+    "grafana/plugin.json"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

@@ -1,4 +1,4 @@
-"""Tests for dev-flow/hooks/nudge-rg-over-grep PreToolUse hook."""
+"""Tests for grepping/hooks/nudge-rg-over-grep PreToolUse hook."""
 
 from __future__ import annotations
 
@@ -194,7 +194,7 @@ class TestCache:
     def test_cache_file_written(self, tmp_path: Path, env: dict[str, str]) -> None:
         repo = make_repo(tmp_path, "withprobe", PROBE_MCP)
         run_hook("grep -rn 'func Foo' .", cwd=repo, env=env)
-        cache_dir = Path(env["XDG_CACHE_HOME"]) / "dev-flow-grepping"
+        cache_dir = Path(env["XDG_CACHE_HOME"]) / "grepping"
         sentinels = list(cache_dir.glob("probe-*.json"))
         assert sentinels, "expected a probe sentinel to be cached"
         payload = json.loads(sentinels[0].read_text())

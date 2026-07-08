@@ -1,0 +1,5 @@
+{
+  "name": "grepping",
+  "version": "2.0.1",
+  "description": "Shell code/text search skill (rg, ast-grep, grep-family) with rg-over-grep and rg-failure nudge hooks"
+}

@@ -1,0 +1,33 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-29-handoff-bead-type.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Handoff Bead Type Implementation Plan",
+  "summary": "Task-by-task implementation plan for replacing ephemeral handoff-prompt skill with persistent handoff bead type, including skill creation, command registration, and workflow integration.",
+  "scope": [
+    "handoff skill",
+    "handoff-prompt skill",
+    "handoff command",
+    "handoff-resume command",
+    "dev-flow skills",
+    "dev-flow commands",
+    "beads (bd) type system",
+    "VCS state capture",
+    "jj/git workspace handling"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-29-handoff-bead-type-design.md",
+    "dev-flow/skills/handoff/SKILL.md",
+    "dev-flow/skills/handoff/references/body-schema.md",
+    "dev-flow/commands/handoff.md",
+    "dev-flow/commands/handoff-resume.md",
+    "dev-flow/skills/handoff-prompt/SKILL.md",
+    "dev-flow/skills/finishing-a-development-branch/SKILL.md",
+    "references/vcs-preamble.md",
+    "fhsk-9ho"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

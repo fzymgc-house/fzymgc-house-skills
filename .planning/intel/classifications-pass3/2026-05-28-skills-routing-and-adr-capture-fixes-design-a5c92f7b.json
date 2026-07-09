@@ -1,0 +1,36 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-28-skills-routing-and-adr-capture-fixes-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Fix `--skills` Routing Misconception + Tighten/Retime capture-adrs",
+  "summary": "Design specification for three independent fixes to dev-flow: correcting `--skills` routing semantics with an `agent:*` label, tightening ADR capture worthiness criteria, and retiming the ADR capture nudge to fire only on plans.",
+  "scope": [
+    "skills routing",
+    "subagent dispatch",
+    "agent labels",
+    "ADR capture",
+    "capture-adrs skill",
+    "nudge-adr-capture hook",
+    "bead labeling",
+    "dev-flow workflow"
+  ],
+  "cross_refs": [
+    "fhsk-07o",
+    "docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "dev-flow/skills/handoff-prompt/SKILL.md",
+    "dev-flow/skills/plan-to-beads/SKILL.md",
+    "dev-flow/skills/bead-create-smart/SKILL.md",
+    "dev-flow/AGENTS.md",
+    "dev-flow/agents/adr-extractor.md",
+    "dev-flow/hooks/nudge-adr-capture",
+    "dev-flow/hooks/tests/test_nudge_adr_capture.sh",
+    "dev-flow/hooks/tests/test_nudge_adr_capture.py",
+    "PR #102"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Document is dated 2026-05-28 and marked 'Draft for review'. It is a prescriptive design specification (not a decision record) that details implementation changes across three independent feature areas. References a canonical spec mirror (2026-05-14-dev-flow-beads-integration-design.md) that must be kept in sync."
+}

@@ -1,0 +1,41 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-06-30-adr-render-python-frontmatter.md",
+  "type": "DOC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "ADR render-adr + adr-doctor → Python/uv with Starlight frontmatter — Implementation Plan",
+  "summary": "Implementation plan for rewriting ADR rendering and validation scripts from bash to Python with PEP 723, structured as 13 detailed tasks with test-driven approach.",
+  "scope": [
+    "ADR rendering (render-adr script)",
+    "ADR validation (adr-doctor script)",
+    "Python PEP 723 implementation",
+    "pytest testing framework",
+    "Starlight documentation format",
+    "Beads issue tracker integration"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-06-30-adr-render-python-frontmatter-design.md",
+    "dev-flow/scripts/_adr_render.py",
+    "dev-flow/scripts/_adr_doctor.py",
+    "dev-flow/scripts/render-adr",
+    "dev-flow/scripts/adr-doctor",
+    "dev-flow/scripts/tests/test_adr_render.py",
+    "dev-flow/scripts/tests/test_adr_doctor.py",
+    "Taskfile.yaml",
+    "AGENTS.md",
+    "dev-flow/AGENTS.md",
+    "dev-flow/skills/evolve-adr/SKILL.md",
+    "dev-flow/skills/capture-adrs/SKILL.md",
+    "dev-flow/commands/adr.md",
+    "docs/adr/",
+    "bead:fhsk-cdr",
+    "bead:fhsk-7y4",
+    "bead:fhsk-0cd",
+    "bead:fhsk-slp",
+    "bead:fhsk-nlw",
+    "bead:fhsk-bmn"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Marked as IMPLEMENTED (epic fhsk-cdr, all tasks closed). This is a historical implementation plan/guide, not an active architectural decision. Filename contains 'adr' which could suggest ADR classification, but document structure (13 numbered tasks with step-by-step instructions, checkbox syntax, code examples) and IMPLEMENTED status clearly indicate instructional documentation for a completed project. Medium confidence due to filename ambiguity, but structure strongly favors DOC. Related spec: docs/superpowers/specs/2026-06-30-adr-render-python-frontmatter-design.md."
+}

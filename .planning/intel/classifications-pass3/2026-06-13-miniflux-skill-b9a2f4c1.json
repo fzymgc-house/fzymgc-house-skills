@@ -1,0 +1,25 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-06-13-miniflux-skill.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Miniflux Skill Implementation Plan",
+  "summary": "Step-by-step guide for building a miniflux RSS skill with 12 implementation tasks covering gateway script, handlers, workflows, and documentation.",
+  "scope": ["miniflux", "RSS feeds", "Python CLI", "skill development", "testing", "task automation", "feed management", "curation"],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-06-13-miniflux-skill-design.md",
+    "homelab/skills/miniflux/scripts/miniflux_api.py",
+    "homelab/skills/miniflux/tests/test_miniflux_api.py",
+    "homelab/skills/miniflux/SKILL.md",
+    "homelab/skills/miniflux/references/feeds.md",
+    "homelab/skills/miniflux/references/entries.md",
+    "homelab/skills/miniflux/references/curation.md",
+    "homelab/skills/miniflux/references/digest.md",
+    "homelab/skills/miniflux/references/health.md",
+    "Taskfile.yaml",
+    "fhsk-8k8"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

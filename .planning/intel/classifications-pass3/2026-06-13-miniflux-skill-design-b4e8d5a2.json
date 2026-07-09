@@ -1,0 +1,35 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-06-13-miniflux-skill-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Miniflux RSS Feed Management & Curation Skill — Design",
+  "summary": "Technical specification for a homelab skill providing AI-driven feed management, curation, and triage through the Miniflux Python client with CLI interface.",
+  "scope": [
+    "miniflux",
+    "RSS feeds",
+    "feed management",
+    "feed curation",
+    "triage workflow",
+    "homelab skill",
+    "Python client wrapper",
+    "CLI commands",
+    "configuration",
+    "error handling"
+  ],
+  "cross_refs": [
+    "fhsk-8k8",
+    "homelab/skills/grafana",
+    "homelab/skills/terraform",
+    "homelab/skills/miniflux/SKILL.md",
+    "homelab/skills/miniflux/scripts/miniflux_api.py",
+    "homelab/skills/miniflux/references/feeds.md",
+    "homelab/skills/miniflux/references/entries.md",
+    "homelab/skills/miniflux/references/curation.md",
+    "homelab/skills/miniflux/references/digest.md",
+    "homelab/skills/miniflux/references/health.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

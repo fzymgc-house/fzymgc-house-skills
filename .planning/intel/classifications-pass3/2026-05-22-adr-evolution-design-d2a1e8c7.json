@@ -1,0 +1,29 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-22-adr-evolution-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "dev-flow: ADR Evolution — bd as Source of Truth + Templating + Lifecycle",
+  "summary": "Technical specification for shifting dev-flow's ADR system to use bd as canonical source, with versioned formula scaffolding, rendering pipeline, lifecycle operations skill, and drift detection via adr-doctor lint checks.",
+  "scope": [
+    "ADR system",
+    "beads (bd)",
+    "formula-adr",
+    "render-adr script",
+    "evolve-adr skill",
+    "/adr commands",
+    "adr-doctor lint extensions",
+    "decision lifecycle",
+    "ADR migration"
+  ],
+  "cross_refs": [
+    "fhsk-4xf",
+    "docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md",
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "dev-flow/AGENTS.md",
+    "dev-flow/skills/capture-adrs/SKILL.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

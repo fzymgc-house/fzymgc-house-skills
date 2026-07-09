@@ -1,0 +1,32 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-06-30-adr-render-python-frontmatter-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Migrate render-adr + adr-doctor to Python/uv with Starlight frontmatter",
+  "summary": "Technical specification for migrating ADR rendering and validation tooling from shell to Python with PEP 723 and YAML frontmatter support.",
+  "scope": [
+    "render-adr",
+    "adr-doctor",
+    "dev-flow/scripts",
+    "Python/uv",
+    "ADR file format",
+    "Starlight frontmatter",
+    "_adr_render.py",
+    "_adr_doctor.py"
+  ],
+  "cross_refs": [
+    "reference/frontmatter.md",
+    "dev-flow/AGENTS.md",
+    "AGENTS.md",
+    "dev-flow/skills/evolve-adr/SKILL.md",
+    "dev-flow/skills/capture-adrs/SKILL.md",
+    "docs/superpowers/specs/*",
+    "fhsk-cdr",
+    "hl-386w",
+    "fhsk-0cd"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Design specification with technical architecture, code structure, testing plan, and risk mitigations. Located in /specs/ directory. Despite 'adr-' in filename, this is a SPEC (implementation design), not an ADR (no decision/consequences structure). Status is Draft pending review."
+}

@@ -1,0 +1,30 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-24-drain-goal-handoff.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "`/drain` `/goal` Cold-Boot Handoff Implementation Plan",
+  "summary": "Step-by-step implementation plan to refactor the /drain command to use a self-contained /goal condition pointer and relocate the iteration protocol to the draining-beads skill.",
+  "scope": [
+    "dev-flow/commands/drain.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "tests/test_drain_skill.py",
+    "dev-flow/AGENTS.md",
+    "/goal condition",
+    "/drain command",
+    "draining-beads skill",
+    "cold-boot protocol",
+    "bead metadata"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md",
+    "fhsk-a49",
+    "fhsk-maa",
+    "references/vcs-preamble.md",
+    ".drain/",
+    ".gitignore"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

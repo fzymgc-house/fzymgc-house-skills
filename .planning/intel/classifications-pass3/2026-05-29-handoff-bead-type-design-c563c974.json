@@ -1,0 +1,28 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-29-handoff-bead-type-design.md",
+  "type": "ADR",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "dev-flow: handoff Bead Type + Create/Resume Skill",
+  "summary": "Design to make handoff a first-class persistent bead type with create/resume workflows, replacing the ephemeral handoff-prompt skill.",
+  "scope": [
+    "handoff custom bead type",
+    "handoff create mode",
+    "handoff resume mode",
+    "session-state capture",
+    "bead dependency links",
+    "handoff lifecycle",
+    "VCS workspace state"
+  ],
+  "cross_refs": [
+    "fhsk-9ho",
+    "dev-flow/skills/handoff-prompt/SKILL.md",
+    "dev-flow/skills/finishing-a-development-branch/SKILL.md",
+    "dev-flow/plugin.json",
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "docs/adr/fhsk-buu-use-bd-create-type-drain-drain-bead-creation-not-bd-mol-pour.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Medium confidence: Status: Proposed and Supersedes fields + decision-making structure (Alternatives Considered) strongly indicate ADR, but /specs/ path and extensive technical schema detail create ambiguity. Content is primarily a decision document about making handoff persistent; technical specs are specifications *of* that decision, not standalone implementation contracts. Proposed status means not locked."
+}

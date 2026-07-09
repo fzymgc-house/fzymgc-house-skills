@@ -1,0 +1,33 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-03-16-superpowers-jj-fork-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Superpowers Plugin Fork with jj (Jujutsu) VCS Support",
+  "summary": "Technical specification for forking upstream superpowers plugin with git and jj VCS abstraction layer, including plugin configuration, skill modifications, and upstream sync tooling.",
+  "scope": [
+    "superpowers plugin",
+    "git VCS",
+    "jj VCS",
+    "plugin configuration",
+    "workspace management",
+    "skill modifications",
+    "upstream synchronization",
+    "release-please integration"
+  ],
+  "cross_refs": [
+    "obra/superpowers",
+    "jj (Jujutsu VCS)",
+    ".claude-plugin/marketplace.json",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    "CLAUDE.md",
+    "references/vcs-preamble.md",
+    "references/upstream-manifest.md",
+    "scripts/sync-upstream",
+    "superpowers/plugin.json"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

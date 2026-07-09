@@ -185,6 +185,16 @@ Format: `DEC-adr-fhsk-XXX` — one-line decision — source — status.
 - `fhsk-rqh` — `bd mol pour` with a versioned formula for drain bead creation — SUPERSEDED by fhsk-buu — source `docs/adr/fhsk-rqh-use-bd-mol-pour-versioned-formula-drain-bead-creation.md`
 - `fhsk-toy` — Tag-only cog releases with no commit to main — SUPERSEDED by fhsk-dgo — source `docs/adr/fhsk-toy-use-tag-only-cog-releases-no-commit-main.md`
 
+## Supporting Specs & Constraints (Pass 3)
+
+Pass 3 ingested 44 design/spec/plan docs (`docs/superpowers/{plans,specs}` + `docs/dev-flow-pipeline.md` + `docs/adr/README.md`) — the design/spec elaborations behind the locked ADRs above. They added **0 new decisions**; by precedence (ADR > SPEC > DOC) all 44 were subordinated as supporting detail:
+
+- **19 technical constraints** (implementation contracts, NFRs, protocols, schemas) — see `.planning/intel/pass3/constraints.md`
+- **21 context groups** (dev-flow pipeline architecture, runbooks, reference docs) — see `.planning/intel/pass3/context.md`
+- Superseded-in-practice and recorded as historical: the cog release flow (→ release-please / `fhsk-dgo`) and the original drain-skill design (→ cold-boot redesign).
+
+Conflict report: `.planning/INGEST-CONFLICTS-pass3.md` (0 blockers, 0 warnings, 6 info).
+
 ---
 
-*Last updated: 2026-07-09 — Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; prior: 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*
+*Last updated: 2026-07-09 — Pass 3 supporting specs/docs (44) subordinated as constraints/context; Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; prior: 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*

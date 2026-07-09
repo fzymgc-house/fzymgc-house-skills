@@ -77,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-07-09
-Stopped at: Pass 2 ADR intel merged into .planning/ (PROJECT.md ADR Decision Register added; STATE.md updated). Prior: 2026-07-08 retrospective bootstrap complete.
+Stopped at: Pass 3 ingest complete — 44 design/spec/plan docs (docs/superpowers + dev-flow-pipeline + adr/README) subordinated under the locked baseline (0 new decisions; 19 constraints + 21 context groups in .planning/intel/pass3/). Prior: Pass 2 ADR Decision Register (35 ADRs); Pass 1 retrospective bootstrap (2026-07-08).
 Resume file: None

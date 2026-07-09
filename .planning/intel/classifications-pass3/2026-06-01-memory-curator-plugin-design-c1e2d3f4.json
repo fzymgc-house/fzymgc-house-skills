@@ -1,0 +1,38 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-06-01-memory-curator-plugin-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "memory-curator plugin — design",
+  "summary": "Design specification for client-side Claude Code plugin that automatically surfaces prior memory context, captures durable knowledge, and maintains correctness through two-tier memory scope management.",
+  "scope": [
+    "memory-curator plugin",
+    "MCP OAuth authentication",
+    "Session start/end hooks",
+    "Memory curation skill",
+    "Memory promotion skill",
+    "Scope derivation logic",
+    "Claude marketplace integration",
+    "Codex wrapper",
+    "Hook infrastructure",
+    "Memory tier selection"
+  ],
+  "cross_refs": [
+    "fhsk-ga7",
+    "GH#131",
+    "fhsk-p07",
+    "dev-flow/hooks/nudge-rg-over-grep",
+    "dev-flow:finishing-a-development-branch",
+    "jj/hooks/hooks.json",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "plugins/homelab/.mcp.json",
+    "selfhosted-cluster:docs/operations/litellm-mcp-clients.md",
+    "selfhosted-cluster:services/memory-mcp/tools.go",
+    "dev-flow/AGENTS.md",
+    "claude-code-guide",
+    "code.claude.com/docs"
+  ],
+  "locked": false,
+  "precedence": null
+}

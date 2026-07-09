@@ -1,0 +1,12 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-slp-adopt-yaml-title-frontmatter-adr-files-drop-body-h1.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Adopt YAML title frontmatter in ADR files, drop body H1",
+  "summary": "Add YAML frontmatter with title field to all ADR files and remove body H1 to comply with Starlight documentation requirements.",
+  "scope": ["ADR rendering", "render-adr script", "adr-doctor tooling", "Starlight docs build", "YAML frontmatter"],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null
+}

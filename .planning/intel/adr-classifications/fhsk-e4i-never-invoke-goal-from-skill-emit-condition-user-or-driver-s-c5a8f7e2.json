@@ -1,0 +1,12 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-e4i-never-invoke-goal-from-skill-emit-condition-user-or-driver-s.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Never invoke /goal from a skill; emit the condition for a user or driver to submit",
+  "summary": "Skills must emit /goal conditions for users or drivers to submit, never invoke /goal directly as agents lack tool access.",
+  "scope": ["/goal", "skill design", "agent behavior", "user-only built-ins", "drain command"],
+  "cross_refs": ["drain.md"],
+  "locked": true,
+  "precedence": null
+}

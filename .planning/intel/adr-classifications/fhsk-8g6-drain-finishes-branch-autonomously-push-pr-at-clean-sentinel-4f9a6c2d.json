@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-8g6-drain-finishes-branch-autonomously-push-pr-at-clean-sentinel.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Drain finishes the branch autonomously (push + PR) at the clean sentinel",
+  "summary": "Drain workers autonomously finish branches via non-interactive mode of finishing-a-development-branch skill, pushing and creating PRs without interactive menus.",
+  "scope": [
+    "drain worker",
+    "dev-flow:finishing-a-development-branch",
+    "clean sentinel",
+    "branch finishing",
+    "PR creation",
+    "review-pr gate"
+  ],
+  "cross_refs": [
+    "dev-flow:finishing-a-development-branch",
+    "draining-beads",
+    "review-pr"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

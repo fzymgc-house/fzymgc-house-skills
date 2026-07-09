@@ -1,0 +1,28 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Add tmux as a standalone plugin rather than folding into dev-flow",
+  "summary": "Decision to create tmux as a standalone plugin at the organizational level of jj and homelab, rather than co-locating within dev-flow, for reusability across plugin boundaries.",
+  "scope": [
+    "tmux plugin",
+    "plugin taxonomy",
+    "marketplace registration",
+    "release automation",
+    "Codex wrapper"
+  ],
+  "cross_refs": [
+    "dev-flow/skills/",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "release-please-config.json",
+    "plugins/tmux/",
+    "tmux/plugin.json",
+    "tmux/skills/tmux/SKILL.md",
+    "AGENTS.md"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

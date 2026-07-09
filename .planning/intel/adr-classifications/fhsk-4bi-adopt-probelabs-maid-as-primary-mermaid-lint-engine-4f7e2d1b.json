@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Adopt @probelabs/maid as the primary Mermaid lint engine",
+  "summary": "Use @probelabs/maid as the primary Mermaid lint engine via bunx, with optional mmdc render-validate fallback for portability and browser-free validation.",
+  "scope": [
+    "mermaid",
+    "linting",
+    "validation",
+    "@probelabs/maid",
+    "bunx",
+    "diagram-validation",
+    "flowchart",
+    "mermaid-cli"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

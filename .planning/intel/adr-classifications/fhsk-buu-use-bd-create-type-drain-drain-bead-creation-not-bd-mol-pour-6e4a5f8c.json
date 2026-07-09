@@ -1,0 +1,12 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-buu-use-bd-create-type-drain-drain-bead-creation-not-bd-mol-pour.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use bd create --type drain for drain bead creation (not bd mol pour)",
+  "summary": "Decided to use bd create --type drain directly instead of bd mol pour formula-drain for creating audit-trail drain beads, based on verified bd source incompatibilities.",
+  "scope": ["bd create command", "drain bead type", "bead metadata", "bead formula", "type registration"],
+  "cross_refs": ["fhsk-rqh"],
+  "locked": true,
+  "precedence": null
+}

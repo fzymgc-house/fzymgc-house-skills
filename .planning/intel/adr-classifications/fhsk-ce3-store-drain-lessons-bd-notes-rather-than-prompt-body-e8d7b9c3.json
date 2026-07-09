@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-ce3-store-drain-lessons-bd-notes-rather-than-prompt-body.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Store drain lessons in bd notes rather than the prompt body",
+  "summary": "Stores lessons as bd notes on drain (ephemeral) or epic (persistent) beads to eliminate prompt drift and establish stable prompt iteration.",
+  "scope": [
+    "bd notes",
+    "drain beads",
+    "epic beads",
+    "prompt iteration",
+    "lesson storage",
+    "holomush loop"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "fhsk-a67",
+    "f3a83fe5"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

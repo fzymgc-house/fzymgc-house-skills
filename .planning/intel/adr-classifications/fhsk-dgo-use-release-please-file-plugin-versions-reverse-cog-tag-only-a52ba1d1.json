@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use release-please with in-file plugin versions (reverse cog tag-only)",
+  "summary": "Adopt release-please over cog for release automation, restore in-file plugin versions and CHANGELOG.md for consistency with sibling repos.",
+  "scope": [
+    "release-please",
+    "release automation",
+    "plugin versioning",
+    "GitHub releases",
+    "conventional commits",
+    "CHANGELOG.md",
+    "manifest management",
+    "branch protection bypass"
+  ],
+  "cross_refs": [
+    "fhsk-toy",
+    "fhsk-7y4"
+  ],
+  "locked": true,
+  "precedence": null
+}

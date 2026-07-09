@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-57f-package-handoff-create-and-resume-as-one-conditional-workflo.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Package handoff create and resume as one conditional-workflow skill",
+  "summary": "Implement one handoff skill with conditional create/resume modes sharing a single body-schema reference, with thin /handoff and /handoff-resume entry points.",
+  "scope": [
+    "handoff skill",
+    "conditional-workflow pattern",
+    "body schema",
+    "create mode",
+    "resume mode",
+    "handoff-prompt redirect"
+  ],
+  "cross_refs": [
+    "handoff-prompt"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

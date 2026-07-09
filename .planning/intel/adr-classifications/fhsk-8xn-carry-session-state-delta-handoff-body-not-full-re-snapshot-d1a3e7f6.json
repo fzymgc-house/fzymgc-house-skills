@@ -1,0 +1,20 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-8xn-carry-session-state-delta-handoff-body-not-full-re-snapshot.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Carry session-state delta in the handoff body, not a full re-snapshot",
+  "summary": "Handoff beads carry only session-state delta via bd dep edges, omitting sections when not applicable; re-snapshots rejected as maintenance burden and source of drift.",
+  "scope": [
+    "handoff beads",
+    "session-state delta",
+    "bd dep related edges",
+    "work context",
+    "resume flow",
+    "stale-handoff detection"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

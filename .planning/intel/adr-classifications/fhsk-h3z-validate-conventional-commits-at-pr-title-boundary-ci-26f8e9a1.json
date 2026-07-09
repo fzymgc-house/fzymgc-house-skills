@@ -1,0 +1,23 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-h3z-validate-conventional-commits-at-pr-title-boundary-ci.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Validate conventional commits at the PR-title boundary in CI",
+  "summary": "Move conventional commit validation from local git hook to CI workflow on PR title for reliable enforcement across jj and git VCS clients.",
+  "scope": [
+    "conventional commits",
+    "PR title validation",
+    "CI workflow",
+    "lefthook",
+    "cog verification",
+    "jj operations",
+    "squash-merge"
+  ],
+  "cross_refs": [
+    "bd:fhsk-h3z"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

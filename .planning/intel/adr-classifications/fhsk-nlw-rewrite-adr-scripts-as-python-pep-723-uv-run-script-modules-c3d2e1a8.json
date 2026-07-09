@@ -1,0 +1,26 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-nlw-rewrite-adr-scripts-as-python-pep-723-uv-run-script-modules.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Rewrite ADR scripts as Python PEP 723 uv run --script modules",
+  "summary": "Rewrite ADR tooling (render-adr, adr-doctor.sh) as PEP 723 uv run --script Python modules to enable in-memory render matching and unit testing without live bd.",
+  "scope": [
+    "render-adr",
+    "adr-doctor.sh",
+    "adr-doctor",
+    "ADR tooling",
+    "dev-flow",
+    "PEP 723",
+    "uv run --script",
+    "Python modules",
+    "_adr_render.py",
+    "_adr_doctor.py"
+  ],
+  "cross_refs": [
+    "evolve-adr/SKILL.md"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

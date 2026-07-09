@@ -13,7 +13,7 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-08)
+See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Skills are single-source, discoverable, and reusable across the org's projects with low friction to adopt
 **Current focus:** Phase 5 — Governance Reconciliation & Reuse Hardening
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-07-08)
 Phase: 5 of 5 (Governance Reconciliation & Reuse Hardening)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-07-08 — Retrospective `.planning/` bootstrap from ingest intel (Phases 1-4 confirmed shipped)
+Last activity: 2026-07-09 — Pass 2 ADR intel (docs/adr, 35 ADRs) ingested and merged into PROJECT.md
 
 Progress: [████████░░] 80% (4 of 5 phases shipped; phase completion basis, plans not retrofitted)
 
@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 - LOCKED: release-please manifest mode + one repo-wide version — layout claims (`fzymgc-house/skills/*`) superseded; drives GOV-01
 - LOCKED: jj op-log-rewind gated MUST NOT + recovery ladder
 - PROPOSED (Draft): beads as PR-review persistence (shipped, ADR unlocked)
+- Pass 2 (docs/adr, 35 ADRs) ingested and merged: 31 locked ADR decisions added to PROJECT.md "ADR Decision Register (Pass 2)", 4 superseded (fhsk-0o2, fhsk-7y4, fhsk-rqh, fhsk-toy) recorded as historical, 0 blockers / 0 competing variants. ADR fhsk-dgo agrees with DEC-release-please-versioning; GOV-01 directory-layout supersession remains open.
 
 ### Pending Todos
 
@@ -65,7 +66,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 5]: The LOCKED release-please ADR still encodes the superseded `fzymgc-house/skills/*` layout; a superseding ADR (GOV-01) is the clean resolution before further planning around restructured paths.
+- [Phase 5]: The LOCKED release-please ADR still encodes the superseded `fzymgc-house/skills/*` layout; a superseding ADR (GOV-01) is the clean resolution before further planning around restructured paths. Pass 2 note: fhsk-dgo supplies release-please provenance but does NOT close the directory-layout supersession.
 
 ## Deferred Items
 
@@ -75,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-08
-Stopped at: Retrospective bootstrap complete — PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md written
+Last session: 2026-07-09
+Stopped at: Pass 2 ADR intel merged into .planning/ (PROJECT.md ADR Decision Register added; STATE.md updated). Prior: 2026-07-08 retrospective bootstrap complete.
 Resume file: None

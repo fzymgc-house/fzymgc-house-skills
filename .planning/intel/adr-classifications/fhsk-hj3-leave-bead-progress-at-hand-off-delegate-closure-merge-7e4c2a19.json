@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-hj3-leave-bead-progress-at-hand-off-delegate-closure-merge.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Leave bead in_progress at hand-off; delegate closure to merge",
+  "summary": "Bead closure occurs at merge time, not at fix commit. Phase 4 leaves bead in_progress and suggests finishing-a-development-branch.",
+  "scope": [
+    "bead lifecycle",
+    "solving-a-bead skill",
+    "finishing-a-development-branch",
+    "PR/merge workflow",
+    "issue tracker state"
+  ],
+  "cross_refs": [
+    "dev-flow:finishing-a-development-branch",
+    "/drain skill"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

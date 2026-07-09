@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-rqh-use-bd-mol-pour-versioned-formula-drain-bead-creation.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use bd mol pour with versioned formula for drain bead creation",
+  "summary": "Use bd mol pour with versioned TOML formula for drain bead creation to enable version control and schema migration.",
+  "scope": [
+    "bd (beads issue tracker)",
+    "mol pour command",
+    "drain beads",
+    "versioned formula",
+    "TOML formula file",
+    "bead type field",
+    "variable substitution"
+  ],
+  "cross_refs": [
+    "fhsk-buu",
+    "dev-flow/.beads/formulas/formula-drain.toml"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Superseded by fhsk-buu. Status reads 'Superseded', not 'Accepted', so locked=false."
+}

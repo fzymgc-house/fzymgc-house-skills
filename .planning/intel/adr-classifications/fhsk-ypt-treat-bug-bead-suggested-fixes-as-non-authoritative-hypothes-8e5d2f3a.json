@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-ypt-treat-bug-bead-suggested-fixes-as-non-authoritative-hypothes.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Treat bug bead suggested fixes as non-authoritative hypotheses",
+  "summary": "Demotes bug bead suggested fixes to non-authoritative hypotheses and routes them through systematic-debugging to enforce root-cause-first discipline.",
+  "scope": [
+    "bug beads",
+    "suggested fixes",
+    "Phase 2 triage",
+    "systematic-debugging skill",
+    "red-flags table",
+    "root-cause analysis",
+    "hypothesis routing"
+  ],
+  "cross_refs": [
+    "systematic-debugging",
+    "solving-a-bead"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

@@ -1,0 +1,12 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-7y4-adopt-single-repo-wide-version-replacing-per-package-streams.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Adopt single repo-wide version replacing per-package streams",
+  "summary": "Replace per-package semver release-please streams with single repo-wide version derived from conventional commits.",
+  "scope": ["versioning", "release-please", "conventional commits", "semver", "plugins", "marketplace"],
+  "cross_refs": ["fhsk-dgo"],
+  "locked": false,
+  "precedence": null
+}

@@ -1,0 +1,20 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-p07-replace-blocking-stop-hook-capture-nudge-silent-sessionstart.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Replace blocking Stop-hook capture nudge with silent SessionStart briefing and throttled PostToolUse nudge",
+  "summary": "Remove blocking Stop hook that emits error-styled output; replace with silent SessionStart briefing and throttled PostToolUse nudge for memory capture.",
+  "scope": [
+    "memory-curator plugin",
+    "Stop hook",
+    "SessionStart briefing",
+    "PostToolUse hook",
+    "session capture",
+    "search_memory"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

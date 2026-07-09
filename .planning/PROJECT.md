@@ -43,7 +43,7 @@ repo can adopt a skill with low friction and without forking content.
 
 <!-- Forward-looking. The dominant open thread. -->
 
-- [ ] **GOV-01**: Author a superseding ADR that records the shipped plugin layout and supersedes the release-please ADR's `fzymgc-house/skills/*` package layout
+- [ ] **GOV-01**: Author a superseding ADR that records the shipped plugin layout and supersedes the release-please ADR's `fzymgc-house/skills/*` package layout. *(Pass 2: ADR fhsk-dgo now supplies release-please ADR provenance and AGREES with DEC-release-please-versioning, but the directory-layout supersession — `fzymgc-house/skills/*` → shipped `homelab`/`dev-flow`/`jj`/`tmux`/`grepping` — REMAINS OPEN. GOV-01 stays open.)*
 - [ ] **GOV-02**: Document low-friction cross-project adoption (install path + discovery) so a new org repo can add a skill quickly
 
 ### Out of Scope
@@ -119,6 +119,72 @@ could be superseded without a hard block.
 | Sibling worktree layout for fix agents | Nested `.claude/worktrees/` confused LSP; agents clobbered base repo | ✓ Good |
 | `pr-review` work folded into `dev-flow` agents | Restructure landed review agents in the workflow plugin, not a separate plugin | ✓ Good (contradicts ADR paths — GOV-01) |
 
+## ADR Decision Register (Pass 2)
+
+Compact register of the 31 active LOCKED ADR decisions ingested from `docs/adr/`
+(Pass 2). Full statements live in `.planning/intel/pass2/decisions.md`; these
+higher-precedence ADRs are retrospective and map to already-Complete phases 1–4.
+Format: `DEC-adr-fhsk-XXX` — one-line decision — source — status.
+
+### Drain harness & workers
+
+- `DEC-adr-fhsk-0cd` — Bootstrap the drain harness explicitly via `/drain init` with pre-flight checks; missing assets error rather than silently mutate — source `docs/adr/fhsk-0cd-make-drain-init-explicit-rather-than-auto-bootstrapping-firs.md` — LOCKED
+- `DEC-adr-fhsk-5dj` — Replace the drain-with-worker command with a parameterized skill taking an optional worker-type arg, supporting multiple multiplexers — source `docs/adr/fhsk-5dj-convert-drain-worker-command-parameterized-skill.md` — LOCKED
+- `DEC-adr-fhsk-8g6` — Drain workers autonomously finish branches (push + PR) via non-interactive finishing-a-development-branch at the clean sentinel — source `docs/adr/fhsk-8g6-drain-finishes-branch-autonomously-push-pr-at-clean-sentinel.md` — LOCKED
+- `DEC-adr-fhsk-8yz` — Extract shared cmux/tmux driver logic into a `_muxdriver.py` stdlib module for protocol consistency across scripts — source `docs/adr/fhsk-8yz-share-cmux-tmux-driver-logic-via-muxdriver-module-not-script.md` — LOCKED
+- `DEC-adr-fhsk-dtk` — Require AskUserQuestion confirmation before launching privileged /drain-with-worker workers; never auto-fire — source `docs/adr/fhsk-dtk-gate-drain-worker-launch-behind-askuserquestion-never-auto-f.md` — LOCKED
+- `DEC-adr-fhsk-e4i` — Skills emit /goal conditions for a user/driver to submit; never invoke /goal directly (agents lack the tool) — source `docs/adr/fhsk-e4i-never-invoke-goal-from-skill-emit-condition-user-or-driver-s.md` — LOCKED
+- `DEC-adr-fhsk-eqt` — Move the 12-step drain iteration protocol into the dev-flow skill, off the /goal condition, avoiding 4K-char truncation — source `docs/adr/fhsk-eqt-store-drain-iteration-protocol-skill-not-goal-condition.md` — LOCKED
+- `DEC-adr-fhsk-thw` — Adopt /goal (not /loop) as the sole autonomous bead-queue drain primitive, eliminating timer-based prompt drift — source `docs/adr/fhsk-thw-use-goal-over-loop-autonomous-bead-queue-drains.md` — LOCKED
+- `DEC-adr-fhsk-ce3` — Store drain lessons as bd notes on drain (ephemeral) or epic (persistent) beads, not the prompt body — source `docs/adr/fhsk-ce3-store-drain-lessons-bd-notes-rather-than-prompt-body.md` — LOCKED
+- `DEC-adr-fhsk-buu` — Use `bd create --type drain` for audit-trail drain beads instead of `bd mol pour` (verified bd incompatibilities); supersedes fhsk-rqh — source `docs/adr/fhsk-buu-use-bd-create-type-drain-drain-bead-creation-not-bd-mol-pour.md` — LOCKED
+
+### Beads / handoff / session-state
+
+- `DEC-adr-fhsk-57f` — One handoff skill with conditional create/resume modes over a shared body-schema; thin `/handoff` + `/handoff-resume` entry points — source `docs/adr/fhsk-57f-package-handoff-create-and-resume-as-one-conditional-workflo.md` — LOCKED
+- `DEC-adr-fhsk-8xn` — Handoff beads carry only the session-state delta via bd dep edges; reject full re-snapshots as drift/maintenance burden — source `docs/adr/fhsk-8xn-carry-session-state-delta-handoff-body-not-full-re-snapshot.md` — LOCKED
+- `DEC-adr-fhsk-s15` — Register a custom bd type for handoffs for independent querying, a distinct lifecycle, and untracked-exploration support — source `docs/adr/fhsk-s15-use-custom-bd-type-handoffs-not-label-or-note.md` — LOCKED
+- `DEC-adr-fhsk-zds` — Use the drain bead (with `drain_workspace`/`drain_sentinel` metadata) as the durable cross-session handoff carrier, not temp files — source `docs/adr/fhsk-zds-use-drain-bead-as-cross-session-handoff-carrier-not-temp-fil.md` — LOCKED
+- `DEC-adr-fhsk-hj3` — Close beads at merge time, not fix commit; Phase 4 leaves the bead in_progress and suggests finishing-a-development-branch — source `docs/adr/fhsk-hj3-leave-bead-progress-at-hand-off-delegate-closure-merge.md` — LOCKED
+- `DEC-adr-fhsk-3xn` — Phase 0 of solving-a-bead hard-blocks on any open blocker dependency rather than emitting a soft warning — source `docs/adr/fhsk-3xn-hard-block-skill-entry-unmet-bead-blocker-dependencies.md` — LOCKED
+- `DEC-adr-fhsk-bj8` — Use `agent:<type>` bead labels as the sole subagent dispatch signal with a static known-set fallback to general-purpose — source `docs/adr/fhsk-bj8-use-agent-label-as-sole-subagent-dispatch-signal.md` — LOCKED
+- `DEC-adr-fhsk-ypt` — Demote bug-bead suggested fixes to non-authoritative hypotheses, routing them through systematic-debugging — source `docs/adr/fhsk-ypt-treat-bug-bead-suggested-fixes-as-non-authoritative-hypothes.md` — LOCKED
+
+### Review & slop pipeline
+
+- `DEC-adr-fhsk-2us` — Use ACTIVE_ASPECTS deferral in slop-hunter to suppress co-owned patterns when owning aspects are present, eliminating duplicate findings — source `docs/adr/fhsk-2us-use-active-aspects-deferral-cross-aspect-deduplication-slop.md` — LOCKED
+
+### Plugin packaging & marketplace
+
+- `DEC-adr-fhsk-a6v` — Ship tmux as a standalone plugin at the level of jj/homelab (not folded into dev-flow) for cross-boundary reuse — source `docs/adr/fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md` — LOCKED
+
+### ADR / release / CI tooling
+
+- `DEC-adr-fhsk-4bi` — Use @probelabs/maid via bunx as the primary Mermaid lint engine, with optional mmdc render-validate fallback — source `docs/adr/fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md` — LOCKED
+- `DEC-adr-fhsk-bmn` — Add a bd-free INV-A25 CI check for ADR YAML frontmatter title, complementing the bd-guarded INV-A22 content-fidelity check — source `docs/adr/fhsk-bmn-add-bd-free-inv-a25-frontmatter-check-alongside-bd-guarded-i.md` — LOCKED
+- `DEC-adr-fhsk-dgo` — Adopt release-please (over cog) with restored in-file plugin versions + CHANGELOG.md; supersedes fhsk-toy and fhsk-7y4 — source `docs/adr/fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md` — LOCKED
+- `DEC-adr-fhsk-h3z` — Move conventional-commit validation from a local git hook to a CI check on the PR title (reliable across jj/git) — source `docs/adr/fhsk-h3z-validate-conventional-commits-at-pr-title-boundary-ci.md` — LOCKED
+- `DEC-adr-fhsk-nlw` — Rewrite ADR tooling (render-adr, adr-doctor) as PEP 723 `uv run --script` Python modules for in-memory render matching + unit tests — source `docs/adr/fhsk-nlw-rewrite-adr-scripts-as-python-pep-723-uv-run-script-modules.md` — LOCKED
+- `DEC-adr-fhsk-slp` — Add YAML title frontmatter to all ADR files and drop the body H1 to satisfy the Starlight docs build — source `docs/adr/fhsk-slp-adopt-yaml-title-frontmatter-adr-files-drop-body-h1.md` — LOCKED
+
+### Memory model
+
+- `DEC-adr-fhsk-e0u` — Adopt a two-tier spine (repo-wide) / overlay (workspace-local) scope model for the memory-curator plugin — source `docs/adr/fhsk-e0u-use-two-tier-spine-overlay-memory-scope-model.md` — LOCKED
+- `DEC-adr-fhsk-p07` — Replace the blocking Stop-hook capture nudge with a silent SessionStart briefing + throttled PostToolUse nudge — source `docs/adr/fhsk-p07-replace-blocking-stop-hook-capture-nudge-silent-sessionstart.md` — LOCKED
+
+### Miniflux curation
+
+- `DEC-adr-fhsk-0qz` — Keep deterministic blocklist/keeplist regex rules server-side in Miniflux; Claude handles ranking, digest prose, and rule proposals — source `docs/adr/fhsk-0qz-split-curation-into-deterministic-rules-miniflux-and-reasoni.md` — LOCKED
+- `DEC-adr-fhsk-pqw` — Wrap the Miniflux client directly (no MCP intermediary), diverging from the homelab MCP-gateway pattern — source `docs/adr/fhsk-pqw-wrap-miniflux-client-directly-not-via-mcp-gateway.md` — LOCKED
+- `DEC-adr-fhsk-qs9` — Resolve Miniflux URL/API-key with env vars taking precedence over the XDG config file — source `docs/adr/fhsk-qs9-use-env-then-file-config-resolution-miniflux-credentials.md` — LOCKED
+
+### Superseded ADRs (historical, not active)
+
+- `fhsk-0o2` — Split the drain harness into formula + command (Stop-hook body) + canonical-reference skill — SUPERSEDED (locked:false); supersedes / back-references fhsk-eqt — source `docs/adr/fhsk-0o2-split-drain-harness-into-formula-command-and-skill.md`
+- `fhsk-7y4` — Single repo-wide version replacing per-package semver streams — SUPERSEDED by fhsk-dgo — source `docs/adr/fhsk-7y4-adopt-single-repo-wide-version-replacing-per-package-streams.md`
+- `fhsk-rqh` — `bd mol pour` with a versioned formula for drain bead creation — SUPERSEDED by fhsk-buu — source `docs/adr/fhsk-rqh-use-bd-mol-pour-versioned-formula-drain-bead-creation.md`
+- `fhsk-toy` — Tag-only cog releases with no commit to main — SUPERSEDED by fhsk-dgo — source `docs/adr/fhsk-toy-use-tag-only-cog-releases-no-commit-main.md`
+
 ---
 
-*Last updated: 2026-07-08 after retrospective `.planning/` bootstrap from ingest intel*
+*Last updated: 2026-07-09 — Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; prior: 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*

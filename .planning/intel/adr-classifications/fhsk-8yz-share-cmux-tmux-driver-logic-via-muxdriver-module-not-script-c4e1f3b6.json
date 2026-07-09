@@ -1,0 +1,26 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-8yz-share-cmux-tmux-driver-logic-via-muxdriver-module-not-script.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Share cmux/tmux driver logic via a _muxdriver module, not script duplication",
+  "summary": "Extract shared cmux/tmux driver logic into _muxdriver.py stdlib module to ensure protocol consistency across scripts.",
+  "scope": [
+    "_muxdriver module",
+    "CmuxDriver",
+    "TmuxDriver",
+    "Multiplexer abstraction",
+    "argv construction",
+    "dev-flow/scripts",
+    "drain-worker-launch",
+    "drain-watchdog",
+    "uv run --script",
+    "protocol detection"
+  ],
+  "cross_refs": [
+    "dev-flow/scripts/"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

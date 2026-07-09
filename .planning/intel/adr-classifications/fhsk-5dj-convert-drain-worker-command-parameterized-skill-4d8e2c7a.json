@@ -1,0 +1,25 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-5dj-convert-drain-worker-command-parameterized-skill.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Convert drain-with-worker command to a parameterized skill",
+  "summary": "Replace drain-with-worker command with a parameterized skill accepting optional worker-type argument to support multiple multiplexers without forking.",
+  "scope": [
+    "drain-with-worker",
+    "dev-flow",
+    "skill parameterization",
+    "worker-type argument",
+    "allowed-tools frontmatter",
+    "cmux",
+    "tmux",
+    "multiplexer support"
+  ],
+  "cross_refs": [
+    "dev-flow/commands/drain-with-worker.md",
+    "dev-flow/skills/drain-with-worker/SKILL.md"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

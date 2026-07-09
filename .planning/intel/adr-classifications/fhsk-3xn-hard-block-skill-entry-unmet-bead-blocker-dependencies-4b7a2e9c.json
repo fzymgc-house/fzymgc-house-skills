@@ -1,0 +1,20 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-3xn-hard-block-skill-entry-unmet-bead-blocker-dependencies.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Hard-block skill entry on unmet bead blocker dependencies",
+  "summary": "Phase 0 of solving-a-bead hard-blocks if any blocker dependencies are open, ensuring absolute correctness guarantees rather than soft warnings.",
+  "scope": [
+    "solving-a-bead",
+    "bead",
+    "Phase 0",
+    "blocker dependencies",
+    "skill entry gate",
+    "dependency validation"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

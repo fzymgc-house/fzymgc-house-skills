@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-s15-use-custom-bd-type-handoffs-not-label-or-note.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use a custom bd type for handoffs, not a label or note",
+  "summary": "Register a custom bd type for handoffs to enable independent querying, distinct lifecycle, and support untracked exploration cases.",
+  "scope": [
+    "bd (beads)",
+    "handoff workflow",
+    "custom types",
+    "work handoff persistence",
+    "issue tracking"
+  ],
+  "cross_refs": [
+    "fhsk-4ut",
+    "fhsk-dgo"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

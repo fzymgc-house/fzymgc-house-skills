@@ -1,0 +1,19 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-zds-use-drain-bead-as-cross-session-handoff-carrier-not-temp-fil.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use the drain bead as the cross-session handoff carrier, not a temp file",
+  "summary": "The drain bead, extended with drain_workspace and drain_sentinel metadata fields, serves as the durable cross-session handoff carrier for /goal workers instead of temp files.",
+  "scope": [
+    "drain bead",
+    "cross-session handoff",
+    "jj workspace",
+    "cold-boot sequence",
+    "metadata fields"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

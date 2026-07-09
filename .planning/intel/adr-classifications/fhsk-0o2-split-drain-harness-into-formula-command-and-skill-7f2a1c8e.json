@@ -1,0 +1,13 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-0o2-split-drain-harness-into-formula-command-and-skill.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Split drain harness into formula, command, and skill",
+  "summary": "Architectural decision to split drain harness into three pieces: formula scaffolding, command entry point with Stop-hook body, and skill as canonical reference.",
+  "scope": ["drain harness", "dev-flow", "beads", "formula", "command", "skill", "Stop-hook"],
+  "cross_refs": ["fhsk-eqt", ".beads/formulas/formula-drain.toml", "dev-flow/commands/drain.md", "dev-flow/skills/draining-beads/SKILL.md"],
+  "locked": false,
+  "precedence": null,
+  "notes": "Status is Superseded (not Accepted), so not locked. Supersedes fhsk-eqt. Decision ID: fhsk-0o2. Date: 2026-05-22."
+}

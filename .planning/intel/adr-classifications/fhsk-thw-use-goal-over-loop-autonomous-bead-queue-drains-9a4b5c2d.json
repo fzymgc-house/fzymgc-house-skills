@@ -1,0 +1,25 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-thw-use-goal-over-loop-autonomous-bead-queue-drains.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use /goal over /loop for autonomous bead-queue drains",
+  "summary": "Decision to adopt /goal as the sole autonomous-drain primitive in dev-flow, eliminating prompt drift from /loop's timer-based approach.",
+  "scope": [
+    "dev-flow",
+    "autonomous-drains",
+    "bead-queue",
+    "/goal",
+    "/loop",
+    "Claude Code",
+    "holomush",
+    "bd-notes"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "fhsk-a67"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

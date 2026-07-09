@@ -1,0 +1,27 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2025-12-29-terraform-skill-design.md",
+  "type": "SPEC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "Terraform Skill Design",
+  "summary": "Technical specification for Terraform Cloud skill wrapping HashiCorp MCP server with session-managed operations, HCP API fallback, and provider documentation lookup.",
+  "scope": [
+    "terraform-skill",
+    "mcp-client",
+    "hcp-terraform-api",
+    "session-management",
+    "workflow-operations",
+    "provider-documentation",
+    "docker-subprocess"
+  ],
+  "cross_refs": [
+    "fzymgc-house-skills/terraform/SKILL.md",
+    "fzymgc-house-skills/terraform/scripts/terraform_mcp.py",
+    "fzymgc-house-skills/terraform/references/workspaces.md",
+    "fzymgc-house-skills/terraform/references/runs.md",
+    "fzymgc-house-skills/terraform/references/providers.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Blends design planning (goals, non-goals, implementation plan) with technical specification (architecture diagram, API contracts, code implementation details, configuration tables). Status: Draft. Strong SPEC signals from system architecture, MCP client implementation, error handling contracts, and workflow API definitions."
+}

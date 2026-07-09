@@ -1,0 +1,12 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-pqw-wrap-miniflux-client-directly-not-via-mcp-gateway.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Wrap Miniflux client directly, not via MCP gateway",
+  "summary": "Architectural decision to wrap Miniflux client directly without MCP intermediary, diverging from existing homelab patterns.",
+  "scope": ["Miniflux", "MCP gateway", "Python client wrapper", "homelab plugin"],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null
+}

@@ -1,0 +1,36 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-25-drain-with-worker-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "/drain-with-worker — Autonomous Worker-Pane Launcher",
+  "summary": "Technical specification for implementing an autonomous worker-pane launcher command that lifts holomush drain-pane mechanics into dev-flow with cmux integration, watchdog monitoring, and bug fixes.",
+  "scope": [
+    "/drain-with-worker command",
+    "drain-with-worker reference",
+    "drain-with-worker cmux launch sequence",
+    "autonomous worker pane management",
+    "stall-watchdog with surface monitoring",
+    "drain-watchdog Python script",
+    "bead prerequisite validation",
+    "dev-flow command integration",
+    "worker condition handoff",
+    "test suite extensions"
+  ],
+  "cross_refs": [
+    "dev-flow/commands/drain.md",
+    "dev-flow/commands/drain-with-worker.md",
+    "dev-flow/references/drain-with-worker.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "dev-flow/scripts/drain-watchdog",
+    "dev-flow/AGENTS.md",
+    "tests/test_drain_skill.py",
+    "docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md",
+    "ADR fhsk-e4i",
+    "ADR fhsk-zds",
+    "fhsk-jmn"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

@@ -1,0 +1,21 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-toy-use-tag-only-cog-releases-no-commit-main.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use tag-only cog releases with no commit to main",
+  "summary": "Configure cog to create only git tags and GitHub Releases without committing to main (superseded by fhsk-dgo).",
+  "scope": [
+    "release process",
+    "cog configuration",
+    "GitHub Releases",
+    "git tagging",
+    "main branch protection"
+  ],
+  "cross_refs": [
+    "fhsk-dgo"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Status: Superseded by fhsk-dgo. Original decision date: 2026-05-29. Rejected tag-only approach in favor of release-please PRs per fhsk-dgo."
+}

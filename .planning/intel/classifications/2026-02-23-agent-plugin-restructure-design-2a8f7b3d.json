@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-02-23-agent-plugin-restructure-design.md",
+  "type": "SPEC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "Agent & Plugin Restructure Design",
+  "summary": "Split fzymgc-house plugin into homelab and pr-review plugins with native Claude Code agents and worktree isolation.",
+  "scope": [
+    "plugin architecture",
+    "agent design",
+    "Claude Code integration",
+    "worktree isolation",
+    "PR review workflow",
+    "agent contracts",
+    "merge protocols",
+    "plugin split strategy"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": "Document contains architectural decision-making (Decisions section line 294-306) alongside technical specifications (agent matrix, input/output contracts, merge protocols). Classified as SPEC due to dominance of implementation specifications: agent definitions with tool lists, agent-to-orchestrator contracts, worktree merge protocol, and communication boundaries. Though Decisions section present, no explicit ADR status field (Accepted/Proposed/Superseded) found; document reads as design proposal/specification rather than locked architectural decision."
+}

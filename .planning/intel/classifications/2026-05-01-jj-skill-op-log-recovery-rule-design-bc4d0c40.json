@@ -1,0 +1,25 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-05-01-jj-skill-op-log-recovery-rule-design.md",
+  "type": "ADR",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "jj Skill — Op-Log Recovery Rule (Design)",
+  "summary": "Adopts recovery ladder and MUST NOT gate for jj op restore/abandon commands to prevent multi-workspace op-log hazards.",
+  "scope": [
+    "jj skill",
+    "op-log recovery",
+    "multi-workspace safety",
+    "SKILL.md",
+    "jj-reference.md"
+  ],
+  "cross_refs": [
+    "jj/skills/jujutsu/SKILL.md",
+    "jj/skills/jujutsu/references/jj-reference.md",
+    "jj/skills/jujutsu/CHANGELOG.md",
+    "pr-review/",
+    "superpowers/"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": "Unconventional path (docs/plans/ not adr/) and filename convention (no ADR- prefix), but content structure is pure decision record: clear decision statement (Adopt Option B), grounded claims with citations, consequences table, acceptance criteria. Status field 'Approved (awaiting implementation plan)' treated as Accepted/locked. Bead-tracked (fzymgc-house-skills-5qh)."
+}

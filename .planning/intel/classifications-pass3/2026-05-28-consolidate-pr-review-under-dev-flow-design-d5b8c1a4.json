@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-28-consolidate-pr-review-under-dev-flow-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Consolidate `pr-review` Under `dev-flow` (Structural Move)",
+  "summary": "Technical specification for consolidating pr-review plugin into dev-flow with detailed file relocation, path retargeting, manifest updates, symlink changes, and test modifications.",
+  "scope": [
+    "pr-review plugin consolidation",
+    "dev-flow plugin structure",
+    "marketplace manifests",
+    "release-please configuration",
+    "Codex wrappers and symlinks",
+    "test suite updates"
+  ],
+  "cross_refs": [
+    "fhsk-ddw"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

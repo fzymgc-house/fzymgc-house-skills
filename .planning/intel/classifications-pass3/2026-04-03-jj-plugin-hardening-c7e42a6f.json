@@ -1,0 +1,31 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-04-03-jj-plugin-hardening.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "jj Plugin Hardening Implementation Plan",
+  "summary": "Implementation plan to fix operational gaps in the jj plugin including pager safety, parallel agent collisions, undo semantics, and test assertions.",
+  "scope": [
+    "jj plugin",
+    "jj/skills/jujutsu",
+    "jj/hooks",
+    "Claude hooks",
+    "test assertions",
+    "pager safety",
+    "workspace collision detection",
+    "undo operation semantics"
+  ],
+  "cross_refs": [
+    "jj/skills/jujutsu/SKILL.md",
+    "jj/hooks/session-start-jj-detect",
+    "jj/hooks/tests/test_session_start_jj_detect.py",
+    ".claude/hooks/worktree-remove",
+    ".claude/hooks/tests/test_worktree_remove.py",
+    "memory/reference_jjagent.md",
+    "memory/MEMORY.md",
+    "references/workflows-reference.md",
+    "references/jj-reference.md"
+  ],
+  "locked": false,
+  "precedence": null
+}

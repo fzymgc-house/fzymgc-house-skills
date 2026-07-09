@@ -1,0 +1,29 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-03-11-hook-python-migration-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Hook Python Migration Design",
+  "summary": "Technical specification for migrating Claude hooks from bash to Python uv scripts with pytest tests, detailing architecture, component design, testing strategy, and migration plan.",
+  "scope": [
+    "worktree-create",
+    "worktree-remove",
+    "post-edit-format",
+    "worktree_helpers.py",
+    "pytest fixtures",
+    "uv scripts",
+    "settings.json configuration",
+    "bash-to-Python migration"
+  ],
+  "cross_refs": [
+    ".claude/hooks/",
+    ".claude/settings.json",
+    "worktree-create.sh",
+    "worktree-remove.sh",
+    "worktree-helpers.sh",
+    "post-edit-format.sh"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

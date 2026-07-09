@@ -1,0 +1,26 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-02-guard-jj-mutating.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "guard-jj-mutating Implementation Plan",
+  "summary": "Step-by-step implementation guide for adding a PreToolUse/Bash hook that blocks jj op restore/abandon in jj repos unless approved with # jj-op-approved marker.",
+  "scope": [
+    "jj/hooks/guard-jj-mutating",
+    "jj/hooks/tests/test_guard_jj_mutating.py",
+    "jj/plugin.json",
+    "guard-git-mutating",
+    "PreToolUse/Bash hooks",
+    "jj multi-workspace repos",
+    "Claude Code hook protocol"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-02-guard-jj-mutating-design.md",
+    "fhsk-406",
+    "jj/skills/jujutsu/SKILL.md",
+    "jj-vcs/jj#9208"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Planning/implementation guide document. Structured as task breakdown with step-by-step developer instructions. References separate spec document defining the actual requirements. Not a specification of final product behavior, but a guide for how to build it."
+}

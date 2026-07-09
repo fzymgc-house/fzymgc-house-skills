@@ -1,0 +1,18 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-30-mermaid-skill.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Mermaid Skill Implementation Plan",
+  "summary": "Step-by-step implementation plan for adding a Mermaid diagram authoring, linting, and rendering skill to dev-flow.",
+  "scope": ["mermaid", "dev-flow", "skill", "linting", "rendering", "Taskfile", "MCP", "testing"],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-30-mermaid-skill-design.md",
+    "dev-flow/AGENTS.md",
+    "references/vcs-preamble.md",
+    "fhsk-4bi"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

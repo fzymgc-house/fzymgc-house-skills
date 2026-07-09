@@ -1,0 +1,36 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-28-wire-review-pipeline-seams-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Wire Review Pipeline Seams (Post-Consolidation)",
+  "summary": "Technical design for wiring four integration seams in dev-flow after PR consolidation: PR handoff suggestions, VCS preamble consolidation, and code-reviewer disambiguation.",
+  "scope": [
+    "review-pr skill",
+    "address-findings skill",
+    "finishing-a-development-branch skill",
+    "code-reviewer agent",
+    "VCS preambles",
+    "subagent-driven-development skill",
+    "dev-flow plugin"
+  ],
+  "cross_refs": [
+    "dev-flow/skills/finishing-a-development-branch/SKILL.md",
+    "dev-flow/skills/review-pr/SKILL.md",
+    "dev-flow/agents/code-reviewer.md",
+    "dev-flow/skills/requesting-code-review/code-reviewer.md",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/references/vcs-preamble.md",
+    "dev-flow/references/vcs-detection-preamble.md",
+    "dev-flow/references/vcs-equivalence.md",
+    "dev-flow/references/upstream-manifest.md",
+    "dev-flow/skills/address-findings/SKILL.md",
+    "dev-flow/skills/respond-to-comments/SKILL.md",
+    "tests/test_agent_guidance_docs.py",
+    ".github/workflows/check-skills.yml",
+    "fhsk-cph"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

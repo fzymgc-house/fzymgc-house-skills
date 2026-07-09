@@ -1,0 +1,26 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-02-16-address-review-findings-implementation.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Address Review Findings — Implementation Plan",
+  "summary": "Step-by-step implementation guide for creating the address-review-findings skill with bd CLI integration and Phase 1-6 development tasks.",
+  "scope": [
+    "address-review-findings skill",
+    "SKILL.md structure",
+    "bd CLI reference",
+    "skill frontmatter",
+    "Phase 1-6 implementation",
+    "skill validation"
+  ],
+  "cross_refs": [
+    "docs/plans/2026-02-16-address-review-findings-design.md",
+    "docs/plans/2026-02-15-beads-review-integration-design.md",
+    "fzymgc-house/skills/address-review-findings/SKILL.md",
+    "fzymgc-house/skills/address-review-findings/references/bd-reference.md",
+    "CLAUDE.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

@@ -1,0 +1,21 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-bmn-add-bd-free-inv-a25-frontmatter-check-alongside-bd-guarded-i.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Add bd-free INV-A25 frontmatter check alongside bd-guarded INV-A22",
+  "summary": "Introduces bd-free INV-A25 check to enforce YAML frontmatter title presence in ADR files during CI, complementing the local bd-guarded INV-A22 content-fidelity check.",
+  "scope": [
+    "adr-doctor",
+    "INV-A25",
+    "INV-A22",
+    "frontmatter validation",
+    "ADR files",
+    "bd (beads)",
+    "CI pipeline"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

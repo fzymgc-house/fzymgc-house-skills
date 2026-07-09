@@ -1,0 +1,31 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-03-06-worktree-isolation-fix-design.md",
+  "type": "SPEC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "Worktree Isolation Fix Design",
+  "summary": "Technical design for fixing agent worktree isolation by implementing sibling directory layout, hook scripts, and commit/verification protocols.",
+  "scope": [
+    "worktree isolation",
+    "fix-worker",
+    "verification-runner",
+    "agent workflows",
+    "git/jj integration",
+    "pr-review plugin",
+    "hook scripts",
+    "verification runner enhancements"
+  ],
+  "cross_refs": [
+    ".claude/hooks/worktree-create.sh",
+    ".claude/hooks/worktree-remove.sh",
+    ".claude/settings.json",
+    "pr-review/agents/fix-worker.md",
+    "pr-review/agents/verification-runner.md",
+    "pr-review/skills/address-findings/SKILL.md",
+    "pr-review/skills/respond-to-comments/SKILL.md",
+    "CLAUDE.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Design document with implementation specifications. Could also be classified as DOC (design rationale), but classified as SPEC due to precise technical constraints and implementation requirements (worktree layout, hook behavior, commit protocols, verification runner changes)."
+}

@@ -1,0 +1,38 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-28-consolidate-pr-review-under-dev-flow.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Consolidate pr-review Under dev-flow Implementation Plan",
+  "summary": "Step-by-step implementation guide for moving pr-review plugin skills, agents, references, and evals into dev-flow, updating marketplaces, tests, and documentation.",
+  "scope": [
+    "pr-review plugin",
+    "dev-flow plugin",
+    "marketplace consolidation",
+    "release-please configuration",
+    "test suite updates",
+    "documentation updates",
+    "Codex wrapper removal"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-28-consolidate-pr-review-under-dev-flow-design.md",
+    "references/vcs-preamble.md",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "plugins/pr-review/",
+    "plugins/dev-flow/",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    "tests/test_agent_guidance_docs.py",
+    "tests/test_codex_marketplace.py",
+    "AGENTS.md",
+    "README.md",
+    "dev-flow/agents/",
+    "dev-flow/skills/",
+    "dev-flow/references/",
+    "dev-flow/evals/"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Implementation plan for structural consolidation. Contains 7 sequential tasks with bash commands and verification steps. References bead ID fhsk-ddw across commit messages. Related design spec in docs/superpowers/specs/ marked as design-reviewer READY."
+}

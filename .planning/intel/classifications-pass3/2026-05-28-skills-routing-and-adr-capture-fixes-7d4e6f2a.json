@@ -1,0 +1,41 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-28-skills-routing-and-adr-capture-fixes.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Skills Routing + capture-adrs Fixes Implementation Plan",
+  "summary": "Step-by-step implementation plan for fixing three dev-flow defects: subagent routing via agent:* labels, ADR capture worthiness criteria, and nudge-adr-capture hook timing.",
+  "scope": [
+    "dev-flow",
+    "subagent routing",
+    "agent:* labels",
+    "ADR capture worthiness",
+    "nudge-adr-capture hook",
+    "adr-extractor agent",
+    "subagent-driven-development skill",
+    "draining-beads skill",
+    "handoff-prompt skill",
+    "plan-to-beads skill",
+    "bead-create-smart skill"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-28-skills-routing-and-adr-capture-fixes-design.md",
+    "dev-flow/references/vcs-preamble.md",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "dev-flow/skills/handoff-prompt/SKILL.md",
+    "dev-flow/skills/plan-to-beads/SKILL.md",
+    "dev-flow/skills/bead-create-smart/SKILL.md",
+    "dev-flow/agents/adr-extractor.md",
+    "dev-flow/AGENTS.md",
+    "dev-flow/hooks/nudge-adr-capture",
+    "dev-flow/hooks/tests/test_nudge_adr_capture.sh",
+    "dev-flow/hooks/tests/test_nudge_adr_capture.py",
+    "docs/superpowers/specs/2026-05-14-dev-flow-beads-integration-design.md",
+    "docs/adr/",
+    "fhsk-07o"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

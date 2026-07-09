@@ -1,0 +1,41 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-28-wire-review-pipeline-seams.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Wire Review Pipeline Seams Implementation Plan",
+  "summary": "Detailed implementation plan for wiring four post-consolidation review-pipeline seams in dev-flow with additive handoffs, file merges, and agent role clarification.",
+  "scope": [
+    "dev-flow",
+    "finishing-a-development-branch",
+    "review-pr",
+    "address-findings",
+    "code-reviewer",
+    "subagent-driven-development",
+    "vcs-preamble",
+    "vcs-detection-preamble",
+    "vcs-equivalence",
+    "review pipeline seams",
+    "pytest"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-28-wire-review-pipeline-seams-design.md",
+    "dev-flow/references/vcs-preamble.md",
+    "dev-flow/references/vcs-detection-preamble.md",
+    "dev-flow/references/vcs-equivalence.md",
+    "dev-flow/skills/finishing-a-development-branch/SKILL.md",
+    "dev-flow/skills/review-pr/SKILL.md",
+    "dev-flow/skills/address-findings/SKILL.md",
+    "dev-flow/skills/respond-to-comments/SKILL.md",
+    "dev-flow/skills/requesting-code-review/code-reviewer.md",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/agents/code-reviewer.md",
+    "tests/test_agent_guidance_docs.py",
+    "dev-flow/evals/evals.json",
+    ".claude/hooks/tests/",
+    "jj/hooks/tests/"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

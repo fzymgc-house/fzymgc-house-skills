@@ -1,0 +1,24 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-04-09-codex-marketplace-implementation.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Codex Marketplace Compatibility Implementation Plan",
+  "summary": "Step-by-step implementation plan to add Codex marketplace wrappers and pytest coverage for repo-local plugin management.",
+  "scope": [
+    "Codex marketplace",
+    "plugin wrappers",
+    "symlinks",
+    "pytest",
+    "GitHub Actions",
+    "marketplace.json",
+    "Codex compatibility"
+  ],
+  "cross_refs": [
+    "docs/plans/2026-04-09-codex-marketplace-design.md",
+    "superpowers/references/vcs-preamble.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

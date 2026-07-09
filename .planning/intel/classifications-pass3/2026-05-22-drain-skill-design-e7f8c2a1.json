@@ -1,0 +1,38 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "`dev-flow`: `/drain` Slash Command + `draining-beads` Skill",
+  "summary": "Specifies a three-piece autonomous bead-iteration harness in dev-flow using /goal slash command, drain beads, and bd notes for structured lessons.",
+  "scope": [
+    "/drain slash command",
+    "draining-beads skill",
+    "formula-drain.toml bd formula",
+    "bead iteration harness",
+    "sentinel design",
+    "halt conditions",
+    "lessons mechanism",
+    "/goal Stop hook integration",
+    "pre-flight checks",
+    "post-flight finalization"
+  ],
+  "cross_refs": [
+    "../../../README.md",
+    "2026-05-14-dev-flow-beads-integration-design.md",
+    "dev-flow/.beads/formulas/formula-drain.toml",
+    "dev-flow/commands/drain.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/skills/executing-plans/SKILL.md",
+    "dev-flow/plugin.json",
+    "dev-flow/AGENTS.md",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "fhsk-a67",
+    "fhsk-4ut"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

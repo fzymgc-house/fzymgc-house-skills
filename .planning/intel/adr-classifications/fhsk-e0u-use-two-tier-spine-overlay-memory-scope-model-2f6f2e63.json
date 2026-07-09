@@ -1,0 +1,19 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-e0u-use-two-tier-spine-overlay-memory-scope-model.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use two-tier spine/overlay memory scope model",
+  "summary": "Adopts a two-tier scope model for memory-curator plugin using spine (repo-wide) and overlay (workspace-local) scopes to share durable facts while isolating in-flight context.",
+  "scope": [
+    "memory-curator plugin",
+    "scope model",
+    "repository workspaces",
+    "jj workspaces",
+    "durable facts"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

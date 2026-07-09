@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-eqt-store-drain-iteration-protocol-skill-not-goal-condition.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Store the drain iteration protocol in the skill, not the /goal condition",
+  "summary": "Decision to move 12-step iteration protocol into dev-flow skill, away from /goal condition, to avoid 4K character truncation risk.",
+  "scope": [
+    "drain iteration protocol",
+    "dev-flow:draining-beads skill",
+    "/goal condition",
+    "prompt caching",
+    "cold-boot reliability",
+    ".drain/<drain-id>.md fallback"
+  ],
+  "cross_refs": [
+    "docs/adr/fhsk-0o2.md"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

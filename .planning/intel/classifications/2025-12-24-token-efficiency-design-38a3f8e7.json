@@ -1,0 +1,20 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2025-12-24-token-efficiency-design.md",
+  "type": "DOC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "Token Efficiency Design for Grafana Skill",
+  "summary": "Design for reducing token consumption in the Grafana skill through output formatting, compound workflows, and pre-baked tool schemas.",
+  "scope": [
+    "Grafana skill",
+    "token efficiency",
+    "output formatting",
+    "compound workflows",
+    "grafana_mcp.py",
+    "reference documentation"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null,
+  "notes": "Approved status suggests decision-like quality, but lacks ADR structure (no Consequences section) and typical ADR 'Accepted' status marker. Classified as design rationale/planning document rather than locked decision record."
+}

@@ -1,0 +1,28 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/dev-flow-pipeline.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "dev-flow Pipeline",
+  "summary": "Explains the linear dev-flow pipeline architecture with adversarial review gates, bead graph junction, and PR integration workflow.",
+  "scope": [
+    "dev-flow",
+    "brainstorming",
+    "writing-plans",
+    "capture-adrs",
+    "plan-to-beads",
+    "subagent-driven-development",
+    "executing-plans",
+    "draining-beads",
+    "review-pr",
+    "address-findings",
+    "design-reviewer",
+    "plan-reviewer"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

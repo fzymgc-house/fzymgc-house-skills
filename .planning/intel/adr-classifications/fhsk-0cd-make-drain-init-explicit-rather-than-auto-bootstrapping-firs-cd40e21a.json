@@ -1,0 +1,23 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-0cd-make-drain-init-explicit-rather-than-auto-bootstrapping-firs.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Make /drain init explicit rather than auto-bootstrapping on first run",
+  "summary": "Bootstrap for drain harness is explicit via /drain init with pre-flight checks; missing assets produce clear error rather than silent mutations.",
+  "scope": [
+    "drain harness",
+    "bd configuration",
+    "bootstrap initialization",
+    "custom type registration",
+    "formula deployment",
+    "operator visibility"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "fhsk-a67"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

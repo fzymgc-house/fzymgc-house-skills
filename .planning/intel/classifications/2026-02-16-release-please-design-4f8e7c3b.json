@@ -1,0 +1,31 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-02-16-release-please-design.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Release Please Integration — Design",
+  "summary": "Integrates release-please GitHub Action using manifest mode for automated versioning of plugin and skill components via conventional commits.",
+  "scope": [
+    "versioning",
+    "changelog automation",
+    "release-please",
+    "GitHub Actions",
+    "marketplace.json",
+    "plugin.json",
+    "SKILL.md metadata",
+    "conventional commits",
+    "release workflow"
+  ],
+  "cross_refs": [
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    ".claude-plugin/marketplace.json",
+    "fzymgc-house/plugin.json",
+    ".github/workflows/release-please.yml",
+    ".github/workflows/check-skills.yml",
+    "CLAUDE.md"
+  ],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

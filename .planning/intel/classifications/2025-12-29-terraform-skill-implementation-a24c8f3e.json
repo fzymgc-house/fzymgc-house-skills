@@ -1,0 +1,29 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2025-12-29-terraform-skill-implementation.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Terraform Skill Implementation Plan",
+  "summary": "Step-by-step implementation guide for creating a Terraform Cloud operations skill wrapping the HashiCorp Terraform MCP server with a Python gateway.",
+  "scope": [
+    "terraform",
+    "MCP",
+    "HCP Terraform",
+    "Docker",
+    "Python gateway script",
+    "workspace management",
+    "run monitoring",
+    "provider documentation"
+  ],
+  "cross_refs": [
+    "fzymgc-house/skills/terraform/SKILL.md",
+    "fzymgc-house/skills/terraform/scripts/terraform_mcp.py",
+    "fzymgc-house/skills/terraform/references/workspaces.md",
+    "fzymgc-house/skills/terraform/references/runs.md",
+    "fzymgc-house/skills/terraform/references/providers.md",
+    ".github/workflows/ci.yaml"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

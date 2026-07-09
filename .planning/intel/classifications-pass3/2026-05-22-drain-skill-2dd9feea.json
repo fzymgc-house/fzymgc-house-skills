@@ -1,0 +1,32 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-22-drain-skill.md",
+  "type": "DOC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "/drain Implementation Plan",
+  "summary": "Step-by-step implementation guide for shipping a /drain slash command, draining-beads skill, and formula-drain.toml orchestrating autonomous bead iteration via Claude Code's /goal.",
+  "scope": [
+    "drain",
+    "slash command",
+    "draining-beads skill",
+    "formula-drain.toml",
+    "bead iteration",
+    "dev-flow plugin",
+    "Claude Code /goal",
+    "subagent-driven-development",
+    "bd formula"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "dev-flow/skills/draining-beads/SKILL.md",
+    "dev-flow/commands/drain.md",
+    "dev-flow/.beads/formulas/formula-drain.toml",
+    "dev-flow/skills/subagent-driven-development/SKILL.md",
+    "dev-flow/skills/executing-plans/SKILL.md",
+    "dev-flow/AGENTS.md",
+    "fhsk-a67"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Implementation plan/runbook documenting 12 sequential tasks. Companion spec document (2026-05-22-drain-skill-design.md) holds the authoritative technical specification and architectural decisions. Classified as DOC (process guidance) rather than PRD or SPEC because it is procedural and process-focused; the actual requirements and specifications reside in the companion spec."
+}

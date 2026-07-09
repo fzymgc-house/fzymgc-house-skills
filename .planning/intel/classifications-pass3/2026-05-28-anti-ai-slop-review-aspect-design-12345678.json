@@ -1,0 +1,37 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-28-anti-ai-slop-review-aspect-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Anti-AI-Slop Review Aspect (Code + Docs)",
+  "summary": "Design specification for integrating AI-authorship detection as a review aspect in pr-review orchestrator, with pattern catalogs and agent contract.",
+  "scope": [
+    "anti-ai-slop-detection",
+    "pr-review-orchestrator",
+    "slop-hunter-agent",
+    "code-pattern-catalog",
+    "prose-pattern-catalog",
+    "review-aspect-wiring"
+  ],
+  "cross_refs": [
+    "fhsk-rhh",
+    "pr-review/agents/slop-hunter.md",
+    "pr-review/references/code-slop.md",
+    "pr-review/references/prose-slop.md",
+    "pr-review/skills/review-pr/SKILL.md",
+    "pr-review/references/vcs-detection-preamble.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    "github.com/berenslab/llm-excess-vocab",
+    "writehuman.ai",
+    "bloomberry.ai",
+    "dev.to",
+    "gitautoreview.com",
+    "aquilax.ai"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Status is Draft for review, not Accepted, so not locked. Clear SPEC structure with pattern definitions (C-n, P-n), agent contract, orchestrator wiring (ACTIVE_ASPECTS variable, dispatch logic), and implementation checklist."
+}

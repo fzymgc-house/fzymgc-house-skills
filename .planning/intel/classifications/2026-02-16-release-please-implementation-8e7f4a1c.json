@@ -1,0 +1,28 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/plans/2026-02-16-release-please-implementation.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Release Please Integration — Implementation Plan",
+  "summary": "Step-by-step implementation plan for automating version bumping and changelog generation using release-please GitHub Action.",
+  "scope": [
+    "release-please",
+    "GitHub Actions",
+    "version management",
+    "SKILL.md metadata",
+    "release workflow",
+    "CI configuration",
+    "manifest mode"
+  ],
+  "cross_refs": [
+    "docs/plans/2026-02-16-release-please-design.md",
+    "CLAUDE.md",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    ".github/workflows/release-please.yml",
+    ".github/workflows/check-skills.yml"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

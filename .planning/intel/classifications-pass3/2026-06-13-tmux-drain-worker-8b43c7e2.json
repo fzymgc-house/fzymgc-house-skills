@@ -1,0 +1,41 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-06-13-tmux-drain-worker.md",
+  "type": "DOC",
+  "confidence": "medium",
+  "manifest_override": false,
+  "title": "Multiplexer-Parameterized drain-with-worker + tmux Plugin Implementation Plan",
+  "summary": "Step-by-step implementation guide for adding tmux support to the drain-worker launcher and creating a standalone tmux plugin, with checkpoint-tracked tasks.",
+  "scope": [
+    "_muxdriver driver module",
+    "drain-watchdog script parameterization",
+    "drain-worker-launch validation script",
+    "drain-with-worker skill conversion",
+    "tmux plugin and skill",
+    "terminal multiplexer abstraction (cmux/tmux)",
+    "plugin marketplace registration"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-06-13-tmux-drain-worker-design.md",
+    "dev-flow/commands/drain.md",
+    "dev-flow/references/drain-with-worker.md",
+    "dev-flow/skills/drain-with-worker/SKILL.md",
+    "dev-flow/scripts/_muxdriver.py",
+    "dev-flow/scripts/drain-watchdog",
+    "dev-flow/scripts/drain-worker-launch",
+    "tests/test_muxdriver.py",
+    "tests/test_drain_worker_launch.py",
+    "tests/test_drain_skill.py",
+    "tmux/plugin.json",
+    "tmux/skills/tmux/SKILL.md",
+    "plugins/tmux/.codex-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "release-please-config.json",
+    "Taskfile.yaml",
+    "AGENTS.md",
+    "fhsk-3qy"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Implementation plan with procedural step-by-step structure (checkbox-tracked tasks), not a binding specification or decision record. Actual architectural decisions documented separately in design bead fhsk-3qy (docs/superpowers/specs/2026-06-13-tmux-drain-worker-design.md). Classified as DOC (runbook/guide) because it reads as a working tutorial for executing the implementation. Medium confidence reflects possible ambiguity with SPEC (technical plan), but the tutorial-like checkpoint structure and reference to an external design/spec document indicate it is primarily a DOC."
+}

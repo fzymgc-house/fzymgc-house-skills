@@ -1,0 +1,29 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-25-drain-with-worker.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "/drain-with-worker Implementation Plan",
+  "summary": "Procedural plan to lift holomush's drain-pane skill into dev-flow as /drain-with-worker command with cmux pane management and stall-watchdog integration.",
+  "scope": [
+    "/drain-with-worker command",
+    "drain-with-worker reference",
+    "cmux pane management",
+    "stall-watchdog",
+    "dev-flow integration",
+    "test suite updates",
+    "AGENTS.md documentation"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-25-drain-with-worker-design.md",
+    "dev-flow/commands/drain.md",
+    "dev-flow/references/drain-with-worker.md",
+    "dev-flow/commands/drain-with-worker.md",
+    "dev-flow/AGENTS.md",
+    "tests/test_drain_skill.py",
+    "holomush/.claude/skills/drain-pane/"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "Task-oriented procedural plan with 7 concrete implementation steps, checkboxes, expected test outcomes, and commit messages. References design bead fhsk-jmn. No architectural decision, requirements, or technical spec—purely implementation guidance."
+}

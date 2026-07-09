@@ -1,0 +1,21 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-bj8-use-agent-label-as-sole-subagent-dispatch-signal.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Use agent:* label as the sole subagent dispatch signal",
+  "summary": "Replace unreachable skills[] dispatch with agent:<type> bead labels using static known-set fallback to general-purpose.",
+  "scope": [
+    "subagent dispatch",
+    "bead labels",
+    "agent label routing",
+    "subagent-driven-development",
+    "draining-beads",
+    "handoff-prompt",
+    "agent:code-reviewer"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

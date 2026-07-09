@@ -1,0 +1,38 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/plans/2026-05-29-solving-a-bead.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "solving-a-bead Skill Implementation Plan",
+  "summary": "Step-by-step task-based implementation guide for adding a solving-a-bead skill and slash command to the dev-flow workflow.",
+  "scope": [
+    "solving-a-bead skill",
+    "dev-flow commands",
+    "skill implementation",
+    "bead workflow",
+    "verification gates",
+    "VCS integration",
+    "implementation plan"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-29-solving-a-bead-design.md",
+    "dev-flow/skills/solving-a-bead/SKILL.md",
+    "dev-flow/commands/solving-a-bead.md",
+    "dev-flow/references/vcs-preamble.md",
+    "references/vcs-preamble.md",
+    "dev-flow:using-worktrees",
+    "dev-flow:systematic-debugging",
+    "dev-flow:brainstorming",
+    "dev-flow:test-driven-development",
+    "dev-flow:verification-before-completion",
+    "dev-flow:finishing-a-development-branch",
+    "fhsk-eip",
+    "fhsk-7y4",
+    "fhsk-ypt",
+    "fhsk-3xn",
+    "fhsk-hj3"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

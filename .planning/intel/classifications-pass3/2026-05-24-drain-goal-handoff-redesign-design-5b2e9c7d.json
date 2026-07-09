@@ -1,0 +1,32 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-24-drain-goal-handoff-redesign-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "/drain /goal Handoff Redesign — Cold-Boot Worker Contract",
+  "summary": "Technical specification for redesigning drain-goal interaction using cold-boot worker protocol with condition pointers and durable bead-based state.",
+  "scope": [
+    "drain command",
+    "goal built-in",
+    "Claude Code",
+    "draining-beads skill",
+    "drain bead metadata fields",
+    "worker cold-boot protocol",
+    "condition template",
+    "sentinel predicates"
+  ],
+  "cross_refs": [
+    "docs/superpowers/specs/2026-05-22-drain-skill-design.md",
+    "code.claude.com/docs/en/goal.md",
+    "fhsk-a49",
+    "fhsk-thw",
+    "fhsk-0o2",
+    "fhsk-ce3",
+    "fhsk-0cd",
+    "fhsk-eqt",
+    "fhsk-zds",
+    "fhsk-e4i"
+  ],
+  "locked": false,
+  "precedence": null
+}

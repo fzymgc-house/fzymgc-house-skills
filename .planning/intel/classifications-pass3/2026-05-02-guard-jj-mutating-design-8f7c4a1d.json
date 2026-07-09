@@ -1,0 +1,35 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/superpowers/specs/2026-05-02-guard-jj-mutating-design.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "guard-jj-mutating Hook",
+  "summary": "Technical specification for a PreToolUse/Bash hook that blocks jj op restore and jj op abandon unless approved with # jj-op-approved marker.",
+  "scope": [
+    "jj/hooks/guard-jj-mutating",
+    "jj/hooks/tests/test_guard_jj_mutating.py",
+    "jj/plugin.json",
+    "PreToolUse/Bash hook",
+    "guard-git-mutating",
+    "approval marker mechanism",
+    "jj op log rewinding",
+    "JSON response shapes",
+    "regex patterns",
+    "execution flow",
+    "hook protocol"
+  ],
+  "cross_refs": [
+    "fhsk-406",
+    "fhsk-5qh",
+    "fhsk-804",
+    "jj/hooks/guard-git-mutating",
+    "jj/hooks/tests/test_guard_git_mutating.py",
+    "jj/skills/jujutsu/SKILL.md",
+    "jj-vcs/jj#9208",
+    "PR #50",
+    "docs/superpowers/plans/2026-05-02-guard-jj-mutating.md"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

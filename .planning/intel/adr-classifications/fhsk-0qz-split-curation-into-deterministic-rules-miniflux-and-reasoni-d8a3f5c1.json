@@ -1,0 +1,22 @@
+{
+  "source_path": "/Volumes/Code/github.com/fzymgc-house/fzymgc-house-skills/docs/adr/fhsk-0qz-split-curation-into-deterministic-rules-miniflux-and-reasoni.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Split curation into deterministic rules (Miniflux) and reasoning (Claude)",
+  "summary": "Deterministic blocklist/keeplist regex rules live in Miniflux server-side; Claude handles relevance ranking, digest prose, and rule proposals via a suggest-rules→apply-rule handoff.",
+  "scope": [
+    "Miniflux",
+    "Claude",
+    "content curation",
+    "filtering",
+    "blocklist rules",
+    "keeplist rules",
+    "rule proposals",
+    "relevance ranking"
+  ],
+  "cross_refs": [],
+  "locked": true,
+  "precedence": null,
+  "notes": ""
+}

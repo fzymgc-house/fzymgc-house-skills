@@ -9,6 +9,8 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 
 | Date | bd | Title | Status |
 |------|-----|-------|--------|
+| 2026-07-10 | [fhsk-o9o](fhsk-o9o-use-release-please-file-plugin-versions-across-six-shipped-m.md) | Use release-please with in-file plugin versions across the six shipped manifests | Accepted |
+| 2026-07-10 | [fhsk-wdk](fhsk-wdk-record-shipped-5-plugin-root-layout-superseding-design-plan.md) | Record the shipped 5-plugin root layout, superseding the design-plan per-skill package layout in practice | Accepted |
 | 2026-06-30 | [fhsk-bmn](fhsk-bmn-add-bd-free-inv-a25-frontmatter-check-alongside-bd-guarded-i.md) | Add bd-free INV-A25 frontmatter check alongside bd-guarded INV-A22 | Accepted |
 | 2026-06-30 | [fhsk-nlw](fhsk-nlw-rewrite-adr-scripts-as-python-pep-723-uv-run-script-modules.md) | Rewrite ADR scripts as Python PEP 723 uv run --script modules | Accepted |
 | 2026-06-30 | [fhsk-slp](fhsk-slp-adopt-yaml-title-frontmatter-adr-files-drop-body-h1.md) | Adopt YAML title frontmatter in ADR files, drop body H1 | Accepted |
@@ -19,7 +21,7 @@ brainstorming and planning phases of work tracked by `dev-flow`.
 | 2026-06-13 | [fhsk-8yz](fhsk-8yz-share-cmux-tmux-driver-logic-via-muxdriver-module-not-script.md) | Share cmux/tmux driver logic via a _muxdriver module, not script duplication | Accepted |
 | 2026-06-13 | [fhsk-a6v](fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md) | Add tmux as a standalone plugin rather than folding into dev-flow | Accepted |
 | 2026-06-10 | [fhsk-8g6](fhsk-8g6-drain-finishes-branch-autonomously-push-pr-at-clean-sentinel.md) | Drain finishes the branch autonomously (push + PR) at the clean sentinel | Accepted |
-| 2026-06-09 | [fhsk-dgo](fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md) | Use release-please with in-file plugin versions (reverse cog tag-only) | Accepted |
+| 2026-06-09 | [fhsk-dgo](fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md) | Use release-please with in-file plugin versions (reverse cog tag-only) | Superseded by fhsk-o9o |
 | 2026-06-02 | [fhsk-p07](fhsk-p07-replace-blocking-stop-hook-capture-nudge-silent-sessionstart.md) | Replace blocking Stop-hook capture nudge with silent SessionStart briefing and throttled PostToolUse nudge | Accepted |
 | 2026-06-01 | [fhsk-e0u](fhsk-e0u-use-two-tier-spine-overlay-memory-scope-model.md) | Use two-tier spine/overlay memory scope model | Accepted |
 | 2026-05-30 | [fhsk-4bi](fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md) | Adopt @probelabs/maid as the primary Mermaid lint engine | Accepted |

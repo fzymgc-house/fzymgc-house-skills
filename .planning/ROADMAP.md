@@ -102,9 +102,9 @@ core value (reuse) is documented, not just implicit.
 1. A superseding ADR records the shipped `homelab`/`jj`/`dev-flow`/`tmux`/`grepping` layout and marks the release-please ADR's `fzymgc-house/skills/*` package layout superseded
 2. A new org repo can discover and install a skill following documented, minimal-friction steps
 
-**Plans**: 2 plans
+**Plans**: 1/2 plans executed
 
-- [ ] 05-01-PLAN.md — Author two superseding ADRs (release-please versioning + shipped 5-plugin layout), flip fhsk-dgo to Superseded, regenerate the ADR index
+- [x] 05-01-PLAN.md — Author two superseding ADRs (release-please versioning + shipped 5-plugin layout), flip fhsk-dgo to Superseded, regenerate the ADR index
 - [ ] 05-02-PLAN.md — Complete the skill catalog (README + docs/adoption.md), add the adoption guide, and add a CI drift-gate test
 
 **Status**: Planned
@@ -120,4 +120,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. PR Review & Fix Pipeline | -/- | Complete (retrospective) | Shipped as of 2026-07-08 |
 | 3. Multi-VCS Support (jj) | -/- | Complete (retrospective) | Shipped as of 2026-07-08 |
 | 4. Release & Distribution | -/- | Complete (retrospective) | Shipped as of 2026-07-08 |
-| 5. Governance Reconciliation | 0/2 | Planned | - |
+| 5. Governance Reconciliation | 1/2 | In Progress|  |

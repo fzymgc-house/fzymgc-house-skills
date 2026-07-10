@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 5
-current_phase_name: Governance Reconciliation & Reuse Hardening
+current_phase: 05
+current_phase_name: governance-reconciliation-reuse-hardening
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-10T02:27:18.447Z"
-last_activity: 2026-07-09
-last_activity_desc: Pass 2 ADR intel (docs/adr, 35 ADRs) ingested and merged into PROJECT.md
+last_updated: "2026-07-10T03:20:05.244Z"
+last_activity: 2026-07-10
+last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Skills are single-source, discoverable, and reusable across the org's projects with low friction to adopt
-**Current focus:** Phase 5 — Governance Reconciliation & Reuse Hardening
+**Current focus:** Phase 05 — governance-reconciliation-reuse-hardening
 
 ## Current Position
 
-Phase: 5 of 5 (Governance Reconciliation & Reuse Hardening)
-Plan: 0 of TBD in current phase
+Phase: 05 (governance-reconciliation-reuse-hardening) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-09 — Pass 2 ADR intel (docs/adr, 35 ADRs) ingested and merged into PROJECT.md
+Last activity: 2026-07-10 — Phase 05 execution started
 
 Progress: [████████░░] 80% (4 of 5 phases shipped; phase completion basis, plans not retrofitted)
 
@@ -55,6 +55,7 @@ Progress: [████████░░] 80% (4 of 5 phases shipped; phase com
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 05 P01 | 20min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Recent decisions affecting current work:
 - LOCKED: jj op-log-rewind gated MUST NOT + recovery ladder
 - PROPOSED (Draft): beads as PR-review persistence (shipped, ADR unlocked)
 - Pass 2 (docs/adr, 35 ADRs) ingested and merged: 31 locked ADR decisions added to PROJECT.md "ADR Decision Register (Pass 2)", 4 superseded (fhsk-0o2, fhsk-7y4, fhsk-rqh, fhsk-toy) recorded as historical, 0 blockers / 0 competing variants. ADR fhsk-dgo agrees with DEC-release-please-versioning; GOV-01 directory-layout supersession remains open.
+- [Phase 05]: fhsk-o9o re-homes (not reverses) the release-please decision, correcting the synced-manifest list from four to six (adds tmux/plugin.json, grepping/plugin.json)
+- [Phase 05]: fhsk-wdk records the shipped 5-plugin root layout and marks the design plan's fzymgc-house/skills/* per-skill package layout superseded-in-practice via prose only (no bd dep edge)
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-10T00:14:29.647Z
+Last session: 2026-07-10T03:17:42.592Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-governance-reconciliation-reuse-hardening/05-CONTEXT.md

@@ -5,7 +5,7 @@ title: "Use release-please with in-file plugin versions (reverse cog tag-only)"
 <!-- adr-render: source=bd:fhsk-dgo; do not edit manually; use `/adr update fhsk-dgo` -->
 
 **Date:** 2026-06-09
-**Status:** Accepted
+**Status:** Superseded by fhsk-o9o
 **Decision:** fhsk-dgo
 **Deciders:** Sean Brandt
 
@@ -39,3 +39,4 @@ Reverse to release-please for this repo. release-please (push-triggered on main,
 
 - Supersedes: fhsk-toy
 - Supersedes: fhsk-7y4
+- Superseded by: fhsk-o9o

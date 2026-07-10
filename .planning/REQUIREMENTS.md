@@ -45,8 +45,8 @@
 
 ### Governance & Reuse Hardening (GOV) — forward-looking
 
-- [ ] **GOV-01**: A superseding ADR records the shipped plugin layout (`homelab`/`jj`/`dev-flow`/`tmux`/`grepping`) and marks the release-please ADR's `fzymgc-house/skills/*` package layout superseded
-- [ ] **GOV-02**: Cross-project adoption is documented so a new org repo can discover and install a skill following minimal, explicit steps
+- [x] **GOV-01**: A superseding ADR records the shipped plugin layout (`homelab`/`jj`/`dev-flow`/`tmux`/`grepping`) and marks the release-please ADR's `fzymgc-house/skills/*` package layout superseded
+- [x] **GOV-02**: Cross-project adoption is documented so a new org repo can discover and install a skill following minimal, explicit steps
 
 ## v2 Requirements
 
@@ -82,8 +82,8 @@ None captured. Move forward-looking GOV items or new skill proposals here as the
 | DIST-01 | Phase 4 | Complete |
 | DIST-02 | Phase 4 | Complete |
 | DIST-03 | Phase 4 | Complete |
-| GOV-01 | Phase 5 | Pending |
-| GOV-02 | Phase 5 | Pending |
+| GOV-01 | Phase 5 | Complete |
+| GOV-02 | Phase 5 | Complete |
 
 **Coverage:**
 

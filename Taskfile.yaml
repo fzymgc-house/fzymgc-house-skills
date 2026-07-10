@@ -14,7 +14,7 @@ vars:
   # Living docs + shipped artifacts only. Historical records under docs/plans/
   # and docs/superpowers/ are point-in-time and intentionally not style-gated.
   MD_FILES: >-
-    README.md AGENTS.md CLAUDE.md
+    README.md AGENTS.md CLAUDE.md docs/adoption.md
     homelab/skills/*/SKILL.md
     jj/skills/*/SKILL.md
     jj/commands/*.md

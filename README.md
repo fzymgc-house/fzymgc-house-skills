@@ -23,6 +23,7 @@ Infrastructure skills for interacting with the homelab cluster.
 |-------|-------------|
 | **terraform** | Terraform Cloud operations — runs, workspaces, state management, registry documentation |
 | **skill-qa** | Validates SKILL.md files against Claude Code best practices |
+| **miniflux** | Manage and curate a personal Miniflux RSS subscription set — feeds, reading/triage, AI curation, health |
 
 ### jj
 
@@ -49,9 +50,27 @@ Highlights:
 | **systematic-debugging** | Structured debugging workflow |
 | **verification-before-completion** | Verification gate before claiming success |
 
-See [`dev-flow/skills/`](dev-flow/skills/) for the complete skill
-list — additional skills cover worktrees, parallel agents, code review,
-TDD, and skill authoring.
+#### Additional dev-flow skills
+
+| Skill | Description |
+|-------|-------------|
+| **bead-create-smart** | Create a tracked bd issue via structured flags for ad-hoc beads outside the plan-to-beads flow |
+| **capture-adrs** | Extract ADR-worthy decisions from a finalized spec/plan into docs/adr/ files and bd decision records |
+| **dispatching-parallel-agents** | Dispatch parallel subagents for 2+ independent tasks with no shared state or ordering dependency |
+| **drain-with-worker** | Launch an autonomous `/drain` worker in a detached cmux/tmux surface with a surface-aware watchdog |
+| **draining-beads** | Autonomously drain an epic/set/cascade of beads via Claude Code's `/goal`, paired with `/drain` |
+| **evolve-adr** | Update, supersede, deprecate, or migrate an ADR; bd is the source of truth for ADR content |
+| **finishing-a-development-branch** | Decide how to integrate completed work (git or jj) — merge, PR, or cleanup |
+| **handoff-prompt** | Generate a self-contained briefing prompt for a fresh agent session to pick up a bead's work |
+| **plan-to-beads** | Materialize an implementation plan's task table into bd issues, dependency edges, and parent links |
+| **receiving-code-review** | Apply code review feedback with technical rigor and verification, not performative agreement |
+| **requesting-code-review** | Request code review before merging, verifying work meets requirements (git and jj) |
+| **solving-a-bead** | Solve a specific bead/issue by ID with an isolated workspace and TDD-driven solution |
+| **subagent-driven-development** | Execute implementation plans with independent tasks dispatched to subagents in-session |
+| **test-driven-development** | Write a failing test first, then minimal code to pass, then refactor |
+| **using-git-worktrees** | Alias/redirect to `using-worktrees` |
+| **using-worktrees** | Ensure an isolated workspace exists (native tools or git/jj fallback) before implementation work |
+| **writing-skills** | Create, edit, or verify skills before deployment |
 
 #### PR review workflow
 
@@ -114,6 +133,13 @@ Current Codex limitation: named Claude plugin agents are not installed
 natively. The `dev-flow` review workflows still work in Codex,
 but agent-dispatch steps must follow the compatibility guidance in
 `dev-flow/skills/using-superpowers/references/codex-tools.md`.
+
+### Adopt a skill in a new repo
+
+Adopting a skill in another org repo is a two-command install (above) plus
+knowing which skill to reach for. See
+[`docs/adoption.md`](docs/adoption.md) for the full Claude and Codex install
+paths, a complete skill discovery index, and troubleshooting.
 
 ## Development
 

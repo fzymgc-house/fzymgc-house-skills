@@ -38,13 +38,14 @@ repo can adopt a skill with low friction and without forking content.
 - ✓ Jujutsu (jj) workflow plugin with VCS detection + op-log recovery gate — `jj/`
 - ✓ release-please manifest-mode versioning, one repo-wide version line
 - ✓ Dual Claude + Codex marketplace over single-source skills (CI drift check)
+- ✓ **GOV-01**: Superseding ADRs record the shipped layout — `fhsk-o9o` (release-please, corrected six-manifest sync, supersedes `fhsk-dgo`) + `fhsk-wdk` (5-plugin root layout; `fzymgc-house/skills/*` superseded-in-practice) — *Validated in Phase 5*
+- ✓ **GOV-02**: Cross-project adoption documented (`docs/adoption.md`) + CI drift gate (`tests/test_skill_catalog.py`) enforcing catalog completeness — *Validated in Phase 5*
 
 ### Active
 
-<!-- Forward-looking. The dominant open thread. -->
+<!-- No open requirements. The dominant governance thread closed in Phase 5. -->
 
-- [ ] **GOV-01**: Author a superseding ADR that records the shipped plugin layout and supersedes the release-please ADR's `fzymgc-house/skills/*` package layout. *(Pass 2: ADR fhsk-dgo now supplies release-please ADR provenance and AGREES with DEC-release-please-versioning, but the directory-layout supersession — `fzymgc-house/skills/*` → shipped `homelab`/`dev-flow`/`jj`/`tmux`/`grepping` — REMAINS OPEN. GOV-01 stays open.)*
-- [ ] **GOV-02**: Document low-friction cross-project adoption (install path + discovery) so a new org repo can add a skill quickly
+- *None — all v1 requirements validated. GOV-01 and GOV-02 closed in Phase 5 (see Validated above).*
 
 ### Out of Scope
 
@@ -91,7 +92,9 @@ automation. LOCKED. Reconciliation: the ADR enumerates per-skill packages under
 the shipped reality is a SINGLE repo-wide version line synced across all plugin manifests,
 and the directory layout is `homelab/dev-flow/jj/tmux/grepping`. The decision (release-please,
 manifest mode, automated version sync) is locked; the specific per-skill package layout and
-`fzymgc-house/skills/*` paths are SUPERSEDED in practice. A superseding ADR is recommended (GOV-01).
+`fzymgc-house/skills/*` paths are SUPERSEDED in practice. Formally reconciled in Phase 5 by ADR
+`fhsk-o9o` (re-homes the versioning decision, corrects the sync list to six manifests, supersedes
+`fhsk-dgo`) and `fhsk-wdk` (records the shipped 5-plugin root layout) — GOV-01 closed.
 </decision>
 <decision id="DEC-jj-op-log-recovery-gate" locked="true" source="docs/plans/2026-05-01-jj-skill-op-log-recovery-rule-design.md">
 Gate the op-log-rewind class (`jj op restore`, `jj op abandon`) behind explicit user approval,
@@ -112,18 +115,20 @@ could be superseded without a hard block.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| release-please, manifest mode, one repo-wide version | Automated, conflict-free version + changelog sync across plugins | ✓ Good (layout claims superseded — see GOV-01) |
+| release-please, manifest mode, one repo-wide version | Automated, conflict-free version + changelog sync across plugins | ✓ Good (layout formally reconciled by `fhsk-o9o`/`fhsk-wdk`, Phase 5) |
 | jj op-log-rewind gated MUST NOT + recovery ladder | Op log is repo-global; restores clobbered concurrent agents | ✓ Good |
 | Beads as PR-review persistence (Approach B) | Single source of truth; survives session boundaries | ✓ Good (ADR still Draft/unlocked) |
 | Dual marketplace over single-source symlinks | Reuse on Claude + Codex without forking content | ✓ Good |
 | Sibling worktree layout for fix agents | Nested `.claude/worktrees/` confused LSP; agents clobbered base repo | ✓ Good |
-| `pr-review` work folded into `dev-flow` agents | Restructure landed review agents in the workflow plugin, not a separate plugin | ✓ Good (contradicts ADR paths — GOV-01) |
+| `pr-review` work folded into `dev-flow` agents | Restructure landed review agents in the workflow plugin, not a separate plugin | ✓ Good (shipped layout recorded in `fhsk-wdk`, Phase 5) |
 
 ## ADR Decision Register (Pass 2)
 
 Compact register of the 31 active LOCKED ADR decisions ingested from `docs/adr/`
-(Pass 2). Full statements live in `.planning/intel/pass2/decisions.md`; these
-higher-precedence ADRs are retrospective and map to already-Complete phases 1–4.
+(Pass 2), plus two Phase-5 governance ADRs (`fhsk-o9o`, `fhsk-wdk`) appended below
+and marked `(Phase 5)`; `fhsk-dgo` is now superseded by `fhsk-o9o`. Full statements
+live in `.planning/intel/pass2/decisions.md`; the Pass-2 ADRs are retrospective and
+map to already-Complete phases 1–4.
 Format: `DEC-adr-fhsk-XXX` — one-line decision — source — status.
 
 ### Drain harness & workers
@@ -157,12 +162,14 @@ Format: `DEC-adr-fhsk-XXX` — one-line decision — source — status.
 ### Plugin packaging & marketplace
 
 - `DEC-adr-fhsk-a6v` — Ship tmux as a standalone plugin at the level of jj/homelab (not folded into dev-flow) for cross-boundary reuse — source `docs/adr/fhsk-a6v-add-tmux-as-standalone-plugin-rather-than-folding-into-dev-f.md` — LOCKED
+- `DEC-adr-fhsk-wdk` — Record the shipped 5-plugin root layout (homelab/jj/dev-flow/tmux/grepping) with Codex thin wrappers; mark the design-plan `fzymgc-house/skills/*` layout superseded-in-practice and PR-review-inside-dev-flow; Related to fhsk-o9o + fhsk-a6v — source `docs/adr/fhsk-wdk-record-shipped-5-plugin-root-layout-superseding-design-plan.md` — LOCKED (Phase 5, GOV-01)
 
 ### ADR / release / CI tooling
 
 - `DEC-adr-fhsk-4bi` — Use @probelabs/maid via bunx as the primary Mermaid lint engine, with optional mmdc render-validate fallback — source `docs/adr/fhsk-4bi-adopt-probelabs-maid-as-primary-mermaid-lint-engine.md` — LOCKED
 - `DEC-adr-fhsk-bmn` — Add a bd-free INV-A25 CI check for ADR YAML frontmatter title, complementing the bd-guarded INV-A22 content-fidelity check — source `docs/adr/fhsk-bmn-add-bd-free-inv-a25-frontmatter-check-alongside-bd-guarded-i.md` — LOCKED
-- `DEC-adr-fhsk-dgo` — Adopt release-please (over cog) with restored in-file plugin versions + CHANGELOG.md; supersedes fhsk-toy and fhsk-7y4 — source `docs/adr/fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md` — LOCKED
+- `DEC-adr-fhsk-dgo` — Adopt release-please (over cog) with restored in-file plugin versions + CHANGELOG.md; supersedes fhsk-toy and fhsk-7y4 — source `docs/adr/fhsk-dgo-use-release-please-file-plugin-versions-reverse-cog-tag-only.md` — LOCKED, SUPERSEDED by `fhsk-o9o` (Phase 5)
+- `DEC-adr-fhsk-o9o` — Re-home the release-please decision forward intact, correcting the version-synced manifest list from four to the current six (`+ tmux/plugin.json`, `grepping/plugin.json`); supersedes fhsk-dgo — source `docs/adr/fhsk-o9o-use-release-please-file-plugin-versions-across-six-shipped-m.md` — LOCKED (Phase 5, GOV-01)
 - `DEC-adr-fhsk-h3z` — Move conventional-commit validation from a local git hook to a CI check on the PR title (reliable across jj/git) — source `docs/adr/fhsk-h3z-validate-conventional-commits-at-pr-title-boundary-ci.md` — LOCKED
 - `DEC-adr-fhsk-nlw` — Rewrite ADR tooling (render-adr, adr-doctor) as PEP 723 `uv run --script` Python modules for in-memory render matching + unit tests — source `docs/adr/fhsk-nlw-rewrite-adr-scripts-as-python-pep-723-uv-run-script-modules.md` — LOCKED
 - `DEC-adr-fhsk-slp` — Add YAML title frontmatter to all ADR files and drop the body H1 to satisfy the Starlight docs build — source `docs/adr/fhsk-slp-adopt-yaml-title-frontmatter-adr-files-drop-body-h1.md` — LOCKED
@@ -197,4 +204,4 @@ Conflict report: `.planning/INGEST-CONFLICTS-pass3.md` (0 blockers, 0 warnings, 
 
 ---
 
-*Last updated: 2026-07-09 — Pass 3 supporting specs/docs (44) subordinated as constraints/context; Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; prior: 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*
+*Last updated: 2026-07-10 — Phase 5 complete: GOV-01/GOV-02 validated (ADRs `fhsk-o9o` + `fhsk-wdk`, `docs/adoption.md`, catalog drift gate); all v1 requirements now validated. Prior: 2026-07-09 Pass 3 supporting specs/docs (44) subordinated as constraints/context; Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*

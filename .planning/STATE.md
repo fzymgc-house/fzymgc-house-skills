@@ -1,12 +1,19 @@
 ---
-gsd_state_version: '1.0'  # placeholder; syncStateFrontmatter overwrites on first state.* call
-status: planning
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_phase: 05
+status: "Phase 05 shipped — PR #190"
+stopped_at: Phase 05 complete and verified — milestone v1.0 ready to ship
+last_updated: "2026-07-10T12:50:32.380Z"
+last_activity: 2026-07-10
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 0
-  completed_plans: 0
-  percent: 80
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 20
+current_phase_name: governance-reconciliation-reuse-hardening
 ---
 
 # Project State
@@ -16,22 +23,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09)
 
 **Core value:** Skills are single-source, discoverable, and reusable across the org's projects with low friction to adopt
-**Current focus:** Phase 5 — Governance Reconciliation & Reuse Hardening
+**Current focus:** Phase 05 — governance-reconciliation-reuse-hardening
 
 ## Current Position
 
-Phase: 5 of 5 (Governance Reconciliation & Reuse Hardening)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-07-09 — Pass 2 ADR intel (docs/adr, 35 ADRs) ingested and merged into PROJECT.md
+Phase: 05
+Plan: 05-01, 05-02 (2/2 complete)
+Status: Phase 05 shipped — PR #190
+Last activity: 2026-07-10
 
-Progress: [████████░░] 80% (4 of 5 phases shipped; phase completion basis, plans not retrofitted)
+Progress: [██████████] 100% (5 of 5 phases shipped; phase completion basis, plans not retrofitted)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (retrospective bootstrap — historical plans not retrofitted into GSD)
+- Total plans completed: 2 (retrospective bootstrap — historical plans not retrofitted into GSD)
 - Average duration: n/a
 - Total execution time: n/a
 
@@ -40,6 +47,7 @@ Progress: [████████░░] 80% (4 of 5 phases shipped; phase com
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1-4 (retrospective) | - | - | - |
+| 05 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -47,6 +55,8 @@ Progress: [████████░░] 80% (4 of 5 phases shipped; phase com
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 05 P01 | 20min | 3 tasks | 5 files |
+| Phase 05 P02 | 70min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -59,6 +69,10 @@ Recent decisions affecting current work:
 - LOCKED: jj op-log-rewind gated MUST NOT + recovery ladder
 - PROPOSED (Draft): beads as PR-review persistence (shipped, ADR unlocked)
 - Pass 2 (docs/adr, 35 ADRs) ingested and merged: 31 locked ADR decisions added to PROJECT.md "ADR Decision Register (Pass 2)", 4 superseded (fhsk-0o2, fhsk-7y4, fhsk-rqh, fhsk-toy) recorded as historical, 0 blockers / 0 competing variants. ADR fhsk-dgo agrees with DEC-release-please-versioning; GOV-01 directory-layout supersession remains open.
+- [Phase 05]: fhsk-o9o re-homes (not reverses) the release-please decision, correcting the synced-manifest list from four to six (adds tmux/plugin.json, grepping/plugin.json)
+- [Phase 05]: fhsk-wdk records the shipped 5-plugin root layout and marks the design plan's fzymgc-house/skills/* per-skill package layout superseded-in-practice via prose only (no bd dep edge)
+- [Phase 05]: Scoped skill-enumeration glob in test_skill_catalog.py to exclude dot-prefixed dirs (.claude/skills/core.gc-*) — locally-installed unrelated-marketplace skills, not shipped by this repo
+- [Phase 05]: No PYTEST_DIRS/CI-yaml edit needed for the new drift test — tests/ already gated, CI invokes task lint/task test directly
 
 ### Pending Todos
 
@@ -76,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-09
-Stopped at: Pass 3 ingest complete — 44 design/spec/plan docs (docs/superpowers + dev-flow-pipeline + adr/README) subordinated under the locked baseline (0 new decisions; 19 constraints + 21 context groups in .planning/intel/pass3/). Prior: Pass 2 ADR Decision Register (35 ADRs); Pass 1 retrospective bootstrap (2026-07-08).
-Resume file: None
+Last session: 2026-07-10T04:30:37.435Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-governance-reconciliation-reuse-hardening/05-CONTEXT.md

@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 05
 current_phase_name: governance-reconciliation-reuse-hardening
-status: executing
+status: verifying
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-10T03:20:05.244Z"
+last_updated: "2026-07-10T04:31:01.535Z"
 last_activity: 2026-07-10
 last_activity_desc: Phase 05 execution started
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-09)
 
 Phase: 05 (governance-reconciliation-reuse-hardening) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-10 — Phase 05 execution started
 
 Progress: [████████░░] 80% (4 of 5 phases shipped; phase completion basis, plans not retrofitted)
@@ -56,6 +56,7 @@ Progress: [████████░░] 80% (4 of 5 phases shipped; phase com
 
 *Updated after each plan completion*
 | Phase 05 P01 | 20min | 3 tasks | 5 files |
+| Phase 05 P02 | 70min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - Pass 2 (docs/adr, 35 ADRs) ingested and merged: 31 locked ADR decisions added to PROJECT.md "ADR Decision Register (Pass 2)", 4 superseded (fhsk-0o2, fhsk-7y4, fhsk-rqh, fhsk-toy) recorded as historical, 0 blockers / 0 competing variants. ADR fhsk-dgo agrees with DEC-release-please-versioning; GOV-01 directory-layout supersession remains open.
 - [Phase 05]: fhsk-o9o re-homes (not reverses) the release-please decision, correcting the synced-manifest list from four to six (adds tmux/plugin.json, grepping/plugin.json)
 - [Phase 05]: fhsk-wdk records the shipped 5-plugin root layout and marks the design plan's fzymgc-house/skills/* per-skill package layout superseded-in-practice via prose only (no bd dep edge)
+- [Phase 05]: Scoped skill-enumeration glob in test_skill_catalog.py to exclude dot-prefixed dirs (.claude/skills/core.gc-*) — locally-installed unrelated-marketplace skills, not shipped by this repo
+- [Phase 05]: No PYTEST_DIRS/CI-yaml edit needed for the new drift test — tests/ already gated, CI invokes task lint/task test directly
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-10T03:17:42.592Z
+Last session: 2026-07-10T04:30:37.435Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-governance-reconciliation-reuse-hardening/05-CONTEXT.md

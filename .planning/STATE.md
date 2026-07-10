@@ -2,11 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 05
-status: "Phase 05 shipped — PR #190"
-stopped_at: Phase 05 complete and verified — milestone v1.0 ready to ship
-last_updated: "2026-07-10T12:50:32.380Z"
+current_phase: 0
+status: Awaiting next milestone
+stopped_at: Phase 5 context gathered
+last_updated: "2026-07-10T13:34:53.087Z"
 last_activity: 2026-07-10
+last_activity_desc: Milestone v1.0 completed and archived
 progress:
   total_phases: 5
   completed_phases: 1
@@ -27,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-07-09)
 
 ## Current Position
 
-Phase: 05
-Plan: 05-01, 05-02 (2/2 complete)
-Status: Phase 05 shipped — PR #190
-Last activity: 2026-07-10
-
-Progress: [██████████] 100% (5 of 5 phases shipped; phase completion basis, plans not retrofitted)
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-10 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -93,3 +92,7 @@ None yet.
 Last session: 2026-07-10T04:30:37.435Z
 Stopped at: Phase 5 context gathered
 Resume file: .planning/phases/05-governance-reconciliation-reuse-hardening/05-CONTEXT.md
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

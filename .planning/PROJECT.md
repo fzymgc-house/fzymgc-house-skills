@@ -57,6 +57,11 @@ repo can adopt a skill with low friction and without forking content.
 
 ## Context
 
+- **Current state — v1.0 shipped (2026-07-10).** All five phases complete; the 5-plugin
+  marketplace (`homelab`/`jj`/`dev-flow`/`tmux`/`grepping`) is live on both Claude Code and
+  Codex. Plugin-layout governance is reconciled (ADRs `fhsk-o9o` + `fhsk-wdk`) and cross-project
+  adoption is documented (`docs/adoption.md`) and CI-enforced (`tests/test_skill_catalog.py`).
+  All v1 requirements validated; milestone archived to `.planning/milestones/v1.0-*`.
 - **Mature project, retrospective bootstrap.** The shipped tree is `homelab/`, `jj/`,
   `dev-flow/`, `tmux/`, `grepping/` at repo root plus `plugins/` Codex wrappers. A
   codebase map already exists at `.planning/codebase/` (authoritative; do not overwrite).
@@ -204,4 +209,4 @@ Conflict report: `.planning/INGEST-CONFLICTS-pass3.md` (0 blockers, 0 warnings, 
 
 ---
 
-*Last updated: 2026-07-10 — Phase 5 complete: GOV-01/GOV-02 validated (ADRs `fhsk-o9o` + `fhsk-wdk`, `docs/adoption.md`, catalog drift gate); all v1 requirements now validated. Prior: 2026-07-09 Pass 3 supporting specs/docs (44) subordinated as constraints/context; Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*
+*Last updated: 2026-07-10 after v1.0 "Skills Marketplace" milestone — all five phases shipped, all v1 requirements validated; ROADMAP/REQUIREMENTS archived to `.planning/milestones/v1.0-*`. Prior: 2026-07-10 Phase 5 complete (GOV-01/GOV-02 validated: ADRs `fhsk-o9o` + `fhsk-wdk`, `docs/adoption.md`, catalog drift gate); 2026-07-09 Pass 3 supporting specs/docs (44) subordinated as constraints/context; Pass 2 ADR intel (docs/adr, 35 ADRs) merged into the ADR Decision Register; 2026-07-08 retrospective `.planning/` bootstrap from ingest intel*

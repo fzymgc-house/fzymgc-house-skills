@@ -1,12 +1,20 @@
 ---
-gsd_state_version: '1.0'  # placeholder; syncStateFrontmatter overwrites on first state.* call
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_phase: 5
+current_phase_name: Governance Reconciliation & Reuse Hardening
 status: planning
+stopped_at: Phase 5 context gathered
+last_updated: "2026-07-10T00:14:29.653Z"
+last_activity: 2026-07-09
+last_activity_desc: Pass 2 ADR intel (docs/adr, 35 ADRs) ingested and merged into PROJECT.md
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 80
+  percent: 0
 ---
 
 # Project State
@@ -76,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-09
-Stopped at: Pass 3 ingest complete — 44 design/spec/plan docs (docs/superpowers + dev-flow-pipeline + adr/README) subordinated under the locked baseline (0 new decisions; 19 constraints + 21 context groups in .planning/intel/pass3/). Prior: Pass 2 ADR Decision Register (35 ADRs); Pass 1 retrospective bootstrap (2026-07-08).
-Resume file: None
+Last session: 2026-07-10T00:14:29.647Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-governance-reconciliation-reuse-hardening/05-CONTEXT.md

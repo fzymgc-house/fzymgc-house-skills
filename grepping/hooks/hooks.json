@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/nudge-rg-over-grep\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/rg-guard\"",
             "timeout": 10
           }
         ]

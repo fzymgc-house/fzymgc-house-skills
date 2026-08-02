@@ -16,7 +16,7 @@ marketplace:
   `respond-to-comments`) and review/fix/verification agents
 - `tmux` - terminal-multiplexer usage skill
 - `grepping` - shell code/text search skill (rg, ast-grep, grep-family) with
-  advisory rg-over-grep / rg-failure nudge hooks
+  a deterministic rg guard and advisory failure/routing hooks
 
 It also publishes a repo-local Codex compatibility layer:
 
@@ -77,7 +77,7 @@ tmux/
   skills/
 grepping/
   plugin.json
-  hooks/          # nudge-rg-over-grep (PreToolUse), nudge-rg-failure (PostToolUse)
+  hooks/          # rg-guard (PreToolUse), nudge-rg-failure (PostToolUse)
   skills/
 ```
 

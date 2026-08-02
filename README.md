@@ -204,7 +204,7 @@ tmux/
     tmux/               # tmux usage skill
 grepping/
   plugin.json           # Plugin manifest
-  hooks/                # nudge-rg-over-grep, nudge-rg-failure (advisory)
+  hooks/                # blocking rg-guard + advisory failure hook
   skills/
     grepping/           # rg / ast-grep / grep-family search skill
 ```

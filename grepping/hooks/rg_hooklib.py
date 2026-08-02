@@ -7,7 +7,6 @@ import json
 import os
 import re
 import shlex
-import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -326,28 +325,86 @@ def scan_rg(invocation: RgInvocation) -> RgScan:
     return RgScan(options=tuple(options), patterns=tuple(patterns))
 
 
+# rg accepts the WHATWG Encoding Standard label set (plus "auto"/"none").
+# Python's codec registry covers most labels; this is the WHATWG-only delta,
+# checked statically so the guard stays deterministic and never needs rg on
+# PATH (CI runners may not have it). An unknown-but-real label costs only a
+# bypassable deny with a clear message.
+_WHATWG_ONLY_LABELS = frozenset(
+    {
+        "replacement",
+        "x-user-defined",
+        "unicode-1-1-utf-8",
+        "unicode11utf8",
+        "unicode20utf8",
+        "x-unicode20utf8",
+        "csiso2022kr",
+        "hz-gb-2312",
+        "iso-2022-cn",
+        "iso-2022-cn-ext",
+        "iso-2022-kr",
+        "x-mac-cyrillic",
+        "x-mac-ukrainian",
+        "csmacintosh",
+        "mac",
+        "x-mac-roman",
+        "dos-874",
+        "windows-949",
+        "asmo-708",
+        "sun_eu_greek",
+        "iso-ir-126",
+        "iso-ir-127",
+        "iso-ir-138",
+        "iso-ir-144",
+        "iso-ir-148",
+        "iso-ir-149",
+        "iso-ir-157",
+        "iso-ir-58",
+        "elot_928",
+        "ecma-118",
+        "csisolatingreek",
+        "csisolatinarabic",
+        "csisolatincyrillic",
+        "csisolatinhebrew",
+        "csksc56011987",
+        "ksc5601",
+        "ksc_5601",
+        "csshiftjis",
+        "ms932",
+        "ms_kanji",
+        "windows-31j",
+        "x-sjis",
+        "x-euc-jp",
+        "cseucpkdfmtjapanese",
+        "csiso2022jp",
+        "csibm866",
+        "cskoi8r",
+        "koi",
+        "koi8",
+        "koi8_r",
+        "csbig5",
+        "cn-big5",
+        "x-x-big5",
+        "csgb2312",
+        "csiso58gb231280",
+        "chinese",
+        "gb_2312",
+        "gb_2312-80",
+        "tis-620",
+    }
+)
+
+
 def _known_encoding(value: str | None) -> bool:
     if not value:
         return False
-    if value.lower() in {"auto", "none"}:
+    label = value.strip().lower()
+    if label in {"auto", "none"} or label in _WHATWG_ONLY_LABELS:
         return True
     try:
-        codecs.lookup(value)
+        codecs.lookup(label)
     except LookupError:
-        # rg accepts the WHATWG Encoding Standard labels; Python's codec aliases
-        # omit a few legitimate values such as x-user-defined. Ask rg only on
-        # this rare slow path so valid encodings are never denied.
-        try:
-            result = subprocess.run(
-                ["rg", f"--encoding={value}", "--version"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=1,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return False
-        return result.returncode == 0
+        return False
     return True
 
 

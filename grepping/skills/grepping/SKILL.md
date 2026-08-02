@@ -18,23 +18,21 @@ into rg: rg uses Rust regex (ERE-like, **not** grep's BRE), is recursive by defa
 `.gitignore`. The flags you remember from `grep`/`egrep`/BSD grep are often wrong — sometimes they
 error, and sometimes (worse) they silently corrupt the search.
 
-For "where is this symbol defined / how does this work" questions, prefer `mcp__probe__search_code`
-first — it returns whole AST blocks. `rg` is for raw text matches; `sg` is for structural matches;
-`probe` is for semantic symbol lookup. This skill covers `rg` and `sg`.
+`rg` is for raw text matches (including "where is this symbol defined" lookups); `sg` is for
+structural matches. This skill covers `rg` and `sg`.
 
 **Stance:** `rg` and `ast-grep` are the tools this plugin pushes; `grep`/`egrep`/`fgrep`/`ugrep`
-are a fallback (a box without rg, or a ugrep-only feature like fuzzy/archive search). For
-symbol lookup ("where is X / how does Y work"), `probe` outranks all of them when it is available.
-Two hooks guard this skill non-blockingly:
+are a fallback (a box without rg, or a ugrep-only feature like fuzzy/archive search).
+Two hooks guard this skill:
 
-- **PreToolUse** (`nudge-rg-over-grep`): when a grep-family tool leads a Bash command, nudges
-  toward `rg`/`ast-grep`. When the search looks symbol-shaped **and** the probe MCP is configured,
-  nudges toward `mcp__probe__search_code` first.
+- **PreToolUse** (`rg-guard`): denies deterministic, always-wrong rg invocations and includes a
+  corrected command. It still gives an advisory-only routing nudge when a grep-family tool leads
+  a command.
 - **PostToolUse** (`nudge-rg-failure`): after an `rg` command completes, detects failure patterns
-  (flag errors, `\|` alternation, suspect flags like `-rn`/`--include=`) and nudges to load this
-  skill before retrying.
+  across command segments, including string-shaped error responses and success-shaped corruption,
+  then gives the inline fix.
 
-Both are advisory-only — they never block.
+Use `RG_GUARD_OK=1 rg ...` only as an explicit escape hatch for an intentional invocation.
 
 ## Tool selection
 
@@ -43,7 +41,7 @@ Both are advisory-only — they never block.
 | Find text / a regex anywhere in the tree | `rg` |
 | Find a code shape (`if err != nil { return $A }`, a call with any args) | `sg` (ast-grep) |
 | Structural find-and-**rewrite** across a codebase | `sg -p ... -r ...` |
-| "Where is `Foo` defined / how does `Bar` work" | `mcp__probe__search_code` |
+| "Where is `Foo` defined / how does `Bar` work" | `rg -w 'Foo'` (add `-t <lang>` to scope) |
 | You typed `grep`/`egrep`/`fgrep`/`ugrep` out of habit | translate to `rg` (below) |
 
 ## rg quick reference
@@ -78,12 +76,14 @@ wrong or empty output, so you wrongly conclude "the code isn't there."
 |---------|--------------|-----|
 | `rg 'A\|B'` (BRE alternation habit) | **Silent.** `\|` matches a *literal* pipe; the OR never happens, so you get nothing | `rg 'A|B'` — bare `|`, no backslash |
 | `rg -rn 'pat'` / `rg -nr 'pat'` | **Silent corruption.** rg's `-r` is `--replace`; it eats `n` as the replacement and rewrites output | Drop `-r`. rg is already recursive: `rg -n 'pat'` |
+| `rg -rl 'pat'` / `rg -rln 'pat'` | **Silent corruption.** `l`/`ln` becomes replacement text instead of file/line flags | Drop only `-r`: `rg -l 'pat'` / `rg -ln 'pat'` |
 | `rg 'pat' dir -r` (trailing `-r`) | Hard error: `missing value for flag -r` | Drop `-r` |
 | `rg -nR 'pat'` | `unrecognized flag -R` | Drop `-R` (recursion is default) |
 | `rg --include='*.go' 'pat'` | `unrecognized flag --include` | `rg -g '*.go' 'pat'` or `rg -t go 'pat'` |
 | `rg -E 'A|B'` (extended-regex habit) | `unknown encoding: A|B` — rg's `-E` is `--encoding` | Drop `-E`; rg is ERE-like already |
 | `rg 'Foo{'` / `rg 'pkg.Type{'` | `regex parse error: repetition quantifier...` — `{` is a regex metachar | `rg -F 'Foo{'` or escape: `rg 'Foo\{'` |
 | `rg '...\K...'`, lookaround, backrefs | `unrecognized escape sequence` / `look-around not supported` | Add `-P`: `rg -P '...\K...'` |
+| `rg 'first\nsecond'` without `-U` | No cross-line match because multiline mode is off | Add `-U`, or rewrite as a single-line pattern |
 | `rg -t proto 'pat'` | `unrecognized file type: proto` | `rg --type-add 'proto:*.proto' -t proto` or `-g '*.proto'` |
 | `rg --no-pager 'pat'` | `unrecognized flag --no-pager` | Omit it — rg has no pager |
 | `rg 'pat' && nothing found` | maybe a `-g`/`-t` filter excluded everything | re-run with `--debug`, or check `--no-ignore --hidden` |
@@ -152,6 +152,7 @@ Full ast-grep reference: [references/ast-grep.md](references/ast-grep.md).
 ## When NOT to use rg
 
 - Matching balanced/nested code (function bodies, composite literals, call arguments) → `sg`.
-- "Where is `X` defined / how does `Y` work" → `mcp__probe__search_code` (whole AST blocks).
 - Renaming a symbol across a codebase by *meaning* rather than text → `sg -p ... -r ...`, not
   `rg ... | sed` (which will also hit comments, strings, and substrings).
+- Filtering output from a remote host that may not have rg → run the producer remotely and pipe to
+  local rg: `ssh host 'journalctl ...' | rg 'pat'`.

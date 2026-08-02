@@ -12,8 +12,6 @@ the `grepping` skill; for text search see `ripgrep.md`.
 - You want a structural **rewrite** (`-r`) instead of a text substitution that would also hit
   comments, strings, and substrings.
 
-For "where is `X` defined / how does `Y` work", prefer `mcp__probe__search_code` over both.
-
 ## Pattern syntax
 
 | Construct | Meaning |

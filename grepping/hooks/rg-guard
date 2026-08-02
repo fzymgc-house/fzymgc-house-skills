@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""PreToolUse guard for deterministic rg failures plus grep-family routing nudges."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import shlex
+import sys
+
+from rg_hooklib import (
+    advisory_warnings,
+    bypassed,
+    guard_issues,
+    iter_rg_invocations,
+    log_decision,
+    remote_rg_stages,
+    shell_stages,
+)
+
+GREP_TOOLS = {"grep", "egrep", "fgrep", "ugrep", "ug"}
+
+
+def leading_grep(command: str) -> str | None:
+    """Find a leading grep-family command, excluding grep used only as a pipe filter."""
+    for stage in shell_stages(command):
+        if stage.separator == "|":
+            continue
+        try:
+            tokens = shlex.split(stage.text, comments=False, posix=True)
+        except ValueError:
+            continue
+        while tokens and re.match(r"^[A-Za-z_]\w*=", tokens[0]):
+            tokens.pop(0)
+        if not tokens:
+            continue
+        tool = os.path.basename(tokens[0])
+        if tool in GREP_TOOLS:
+            return tool
+    return None
+
+
+def _advisory_message(tool: str) -> str:
+    return (
+        f"grepping: `{tool}` invoked. Prefer rg for recursive text search and ast-grep "
+        "for syntax-aware matches; use grep-family tools only for a specific feature or fallback."
+    )
+
+
+def main() -> None:
+    try:
+        raw = sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, OSError, AttributeError):
+        return
+    if data.get("tool_name") != "Bash":
+        return
+    tool_input = data.get("tool_input") or {}
+    command = tool_input.get("command", "") if isinstance(tool_input, dict) else ""
+    if not command:
+        return
+
+    invocations = list(iter_rg_invocations(command))
+    if bypassed(command):
+        for invocation in invocations:
+            log_decision(data, decision="bypass", rules=["RG_GUARD_OK"], stage=invocation.stage.text)
+        return
+
+    denied = []
+    warnings = []
+    for invocation in invocations:
+        issues = guard_issues(invocation)
+        invocation_warnings = advisory_warnings(invocation)
+        decision = "deny" if issues else "warn" if invocation_warnings else "allow"
+        log_decision(
+            data,
+            decision=decision,
+            rules=[issue.rule for issue in issues],
+            stage=invocation.stage.text,
+        )
+        denied.extend(issues)
+        warnings.extend(invocation_warnings)
+
+    if denied:
+        unique_messages = list(dict.fromkeys(issue.message for issue in denied))
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": "rg-guard denied a deterministic failure. "
+                + " ".join(unique_messages)
+                + " To bypass an intentional use, prefix the command with `RG_GUARD_OK=1`.",
+            }
+        }
+        json.dump(result, sys.stdout)
+        return
+
+    for remote in remote_rg_stages(command):
+        warnings.append(
+            "A remote host may not have rg. Prefer `ssh host 'producer' | rg PATTERN` so "
+            f"filtering runs locally (remote stage: `{remote}`)."
+        )
+
+    tool = leading_grep(command)
+    if tool:
+        warnings.append(_advisory_message(tool))
+
+    if not warnings:
+        return
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "additionalContext": " ".join(dict.fromkeys(warnings)),
+        }
+    }
+    json.dump(result, sys.stdout)
+
+
+if __name__ == "__main__":
+    main()

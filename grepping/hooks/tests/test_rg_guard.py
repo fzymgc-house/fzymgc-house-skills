@@ -10,7 +10,6 @@ import pytest
 from grepping.hooks.tests.conftest import (
     context,
     deny_reason,
-    make_repo,
     payload,
     run_hook,
 )
@@ -25,6 +24,8 @@ from grepping.hooks.tests.conftest import (
         ("rg -nr ProcessEvent", "rg -n ProcessEvent"),
         ("cd src && rg -rn ProcessEvent", "rg -n ProcessEvent"),
         ("printf x | rg -rn ProcessEvent", "rg -n ProcessEvent"),
+        ("git ls-files | xargs rg -rn ProcessEvent", "xargs rg -n ProcessEvent"),
+        ("timeout 5 rg -rn ProcessEvent", "timeout 5 rg -n ProcessEvent"),
         ("rg -ro ProcessEvent", "rg -o ProcessEvent"),
         ("rg -nR ProcessEvent", "rg -n ProcessEvent"),
         ("rg --recursive ProcessEvent", "rg ProcessEvent"),
@@ -58,6 +59,7 @@ def test_denies_deterministic_failures(
         r"rg -F 'A\|B'",
         r"rg -FP 'A\|B'",
         "rg -P 'foo(?=bar)'",
+        r"rg '^\| col \|' README.md",
     ],
 )
 def test_allows_valid_rg(command: str, isolated_env: dict[str, str]) -> None:
@@ -86,28 +88,6 @@ def test_ambiguous_cases_warn_only(
     result = run_hook("rg-guard", command, env=isolated_env)
     assert deny_reason(result) is None
     assert expected in (context(result) or "")
-
-
-def test_symbol_detection_uses_pattern_not_heredoc_body(
-    tmp_path: Path, isolated_env: dict[str, str]
-) -> None:
-    repo = make_repo(tmp_path, probe=True)
-    command = "rg needle <<'EOF'\nfunc FakeSymbol\nEOF"
-    assert context(run_hook("rg-guard", command, env=isolated_env, cwd=repo)) is None
-
-
-def test_probe_nudge_is_throttled_once_per_session(
-    tmp_path: Path, isolated_env: dict[str, str]
-) -> None:
-    repo = make_repo(tmp_path, probe=True)
-    first = run_hook(
-        "rg-guard", "rg 'func Foo'", env=isolated_env, cwd=repo, session_id="same"
-    )
-    second = run_hook(
-        "rg-guard", "rg 'func Bar'", env=isolated_env, cwd=repo, session_id="same"
-    )
-    assert "mcp__probe__search_code" in (context(first) or "")
-    assert context(second) is None
 
 
 def test_grep_nudge_remains_available(isolated_env: dict[str, str]) -> None:

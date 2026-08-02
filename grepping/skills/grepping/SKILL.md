@@ -18,18 +18,16 @@ into rg: rg uses Rust regex (ERE-like, **not** grep's BRE), is recursive by defa
 `.gitignore`. The flags you remember from `grep`/`egrep`/BSD grep are often wrong — sometimes they
 error, and sometimes (worse) they silently corrupt the search.
 
-For "where is this symbol defined / how does this work" questions, prefer `mcp__probe__search_code`
-first — it returns whole AST blocks. `rg` is for raw text matches; `sg` is for structural matches;
-`probe` is for semantic symbol lookup. This skill covers `rg` and `sg`.
+`rg` is for raw text matches (including "where is this symbol defined" lookups); `sg` is for
+structural matches. This skill covers `rg` and `sg`.
 
 **Stance:** `rg` and `ast-grep` are the tools this plugin pushes; `grep`/`egrep`/`fgrep`/`ugrep`
-are a fallback (a box without rg, or a ugrep-only feature like fuzzy/archive search). For
-symbol lookup ("where is X / how does Y work"), `probe` outranks all of them when it is available.
+are a fallback (a box without rg, or a ugrep-only feature like fuzzy/archive search).
 Two hooks guard this skill:
 
 - **PreToolUse** (`rg-guard`): denies deterministic, always-wrong rg invocations and includes a
-  corrected command. It still gives advisory-only routing nudges for grep-family and symbol-shaped
-  searches.
+  corrected command. It still gives an advisory-only routing nudge when a grep-family tool leads
+  a command.
 - **PostToolUse** (`nudge-rg-failure`): after an `rg` command completes, detects failure patterns
   across command segments, including string-shaped error responses and success-shaped corruption,
   then gives the inline fix.
@@ -43,7 +41,7 @@ Use `RG_GUARD_OK=1 rg ...` only as an explicit escape hatch for an intentional i
 | Find text / a regex anywhere in the tree | `rg` |
 | Find a code shape (`if err != nil { return $A }`, a call with any args) | `sg` (ast-grep) |
 | Structural find-and-**rewrite** across a codebase | `sg -p ... -r ...` |
-| "Where is `Foo` defined / how does `Bar` work" | `mcp__probe__search_code` |
+| "Where is `Foo` defined / how does `Bar` work" | `rg -w 'Foo'` (add `-t <lang>` to scope) |
 | You typed `grep`/`egrep`/`fgrep`/`ugrep` out of habit | translate to `rg` (below) |
 
 ## rg quick reference
@@ -154,7 +152,6 @@ Full ast-grep reference: [references/ast-grep.md](references/ast-grep.md).
 ## When NOT to use rg
 
 - Matching balanced/nested code (function bodies, composite literals, call arguments) → `sg`.
-- "Where is `X` defined / how does `Y` work" → `mcp__probe__search_code` (whole AST blocks).
 - Renaming a symbol across a codebase by *meaning* rather than text → `sg -p ... -r ...`, not
   `rg ... | sed` (which will also hit comments, strings, and substrings).
 - Filtering output from a remote host that may not have rg → run the producer remotely and pipe to

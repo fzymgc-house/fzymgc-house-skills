@@ -58,6 +58,29 @@ def test_empty_filtered_result_warns_about_ignores(
     assert "--no-ignore --hidden" in (context(result) or "")
 
 
+def test_parses_error_prefixed_string_response(isolated_env: dict[str, str]) -> None:
+    """Claude Code prefixes failed Bash results with `Error: ` — the shape seen in real transcripts."""
+    result = run_hook(
+        "nudge-rg-failure",
+        "rg 'foo(?=bar)' src/",
+        env=isolated_env,
+        response="Error: Exit code 2\nrg: look-around, including look-ahead and look-behind, is not supported",
+    )
+    assert "Add `-P`" in (context(result) or "")
+
+
+def test_error_prefixed_exit_one_with_filters_warns(
+    isolated_env: dict[str, str],
+) -> None:
+    result = run_hook(
+        "nudge-rg-failure",
+        "rg -g '*.go' needle",
+        env=isolated_env,
+        response="Error: Exit code 1\n",
+    )
+    assert "--no-ignore --hidden" in (context(result) or "")
+
+
 def test_clean_success_is_silent(isolated_env: dict[str, str]) -> None:
     result = run_hook(
         "nudge-rg-failure",

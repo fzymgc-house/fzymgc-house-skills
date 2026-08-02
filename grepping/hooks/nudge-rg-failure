@@ -14,7 +14,9 @@ from rg_hooklib import (
     scan_rg,
 )
 
-_EXIT_PREFIX = re.compile(r"^\s*Exit code\s+(\d+)\s*\n?", re.IGNORECASE)
+# Claude Code renders failed Bash results as a string beginning
+# "Error: Exit code N" (the "Error: " prefix is present on error results).
+_EXIT_PREFIX = re.compile(r"^\s*(?:Error:\s*)?Exit code\s+(\d+)\s*\n?", re.IGNORECASE)
 _HARD_ERROR = re.compile(
     r"unrecognized flag|regex parse error|missing value for flag|unknown encoding|"
     r"unrecognized file type|look-around.*not supported|backreferences? .*not supported|"

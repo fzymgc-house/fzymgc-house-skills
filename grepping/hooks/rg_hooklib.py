@@ -73,7 +73,10 @@ _LONG_NAMES = {
     "--type": "type",
     "--type-not": "type-not",
 }
-_BRE_ALTERNATION = re.compile(r"\\\|")
+# Word characters adjacent to `\|` signal BRE-style alternation (`foo\|bar`).
+# A bare `\|` between non-word characters (e.g. `rg '^\| x \|'` searching a
+# markdown table for literal pipes) is legitimate and must not be rewritten.
+_BRE_ALTERNATION = re.compile(r"\w\\\||\\\|\w")
 _PCRE_ONLY = re.compile(r"\(\?(?:[=!]|<[=!])|\\K|\\[1-9][0-9]*")
 _RG_IN_REMOTE_COMMAND = re.compile(r"(?:^|[\s;&|])(?:[^\s;&|]*/)?rg(?:\s|$)")
 
@@ -178,26 +181,57 @@ def shell_stages(command: str) -> list[ShellStage]:
     return stages
 
 
+_WRAPPERS = {"sudo", "nice", "nohup", "time", "stdbuf", "timeout", "xargs"}
+_WRAPPER_VALUE_FLAGS = {
+    "sudo": {"-u", "-g", "-p", "-C", "-D", "-R", "-T", "-U"},
+    "xargs": {"-I", "-i", "-n", "-P", "-s", "-d", "-a", "-E", "-L", "-l"},
+    "timeout": {"-k", "-s", "--kill-after", "--signal"},
+    "nice": {"-n", "--adjustment"},
+    "stdbuf": {"-i", "-o", "-e"},
+}
+
+
 def _command_index(tokens: list[str]) -> int | None:
+    """Index of the effective command word, skipping shell/env/wrapper prefixes."""
     index = 0
-    while index < len(tokens) and tokens[index] in _SHELL_PREFIXES:
-        index += 1
-    while index < len(tokens) and _ENV_ASSIGNMENT.match(tokens[index]):
-        index += 1
-    if index < len(tokens) and tokens[index] in {"command", "builtin"}:
-        index += 1
-        while index < len(tokens) and tokens[index].startswith("-"):
+    changed = True
+    while changed and index < len(tokens):
+        changed = False
+        while index < len(tokens) and tokens[index] in _SHELL_PREFIXES:
             index += 1
-    if index < len(tokens) and tokens[index] == "env":
-        index += 1
-        while index < len(tokens):
-            token = tokens[index]
-            if _ENV_ASSIGNMENT.match(token):
+            changed = True
+        while index < len(tokens) and _ENV_ASSIGNMENT.match(tokens[index]):
+            index += 1
+            changed = True
+        if index < len(tokens) and tokens[index] in {"command", "builtin"}:
+            index += 1
+            changed = True
+            while index < len(tokens) and tokens[index].startswith("-"):
                 index += 1
-            elif token.startswith("-"):
+        if index < len(tokens) and tokens[index] == "env":
+            index += 1
+            changed = True
+            while index < len(tokens):
+                token = tokens[index]
+                if _ENV_ASSIGNMENT.match(token) or token.startswith("-"):
+                    index += 1
+                else:
+                    break
+        if index < len(tokens):
+            wrapper = os.path.basename(tokens[index])
+            if wrapper in _WRAPPERS:
                 index += 1
-            else:
-                break
+                changed = True
+                value_flags = _WRAPPER_VALUE_FLAGS.get(wrapper, set())
+                while index < len(tokens) and tokens[index].startswith("-"):
+                    flag = tokens[index]
+                    index += 1
+                    if flag == "--":
+                        break
+                    if flag in value_flags and index < len(tokens):
+                        index += 1
+                if wrapper == "timeout" and index < len(tokens):
+                    index += 1  # the DURATION positional precedes the command
     return index if index < len(tokens) else None
 
 

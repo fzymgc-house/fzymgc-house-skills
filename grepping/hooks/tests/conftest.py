@@ -75,12 +75,3 @@ def deny_reason(result: subprocess.CompletedProcess[str]) -> str | None:
     if output.get("permissionDecision") != "deny":
         return None
     return str(output.get("permissionDecisionReason", ""))
-
-
-def make_repo(tmp_path: Path, *, probe: bool) -> Path:
-    repo = tmp_path / "repo"
-    repo.mkdir()
-    (repo / ".git").mkdir()
-    servers = {"probe": {"command": "probe"}} if probe else {"context7": {}}
-    (repo / ".mcp.json").write_text(json.dumps({"mcpServers": servers}))
-    return repo

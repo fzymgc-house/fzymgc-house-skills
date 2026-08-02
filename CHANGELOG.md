@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v2.0.1...v2.0.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **grepping:** block deterministic rg misuse with a PreToolUse guard ([#196](https://github.com/fzymgc-house/fzymgc-house-skills/issues/196)) ([80f2091](https://github.com/fzymgc-house/fzymgc-house-skills/commit/80f2091d833a7712ada0a4f64271995ecb2db852))
+
 ## [2.0.1](https://github.com/fzymgc-house/fzymgc-house-skills/compare/v2.0.0...v2.0.1) (2026-07-01)
 
 
